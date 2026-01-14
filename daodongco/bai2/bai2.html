@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bài 2: Phương trình dao động điều hòa</title>
+    <!-- Thư viện hiển thị công thức Toán học MathJax -->
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --bg-color: #f4f7f6;
+            --text-color: #333;
+            --accent-color: #e67e22;
+            --success-color: #27ae60;
+            --danger-color: #e74c3c;
+            --info-color: #2980b9;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.7;
+            color: var(--text-color);
+            background-color: var(--bg-color);
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 30px auto;
+            background: #fff;
+            padding: 40px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            border-radius: 12px;
+        }
+
+        header {
+            text-align: center;
+            border-bottom: 3px solid var(--primary-color);
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+        }
+
+        h1 {
+            color: var(--primary-color);
+            margin: 0;
+            font-size: 2em;
+            text-transform: uppercase;
+        }
+
+        h2 {
+            color: var(--secondary-color);
+            border-left: 5px solid var(--secondary-color);
+            padding-left: 15px;
+            margin-top: 35px;
+            font-size: 1.5em;
+            background: #f8f9fa;
+        }
+
+        h3 {
+            color: var(--primary-color);
+            margin-top: 20px;
+            font-size: 1.2em;
+        }
+
+        .highlight {
+            background-color: #fff3cd;
+            padding: 2px 5px;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+
+        .info-box {
+            background-color: #e8f4fd;
+            border-left: 5px solid var(--info-color);
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .formula-box {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            padding: 15px;
+            margin: 15px 0;
+            text-align: center;
+            border-radius: 8px;
+            font-size: 1.15em;
+        }
+
+        .example-box {
+            background-color: #fff9f4;
+            border: 1px solid #f39c12;
+            padding: 20px;
+            margin: 25px 0;
+            border-radius: 10px;
+        }
+
+        .example-title {
+            color: #d35400;
+            font-weight: bold;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+            display: block;
+        }
+
+        .chart-container {
+            text-align: center;
+            margin: 30px 0;
+            background: #fff;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+
+        canvas {
+            max-width: 100%;
+            height: auto;
+        }
+
+        .legend {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 10px;
+            font-weight: bold;
+        }
+
+        .legend-item { display: flex; align-items: center; gap: 5px; }
+
+        @media (max-width: 600px) {
+            .container { padding: 20px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <h1>BÀI 2: PHƯƠNG TRÌNH DAO ĐỘNG ĐIỀU HÒA</h1>
+        </header>
+
+        <h2>I. Các phương trình dao động</h2>
+        
+        <h3>1. Phương trình dao động điều hòa (Li độ)</h3>
+        <div class="formula-box">
+            \( x = A \cos(\omega t + \varphi_0) \)
+        </div>
+        <p>Trong đó: \(A\) là biên độ, \(\omega\) là tần số góc, \(\varphi_0\) là pha ban đầu.</p>
+
+        <h3>2. Phương trình vận tốc</h3>
+        <div class="formula-box">
+            \( v = x' = -\omega A \sin(\omega t + \varphi_0) = \omega A \cos(\omega t + \varphi_0 + \frac{\pi}{2}) \)
+        </div>
+        <p>Vận tốc đạt giá trị cực đại \(v_{max} = \omega A\) tại VTCB.</p>
+
+        <h3>3. Phương trình gia tốc</h3>
+        <div class="formula-box">
+            \( a = v' = -\omega^2 A \cos(\omega t + \varphi_0) = \omega^2 A \cos(\omega t + \varphi_0 + \pi) = -\omega^2 x \)
+        </div>
+        <p>Gia tốc đạt giá trị cực đại \(a_{max} = \omega^2 A\) tại các vị trí biên.</p>
+
+        <h3>4. Phương trình lực hồi phục</h3>
+        <div class="formula-box">
+            \( F = m \cdot a = -m\omega^2 x = -kx = m\omega^2 A \cos(\omega t + \varphi_0 + \pi) \)
+        </div>
+        <p>Lực hồi phục luôn hướng về vị trí cân bằng và tỉ lệ thuận với li độ.</p>
+
+        <h2>II. Mối liên hệ giữa các đại lượng</h2>
+
+        <h3>1. Mối liên hệ pha</h3>
+        <div class="info-box">
+            <ul>
+                <li><strong>v và x:</strong> Vận tốc sớm pha \(\pi/2\) so với li độ.</li>
+                <li><strong>a và v:</strong> Gia tốc sớm pha \(\pi/2\) so với vận tốc.</li>
+                <li><strong>F và a:</strong> Lực hồi phục cùng pha với gia tốc.</li>
+                <li><strong>F và x:</strong> Lực hồi phục ngược pha với li độ.</li>
+            </ul>
+        </div>
+
+        <h3>2. Công thức độc lập với thời gian</h3>
+        <div class="info-box" style="background-color: #fdfefe; border-left-color: var(--accent-color);">
+            <p><strong>a) Liên hệ x và v:</strong> <span class="highlight">\( A^2 = x^2 + \frac{v^2}{\omega^2} \)</span></p>
+            <p><strong>b) Liên hệ v và a:</strong> <span class="highlight">\( \frac{v^2}{\omega^2} + \frac{a^2}{\omega^4} = A^2 \)</span> hoặc <span class="highlight">\( \frac{v^2}{v_{max}^2} + \frac{a^2}{a_{max}^2} = 1 \)</span></p>
+            <p><strong>c) Liên hệ F và x:</strong> <span class="highlight">\( F = -kx \)</span> (Quan hệ bậc nhất)</p>
+            <p><strong>d) Liên hệ a và x:</strong> <span class="highlight">\( a = -\omega^2 x \)</span></p>
+        </div>
+
+        <h2>III. Đồ thị x, v, a theo thời gian</h2>
+        <p>Đồ thị dưới đây mô tả sự biến thiên của Li độ (x), Vận tốc (v) và Gia tốc (a) trên cùng một trục thời gian để thấy rõ độ lệch pha.</p>
+        
+        <div class="chart-container">
+            <canvas id="oscillationChart" width="800" height="400"></canvas>
+            <div class="legend">
+                <div class="legend-item"><span style="color:red">━</span> Li độ (x)</div>
+                <div class="legend-item"><span style="color:blue">━</span> Vận tốc (v/ω)</div>
+                <div class="legend-item"><span style="color:green">━</span> Gia tốc (a/ω²)</div>
+            </div>
+        </div>
+
+        <h2>IV. Bài tập ví dụ</h2>
+        
+        <div class="example-box">
+            <span class="example-title">Ví dụ 1:</span>
+            <p>Vật dao động điều hòa có biên độ \(A = 5 \text{ cm}\), tần số góc \(\omega = 10 \text{ rad/s}\). Tính vận tốc của vật khi vật có li độ \(x = 3 \text{ cm}\).</p>
+            <hr>
+            <p><strong>Giải:</strong><br>
+            Áp dụng hệ thức độc lập: \( A^2 = x^2 + \frac{v^2}{\omega^2} \Rightarrow 5^2 = 3^2 + \frac{v^2}{10^2} \)<br>
+            \( \Rightarrow 25 = 9 + \frac{v^2}{100} \Rightarrow \frac{v^2}{100} = 16 \Rightarrow v^2 = 1600 \)<br>
+            \( \Rightarrow v = \pm 40 \text{ cm/s} \).</p>
+        </div>
+
+        <div class="example-box">
+            <span class="example-title">Ví dụ 2:</span>
+            <p>Một vật có khối lượng \(m = 100 \text{ g}\) dao động với phương trình \(x = 4\cos(2\pi t) \text{ cm}\). Tìm độ lớn lực hồi phục cực đại.</p>
+            <hr>
+            <p><strong>Giải:</strong><br>
+            Ta có \(A = 4 \text{ cm} = 0,04 \text{ m}\), \(\omega = 2\pi \text{ rad/s}\), \(m = 0,1 \text{ kg}\).<br>
+            Lực hồi phục cực đại: \(F_{max} = m \omega^2 A = 0,1 \cdot (2\pi)^2 \cdot 0,04 \approx 0,1 \cdot 40 \cdot 0,04 = 0,16 \text{ N}\).</p>
+        </div>
+    </div>
+
+    <script>
+        function drawChart() {
+            const canvas = document.getElementById('oscillationChart');
+            const ctx = canvas.getContext('2d');
+            const width = canvas.width;
+            const height = canvas.height;
+            const centerY = height / 2;
+            const amplitude = 80;
+            const period = width / 2; // Vẽ 2 chu kỳ
+
+            ctx.clearRect(0, 0, width, height);
+
+            // Vẽ trục tọa độ
+            ctx.beginPath();
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 1;
+            ctx.moveTo(0, centerY);
+            ctx.lineTo(width, centerY);
+            ctx.moveTo(40, 0);
+            ctx.lineTo(40, height);
+            ctx.stroke();
+
+            // Nhãn trục
+            ctx.font = '14px Segoe UI';
+            ctx.fillStyle = '#333';
+            ctx.fillText('t (s)', width - 30, centerY - 10);
+            ctx.fillText('Biên độ', 45, 20);
+
+            function plotWave(offsetPhase, color, label) {
+                ctx.beginPath();
+                ctx.strokeStyle = color;
+                ctx.lineWidth = 2;
+                for (let x = 40; x < width; x++) {
+                    const t = (x - 40) / period * 2 * Math.PI;
+                    const y = centerY - amplitude * Math.cos(t + offsetPhase);
+                    if (x === 40) ctx.moveTo(x, y);
+                    else ctx.lineTo(x, y);
+                }
+                ctx.stroke();
+            }
+
+            // x = A cos(ωt) -> Pha ban đầu 0 (âm cos để hướng lên đúng trục y học thuật)
+            // Trong toán vẽ canvas y tăng xuống dưới nên dùng dấu trừ
+            
+            // Vẽ x (Màu đỏ): x = A cos(wt)
+            plotWave(0, 'red', 'x');
+
+            // Vẽ v/w (Màu xanh dương): v/w = A cos(wt + pi/2)
+            plotWave(Math.PI / 2, 'blue', 'v');
+
+            // Vẽ a/w^2 (Màu xanh lá): a/w^2 = A cos(wt + pi)
+            plotWave(Math.PI, 'green', 'a');
+        }
+
+        window.onload = function() {
+            drawChart();
+        };
+    </script>
+</body>
+</html>

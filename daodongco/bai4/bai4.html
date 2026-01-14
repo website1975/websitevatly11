@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bài 4: Con Lắc Đơn</title>
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f4f7f6;
+        }
+        .container {
+            background-color: #fff;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+        }
+        h2 {
+            color: #2980b9;
+            border-left: 5px solid #3498db;
+            padding-left: 10px;
+            margin-top: 30px;
+        }
+        h3 {
+            color: #16a085;
+        }
+        .figure {
+            text-align: center;
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px inset #eee;
+        }
+        .formula {
+            background-color: #f9f9f9;
+            padding: 15px;
+            border-radius: 5px;
+            border-left: 4px solid #e74c3c;
+            margin: 10px 0;
+            font-size: 1.1em;
+            overflow-x: auto;
+        }
+        .exercise {
+            background-color: #fffbe6;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #ffe58f;
+            margin-bottom: 20px;
+        }
+        .solution {
+            color: #27ae60;
+            font-style: italic;
+            margin-top: 10px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: center;
+        }
+        th {
+            background-color: #3498db;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>BÀI 4: CON LẮC ĐƠN</h1>
+
+    <!-- I. THẾ NÀO LÀ CON LẮC ĐƠN -->
+    <h2>I. Thế nào là con lắc đơn</h2>
+    <h3>1. Cấu tạo</h3>
+    <p>Con lắc đơn gồm một vật nhỏ, khối lượng \(m\), treo ở đầu một sợi dây không dãn, khối lượng không đáng kể, có chiều dài \(l\).</p>
+    
+    <div class="figure">
+        <svg width="200" height="250" viewBox="0 0 200 250">
+            <!-- Điểm treo -->
+            <line x1="100" y1="20" x2="100" y2="40" stroke="black" stroke-width="2"/>
+            <rect x="70" y="10" width="60" height="10" fill="#999" />
+            <!-- Dây treo ở VTCB -->
+            <line x1="100" y1="20" x2="100" y2="180" stroke="#ccc" stroke-dasharray="4"/>
+            <!-- Dây treo lệch -->
+            <line x1="100" y1="20" x2="160" y2="160" stroke="black" stroke-width="2"/>
+            <!-- Vật nặng -->
+            <circle cx="160" cy="160" r="10" fill="red" />
+            <!-- Góc alpha -->
+            <path d="M 100 70 A 50 50 0 0 1 120 65" fill="none" stroke="blue" />
+            <text x="110" y="60" font-size="14" fill="blue">\(\alpha\)</text>
+            <text x="105" y="195" font-size="12">VTCB (O)</text>
+            <text x="175" y="165" font-size="12">m</text>
+        </svg>
+        <p><i>Hình 1: Sơ đồ cấu tạo con lắc đơn</i></p>
+    </div>
+
+    <h3>2. Mô tả hoạt động</h3>
+    <ul>
+        <li><strong>Vị trí cân bằng:</strong> Là vị trí dây treo có phương thẳng đứng.</li>
+        <li><strong>Cách tạo dao động:</strong> Kéo nhẹ quả cầu cho dây treo lệch khỏi vị trí cân bằng một góc rồi thả ra. Con lắc sẽ dao động quanh vị trí cân bằng trong mặt phẳng thẳng đứng.</li>
+    </ul>
+
+    <!-- II. KHẢO SÁT VỀ MẶT ĐỘNG LỰC HỌC -->
+    <h2>II. Khảo sát về mặt Động lực học</h2>
+    <h3>1. Phương trình động lực học</h3>
+    <p>Chọn gốc tọa độ tại vị trí cân bằng, chiều dương từ trái sang phải. Vật chịu tác dụng của trọng lực \(\vec{P}\) và lực căng dây \(\vec{T}\).</p>
+    <p>Lực thành phần tiếp tuyến là lực kéo về:</p>
+    <div class="formula">
+        \[ P_t = -mg \sin \alpha \]
+    </div>
+
+    <h3>2. Chứng minh con lắc dao động điều hòa</h3>
+    <p>Khi góc lệch nhỏ (\(\alpha < 10^\circ \text{ hoặc } \approx 0,2 \text{ rad}\)), ta có \(\sin \alpha \approx \alpha = \frac{s}{l}\).</p>
+    <p>Lực kéo về trở thành:</p>
+    <div class="formula">
+        \[ P_t = -mg \frac{s}{l} = -\left(\frac{mg}{l}\right)s \]
+    </div>
+    <p>Vì lực kéo về tỉ lệ với li độ cong \(s\), nên con lắc dao động điều hòa với phương trình:</p>
+    <div class="formula">
+        \[ s = s_0 \cos(\omega t + \phi) \]
+    </div>
+
+    <h3>3. Chu kỳ và tần số</h3>
+    <table>
+        <tr>
+            <th>Đại lượng</th>
+            <th>Công thức</th>
+        </tr>
+        <tr>
+            <td>Tần số góc (\(\omega\))</td>
+            <td>\(\omega = \sqrt{\frac{g}{l}}\)</td>
+        </tr>
+        <tr>
+            <td>Chu kỳ (\(T\))</td>
+            <td>\(T = 2\pi\sqrt{\frac{l}{g}}\)</td>
+        </tr>
+        <tr>
+            <td>Tần số (\(f\))</td>
+            <td>\(f = \frac{1}{2\pi}\sqrt{\frac{g}{l}}\)</td>
+        </tr>
+    </table>
+
+    <!-- III. KHẢO SÁT VỀ NĂNG LƯỢNG -->
+    <h2>III. Khảo sát về năng lượng</h2>
+    
+    <h3>1. Động năng</h3>
+    <div class="formula">
+        \[ W_d = \frac{1}{2}mv^2 \]
+    </div>
+
+    <h3>2. Thế năng</h3>
+    <p>Chọn mốc thế năng tại vị trí cân bằng:</p>
+    <div class="formula">
+        \[ W_t = mgl(1 - \cos \alpha) \]
+    </div>
+
+    <h3>3. Cơ năng</h3>
+    <p>Bỏ qua mọi ma sát, cơ năng được bảo toàn:</p>
+    <div class="formula">
+        \[ W = W_d + W_t = \frac{1}{2}mv^2 + mgl(1 - \cos \alpha) = \text{hằng số} \]
+    </div>
+
+    <h3>4. Đồ thị biến thiên năng lượng</h3>
+    <div class="figure">
+        <svg width="400" height="200" viewBox="0 0 400 200">
+            <!-- Trục tọa độ -->
+            <line x1="50" y1="180" x2="350" y2="180" stroke="black" stroke-width="2"/> <!-- Trục thời gian t -->
+            <line x1="50" y1="180" x2="50" y2="20" stroke="black" stroke-width="2"/> <!-- Trục Năng lượng W -->
+            
+            <!-- Đường Cơ năng W (Đen, nét đứt) - Luôn bằng tổng Wd + Wt -->
+            <line x1="50" y1="40" x2="350" y2="40" stroke="black" stroke-width="2" stroke-dasharray="5"/>
+            
+            <!-- Đồ thị Thế năng Wt (Xanh dương) - Hình sin bình phương, bắt đầu từ cực đại (biên) hoặc 0 (VTCB) -->
+            <!-- Ở đây giả sử bắt đầu từ biên: Wt cực đại -->
+            <path d="M 50 40 Q 125 320 200 40 Q 275 320 350 40" fill="none" stroke="blue" stroke-width="2.5"/>
+            
+            <!-- Đồ thị Động năng Wd (Đỏ) - Ngược pha với Wt, chạm đáy tại trục hoành -->
+            <path d="M 50 180 Q 125 -100 200 180 Q 275 -100 350 180" fill="none" stroke="red" stroke-width="2.5"/>
+            
+            <!-- Chú thích -->
+            <text x="360" y="185" font-weight="bold">t</text>
+            <text x="25" y="25" font-weight="bold">W</text>
+            <text x="360" y="45" font-size="12">W (Cơ năng)</text>
+            <text x="110" y="100" fill="red" font-weight="bold">Wđ</text>
+            <text x="110" y="155" fill="blue" font-weight="bold">Wt</text>
+        </svg>
+        <p><i>Hình 2: Sự chuyển hóa qua lại giữa động năng (đỏ) và thế năng (xanh)</i></p>
+    </div>
+
+    <!-- IV. BÀI TẬP VẬN DỤNG -->
+    <h2>IV. Bài tập vận dụng</h2>
+
+    <div class="exercise">
+        <strong>Bài 1:</strong> Một con lắc đơn có chiều dài \(l = 1m\) dao động tại nơi có \(g = \pi^2 \approx 10 \, m/s^2\). Tính chu kỳ dao động của con lắc.
+        <div class="solution">
+            <strong>Giải:</strong><br>
+            Áp dụng công thức chu kỳ: \(T = 2\pi\sqrt{\frac{l}{g}} = 2\pi\sqrt{\frac{1}{\pi^2}} = 2\pi \cdot \frac{1}{\pi} = 2 \, (s)\).
+        </div>
+    </div>
+
+    <div class="exercise">
+        <strong>Bài 2:</strong> Tại một nơi, con lắc có chiều dài \(l_1\) dao động với chu kỳ \(T_1 = 0,6s\), con lắc có chiều dài \(l_2\) dao động with chu kỳ \(T_2 = 0,8s\). Tính chu kỳ của con lắc có chiều dài \(L = l_1 + l_2\) tại nơi đó.
+        <div class="solution">
+            <strong>Giải:</strong><br>
+            Ta có \(T^2 \sim l\). Khi \(L = l_1 + l_2\) thì \(T^2 = T_1^2 + T_2^2\).<br>
+            \(\Rightarrow T = \sqrt{0,6^2 + 0,8^2} = 1,0 \, (s)\).
+        </div>
+    </div>
+
+    <div class="exercise">
+        <strong>Bài 3:</strong> Một con lắc đơn dài \(l = 2m\), khối lượng \(m = 100g\), kéo lệch khỏi VTCB một góc \(\alpha_0 = 60^\circ\) rồi thả nhẹ. Tính cơ năng của con lắc. Lấy \(g = 10 \, m/s^2\).
+        <div class="solution">
+            <strong>Giải:</strong><br>
+            Vì thả nhẹ nên cơ năng bằng thế năng cực đại:<br>
+            \(W = mgl(1 - \cos \alpha_0) = 0,1 \cdot 10 \cdot 2 \cdot (1 - \cos 60^\circ) = 2 \cdot (1 - 0,5) = 1 \, (J)\).
+        </div>
+    </div>
+
+</div>
+
+</body>
+</html>

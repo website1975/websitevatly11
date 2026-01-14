@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bài học Vật lý: Dao động tắt dần  Duy trì - Cưỡng bức - Cộng hưởng</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']]
+      }
+    };
+    </script>
+
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+        }
+        .graph-container {
+            background: #f8fafc;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 15px 0;
+            border: 1px dashed #cbd5e1;
+        }
+        .resonance-curve {
+            width: 100%;
+            max-width: 450px;
+            margin: 0 auto;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800">
+
+    <div class="max-w-4xl mx-auto px-4 py-8">
+        <!-- Header -->
+        <header class="text-center mb-12">
+            <h1 class="text-4xl font-bold text-blue-700 mb-4 uppercase text-pretty">Bài 4: Dao động tắt dần <br> Dao động cưỡng bức</h1>
+            <div class="h-1 w-24 bg-blue-500 mx-auto"></div>
+        </header>
+
+        <!-- Section I: Dao động tắt dần -->
+        <section class="bg-white rounded-xl shadow-md p-6 mb-8 border-l-4 border-blue-500">
+            <h2 class="text-2xl font-bold text-blue-800 mb-4 uppercase">I. Dao động tắt dần</h2>
+            <div class="mb-6">
+                <h3 class="text-xl font-semibold text-slate-700 mb-2">1. Thế nào là dao động tắt dần?</h3>
+                <p class="mb-2"><strong class="text-blue-600">Định nghĩa:</strong> Dao động có biên độ giảm dần theo thời gian gọi là dao động tắt dần.</p>
+                <p><strong class="text-blue-600">Đặc điểm:</strong> Biên độ và năng lượng của hệ dao động giảm dần do tác dụng của lực cản.</p>
+            </div>
+            <div class="mb-6">
+                <h3 class="text-xl font-semibold text-slate-700 mb-2">2. Các loại tắt dần & Đồ thị minh họa</h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                    <div class="p-4 bg-green-50 rounded-lg border border-green-200"><h4 class="font-bold text-green-700">Dưới hạn</h4><p class="text-sm">Lực cản nhỏ, dao động nhiều lần.</p></div>
+                    <div class="p-4 bg-yellow-50 rounded-lg border border-yellow-200"><h4 class="font-bold text-yellow-700">Tới hạn</h4><p class="text-sm">Về VTCB nhanh nhất.</p></div>
+                    <div class="p-4 bg-red-50 rounded-lg border border-red-200"><h4 class="font-bold text-red-700">Vượt hạn</h4><p class="text-sm">Lực cản rất lớn, vật về VTCB rất chậm.</p></div>
+                </div>
+                <div class="graph-container text-center italic text-slate-500">
+                    <svg viewBox="0 0 400 150" class="mx-auto w-full max-w-md">
+                        <!-- Axes -->
+                        <line x1="20" y1="130" x2="380" y2="130" stroke="#475569" stroke-width="2" />
+                        <line x1="30" y1="10" x2="30" y2="140" stroke="#475569" stroke-width="2" />
+                        <!-- Labels -->
+                        <text x="380" y="145" font-size="12" fill="#475569">t</text>
+                        <text x="10" y="15" font-size="12" fill="#475569">x</text>
+                        <!-- Envelope -->
+                        <path d="M 30 40 Q 150 70 380 125" fill="none" stroke="#cbd5e1" stroke-dasharray="4" />
+                        <path d="M 30 120 Q 150 90 380 135" fill="none" stroke="#cbd5e1" stroke-dasharray="4" />
+                        <!-- Damped Sine Wave -->
+                        <path d="M 30 80 C 50 20, 70 140, 100 80 C 130 40, 160 120, 190 80 C 220 60, 250 100, 280 80 C 310 75, 340 85, 370 80" fill="none" stroke="#3b82f6" stroke-width="2" />
+                    </svg>
+                    <p class="mt-2 text-xs">Hình 1.1: Đồ thị dao động tắt dần (Biên độ giảm dần)</p>
+                </div>
+            </div>
+            <div class="mb-6">
+                <h3 class="text-xl font-semibold text-slate-700 mb-2">3. Nguyên nhân & Giải thích</h3>
+                <p>Do ma sát và lực cản của môi trường. Cơ năng chuyển hóa dần thành nhiệt năng.</p>
+            </div>
+            <div>
+                <h3 class="text-xl font-semibold text-slate-700 mb-2">4. Ứng dụng</h3>
+                <p>Giảm xóc ô tô, xe máy; thiết bị đóng cửa tự động.</p>
+            </div>
+        </section>
+
+        <!-- Section II: Duy trì -->
+        <section class="bg-white rounded-xl shadow-md p-6 mb-8 border-l-4 border-emerald-500">
+            <h2 class="text-2xl font-bold text-emerald-800 mb-4 uppercase">II. Dao động duy trì</h2>
+            <div class="mb-4 bg-emerald-50 p-4 rounded-lg">
+                <p>Bù năng lượng đúng bằng phần mất đi sau mỗi chu kì nhưng <strong>không làm thay đổi chu kì riêng $f_0$</strong> của hệ.</p>
+            </div>
+            <p><strong>Ví dụ:</strong> Con lắc đồng hồ, người chơi đu.</p>
+        </section>
+
+        <!-- Section III: Cưỡng bức -->
+        <section class="bg-white rounded-xl shadow-md p-6 mb-8 border-l-4 border-orange-500">
+            <h2 class="text-2xl font-bold text-orange-800 mb-4 uppercase">III. Dao động cưỡng bức</h2>
+            <p>Xảy ra dưới tác dụng của ngoại lực biến thiên tuần hoàn: $F = F_0 \cos(2\pi ft)$.</p>
+            <ul class="list-disc ml-6 mt-2">
+                <li>Tần số dao động bằng tần số lực cưỡng bức $f$.</li>
+                <li>Biên độ phụ thuộc vào $F_0$ và chênh lệch $|f - f_0|$.</li>
+            </ul>
+        </section>
+
+        <!-- Section IV: Hiện tượng cộng hưởng -->
+        <section class="bg-white rounded-xl shadow-md p-6 mb-8 border-l-4 border-red-600">
+            <h2 class="text-2xl font-bold text-red-800 mb-4 uppercase">IV. Hiện tượng cộng hưởng</h2>
+            
+            <div class="mb-6">
+                <h3 class="text-xl font-semibold text-slate-700 mb-2">1. Định nghĩa</h3>
+                <div class="bg-red-50 p-4 border-l-4 border-red-400">
+                    Hiện tượng biên độ dao động cưỡng bức tăng đến giá trị cực đại khi tần số $f$ của lực cưỡng bức bằng tần số riêng $f_0$ của hệ gọi là <strong>hiện tượng cộng hưởng</strong>.
+                    <p class="mt-2 font-bold text-center text-lg italic text-red-700 underline">Điều kiện cộng hưởng: $f = f_0$ hoặc $T = T_0$</p>
+                </div>
+            </div>
+
+            <div class="mb-6">
+                <h3 class="text-xl font-semibold text-slate-700 mb-2">2. Đồ thị và Giải thích</h3>
+                <p class="mb-4">Khi $f$ tiến gần đến $f_0$, biên độ $A$ tăng nhanh. Tại $f = f_0$, biên độ đạt cực đại $A_{max}$.</p>
+                
+                <div class="graph-container text-center">
+                    <svg viewBox="0 0 300 200" class="resonance-curve">
+                        <!-- Axes -->
+                        <line x1="40" y1="170" x2="280" y2="170" stroke="#475569" stroke-width="2" />
+                        <line x1="50" y1="20" x2="50" y2="180" stroke="#475569" stroke-width="2" />
+                        <!-- Labels -->
+                        <text x="280" y="185" font-size="12" fill="#475569">f</text>
+                        <text x="25" y="25" font-size="12" fill="#475569">A</text>
+                        <!-- Resonance Curve -->
+                        <path d="M 60 160 Q 100 155, 140 100 T 165 40 T 190 100 Q 230 155, 270 160" fill="none" stroke="#ef4444" stroke-width="3" />
+                        <!-- Reference Lines -->
+                        <line x1="165" y1="40" x2="165" y2="170" stroke="#94a3b8" stroke-dasharray="4" />
+                        <line x1="50" y1="40" x2="165" y2="40" stroke="#94a3b8" stroke-dasharray="4" />
+                        <!-- Annotations -->
+                        <text x="155" y="185" font-size="12" font-weight="bold" fill="#b91c1c">f₀</text>
+                        <text x="20" y="45" font-size="12" font-weight="bold" fill="#b91c1c">Aₘₐₓ</text>
+                        <circle cx="165" cy="40" r="4" fill="#ef4444" />
+                    </svg>
+                    <p class="mt-2 text-xs font-medium text-slate-600 italic">Hình 4.1: Đường cong cộng hưởng (Biên độ đạt đỉnh tại f = f₀)</p>
+                </div>
+                
+                <p class="mt-4 italic">Giải thích: Khi $f = f_0$, ngoại lực cung cấp năng lượng nhịp nhàng đúng lúc làm năng lượng hệ nhận được là lớn nhất.</p>
+            </div>
+
+            <div class="mb-6">
+                <h3 class="text-xl font-semibold text-slate-700 mb-2">3. Tầm quan trọng</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="p-3 bg-slate-50 border rounded shadow-sm">
+                        <strong class="text-red-600 block mb-1">Tác hại:</strong>
+                        Làm sập cầu khi đoàn quân đi đều bước; làm hỏng máy móc, công trình nếu tần số rung của máy trùng với tần số riêng của nền móng.
+                    </div>
+                    <div class="p-3 bg-slate-50 border rounded shadow-sm">
+                        <strong class="text-blue-600 block mb-1">Lợi ích:</strong>
+                        Chế tạo các hộp đàn (đàn guitar, violin) để tăng âm lượng; thu sóng vô tuyến (chọn đài).
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section V: Bài tập vận dụng -->
+        <section class="bg-white rounded-xl shadow-md p-6 mb-8 border-l-4 border-slate-700">
+            <h2 class="text-2xl font-bold text-slate-800 mb-6 uppercase">V. Bài tập vận dụng</h2>
+            
+            <div class="space-y-8">
+                <!-- Bài 1 -->
+                <div class="p-4 border rounded-lg hover:border-blue-400 transition-colors">
+                    <p class="font-bold text-blue-700 mb-2">Bài 1: Tính toán chu kỳ cộng hưởng</p>
+                    <p>Một xe lửa chạy trên một đường ray, ở mỗi mối nối giữa hai thanh ray có một khe nhỏ. Chiều dài mỗi thanh ray là $L = 12,5$ m. Chu kỳ dao động riêng của khung xe trên các lò xo giảm xóc là $T_0 = 0,5$ s. Xe lửa chạy với tốc độ bao nhiêu thì xe bị rung mạnh nhất?</p>
+                    <div class="mt-3 text-sm text-slate-600 bg-slate-100 p-2 rounded">
+                        <strong>Hướng dẫn:</strong> Xe rung mạnh nhất khi xảy ra cộng hưởng: $T_{kích\_động} = T_0$. Trong đó $T_{kđ} = L/v$.
+                    </div>
+                </div>
+
+                <!-- Bài 2 -->
+                <div class="p-4 border rounded-lg hover:border-blue-400 transition-colors">
+                    <p class="font-bold text-blue-700 mb-2">Bài 2: Con lắc treo trên toa tàu</p>
+                    <p>Một con lắc đơn có chiều dài $l = 44$ cm được treo vào trần một toa xe lửa. Con lắc bị kích động mỗi khi bánh xe của toa tàu gặp chỗ nối giữa hai thanh ray. Biết chiều dài mỗi thanh ray là $12,5$ m. Lấy $g = 9,8$ m/s². Con lắc sẽ dao động với biên độ lớn nhất khi tàu chạy với tốc độ $v$ bằng bao nhiêu?</p>
+                    <div class="mt-3 text-sm text-slate-600 bg-slate-100 p-2 rounded">
+                        <strong>Hướng dẫn:</strong> Tính chu kỳ riêng con lắc $T_0 = 2\pi\sqrt{l/g}$, sau đó cho $T_0 = L/v$.
+                    </div>
+                </div>
+
+                <!-- Bài 3 -->
+                <div class="p-4 border rounded-lg hover:border-blue-400 transition-colors">
+                    <p class="font-bold text-blue-700 mb-2">Bài 3: Người gánh nước</p>
+                    <p>Một người gánh hai thúng nước, mỗi bước đi dài $L = 50$ cm. Chu kỳ dao động riêng của nước trong thúng là $T_0 = 1$ s. Người đó không nên đi với tốc độ nào để nước trong thúng không bị sóng sánh đổ ra ngoài?</p>
+                    <div class="mt-3 text-sm text-slate-600 bg-slate-100 p-2 rounded">
+                        <strong>Hướng dẫn:</strong> Nước đổ ra ngoài nhiều nhất khi tốc độ bước đi $v$ tạo ra chu kỳ bước đi $T = L/v$ trùng với $T_0$.
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="text-center text-slate-400 text-sm mt-12 pb-8 italic">
+            &copy; 2024 - Tài liệu học tập Vật lý 12 - Chuyên đề Dao động
+        </footer>
+    </div>
+
+</body>
+</html>

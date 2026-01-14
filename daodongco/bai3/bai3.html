@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bài học: Con Lắc Lò Xo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']], // Bắt buộc nhận diện $...$
+        displayMath: [['$$', '$$'], ['\\[', '\\]']]
+      },
+      // ...
+    };
+    </script>
+    <!-- Thêm Chart.js để vẽ đồ thị -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            scroll-behavior: smooth;
+        }
+        .section-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            padding: 2rem;
+            margin-bottom: 2rem;
+            border-left: 5px solid #3b82f6;
+        }
+        .formula-box {
+            background: #f8fafc;
+            border: 1px dashed #3b82f6;
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+            text-align: center;
+        }
+        .chart-container {
+            position: relative;
+            height: 400px;
+            width: 100%;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+
+    <header class="bg-blue-600 text-white py-10 shadow-lg">
+        <div class="container mx-auto px-4 text-center">
+            <h1 class="text-4xl font-bold mb-2">BÀI 3: CON LẮC LÒ XO</h1>
+            <p class="text-lg opacity-90">Khảo sát dao động điều hòa về mặt động lực học và năng lượng</p>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-4 py-8 max-w-4xl">
+        
+        <!-- I. Cấu tạo con lắc lò xo -->
+        <section class="section-card">
+            <h2 class="text-2xl font-bold text-blue-700 mb-4">I. Cấu tạo con lắc lò xo</h2>
+            <div class="flex flex-col md:flex-row gap-6 items-center mb-6">
+                <div class="flex-1">
+                    <h3 class="text-xl font-semibold mb-2">1. Giới thiệu</h3>
+                    <p>Con lắc lò xo gồm một vật nhỏ khối lượng $m$ gắn vào đầu một lò xo có độ cứng $k$ và khối lượng không đáng kể. Đầu kia của lò xo được giữ cố định.</p>
+                </div>
+                <!-- Minh họa con lắc lò xo nằm ngang bằng SVG -->
+                <div class="w-full md:w-1/2 p-4 bg-white border rounded-lg shadow-inner flex flex-col items-center">
+                    <svg width="300" height="120" viewBox="0 0 300 120" xmlns="http://www.w3.org/2000/svg">
+                        <!-- Tường cố định -->
+                        <line x1="10" y1="20" x2="10" y2="100" stroke="#4b5563" stroke-width="4"/>
+                        <line x1="0" y1="30" x2="10" y2="20" stroke="#4b5563" stroke-width="1"/>
+                        <line x1="0" y1="50" x2="10" y2="40" stroke="#4b5563" stroke-width="1"/>
+                        <line x1="0" y1="70" x2="10" y2="60" stroke="#4b5563" stroke-width="1"/>
+                        <line x1="0" y1="90" x2="10" y2="80" stroke="#4b5563" stroke-width="1"/>
+                        
+                        <!-- Mặt sàn -->
+                        <line x1="10" y1="100" x2="280" y2="100" stroke="#9ca3af" stroke-width="2"/>
+                        
+                        <!-- Lò xo (Zizag) -->
+                        <path d="M10,70 L30,70 L40,50 L60,90 L80,50 L100,90 L120,50 L140,90 L160,50 L180,90 L200,70 L210,70" fill="none" stroke="#3b82f6" stroke-width="2"/>
+                        
+                        <!-- Vật m -->
+                        <rect x="210" y="50" width="40" height="40" fill="#ef4444" stroke="#b91c1c" stroke-width="2"/>
+                        <text x="225" y="75" fill="white" font-weight="bold" font-size="14">m</text>
+                        
+                        <!-- Chú thích -->
+                        <text x="100" y="40" fill="#3b82f6" font-size="12" font-style="italic">k</text>
+                        <text x="145" y="115" fill="#9ca3af" font-size="10">Vị trí cân bằng (x = 0)</text>
+                        <line x1="145" y1="95" x2="145" y2="105" stroke="#9ca3af" stroke-width="1"/>
+                    </svg>
+                    <p class="text-xs text-gray-500 mt-2 font-medium italic">Hình 3.1: Mô hình con lắc lò xo nằm ngang</p>
+                </div>
+            </div>
+            
+            <div>
+                <h3 class="text-xl font-semibold mb-2">2. Mô tả hoạt động</h3>
+                <ul class="list-disc ml-6 space-y-2">
+                    <li><strong>Vị trí cân bằng:</strong> Là vị trí khi lò xo không biến dạng (li độ $x = 0$).</li>
+                    <li><strong>Hoạt động:</strong> Khi kéo vật ra khỏi vị trí cân bằng rồi thả nhẹ, lực đàn hồi của lò xo sẽ kéo vật về phía vị trí cân bằng, làm vật dao động điều hòa quanh vị trí này.</li>
+                </ul>
+                <div class="mt-4 p-4 bg-yellow-50 border-l-4 border-yellow-400 text-sm italic">
+                    Ghi chú: Khảo sát lý tưởng khi bỏ qua mọi ma sát.
+                </div>
+            </div>
+        </section>
+
+        <!-- II. Khảo sát về mặt động lực học -->
+        <section class="section-card" style="border-left-color: #10b981;">
+            <h2 class="text-2xl font-bold text-green-700 mb-4">II. Khảo sát chuyển động về mặt động lực học</h2>
+            
+            <div class="mb-6">
+                <h3 class="text-xl font-semibold mb-2">1. Thiết lập phương trình động lực học</h3>
+                <p>Chọn trục tọa độ $Ox$ trùng với trục lò xo, gốc $O$ tại vị trí cân bằng.</p>
+                <p>Tại li độ $x$, lực đàn hồi là $F = -kx$. Theo định luật II Newton: $F = ma \Rightarrow -kx = mx''$</p>
+                <p>Hay: $x'' + \frac{k}{m}x = 0$</p>
+            </div>
+
+            <div class="mb-6">
+                <h3 class="text-xl font-semibold mb-2">2. Chứng minh vật dao động điều hòa</h3>
+                <p>Đặt $\omega^2 = \frac{k}{m}$, phương trình trở thành: $x'' + \omega^2 x = 0$</p>
+                <p>Nghiệm có dạng: $x = A\cos(\omega t + \varphi)$. Đây là phương trình của một dao động điều hòa.</p>
+            </div>
+
+            <div class="mb-6">
+                <h3 class="text-xl font-semibold mb-2">3. Công thức: $\omega, T, f$</h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="formula-box">
+                        <p class="text-xs text-gray-500 uppercase">Tần số góc</p>
+                        <p class="text-xl font-bold">$\omega = \sqrt{\frac{k}{m}}$</p>
+                    </div>
+                    <div class="formula-box">
+                        <p class="text-xs text-gray-500 uppercase">Chu kỳ</p>
+                        <p class="text-xl font-bold">$T = 2\pi\sqrt{\frac{m}{k}}$</p>
+                    </div>
+                    <div class="formula-box">
+                        <p class="text-xs text-gray-500 uppercase">Tần số</p>
+                        <p class="text-xl font-bold">$f = \frac{1}{2\pi}\sqrt{\frac{k}{m}}$</p>
+                    </div>
+                </div>
+            </div>
+
+            <div>
+                <h3 class="text-xl font-semibold mb-2">4. Biểu thức lực kéo về</h3>
+                <div class="formula-box bg-green-50">
+                    <p class="text-xl font-bold">$F = -kx$</p>
+                </div>
+                <p class="text-sm">Đặc điểm: Luôn hướng về vị trí cân bằng, tỉ lệ thuận với độ lớn của li độ.</p>
+            </div>
+        </section>
+
+        <!-- III. Khảo sát về mặt năng lượng -->
+        <section class="section-card" style="border-left-color: #f59e0b;">
+            <h2 class="text-2xl font-bold text-orange-700 mb-4">III. Khảo sát về mặt năng lượng</h2>
+            
+            <div class="space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <h3 class="font-semibold">1. Động năng ($W_đ$)</h3>
+                        <p class="formula-box">$W_đ = \frac{1}{2}mv^2$</p>
+                    </div>
+                    <div>
+                        <h3 class="font-semibold">2. Thế năng ($W_t$)</h3>
+                        <p class="formula-box">$W_t = \frac{1}{2}kx^2$</p>
+                    </div>
+                </div>
+                <div>
+                    <h3 class="font-semibold">3. Cơ năng ($W$)</h3>
+                    <p class="formula-box bg-orange-50 font-bold">
+                        $W = W_đ + W_t = \frac{1}{2}kA^2 = \text{hằng số}$
+                    </p>
+                    <p class="text-sm italic text-center">Cơ năng của con lắc tỉ lệ với bình phương biên độ dao động và được bảo toàn.</p>
+                </div>
+                
+                <div>
+                    <h3 class="font-semibold mb-4">4. Đồ thị năng lượng theo thời gian ($t$)</h3>
+                    <div class="bg-white p-4 rounded-lg border shadow-inner">
+                        <div class="chart-container">
+                            <canvas id="energyChart"></canvas>
+                        </div>
+                        <div class="mt-4 text-sm text-gray-600 flex justify-center gap-6">
+                            <span class="flex items-center"><span class="w-3 h-3 bg-red-500 rounded-full mr-2"></span> Động năng</span>
+                            <span class="flex items-center"><span class="w-3 h-3 bg-blue-500 rounded-full mr-2"></span> Thế năng</span>
+                            <span class="flex items-center"><span class="w-3 h-3 bg-black rounded-full mr-2"></span> Cơ năng</span>
+                        </div>
+                    </div>
+                    <p class="mt-4 text-sm leading-relaxed">
+                        <strong>Nhận xét từ đồ thị:</strong><br>
+                        - Động năng và thế năng biến thiên tuần hoàn với chu kỳ $T' = T/2$ và tần số $f' = 2f$.<br>
+                        - Khi động năng tăng thì thế năng giảm và ngược lại.<br>
+                        - Tại mọi thời điểm, tổng của chúng (Cơ năng) luôn không đổi.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- IV. Bài tập vận dụng -->
+        <section class="section-card" style="border-left-color: #ef4444;">
+            <h2 class="text-2xl font-bold text-red-700 mb-4">IV. Bài tập vận dụng</h2>
+            
+            <div class="space-y-4">
+                <div class="p-4 border rounded-lg bg-gray-50">
+                    <p class="font-bold">Bài 1:</p>
+                    <p>Một con lắc lò xo có $k = 40 \text{ N/m}$, vật $m = 0,4 \text{ kg}$. Tính chu kỳ $T$?</p>
+                    <button onclick="toggleSolution('sol1')" class="mt-2 text-red-600 text-sm font-semibold underline">Xem lời giải</button>
+                    <div id="sol1" class="hidden mt-2 p-3 bg-white border-l-2 border-red-400 text-sm">
+                        $T = 2\pi\sqrt{\frac{m}{k}} = 2\pi\sqrt{\frac{0,4}{40}} = 2\pi\sqrt{0,01} = 0,2\pi \approx 0,628 \text{ (s)}$.
+                    </div>
+                </div>
+
+                <div class="p-4 border rounded-lg bg-gray-50">
+                    <p class="font-bold">Bài 2:</p>
+                    <p>Khi vật có li độ $x = \frac{A\sqrt{2}}{2}$ thì động năng bằng bao nhiêu lần thế năng?</p>
+                    <button onclick="toggleSolution('sol2')" class="mt-2 text-red-600 text-sm font-semibold underline">Xem lời giải</button>
+                    <div id="sol2" class="hidden mt-2 p-3 bg-white border-l-2 border-red-400 text-sm">
+                        $W_t = \frac{1}{2}kx^2 = \frac{1}{2}k\left(\frac{A^2}{2}\right) = \frac{1}{2}W$.<br>
+                        $\Rightarrow W_đ = W - W_t = \frac{1}{2}W$.<br>
+                        Vậy $W_đ = W_t$ (tỉ số bằng 1).
+                    </div>
+                </div>
+
+                <div class="p-4 border rounded-lg bg-gray-50">
+                    <p class="font-bold">Bài 3:</p>
+                    <p>Một vật dao động điều hòa có cơ năng $W$. Tại vị trí động năng bằng 3 lần thế năng ($W_đ = 3W_t$), li độ $x$ của vật là bao nhiêu?</p>
+                    <button onclick="toggleSolution('sol3')" class="mt-2 text-red-600 text-sm font-semibold underline">Xem lời giải</button>
+                    <div id="sol3" class="hidden mt-2 p-3 bg-white border-l-2 border-red-400 text-sm">
+                        Ta có $W = W_đ + W_t = 3W_t + W_t = 4W_t$.<br>
+                        $\Rightarrow \frac{1}{2}kA^2 = 4 \cdot \frac{1}{2}kx^2 \Rightarrow A^2 = 4x^2$.<br>
+                        $\Rightarrow x = \pm A/2$.
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="bg-gray-800 text-white py-8 mt-10">
+        <div class="container mx-auto px-4 text-center">
+            <p class="text-sm opacity-75">Học liệu điện tử - Vật Lý 12 - Con Lắc Lò Xo</p>
+        </div>
+    </footer>
+
+    <script>
+        // Hàm ẩn hiện đáp án
+        function toggleSolution(id) {
+            const el = document.getElementById(id);
+            el.classList.toggle('hidden');
+        }
+
+        // Vẽ đồ thị năng lượng
+        window.onload = function() {
+            const ctx = document.getElementById('energyChart').getContext('2d');
+            
+            const labels = [];
+            const wtData = [];
+            const wdData = [];
+            const wTotalData = [];
+            
+            const points = 100;
+            const T = 2; // Giả sử chu kỳ là 2s
+            const A = 1; // Biên độ
+            const k = 10; // Độ cứng
+            const W = 0.5 * k * A * A; // Cơ năng
+
+            for (let i = 0; i <= points; i++) {
+                let t = (i / points) * T;
+                labels.push(t.toFixed(2));
+                
+                // x = A * cos(omega * t)
+                let omega = (2 * Math.PI) / T;
+                let x = A * Math.cos(omega * t);
+                
+                let wt = 0.5 * k * x * x;
+                let wd = W - wt;
+                
+                wtData.push(wt);
+                wdData.push(wd);
+                wTotalData.push(W);
+            }
+
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Thế năng (Wt)',
+                            data: wtData,
+                            borderColor: '#3b82f6',
+                            borderWidth: 2,
+                            fill: false,
+                            pointRadius: 0
+                        },
+                        {
+                            label: 'Động năng (Wđ)',
+                            data: wdData,
+                            borderColor: '#ef4444',
+                            borderWidth: 2,
+                            fill: false,
+                            pointRadius: 0
+                        },
+                        {
+                            label: 'Cơ năng (W)',
+                            data: wTotalData,
+                            borderColor: '#000000',
+                            borderWidth: 2,
+                            borderDash: [5, 5],
+                            fill: false,
+                            pointRadius: 0
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { enabled: true }
+                    },
+                    scales: {
+                        x: {
+                            title: { display: true, text: 'Thời gian t (s)' },
+                            ticks: { maxTicksLimit: 10 }
+                        },
+                        y: {
+                            title: { display: true, text: 'Năng lượng (J)' },
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        };
+    </script>
+</body>
+</html>
