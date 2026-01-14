@@ -13,6 +13,7 @@
         input[type=range] { accent-color: #4f46e5; }
         .scrollbar-hide::-webkit-scrollbar { display: none; }
         .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+        .tab-btn { cursor: pointer; }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-800 h-screen overflow-hidden flex flex-col">
@@ -61,6 +62,8 @@
                 <defs>
                     <radialGradient id="ballGrad" cx="30%" cy="30%" r="50%"><stop offset="0%" stop-color="#818cf8" /><stop offset="100%" stop-color="#3730a3" /></radialGradient>
                     <radialGradient id="redGrad" cx="30%" cy="30%" r="50%"><stop offset="0%" stop-color="#fb7185" /><stop offset="100%" stop-color="#9f1239" /></radialGradient>
+                    <radialGradient id="greenGrad" cx="30%" cy="30%" r="50%"><stop offset="0%" stop-color="#4ade80" /><stop offset="100%" stop-color="#166534" /></radialGradient>
+                    <radialGradient id="amberGrad" cx="30%" cy="30%" r="50%"><stop offset="0%" stop-color="#fbbf24" /><stop offset="100%" stop-color="#92400e" /></radialGradient>
                 </defs>
                 <g id="sim-content" transform="translate(300, 160)"></g>
             </svg>
@@ -73,9 +76,9 @@
                 <div class="flex justify-between items-center mb-3">
                     <div class="flex items-center gap-2 text-slate-400">
                         <i class="fa-solid fa-chart-line text-indigo-400"></i>
-                        <span class="text-[10px] font-black uppercase tracking-widest">Đồ thị động học</span>
+                        <span class="text-[10px] font-black uppercase tracking-widest" id="graph-title">Đồ thị động học</span>
                     </div>
-                    <div class="flex gap-2 text-[8px] font-bold">
+                    <div class="flex gap-2 text-[8px] font-bold" id="graph-legend">
                         <span class="text-indigo-400">● x</span>
                         <span class="text-emerald-400">● v</span>
                         <span class="text-rose-400">● a</span>
@@ -84,9 +87,10 @@
                 <div class="flex-1 relative bg-black/40 rounded-xl border border-slate-800 overflow-hidden">
                     <svg viewBox="0 0 100 100" class="w-full h-full" preserveAspectRatio="none">
                         <line x1="0" y1="50" x2="100" y2="50" stroke="#1e293b" stroke-width="0.5" stroke-dasharray="2,2" />
-                        <polyline id="path-x" points="" fill="none" stroke="#818cf8" stroke-width="1.5" />
-                        <polyline id="path-v" points="" fill="none" stroke="#34d399" stroke-width="1" stroke-dasharray="1,0.5" />
-                        <polyline id="path-a" points="" fill="none" stroke="#fb7185" stroke-width="1" opacity="0.6" />
+                        <polyline id="path-1" points="" fill="none" stroke="#818cf8" stroke-width="1.5" />
+                        <polyline id="path-2" points="" fill="none" stroke="#34d399" stroke-width="1.5" />
+                        <polyline id="path-3" points="" fill="none" stroke="#fbbf24" stroke-width="1.5" />
+                        <polyline id="path-driver" points="" fill="none" stroke="#fb7185" stroke-width="1" stroke-dasharray="1,1" opacity="0.5" />
                     </svg>
                 </div>
             </div>
@@ -131,38 +135,73 @@
         const MAX_HISTORY = 400;
         const GRAVITY = 9.8;
         let lastTime = 0;
+        let animationId = null;
 
         function switchTab(tab) {
             state.activeTab = tab;
             state.isRunning = false;
             state.time = 0;
             state.history = [];
+            if (animationId) cancelAnimationFrame(animationId);
             
-            // Update UI
+            // Update UI Tabs
             document.querySelectorAll('.tab-btn').forEach(btn => {
-                btn.className = "tab-btn flex items-center gap-2 px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all uppercase text-slate-400 hover:text-white";
+                btn.classList.remove('bg-indigo-600', 'text-white', 'shadow-sm');
+                btn.classList.add('text-slate-400');
             });
-            document.getElementById(`btn-${tab}`).className = "tab-btn flex items-center gap-2 px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all uppercase bg-indigo-600 text-white shadow-sm";
-            document.getElementById('sim-title').innerText = document.getElementById(`btn-${tab}`).innerText;
+            const activeBtn = document.getElementById(`btn-${tab}`);
+            activeBtn.classList.add('bg-indigo-600', 'text-white', 'shadow-sm');
+            activeBtn.classList.remove('text-slate-400');
             
+            document.getElementById('sim-title').innerText = activeBtn.querySelector('span').innerText;
+            
+            // Update Legend and Graph Title
+            const legend = document.getElementById('graph-legend');
+            const graphTitle = document.getElementById('graph-title');
+            if (tab === 'resonance') {
+                graphTitle.innerText = "Đồ thị ly độ các con lắc";
+                legend.innerHTML = `
+                    <span class="text-rose-400">● Mẫu</span>
+                    <span class="text-indigo-400">● L=80</span>
+                    <span class="text-emerald-400">● L=120</span>
+                    <span class="text-amber-400">● L=160</span>
+                `;
+            } else {
+                graphTitle.innerText = "Đồ thị động học";
+                legend.innerHTML = `
+                    <span class="text-indigo-400">● x</span>
+                    <span class="text-emerald-400">● v</span>
+                    <span class="text-rose-400">● a</span>
+                `;
+            }
+
+            updateUIState();
             renderControls();
             updateStats();
             updateSimulation();
             updateGraph();
         }
 
-        function toggleRun() {
-            state.isRunning = !state.isRunning;
+        function updateUIState() {
             const btn = document.getElementById('play-pause');
             const icon = document.getElementById('play-icon');
             if(state.isRunning) {
                 btn.className = "w-9 h-9 rounded-xl flex items-center justify-center text-white active:scale-95 transition-all bg-rose-500 shadow-lg shadow-rose-900/20";
                 icon.className = "fa-solid fa-pause";
-                lastTime = performance.now();
-                requestAnimationFrame(loop);
             } else {
                 btn.className = "w-9 h-9 rounded-xl flex items-center justify-center text-white active:scale-95 transition-all bg-emerald-500 shadow-lg shadow-emerald-900/20";
                 icon.className = "fa-solid fa-play ml-0.5";
+            }
+        }
+
+        function toggleRun() {
+            state.isRunning = !state.isRunning;
+            updateUIState();
+            if(state.isRunning) {
+                lastTime = performance.now();
+                animationId = requestAnimationFrame(loop);
+            } else {
+                if (animationId) cancelAnimationFrame(animationId);
             }
         }
 
@@ -170,10 +209,8 @@
             state.time = 0;
             state.history = [];
             state.isRunning = false;
-            const btn = document.getElementById('play-pause');
-            const icon = document.getElementById('play-icon');
-            btn.className = "w-9 h-9 rounded-xl flex items-center justify-center text-white active:scale-95 transition-all bg-emerald-500 shadow-lg shadow-emerald-900/20";
-            icon.className = "fa-solid fa-play ml-0.5";
+            if (animationId) cancelAnimationFrame(animationId);
+            updateUIState();
             updateSimulation();
             updateGraph();
             document.getElementById('time-display').innerText = "0.00";
@@ -214,12 +251,14 @@
                 }
             } else if (state.activeTab === 'resonance') {
                 const A_res = 8 * (Math.PI / 180);
-                x = A_res * Math.cos(omega * t);
+                x = A_res * Math.cos(omega * t); // Con lắc mẫu
                 [80, 120, 160].forEach((l, i) => {
                     const w_nat = Math.sqrt(GRAVITY / (l / 100));
-                    const denom = Math.sqrt(Math.pow(w_nat**2 - omega**2, 2) + Math.pow(2 * state.params.dampingB * omega, 2));
-                    const ampMax = 0.4 / denom;
-                    extra[`x${i+1}`] = ampMax * (1 - Math.exp(-state.params.dampingB * 0.5 * t)) * Math.sin(omega * t);
+                    const beta = state.params.dampingB * 0.1; 
+                    const denom = Math.sqrt(Math.pow(w_nat**2 - omega**2, 2) + Math.pow(2 * beta * omega, 2));
+                    // Biên độ cộng hưởng phụ thuộc vào việc w_nat gần với omega thế nào
+                    const ampMax = 0.4 / (denom || 0.001);
+                    extra[`x${i+1}`] = ampMax * (1 - Math.exp(-beta * t)) * Math.sin(omega * t);
                 });
             }
             return { x, v, a, ...extra };
@@ -228,8 +267,7 @@
         function updateSimulation() {
             const data = calculateData(state.time);
             const sim = document.getElementById('sim-content');
-            sim.innerHTML = '';
-
+            
             if (state.activeTab === 'pendulum') {
                 const angle = data.x * (180 / Math.PI);
                 sim.innerHTML = `
@@ -255,18 +293,22 @@
                 `;
             } else if (state.activeTab === 'resonance') {
                 let inner = `<line x1="-190" y1="-60" x2="190" y2="-60" stroke="#1e293b" stroke-width="6" stroke-linecap="round" />`;
+                // Con lắc điều khiển (màu đỏ)
                 inner += `
                     <g transform="translate(-110, -60) rotate(${data.x * 180 / Math.PI})">
-                        <line x1="0" y1="0" x2="0" y2="${state.params.lDriver * 0.7}" stroke="#334155" stroke-width="3" />
+                        <line x1="0" y1="0" x2="0" y2="${state.params.lDriver * 0.7}" stroke="#fb7185" stroke-width="3" />
                         <circle cx="0" cy="${state.params.lDriver * 0.7}" r="12" fill="url(#redGrad)" />
                     </g>
                 `;
+                // 3 Con lắc quan sát
+                const colors = ['#818cf8', '#34d399', '#fbbf24'];
+                const grads = ['ballGrad', 'greenGrad', 'amberGrad'];
                 [80, 120, 160].forEach((l, i) => {
                     const angle = data[`x${i+1}`] * 180 / Math.PI;
                     inner += `
                         <g transform="translate(${-30 + i * 80}, -60) rotate(${angle})">
-                            <line x1="0" y1="0" x2="0" y2="${l * 0.7}" stroke="#94a3b8" stroke-width="2" stroke-dasharray="4,2" />
-                            <circle cx="0" cy="${l * 0.7}" r="10" fill="url(#ballGrad)" />
+                            <line x1="0" y1="0" x2="0" y2="${l * 0.7}" stroke="${colors[i]}" stroke-width="2.5" />
+                            <circle cx="0" cy="${l * 0.7}" r="10" fill="url(#${grads[i]})" />
                         </g>
                     `;
                 });
@@ -275,23 +317,50 @@
         }
 
         function updateGraph() {
-            const { maxA, maxV, maxAcc } = getPhysicsConstants();
-            const sx = 40 / maxA;
-            const sv = 40 / maxV;
-            const sa = 40 / maxAcc;
+            const path1 = document.getElementById('path-1');
+            const path2 = document.getElementById('path-2');
+            const path3 = document.getElementById('path-3');
+            const pathDriver = document.getElementById('path-driver');
 
-            const px = state.history.map((d, i) => `${(i / MAX_HISTORY) * 100},${50 - d.x * sx}`).join(' ');
-            const pv = state.history.map((d, i) => `${(i / MAX_HISTORY) * 100},${50 - d.v * sv}`).join(' ');
-            const pa = state.history.map((d, i) => `${(i / MAX_HISTORY) * 100},${50 - d.a * sa}`).join(' ');
+            if (state.history.length === 0) {
+                [path1, path2, path3, pathDriver].forEach(p => p.setAttribute('points', ""));
+                return;
+            }
 
-            document.getElementById('path-x').setAttribute('points', px);
-            document.getElementById('path-v').setAttribute('points', pv);
-            document.getElementById('path-a').setAttribute('points', pa);
+            if (state.activeTab === 'resonance') {
+                // Tỉ lệ scale cố định cho cộng hưởng để thấy biên độ lớn
+                const s = 15; 
+                const p1 = state.history.map((d, i) => `${(i / MAX_HISTORY) * 100},${50 - d.x1 * s}`).join(' ');
+                const p2 = state.history.map((d, i) => `${(i / MAX_HISTORY) * 100},${50 - d.x2 * s}`).join(' ');
+                const p3 = state.history.map((d, i) => `${(i / MAX_HISTORY) * 100},${50 - d.x3 * s}`).join(' ');
+                const pd = state.history.map((d, i) => `${(i / MAX_HISTORY) * 100},${50 - d.x * s * 2}`).join(' ');
+
+                path1.setAttribute('points', p1);
+                path2.setAttribute('points', p2);
+                path3.setAttribute('points', p3);
+                pathDriver.setAttribute('points', pd);
+                pathDriver.style.display = "block";
+            } else {
+                const { maxA, maxV, maxAcc } = getPhysicsConstants();
+                const sx = 40 / (maxA || 1);
+                const sv = 40 / (maxV || 1);
+                const sa = 40 / (maxAcc || 1);
+
+                const px = state.history.map((d, i) => `${(i / MAX_HISTORY) * 100},${50 - d.x * sx}`).join(' ');
+                const pv = state.history.map((d, i) => `${(i / MAX_HISTORY) * 100},${50 - d.v * sv}`).join(' ');
+                const pa = state.history.map((d, i) => `${(i / MAX_HISTORY) * 100},${50 - d.a * sa}`).join(' ');
+
+                path1.setAttribute('points', px);
+                path2.setAttribute('points', pv);
+                path3.setAttribute('points', pa);
+                pathDriver.setAttribute('points', "");
+                pathDriver.style.display = "none";
+            }
         }
 
         function loop(timestamp) {
             if (!state.isRunning) return;
-            const dt = (timestamp - lastTime) / 1000;
+            const dt = Math.min((timestamp - lastTime) / 1000, 0.1);
             state.time += dt;
             lastTime = timestamp;
 
@@ -302,7 +371,7 @@
             document.getElementById('time-display').innerText = state.time.toFixed(2);
             updateSimulation();
             updateGraph();
-            requestAnimationFrame(loop);
+            animationId = requestAnimationFrame(loop);
         }
 
         function renderControls() {
@@ -311,15 +380,15 @@
             
             const addControl = (id, label, unit, min, max, step) => {
                 const div = document.createElement('div');
-                div.className = "group";
+                div.className = "group border-b border-slate-50 pb-3 last:border-0";
                 div.innerHTML = `
-                    <div class="flex justify-between text-[10px] font-bold mb-1.5 uppercase text-slate-500">
+                    <div class="flex justify-between text-[10px] font-bold mb-2 uppercase text-slate-500">
                         <span>${label}</span>
-                        <span class="text-indigo-600 font-mono">${state.params[id]} ${unit}</span>
+                        <span class="text-indigo-600 font-mono" id="val-${id}">${state.params[id]} ${unit}</span>
                     </div>
                     <input type="range" min="${min}" max="${max}" step="${step}" value="${state.params[id]}" 
-                           class="w-full h-1 bg-slate-200 rounded-lg appearance-none cursor-pointer"
-                           oninput="updateParam('${id}', this.value)">
+                           class="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
+                           oninput="updateParam('${id}', this.value, '${unit}')">
                 `;
                 container.appendChild(div);
             };
@@ -332,26 +401,35 @@
                 addControl('mass', 'Khối lượng m', 'kg', 0.5, 3, 0.1);
                 if(state.activeTab === 'damped') addControl('dampingB', 'Hệ số cản b', 'kg/s', 0.05, 2, 0.05);
             } else {
-                addControl('lDriver', 'Chiều dài dây mẫu', 'cm', 50, 200, 1);
-                addControl('dampingB', 'Độ nhớt môi trường', '', 0.1, 1.5, 0.1);
+                addControl('lDriver', 'Chiều dài con lắc mẫu (Điều khiển)', 'cm', 70, 170, 1);
+                addControl('dampingB', 'Lực cản môi trường', '', 0.1, 1.5, 0.1);
             }
         }
 
-        function updateParam(id, val) {
+        function updateParam(id, val, unit) {
             state.params[id] = parseFloat(val);
-            renderControls();
+            document.getElementById(`val-${id}`).innerText = `${val} ${unit}`;
             updateStats();
-            resetSim();
+            if (!state.isRunning) {
+                updateSimulation();
+                updateGraph();
+            } else {
+                if (id === 'length' || id === 'kSpring' || id === 'mass' || id === 'lDriver') {
+                    resetSim();
+                    toggleRun(); // Tự động chạy lại khi đổi lDriver
+                }
+            }
         }
 
         function updateStats() {
             const { omega } = getPhysicsConstants();
             document.getElementById('val-omega').innerText = omega.toFixed(2) + " rad/s";
-            document.getElementById('val-period').innerText = (2 * Math.PI / omega).toFixed(2) + " s";
+            document.getElementById('val-period').innerText = (2 * Math.PI / (omega || 1)).toFixed(2) + " s";
         }
 
-        // Init
-        switchTab('pendulum');
+        window.addEventListener('DOMContentLoaded', () => {
+            switchTab('pendulum');
+        });
     </script>
 </body>
 </html>
