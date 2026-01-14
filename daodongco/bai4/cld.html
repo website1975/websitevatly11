@@ -5,6 +5,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mô phỏng Con lắc đơn</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']], // Bắt buộc nhận diện $...$
+        displayMath: [['$$', '$$'], ['\\[', '\\]']]
+      },
+      // ...
+    };
+    </script>
+
     <style>
         body { background-color: #f0f2f5; overflow: hidden; }
         canvas { display: block; background: #ffffff; border-radius: 8px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); }
@@ -297,4 +308,5 @@
     window.onload = init;
 </script>
 </body>
+
 </html>
