@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mô phỏng Con lắc đơn</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { background-color: #f0f2f5; overflow: hidden; }
+        canvas { display: block; background: #ffffff; border-radius: 8px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); }
+        .panel-container { height: 100vh; padding: 1rem; gap: 1rem; display: flex; }
+        .control-panel { width: 350px; display: flex; flex-direction: column; gap: 1rem; }
+        .simulation-panel { flex-grow: 1; display: flex; flex-direction: column; gap: 1rem; }
+        .label-val { font-weight: bold; color: #2563eb; }
+    </style>
+</head>
+<body>
+
+<div class="panel-container">
+    <!-- PANEL TRÁI: BẢNG ĐIỀU KHIỂN -->
+    <div class="control-panel">
+        <div class="bg-white p-4 rounded-lg shadow h-full flex flex-col gap-4 overflow-y-auto">
+            <div class="flex border-b">
+                <button onclick="switchTab('control')" id="tab-control-btn" class="px-4 py-2 font-bold border-b-2 border-blue-600 text-blue-600">Điều khiển</button>
+                <button onclick="switchTab('notes')" id="tab-notes-btn" class="px-4 py-2 font-bold text-gray-500 border-b-2 border-transparent">Nhận xét</button>
+            </div>
+            
+            <!-- Tab nội dung điều khiển -->
+            <div id="tab-control" class="space-y-4">
+                <section class="space-y-3">
+                    <h2 class="font-semibold text-gray-700 uppercase text-xs tracking-wider">Thiết lập hệ thống</h2>
+                    <div>
+                        <label class="block text-sm">Chiều dài dây $l$ (m): <span id="val-l" class="label-val">2.0</span></label>
+                        <input type="range" id="input-l" min="0.5" max="5" step="0.1" value="2.0" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                    </div>
+                    <div>
+                        <label class="block text-sm">Khối lượng $m$ (kg): <span id="val-m" class="label-val">1.0</span></label>
+                        <input type="range" id="input-m" min="0.1" max="5" step="0.1" value="1.0" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                    </div>
+                    <div>
+                        <label class="block text-sm">Góc lệch ban đầu $\alpha_0$ (°):</label>
+                        <input type="number" id="input-angle" value="30" min="-90" max="90" class="w-full border rounded p-1 text-sm">
+                    </div>
+                    <div class="space-y-2 pt-2 border-t">
+                        <div class="flex items-center gap-2">
+                            <input type="checkbox" id="check-friction" class="w-4 h-4">
+                            <label for="check-friction" class="text-sm font-semibold">Bật lực cản không khí</label>
+                        </div>
+                        <div>
+                            <label class="block text-xs">Độ lớn lực cản: <span id="val-friction" class="label-val">0.05</span></label>
+                            <input type="range" id="input-friction" min="0" max="0.5" step="0.01" value="0.05" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                        </div>
+                    </div>
+                </section>
+
+                <section class="space-y-3 pt-3 border-t">
+                    <h2 class="font-semibold text-gray-700 uppercase text-xs tracking-wider">Trạng thái</h2>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button id="btn-start" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition">Bắt đầu</button>
+                        <button id="btn-reset" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 transition">Đặt lại</button>
+                    </div>
+                </section>
+                
+                <section class="mt-4 pt-4 border-t text-xs space-y-1 text-gray-600">
+                    <p>Ly độ góc: <span id="stat-alpha" class="font-mono">0</span>°</p>
+                    <p>Vận tốc: <span id="stat-v" class="font-mono">0</span> m/s</p>
+                    <p>Năng lượng: <span id="stat-e" class="font-mono">0</span> J</p>
+                </section>
+            </div>
+
+            <!-- Tab nội dung nhận xét -->
+            <div id="tab-notes" class="hidden space-y-4 overflow-y-auto pr-2">
+                <div class="p-3 bg-blue-50 rounded-md border-l-4 border-blue-500">
+                    <h3 class="font-bold text-blue-800 text-sm">1. Chu kỳ, Tần số</h3>
+                    <p class="text-[11px] mt-1">$\omega = \sqrt{\frac{g}{l}}$ ; $T = 2\pi\sqrt{\frac{l}{g}}$ ; $f = \frac{1}{2\pi}\sqrt{\frac{g}{l}}$</p>
+                    <p class="text-[10px] text-gray-600 mt-1 italic italic">Nhận xét: Chỉ phụ thuộc vào $l$ và $g$, không phụ thuộc vào khối lượng $m$.</p>
+                </div>
+
+                <div class="p-3 bg-green-50 rounded-md border-l-4 border-green-500">
+                    <h3 class="font-bold text-green-800 text-sm">2. Quan hệ pha (x, v, a)</h3>
+                    <p class="text-[10px] text-gray-600 mt-1">
+                        - $v$ sớm pha $\pi/2$ so với $x$.<br>
+                        - $a$ ngược pha với $x$ (sớm pha $\pi$).<br>
+                        - Khi $W_d$ đạt cực đại (VTCB) thì $W_t$ cực tiểu và ngược lại.
+                    </p>
+                </div>
+
+                <div class="p-3 bg-purple-50 rounded-md border-l-4 border-purple-500">
+                    <h3 class="font-bold text-purple-800 text-sm">3. Công thức độc lập & Đồ thị</h3>
+                    <p class="text-[10px] text-gray-600 mt-1">
+                        $\alpha_0^2 = \alpha^2 + \frac{v^2}{gl}$ hoặc $(\frac{x}{A})^2 + (\frac{v}{v_{max}})^2 = 1$
+                    </p>
+                    <p class="text-[10px] text-gray-600 italic mt-1 font-bold">Quan sát: Đồ thị pha (v theo x) là một hình Ellipse.</p>
+                </div>
+
+                <div class="p-3 bg-orange-50 rounded-md border-l-4 border-orange-500">
+                    <h3 class="font-bold text-orange-800 text-sm">4. Dao động tắt dần</h3>
+                    <p class="text-[10px] text-gray-600 mt-1">Khi bật lực cản, biên độ $A$ và năng lượng $W$ giảm dần theo thời gian. Hình Ellipse sẽ xoáy dần về tâm.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PANEL PHẢI: MÔ PHỎNG & ĐỒ THỊ -->
+    <div class="simulation-panel">
+        <div class="relative h-3/5 bg-white rounded-lg shadow overflow-hidden">
+            <div class="absolute top-2 left-4 text-sm font-bold text-gray-400 uppercase">Mô phỏng trực quan</div>
+            <!-- Chú thích vectơ -->
+            <div class="absolute bottom-4 left-4 flex flex-col gap-1 bg-white/80 p-2 rounded text-[10px] border border-gray-200">
+                <div class="flex items-center gap-2"><div class="w-3 h-0.5 bg-red-500"></div>Trọng lực P</div>
+                <div class="flex items-center gap-2"><div class="w-3 h-0.5 bg-green-500"></div>Lực căng T</div>
+                <div class="flex items-center gap-2"><div class="w-3 h-0.5 bg-orange-500"></div>Lực kéo về Pt</div>
+            </div>
+            <canvas id="canvas-pendulum"></canvas>
+        </div>
+        <div class="h-2/5 flex gap-4">
+            <div class="flex-grow bg-white rounded-lg shadow overflow-hidden relative">
+                <div class="absolute top-2 left-4 text-xs font-bold text-gray-400 uppercase">Biến thiên theo thời gian (x, v, a)</div>
+                <canvas id="canvas-graph-time"></canvas>
+            </div>
+            <div class="w-64 bg-white rounded-lg shadow overflow-hidden relative">
+                <div class="absolute top-2 left-4 text-xs font-bold text-gray-400 uppercase">Đồ thị pha (v theo x)</div>
+                <canvas id="canvas-graph-phase"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const canvasP = document.getElementById('canvas-pendulum');
+    const ctxP = canvasP.getContext('2d');
+    const canvasGT = document.getElementById('canvas-graph-time');
+    const ctxGT = canvasGT.getContext('2d');
+    const canvasGP = document.getElementById('canvas-graph-phase');
+    const ctxGP = canvasGP.getContext('2d');
+
+    let pL = 2.0, pM = 1.0, gVal = 9.81; 
+    let currAngle = 30 * (Math.PI / 180); 
+    let aVel = 0, aAcc = 0; 
+    let fCoeff = 0.05, isFriction = false;
+    let tTotal = 0, dt = 0.016, isRunning = false;
+
+    let points = [];
+    const MAX_P = 500;
+
+    function switchTab(tab) {
+        document.getElementById('tab-control').classList.toggle('hidden', tab !== 'control');
+        document.getElementById('tab-notes').classList.toggle('hidden', tab !== 'notes');
+        document.getElementById('tab-control-btn').className = tab === 'control' ? 'px-4 py-2 font-bold border-b-2 border-blue-600 text-blue-600' : 'px-4 py-2 font-bold text-gray-500 border-b-2 border-transparent';
+        document.getElementById('tab-notes-btn').className = tab === 'notes' ? 'px-4 py-2 font-bold border-b-2 border-blue-600 text-blue-600' : 'px-4 py-2 font-bold text-gray-500 border-b-2 border-transparent';
+    }
+
+    function init() {
+        resize();
+        window.addEventListener('resize', resize);
+        
+        document.getElementById('input-l').addEventListener('input', e => { pL = parseFloat(e.target.value); document.getElementById('val-l').innerText = pL; reset(); });
+        document.getElementById('input-m').addEventListener('input', e => { pM = parseFloat(e.target.value); document.getElementById('val-m').innerText = pM; });
+        document.getElementById('input-friction').addEventListener('input', e => { fCoeff = parseFloat(e.target.value); document.getElementById('val-friction').innerText = fCoeff; });
+        document.getElementById('btn-start').addEventListener('click', e => { isRunning = !isRunning; e.target.innerText = isRunning ? "Tạm dừng" : "Tiếp tục"; });
+        document.getElementById('btn-reset').addEventListener('click', reset);
+        document.getElementById('check-friction').addEventListener('change', e => isFriction = e.target.checked);
+        document.getElementById('input-angle').addEventListener('change', reset);
+
+        loop();
+    }
+
+    function resize() {
+        canvasP.width = canvasP.parentElement.clientWidth;
+        canvasP.height = canvasP.parentElement.clientHeight;
+        canvasGT.width = canvasGT.parentElement.clientWidth;
+        canvasGT.height = canvasGT.parentElement.clientHeight;
+        canvasGP.width = canvasGP.parentElement.clientWidth;
+        canvasGP.height = canvasGP.parentElement.clientHeight;
+    }
+
+    function reset() {
+        currAngle = parseFloat(document.getElementById('input-angle').value) * (Math.PI / 180);
+        aVel = 0; aAcc = 0; tTotal = 0; points = []; isRunning = false;
+        document.getElementById('btn-start').innerText = "Bắt đầu";
+    }
+
+    function update() {
+        if (!isRunning) return;
+        aAcc = -(gVal / pL) * Math.sin(currAngle);
+        if (isFriction) aAcc -= fCoeff * aVel;
+        aVel += aAcc * dt;
+        currAngle += aVel * dt;
+        tTotal += dt;
+
+        const x = pL * Math.sin(currAngle); 
+        const v = aVel * pL;
+        const a = aAcc * pL;
+        const h = pL * (1 - Math.cos(currAngle));
+        const Wt = pM * gVal * h;
+        const Wd = 0.5 * pM * v * v;
+        
+        points.push({ x, v, a, Wt, Wd });
+        if (points.length > MAX_P) points.shift();
+
+        document.getElementById('stat-alpha').innerText = (currAngle * 180 / Math.PI).toFixed(1);
+        document.getElementById('stat-v').innerText = v.toFixed(2);
+        document.getElementById('stat-e').innerText = (Wt + Wd).toFixed(2);
+    }
+
+    function drawVec(x, y, dx, dy, color, label) {
+        if (Math.abs(dx) < 1 && Math.abs(dy) < 1) return;
+        ctxP.strokeStyle = color;
+        ctxP.fillStyle = color;
+        ctxP.lineWidth = 2;
+        ctxP.beginPath();
+        ctxP.moveTo(x, y);
+        ctxP.lineTo(x + dx, y + dy);
+        ctxP.stroke();
+        
+        // Mũi tên
+        const angle = Math.atan2(dy, dx);
+        const head = 7;
+        ctxP.beginPath();
+        ctxP.moveTo(x + dx, y + dy);
+        ctxP.lineTo(x + dx - head * Math.cos(angle - 0.4), y + dy - head * Math.sin(angle - 0.4));
+        ctxP.lineTo(x + dx - head * Math.cos(angle + 0.4), y + dy - head * Math.sin(angle + 0.4));
+        ctxP.fill();
+
+        ctxP.font = "bold 11px Arial";
+        ctxP.fillText(label, x + dx + 5, y + dy + 5);
+    }
+
+    function draw() {
+        ctxP.clearRect(0, 0, canvasP.width, canvasP.height);
+        const oX = canvasP.width / 2, oY = 60, scale = 80;
+        const bX = oX + pL * scale * Math.sin(currAngle);
+        const bY = oY + pL * scale * Math.cos(currAngle);
+
+        // Giá đỡ và dây
+        ctxP.strokeStyle = '#333'; ctxP.lineWidth = 4;
+        ctxP.beginPath(); ctxP.moveTo(oX - 30, oY); ctxP.lineTo(oX + 30, oY); ctxP.stroke();
+        ctxP.strokeStyle = '#666'; ctxP.lineWidth = 1;
+        ctxP.beginPath(); ctxP.moveTo(oX, oY); ctxP.lineTo(bX, bY); ctxP.stroke();
+        
+        // Các vectơ lực (tỉ lệ hóa lực để hiển thị)
+        const fScale = 40 / (pM * gVal); 
+        // 1. Trọng lực P
+        drawVec(bX, bY, 0, pM * gVal * fScale, '#ef4444', 'P');
+        
+        // 2. Lực căng T (T = mg*cos(a) + mv^2/L)
+        const v_val = aVel * pL;
+        const T = pM * gVal * Math.cos(currAngle) + (pM * v_val * v_val) / pL;
+        drawVec(bX, bY, -T * Math.sin(currAngle) * fScale, -T * Math.cos(currAngle) * fScale, '#10b981', 'T');
+
+        // 3. Lực kéo về Pt (Thành phần tiếp tuyến mg*sin(a))
+        const Pt = -pM * gVal * Math.sin(currAngle);
+        drawVec(bX, bY, Pt * Math.cos(currAngle) * fScale, -Pt * Math.sin(currAngle) * fScale, '#f59e0b', 'Pt');
+
+        // Vật nặng
+        ctxP.fillStyle = '#2563eb'; ctxP.beginPath(); ctxP.arc(bX, bY, 15, 0, Math.PI * 2); ctxP.fill(); ctxP.stroke();
+
+        // Graphs...
+        ctxGT.clearRect(0, 0, canvasGT.width, canvasGT.height);
+        ctxGP.clearRect(0, 0, canvasGP.width, canvasGP.height);
+        if (points.length < 2) return;
+
+        // Time Graph
+        const hT = canvasGT.height, wT = canvasGT.width;
+        ctxGT.strokeStyle = '#eee'; ctxGT.beginPath(); ctxGT.moveTo(0, hT/2); ctxGT.lineTo(wT, hT/2); ctxGT.stroke();
+        const drawLineT = (prop, col, sc) => {
+            ctxGT.strokeStyle = col; ctxGT.beginPath();
+            points.forEach((p, i) => {
+                const px = (i / MAX_P) * wT;
+                const py = hT/2 - p[prop] * sc;
+                if (i === 0) ctxGT.moveTo(px, py); else ctxGT.lineTo(px, py);
+            });
+            ctxGT.stroke();
+        };
+        drawLineT('x', '#2563eb', 40); drawLineT('v', '#ef4444', 20);
+
+        // Phase Graph
+        const hP = canvasGP.height, wP = canvasGP.width;
+        const cx = wP/2, cy = hP/2;
+        ctxGP.strokeStyle = '#eee'; ctxGP.beginPath(); 
+        ctxGP.moveTo(0, cy); ctxGP.lineTo(wP, cy); ctxGP.moveTo(cx, 0); ctxGP.lineTo(cx, hP); ctxGP.stroke();
+        
+        ctxGP.strokeStyle = '#9333ea'; ctxGP.lineWidth = 2;
+        ctxGP.beginPath();
+        points.forEach((p, i) => {
+            const px = cx + p.x * 40;
+            const py = cy - p.v * 20;
+            if (i === 0) ctxGP.moveTo(px, py); else ctxGP.lineTo(px, py);
+        });
+        ctxGP.stroke();
+        const last = points[points.length-1];
+        ctxGP.fillStyle = '#9333ea';
+        ctxGP.beginPath(); ctxGP.arc(cx + last.x * 40, cy - last.v * 20, 4, 0, Math.PI*2); ctxGP.fill();
+    }
+
+    function loop() { update(); draw(); requestAnimationFrame(loop); }
+    window.onload = init;
+</script>
+</body>
+</html>
