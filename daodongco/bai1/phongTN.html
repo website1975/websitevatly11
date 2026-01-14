@@ -1,0 +1,356 @@
+import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { 
+  Play, 
+  Pause, 
+  RotateCcw, 
+  Settings2, 
+  LineChart, 
+  Waves, 
+  Zap,
+  Wind,
+  Combine,
+  Activity
+} from 'lucide-react';
+
+const App = () => {
+  const [activeTab, setActiveTab] = useState('pendulum'); 
+  const [isRunning, setIsRunning] = useState(false);
+  const [time, setTime] = useState(0);
+  const [history, setHistory] = useState([]);
+
+  const gravity = 9.8; 
+  const [mass, setMass] = useState(1.0);
+  const [length, setLength] = useState(150); 
+  const [kSpring, setKSpring] = useState(25);
+  const [initAmp, setInitAmp] = useState(20); 
+  const [dampingB, setDampingB] = useState(0.2); 
+  const [lDriver, setLDriver] = useState(120); 
+  
+  const lOthers = [80, 120, 160]; 
+
+  const requestRef = useRef();
+  const lastUpdateTimeRef = useRef(0);
+  const MAX_HISTORY = 400; 
+  const PI = Math.PI;
+
+  // Tính toán các thông số cơ bản
+  const physicsParams = useMemo(() => {
+    let omega = 1;
+    let maxA = 1;
+
+    if (activeTab === 'pendulum') {
+      omega = Math.sqrt(gravity / (length / 100));
+      maxA = initAmp * (PI / 180); // Radian
+    } else if (activeTab === 'spring' || activeTab === 'damped') {
+      omega = Math.sqrt(kSpring / mass);
+      maxA = 40; // cm
+    } else if (activeTab === 'resonance') {
+      omega = Math.sqrt(gravity / (lDriver / 100));
+      maxA = 1; // Placeholder
+    }
+
+    return {
+      omega,
+      maxA,
+      maxV: omega * maxA,
+      maxAcc: omega * omega * maxA
+    };
+  }, [activeTab, length, kSpring, mass, lDriver, initAmp]);
+
+  const reset = () => {
+    setIsRunning(false);
+    setTime(0);
+    setHistory([]);
+    lastUpdateTimeRef.current = 0;
+  };
+
+  const getPhysicsData = (t) => {
+    const { omega, maxA } = physicsParams;
+    let x = 0, v = 0, a = 0;
+    let extraData = {};
+
+    if (activeTab === 'pendulum') {
+      x = maxA * Math.cos(omega * t);
+      v = -omega * maxA * Math.sin(omega * t);
+      a = -omega * omega * maxA * Math.cos(omega * t);
+    } else if (activeTab === 'spring') {
+      x = maxA * Math.cos(omega * t);
+      v = -omega * maxA * Math.sin(omega * t);
+      a = -omega * omega * maxA * Math.cos(omega * t);
+    } else if (activeTab === 'damped') {
+      const beta = dampingB / (2 * mass);
+      if (beta < omega) {
+        const wd = Math.sqrt(omega * omega - beta * beta);
+        const env = maxA * Math.exp(-beta * t);
+        x = env * Math.cos(wd * t);
+        v = -beta * x - wd * env * Math.sin(wd * t);
+        a = (beta * beta - wd * wd) * x + 2 * beta * wd * env * Math.sin(wd * t);
+      } else {
+        x = maxA * (1 + omega * t) * Math.exp(-omega * t);
+        v = -maxA * omega * omega * t * Math.exp(-omega * t);
+        a = maxA * omega * omega * (omega * t - 1) * Math.exp(-omega * t);
+      }
+    } else if (activeTab === 'resonance') {
+      const A_res = 8 * (PI / 180); 
+      x = A_res * Math.cos(omega * t);
+      lOthers.forEach((l, i) => {
+        const w_nat = Math.sqrt(gravity / (l / 100));
+        const gamma = dampingB; 
+        const F0_m = 0.4;
+        const denom = Math.sqrt(Math.pow(w_nat * w_nat - omega * omega, 2) + Math.pow(2 * gamma * omega, 2));
+        const ampMax = F0_m / denom;
+        const setupFactor = (1 - Math.exp(-dampingB * 0.5 * t));
+        extraData[`x${i+1}`] = ampMax * setupFactor * Math.sin(omega * t); 
+      });
+    }
+
+    return { x, v, a, ...extraData };
+  };
+
+  const animate = (t) => {
+    if (isRunning) {
+      if (lastUpdateTimeRef.current === 0) lastUpdateTimeRef.current = t;
+      const deltaTime = (t - lastUpdateTimeRef.current) / 1000;
+      const newTime = time + deltaTime;
+      setTime(newTime);
+      
+      const data = getPhysicsData(newTime);
+      setHistory(prev => {
+        const newH = [...prev, { t: newTime, ...data }];
+        return newH.length > MAX_HISTORY ? newH.slice(1) : newH;
+      });
+    }
+    lastUpdateTimeRef.current = t;
+    requestRef.current = requestAnimationFrame(animate);
+  };
+
+  useEffect(() => {
+    requestRef.current = requestAnimationFrame(animate);
+    return () => cancelAnimationFrame(requestRef.current);
+  }, [isRunning, time]);
+
+  const current = getPhysicsData(time);
+
+  // Hàm vẽ lò xo cho con lắc lò xo
+  const renderSpring = (xEnd, yPos) => {
+    const points = [];
+    const segments = 16;
+    const width = 12;
+    const startX = -180;
+    const totalW = (xEnd - startX);
+    points.push(`${startX},${yPos}`);
+    for (let i = 0; i < segments; i++) {
+      const px = startX + (totalW / segments) * (i + 0.5);
+      const py = yPos + (i % 2 === 0 ? -width : width);
+      points.push(`${px},${py}`);
+    }
+    points.push(`${xEnd},${yPos}`);
+    return points.join(' ');
+  };
+
+  return (
+    <div className="flex flex-col h-screen bg-slate-50 text-slate-800 font-sans overflow-hidden">
+      <header className="bg-white text-slate-800 p-2 flex justify-between items-center border-b border-slate-200 z-20 shrink-0">
+        <div className="flex items-center gap-2">
+          <div className="bg-indigo-600 p-1.5 rounded-lg text-white"><Activity size={18} /></div>
+          <h1 className="text-xs font-black uppercase tracking-widest hidden md:block">Physics Lab Pro</h1>
+        </div>
+        
+        <nav className="flex bg-slate-100 p-1 rounded-xl border border-slate-200">
+          {[
+            { id: 'pendulum', label: 'Con Lắc Đơn', icon: <Waves size={14}/> },
+            { id: 'spring', label: 'Con Lắc Lò Xo', icon: <Zap size={14}/> },
+            { id: 'damped', label: 'Tắt Dần', icon: <Wind size={14}/> },
+            { id: 'resonance', label: 'Cộng Hưởng', icon: <Combine size={14}/> }
+          ].map(tab => (
+            <button
+              key={tab.id}
+              onClick={() => { setActiveTab(tab.id); reset(); }}
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all uppercase ${activeTab === tab.id ? 'bg-white text-indigo-600 shadow-sm border border-slate-200' : 'text-slate-500 hover:text-indigo-600'}`}
+            >
+              {tab.icon} <span className="hidden sm:inline">{tab.label}</span>
+            </button>
+          ))}
+        </nav>
+
+        <div className="flex gap-2">
+          <button onClick={() => setIsRunning(!isRunning)} className={`w-9 h-9 rounded-xl flex items-center justify-center text-white active:scale-95 transition-all ${isRunning ? 'bg-rose-500 shadow-rose-100' : 'bg-emerald-500 shadow-emerald-100 shadow-lg'}`}>
+            {isRunning ? <Pause size={16} fill="currentColor" /> : <Play size={16} fill="currentColor" className="ml-0.5" />}
+          </button>
+          <button onClick={reset} className="w-9 h-9 rounded-xl bg-slate-200 text-slate-600 flex items-center justify-center border border-slate-300 hover:bg-slate-300">
+            <RotateCcw size={16} />
+          </button>
+        </div>
+      </header>
+
+      <main className="flex-1 flex p-2 gap-2 overflow-hidden">
+        {/* Simulation View */}
+        <div className="flex-[3] bg-white rounded-2xl shadow-sm border border-slate-200 relative flex flex-col overflow-hidden">
+            <div className="absolute top-4 left-6 flex flex-col gap-1 z-10">
+                <span className="text-[10px] font-black text-slate-300 uppercase tracking-[0.2em]">Simulation Engine</span>
+                <span className="text-xs font-mono font-bold text-indigo-600 bg-indigo-50 px-2 py-1 rounded-md border border-indigo-100">TIME: {time.toFixed(2)}s</span>
+            </div>
+
+            <svg width="100%" height="100%" viewBox="0 0 600 400" preserveAspectRatio="xMidYMid meet">
+              <defs>
+                <radialGradient id="ballGrad" cx="30%" cy="30%" r="50%"><stop offset="0%" stopColor="#818cf8" /><stop offset="100%" stopColor="#3730a3" /></radialGradient>
+                <radialGradient id="redGrad" cx="30%" cy="30%" r="50%"><stop offset="0%" stopColor="#fb7185" /><stop offset="100%" stopColor="#9f1239" /></radialGradient>
+                <filter id="softShadow" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="4" stdDeviation="4" floodOpacity="0.1"/></filter>
+              </defs>
+
+              <g transform="translate(300, 160)">
+                {activeTab === 'resonance' ? (
+                  <g transform="translate(-150, -60)">
+                    <line x1="-40" y1="0" x2="340" y2="0" stroke="#1e293b" strokeWidth="6" strokeLinecap="round" />
+                    <g transform={`translate(40, 0) rotate(${current.x * (180/PI)})`}>
+                      <line x1="0" y1="0" x2="0" y2={lDriver * 0.7} stroke="#334155" strokeWidth="3" />
+                      <circle cx="0" cy={lDriver * 0.7} r="12" fill="url(#redGrad)" filter="url(#softShadow)" />
+                      <text y={lDriver * 0.7 + 25} textAnchor="middle" className="text-[10px] font-bold fill-rose-600">DRIVER</text>
+                    </g>
+                    {lOthers.map((l, i) => (
+                      <g key={i} transform={`translate(${120 + i * 80}, 0) rotate(${current[`x${i+1}`] * (180/PI)})`}>
+                        <line x1="0" y1="0" x2="0" y2={l * 0.7} stroke="#94a3b8" strokeWidth="2" strokeDasharray={activeTab==='resonance'?"none":"4,2"} />
+                        <circle cx="0" cy={l * 0.7} r="10" fill="url(#ballGrad)" />
+                      </g>
+                    ))}
+                  </g>
+                ) : activeTab === 'pendulum' ? (
+                  <g transform="translate(0, -100) rotate(${current.x * (180/PI)})">
+                    <rect x="-30" y="-4" width="60" height="8" rx="2" fill="#1e293b" />
+                    <line x1="0" y1="0" x2="0" y2={length * 0.8} stroke="#475569" strokeWidth="3" />
+                    <circle cx="0" cy={length * 0.8} r="22" fill="url(#ballGrad)" filter="url(#softShadow)" />
+                    <circle cx="0" cy="0" r="4" fill="#94a3b8" />
+                  </g>
+                ) : (
+                  <g transform="translate(0, 0)">
+                    <rect x="-200" y="-40" width="20" height="80" rx="4" fill="#1e293b" />
+                    <line x1="-180" y1="40" x2="200" y2="40" stroke="#f1f5f9" strokeWidth="4" />
+                    <polyline points={renderSpring(current.x + 40, 0)} fill="none" stroke="#64748b" strokeWidth="3" strokeLinejoin="round" />
+                    <rect x={current.x + 40} y="-30" width="60" height="60" rx="8" fill="url(#ballGrad)" filter="url(#softShadow)" />
+                    <text x={current.x + 70} y="50" textAnchor="middle" className="text-[10px] font-bold fill-slate-400">m = {mass}kg</text>
+                  </g>
+                )}
+              </g>
+            </svg>
+        </div>
+
+        {/* Info & Graphs Sidebar */}
+        <div className="w-[340px] flex flex-col gap-2 overflow-hidden pr-1">
+          {/* Tri-Graph (x, v, a) */}
+          <div className="bg-slate-900 p-4 rounded-2xl shadow-xl border border-slate-800 flex flex-col shrink-0 h-[260px]">
+            <div className="flex justify-between items-center mb-3">
+                <div className="flex items-center gap-2">
+                    <LineChart size={14} className="text-indigo-400" />
+                    <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Kinematics Graph</span>
+                </div>
+                <div className="flex gap-3">
+                  <span className="flex items-center gap-1 text-[8px] font-bold text-indigo-400"><div className="w-2 h-0.5 bg-indigo-400"></div> x</span>
+                  <span className="flex items-center gap-1 text-[8px] font-bold text-emerald-400"><div className="w-2 h-0.5 bg-emerald-400"></div> v</span>
+                  <span className="flex items-center gap-1 text-[8px] font-bold text-rose-400"><div className="w-2 h-0.5 bg-rose-400"></div> a</span>
+                </div>
+            </div>
+            
+            <div className="flex-1 relative bg-black/40 rounded-xl border border-slate-800 overflow-hidden px-1">
+              <svg viewBox="0 0 100 100" className="w-full h-full" preserveAspectRatio="none">
+                {/* Lưới tọa độ */}
+                <line x1="0" y1="50" x2="100" y2="50" stroke="#1e293b" strokeWidth="0.5" strokeDasharray="2,2" />
+                <line x1="0" y1="25" x2="100" y2="25" stroke="#1e293b" strokeWidth="0.2" />
+                <line x1="0" y1="75" x2="100" y2="75" stroke="#1e293b" strokeWidth="0.2" />
+                
+                {history.length > 1 && (
+                  <>
+                    {activeTab !== 'resonance' ? (
+                      <>
+                        {/* Tính toán SCALE linh hoạt:
+                          Khung đồ thị cao 100 đơn vị (viewBox 0-100).
+                          Trục 0 nằm ở 50. Chúng ta có +/- 45 đơn vị để vẽ (tránh chạm biên).
+                        */}
+                        {(() => {
+                          const scaleX = 40 / physicsParams.maxA;
+                          const scaleV = 40 / physicsParams.maxV;
+                          const scaleA = 40 / physicsParams.maxAcc;
+
+                          return (
+                            <>
+                              {/* x - blue (Li độ) */}
+                              <polyline points={history.map((d, i) => `${(i / MAX_HISTORY) * 100},${50 - d.x * scaleX}`).join(' ')} fill="none" stroke="#818cf8" strokeWidth="1.5" />
+                              {/* v - green (Vận tốc) */}
+                              <polyline points={history.map((d, i) => `${(i / MAX_HISTORY) * 100},${50 - d.v * scaleV}`).join(' ')} fill="none" stroke="#34d399" strokeWidth="1" strokeDasharray="1,0.5" />
+                              {/* a - red (Gia tốc) */}
+                              <polyline points={history.map((d, i) => `${(i / MAX_HISTORY) * 100},${50 - d.a * scaleA}`).join(' ')} fill="none" stroke="#fb7185" strokeWidth="1" opacity="0.7" />
+                            </>
+                          );
+                        })()}
+                      </>
+                    ) : (
+                      <>
+                        <polyline points={history.map((d, i) => `${(i / MAX_HISTORY) * 100},${50 - (d.x1 * 180)}`).join(' ')} fill="none" stroke="#60a5fa" strokeWidth="1" />
+                        <polyline points={history.map((d, i) => `${(i / MAX_HISTORY) * 100},${50 - (d.x2 * 180)}`).join(' ')} fill="none" stroke="#34d399" strokeWidth="2" />
+                        <polyline points={history.map((d, i) => `${(i / MAX_HISTORY) * 100},${50 - (d.x3 * 180)}`).join(' ')} fill="none" stroke="#fbbf24" strokeWidth="1" />
+                      </>
+                    )}
+                  </>
+                )}
+              </svg>
+              <div className="absolute top-1 left-1 text-[7px] text-slate-600 font-mono italic">Normalized Scaling (±Max)</div>
+            </div>
+          </div>
+
+          {/* Controls */}
+          <div className="bg-slate-900 p-5 rounded-2xl shadow-xl border border-slate-800 flex flex-col flex-1 overflow-hidden min-h-0">
+            <div className="text-[10px] font-black uppercase text-slate-500 mb-4 flex items-center gap-2 border-b border-slate-800 pb-3 shrink-0 tracking-widest">
+              <Settings2 size={14} className="text-indigo-400" /> Laboratory Settings
+            </div>
+            
+            <div className="space-y-5 overflow-y-auto pr-1 flex-1 scrollbar-hide">
+              {activeTab === 'resonance' ? (
+                <>
+                  <Control label="Chiều dài con lắc Mẫu (L)" val={lDriver} unit="cm" min={50} max={200} onChange={setLDriver} reset={reset} dark/>
+                  <Control label="Lực cản môi trường" val={dampingB} unit="" min={0.1} max={1.5} step={0.1} onChange={setDampingB} reset={reset} dark/>
+                </>
+              ) : activeTab === 'pendulum' ? (
+                <>
+                  <Control label="Chiều dài dây treo (L)" val={length} unit="cm" min={50} max={250} onChange={setLength} reset={reset} dark/>
+                  <Control label="Góc lệch cực đại" val={initAmp} unit="°" min={5} max={45} onChange={setInitAmp} reset={reset} dark/>
+                </>
+              ) : (
+                <>
+                  <Control label="Hệ số đàn hồi (k)" val={kSpring} unit="N/m" min={10} max={100} onChange={setKSpring} reset={reset} dark/>
+                  <Control label="Khối lượng vật (m)" val={mass} unit="kg" min={0.5} max={3} step={0.1} onChange={setMass} reset={reset} dark/>
+                  {activeTab === 'damped' && <Control label="Hệ số ma sát nhớt (b)" val={dampingB} unit="kg/s" min={0.05} max={2} step={0.05} onChange={setDampingB} reset={reset} dark/>}
+                </>
+              )}
+            </div>
+
+            <div className="mt-4 pt-4 border-t border-slate-800 grid grid-cols-2 gap-2 shrink-0">
+               <div className="bg-slate-800/50 p-2 rounded-lg text-center border border-slate-700">
+                  <div className="text-[8px] font-bold text-slate-500 uppercase">Tần số góc</div>
+                  <div className="text-xs font-mono text-indigo-400">{physicsParams.omega.toFixed(2)} rad/s</div>
+               </div>
+               <div className="bg-slate-800/50 p-2 rounded-lg text-center border border-slate-700">
+                  <div className="text-[8px] font-bold text-slate-500 uppercase">Chu kỳ (T)</div>
+                  <div className="text-xs font-mono text-indigo-400">{(2 * PI / physicsParams.omega).toFixed(2)} s</div>
+               </div>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  );
+};
+
+const Control = ({ label, val, unit, min, max, step=1, onChange, reset, dark }) => (
+  <div className="group">
+    <div className={`flex justify-between text-[10px] font-bold mb-2 uppercase ${dark ? 'text-slate-400' : 'text-slate-400'} group-hover:text-indigo-400 transition-colors tracking-tight`}>
+      <span>{label}</span>
+      <span className="text-indigo-400 font-mono">{val.toFixed(unit === 'kg' || unit === 'kg/s' ? 1 : 0)} {unit}</span>
+    </div>
+    <input 
+        type="range" min={min} max={max} step={step} value={val} 
+        onChange={(e) => { onChange(Number(e.target.value)); reset(); }} 
+        className="w-full h-1 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-indigo-500 hover:accent-indigo-400 transition-all" 
+    />
+  </div>
+);
+
+export default App;
