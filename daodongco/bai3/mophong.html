@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phòng Thí Nghiệm Mô Phỏng Lò Xo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { background-color: #f1f5f9; font-family: 'Inter', system-ui, sans-serif; height: 100vh; overflow: hidden; }
+        .side-panel { background: white; border-right: 1px solid #e2e8f0; height: 100vh; display: flex; flex-direction: column; }
+        .canvas-area { background: #ffffff; position: relative; flex-grow: 1; }
+        input[type="range"] { accent-color: #2563eb; }
+        .slider-label { font-size: 0.75rem; font-weight: 600; color: #475569; display: flex; justify-content: space-between; margin-bottom: 0.25rem; }
+        .value-badge { background: #eff6ff; color: #1e40af; padding: 2px 6px; border-radius: 4px; font-family: monospace; }
+        .menu-bar { background: white; border-bottom: 1px solid #e2e8f0; padding: 0.75rem 1.5rem; display: flex; align-items: center; gap: 1rem; }
+    </style>
+</head>
+<body class="flex overflow-hidden">
+
+    <!-- Bên trái: Side Panel Cấu hình -->
+    <aside class="side-panel w-72 flex-shrink-0 flex flex-col p-5">
+        <div class="mb-6">
+            <h1 class="text-xl font-bold text-slate-800">Thông số</h1>
+            <p class="text-xs text-slate-500 uppercase tracking-widest font-semibold mt-1">Cấu hình vật lý</p>
+        </div>
+
+        <div class="space-y-6 flex-grow">
+            <div class="space-y-5">
+                <div>
+                    <div class="slider-label"><span>Độ cứng k (N/m)</span><span class="value-badge" id="kVal">50</span></div>
+                    <input type="range" id="kSlider" min="10" max="150" value="50" class="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer">
+                </div>
+
+                <div>
+                    <div class="slider-label"><span>Khối lượng m (kg)</span><span class="value-badge" id="mVal">1.0</span></div>
+                    <input type="range" id="mSlider" min="0.2" max="3" step="0.1" value="1.0" class="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer">
+                </div>
+            </div>
+
+            <hr class="border-slate-100">
+            
+            <!-- Đồ thị năng lượng -->
+            <div class="bg-slate-900 rounded-xl p-3 shadow-inner">
+                <h3 class="text-[10px] font-bold text-slate-400 uppercase mb-2 flex justify-between">
+                    <span>Năng lượng (J)</span>
+                    <span class="flex gap-2">
+                        <span class="text-blue-400">● Động</span>
+                        <span class="text-red-400">● Thế</span>
+                    </span>
+                </h3>
+                <canvas id="energyChart" class="w-full h-32"></canvas>
+            </div>
+
+            <div class="p-3 bg-indigo-50 rounded-lg border border-indigo-100 space-y-2">
+                <h3 class="text-[10px] font-bold text-indigo-700 uppercase">Trạng thái pha</h3>
+                <div class="text-[11px] text-indigo-900 leading-tight">
+                    <p>Chu kỳ $T$: <span id="periodVal" class="font-bold">0.00</span> s</p>
+                    <p>Tần số góc $\omega$: <span id="omegaVal" class="font-bold">0.00</span> rad/s</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="pt-4 text-[10px] text-slate-400 text-center italic">
+            Mô phỏng lực hồi phục
+        </div>
+    </aside>
+
+    <!-- Bên phải: Vùng mô phỏng chính -->
+    <main class="flex-grow flex flex-col overflow-hidden">
+        <header class="menu-bar shadow-sm z-20">
+            <div class="flex items-center gap-2 mr-4">
+                <button id="playPauseBtn" class="p-2 rounded-full bg-blue-50 text-blue-600 hover:bg-blue-100 transition shadow-sm border border-blue-200">
+                    <svg id="playIcon" class="w-5 h-5 hidden" fill="currentColor" viewBox="0 0 20 20"><path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.333-5.89a1.5 1.5 0 000-2.538L6.3 2.841z"/></svg>
+                    <svg id="pauseIcon" class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM7 8a1 1 0 012 0v4a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v4a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
+                </button>
+                <button id="resetBtn" class="p-2 rounded-full bg-slate-50 text-slate-600 hover:bg-slate-100 transition border border-slate-200">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                </button>
+            </div>
+            <div class="h-6 w-px bg-slate-200"></div>
+            <div class="flex gap-1 bg-slate-100 p-1 rounded-lg">
+                <button id="btnHoriz" class="px-3 py-1.5 text-xs font-bold rounded-md bg-white shadow-sm text-blue-600 transition">Lò xo Ngang</button>
+                <button id="btnVert" class="px-3 py-1.5 text-xs font-bold rounded-md text-slate-500 hover:bg-slate-50 transition">Lò xo Đứng</button>
+            </div>
+            <div class="h-6 w-px bg-slate-200 mx-2"></div>
+            <button id="togglePhase" class="px-3 py-1.5 text-xs font-bold rounded-md border border-indigo-200 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 transition">
+                Hiện: Pha quay CCW
+            </button>
+            
+            <div class="ml-auto flex items-center gap-4">
+                <div class="flex items-center gap-2">
+                    <span class="w-4 h-1 bg-red-500 rounded-full"></span>
+                    <span class="text-[11px] font-bold text-slate-600 uppercase">Lực hồi phục ($F_{hp}$)</span>
+                </div>
+            </div>
+        </header>
+
+        <div class="canvas-area relative">
+            <canvas id="springCanvas" class="w-full h-full"></canvas>
+            <div id="energyBadge" class="absolute bottom-4 left-4 bg-white/90 backdrop-blur p-2 rounded-lg border border-slate-200 text-[10px] space-y-1 shadow-sm">
+                <div class="flex justify-between gap-4"><span>Động năng ($W_d$):</span><span id="wdText" class="font-mono text-blue-600">0.00 J</span></div>
+                <div class="flex justify-between gap-4"><span>Thế năng ($W_t$):</span><span id="wtText" class="font-mono text-red-600">0.00 J</span></div>
+                <div class="border-t border-slate-100 pt-1 flex justify-between gap-4 font-bold"><span>Cơ năng ($W$):</span><span id="wText" class="font-mono">0.00 J</span></div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const canvas = document.getElementById('springCanvas');
+        const ctx = canvas.getContext('2d');
+        const energyCanvas = document.getElementById('energyChart');
+        const eCtx = energyCanvas.getContext('2d');
+        
+        const playPauseBtn = document.getElementById('playPauseBtn');
+        const playIcon = document.getElementById('playIcon');
+        const pauseIcon = document.getElementById('pauseIcon');
+        const btnHoriz = document.getElementById('btnHoriz');
+        const btnVert = document.getElementById('btnVert');
+        const togglePhaseBtn = document.getElementById('togglePhase');
+        
+        let isVertical = true; // Mặc định vào là lò xo đứng theo yêu cầu mới nhất
+        let isRunning = true;
+        let showPhaseInfo = true;
+        let lastTimestamp = performance.now();
+        
+        let springK = 50;
+        let massM = 1.0;
+        let initialAmp = 0.35; 
+        
+        let posX = initialAmp; 
+        let velV = 0;          
+        
+        const energyHistory = [];
+        const maxHistory = 100;
+
+        function resize() {
+            canvas.width = canvas.offsetWidth;
+            canvas.height = canvas.offsetHeight;
+            energyCanvas.width = energyCanvas.offsetWidth;
+            energyCanvas.height = energyCanvas.offsetHeight;
+        }
+        window.addEventListener('resize', resize);
+        resize();
+
+        document.getElementById('kSlider').oninput = function() {
+            springK = parseFloat(this.value);
+            document.getElementById('kVal').innerText = springK;
+            updatePhysicsLabels();
+            resetSimulation();
+        };
+        document.getElementById('mSlider').oninput = function() {
+            massM = parseFloat(this.value);
+            document.getElementById('mVal').innerText = massM.toFixed(1);
+            updatePhysicsLabels();
+            resetSimulation();
+        };
+
+        function updatePhysicsLabels() {
+            const omega = Math.sqrt(springK / massM);
+            const period = 2 * Math.PI / omega;
+            document.getElementById('omegaVal').innerText = omega.toFixed(2);
+            document.getElementById('periodVal').innerText = period.toFixed(2);
+        }
+
+        playPauseBtn.onclick = () => {
+            isRunning = !isRunning;
+            playIcon.classList.toggle('hidden', isRunning);
+            pauseIcon.classList.toggle('hidden', !isRunning);
+        };
+
+        togglePhaseBtn.onclick = () => {
+            showPhaseInfo = !showPhaseInfo;
+            togglePhaseBtn.innerText = showPhaseInfo ? "Hiện: Pha quay CCW" : "Ẩn thông tin pha";
+        };
+
+        document.getElementById('resetBtn').onclick = resetSimulation;
+
+        btnHoriz.onclick = () => { 
+            isVertical = false; 
+            togglePhaseBtn.style.display = 'inline-block';
+            updateModeButtons(); 
+            resetSimulation(); 
+        };
+        btnVert.onclick = () => { 
+            isVertical = true; 
+            togglePhaseBtn.style.display = 'none'; 
+            updateModeButtons(); 
+            resetSimulation(); 
+        };
+
+        function updateModeButtons() {
+            btnHoriz.className = !isVertical ? "px-3 py-1.5 text-xs font-bold rounded-md bg-white shadow-sm text-blue-600 transition" : "px-3 py-1.5 text-xs font-bold rounded-md text-slate-500 hover:bg-slate-50 transition";
+            btnVert.className = isVertical ? "px-3 py-1.5 text-xs font-bold rounded-md bg-white shadow-sm text-blue-600 transition" : "px-3 py-1.5 text-xs font-bold rounded-md text-slate-500 hover:bg-slate-50 transition";
+        }
+
+        function resetSimulation() {
+            posX = initialAmp;
+            velV = 0;
+            energyHistory.length = 0;
+        }
+
+        function drawSpring(startX, startY, baseLength, springWidth, numCoils, currentDisplacement) {
+            ctx.save();
+            ctx.beginPath();
+            ctx.lineWidth = 2.5;
+            ctx.strokeStyle = '#94a3b8';
+            const totalLength = baseLength + currentDisplacement;
+            const coilStep = totalLength / (numCoils * 4);
+            ctx.moveTo(startX, startY);
+            for (let i = 0; i <= numCoils * 4; i++) {
+                const dist = i * coilStep;
+                const offset = (i % 4 === 1 ? springWidth : i % 4 === 3 ? -springWidth : 0);
+                if (isVertical) ctx.lineTo(startX + offset, startY + dist);
+                else ctx.lineTo(startX + dist, startY + offset);
+            }
+            ctx.stroke();
+            ctx.restore();
+        }
+
+        function drawArrow(x, y, length, isVerticalDir) {
+            if (Math.abs(length) < 5) return; // Không vẽ nếu lực quá nhỏ
+            
+            ctx.save();
+            ctx.beginPath();
+            ctx.strokeStyle = '#ef4444'; // Màu đỏ cho lực hồi phục
+            ctx.fillStyle = '#ef4444';
+            ctx.lineWidth = 3;
+
+            const headSize = 10;
+            if (isVerticalDir) {
+                ctx.moveTo(x, y);
+                ctx.lineTo(x, y + length);
+                ctx.stroke();
+                // Đầu mũi tên
+                ctx.beginPath();
+                const sign = length > 0 ? 1 : -1;
+                ctx.moveTo(x - 5, y + length - sign * headSize);
+                ctx.lineTo(x + 5, y + length - sign * headSize);
+                ctx.lineTo(x, y + length);
+                ctx.fill();
+            } else {
+                ctx.moveTo(x, y);
+                ctx.lineTo(x + length, y);
+                ctx.stroke();
+                // Đầu mũi tên
+                ctx.beginPath();
+                const sign = length > 0 ? 1 : -1;
+                ctx.moveTo(x + length - sign * headSize, y - 5);
+                ctx.lineTo(x + length - sign * headSize, y + 5);
+                ctx.lineTo(x + length, y);
+                ctx.fill();
+            }
+            ctx.restore();
+        }
+
+        function drawEnergyChart() {
+            eCtx.clearRect(0, 0, energyCanvas.width, energyCanvas.height);
+            if (energyHistory.length < 2) return;
+            const w = energyCanvas.width;
+            const h = energyCanvas.height;
+            const maxE = Math.max(...energyHistory.map(e => e.total)) * 1.2 || 1;
+            const drawLine = (key, color) => {
+                eCtx.beginPath();
+                eCtx.strokeStyle = color;
+                eCtx.lineWidth = 2;
+                energyHistory.forEach((e, i) => {
+                    const x = (i / (maxHistory - 1)) * w;
+                    const y = h - (e[key] / maxE) * (h - 10) - 5;
+                    if (i === 0) eCtx.moveTo(x, y);
+                    else eCtx.lineTo(x, y);
+                });
+                eCtx.stroke();
+            };
+            drawLine('kinetic', '#60a5fa');
+            drawLine('potential', '#f87171');
+        }
+
+        function animate() {
+            const now = performance.now();
+            const deltaTime = Math.min((now - lastTimestamp) / 1000, 0.02); 
+            lastTimestamp = now;
+
+            if (isRunning) {
+                const springForce = -springK * posX;
+                const accelA = springForce / massM;
+                velV += accelA * deltaTime;
+                posX += velV * deltaTime;
+
+                const Ek = 0.5 * massM * velV * velV;
+                const Et = 0.5 * springK * posX * posX;
+                energyHistory.push({ kinetic: Ek, potential: Et, total: Ek + Et });
+                if (energyHistory.length > maxHistory) energyHistory.shift();
+
+                document.getElementById('wdText').innerText = Ek.toFixed(3) + " J";
+                document.getElementById('wtText').innerText = Et.toFixed(3) + " J";
+                document.getElementById('wText').innerText = (Ek + Et).toFixed(3) + " J";
+            }
+
+            render();
+            drawEnergyChart();
+            requestAnimationFrame(animate);
+        }
+
+        function render() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            const midX = canvas.width / 2;
+            const midY = canvas.height / 2;
+            const pScale = 220; 
+            
+            if (isVertical) {
+                const drawEqY = canvas.height / 2; 
+                const anchorY = 60;
+                
+                // VTCB
+                ctx.strokeStyle = '#10b981';
+                ctx.setLineDash([8, 4]);
+                ctx.beginPath(); ctx.moveTo(midX - 120, drawEqY); ctx.lineTo(midX + 120, drawEqY); ctx.stroke();
+                ctx.setLineDash([]);
+                ctx.fillStyle = '#10b981'; ctx.font = '10px Inter'; ctx.fillText('VTCB', midX + 125, drawEqY + 4);
+
+                // Lò xo
+                ctx.fillStyle = "#1e293b"; ctx.fillRect(midX - 40, anchorY, 80, 5);
+                drawSpring(midX, anchorY + 5, drawEqY - anchorY - 5, 16, 15, posX * pScale);
+                
+                const weightY = drawEqY + (posX * pScale);
+
+                // Vẽ Lực Hồi Phục (F = -kx)
+                // posX dương (vật ở dưới VTCB) -> Lực hướng lên (giá trị vẽ âm)
+                // posX âm (vật ở trên VTCB) -> Lực hướng xuống (giá trị vẽ dương)
+                const forceMag = -posX * 150; // Hệ số 150 để hiển thị vector rõ hơn
+                drawArrow(midX, weightY, forceMag, true);
+
+                // Vật nặng
+                ctx.fillStyle = "#2563eb"; ctx.beginPath(); ctx.arc(midX, weightY, 22, 0, Math.PI * 2); ctx.fill();
+                ctx.strokeStyle = "white"; ctx.lineWidth = 2; ctx.stroke();
+
+            } else {
+                const baseLen = 150;
+                const eqX = midX;
+                const springStartX = eqX - baseLen;
+                const radius = initialAmp * pScale;
+                
+                // Vòng tròn pha
+                ctx.strokeStyle = '#cbd5e1';
+                ctx.setLineDash([2, 2]);
+                ctx.beginPath(); ctx.moveTo(eqX - radius - 50, midY); ctx.lineTo(eqX + radius + 50, midY); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(eqX, midY - radius - 50); ctx.lineTo(eqX, midY + radius + 50); ctx.stroke();
+                ctx.setLineDash([]);
+                ctx.beginPath(); ctx.arc(eqX, midY, radius, 0, Math.PI * 2); ctx.strokeStyle = '#f1f5f9'; ctx.stroke();
+
+                const phi = Math.acos(Math.max(-1, Math.min(1, (posX * pScale) / radius)));
+                let currentPhase = velV > 0 ? (2 * Math.PI - phi) : phi;
+                const canvasAngle = -currentPhase; 
+                const orbitX = eqX + radius * Math.cos(canvasAngle);
+                const orbitY = midY + radius * Math.sin(canvasAngle);
+
+                if (showPhaseInfo) {
+                    ctx.save();
+                    ctx.beginPath(); ctx.moveTo(eqX, midY);
+                    ctx.arc(eqX, midY, 40, 0, canvasAngle, true);
+                    ctx.fillStyle = 'rgba(79, 70, 229, 0.15)'; ctx.fill();
+                    ctx.strokeStyle = '#4f46e5'; ctx.stroke();
+                    ctx.restore();
+                }
+
+                // Điểm pha
+                ctx.fillStyle = "#f59e0b"; ctx.beginPath(); ctx.arc(orbitX, orbitY, 8, 0, Math.PI * 2); ctx.fill();
+
+                // Lò xo & Vật
+                ctx.fillStyle = "#1e293b"; ctx.fillRect(springStartX - 10, midY - 45, 10, 90);
+                drawSpring(springStartX, midY, baseLen, 14, 12, posX * pScale);
+                const weightX = eqX + (posX * pScale);
+
+                // Vẽ Lực Hồi Phục (ngang)
+                const forceMag = -posX * 150;
+                drawArrow(weightX, midY, forceMag, false);
+
+                ctx.fillStyle = "#2563eb"; ctx.fillRect(weightX - 20, midY - 20, 40, 40);
+                ctx.strokeStyle = "white"; ctx.strokeRect(weightX - 20, midY - 20, 40, 40);
+                
+                // VTCB
+                ctx.beginPath(); ctx.moveTo(eqX, midY - 80); ctx.lineTo(eqX, midY + 80);
+                ctx.strokeStyle = "#10b981"; ctx.setLineDash([8, 4]); ctx.stroke();
+            }
+        }
+
+        // Khởi tạo trạng thái ban đầu là lò xo đứng
+        btnVert.click();
+        updatePhysicsLabels();
+        animate();
+    </script>
+</body>
+</html>
