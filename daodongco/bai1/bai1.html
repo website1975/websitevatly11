@@ -5,168 +5,285 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Bài 1: Mô tả dao động - Vật lí 11</title>
     <script src="https://cdn.tailwindcss.com"></script>
-<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <script>
     window.MathJax = {
       tex: {
-        inlineMath: [['$', '$'], ['\\(', '\\)']], // Bắt buộc nhận diện $...$
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
         displayMath: [['$$', '$$'], ['\\[', '\\]']]
-      },
-      // ...
+      }
     };
     </script>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
+        
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            line-height: 1.6;
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
         }
-        .math {
+        
+        .math-text {
             font-family: 'Times New Roman', Times, serif;
             font-style: italic;
-            font-weight: bold;
-            color: #1d4ed8;
+            font-weight: 600;
+            color: #1e40af;
         }
-        .highlight {
-            background-color: #fef9c3;
-            padding: 2px 4px;
-            border-radius: 4px;
-        }
-        .exercise-box {
-            border-left: 4px solid #f59e0b;
-            background-color: #fffbeb;
-            padding: 1.25rem;
-            margin: 1.5rem 0;
-            border-radius: 0 0.5rem 0.5rem 0;
-        }
-        .theory-section {
-            margin-bottom: 2rem;
+
+        .section-card {
             background: white;
+            border-radius: 1rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            padding: 2rem;
+            margin-bottom: 2rem;
+            border: 1px solid #e2e8f0;
+        }
+
+        .highlight-yellow {
+            background-color: #fef9c3;
+            padding: 0.1rem 0.3rem;
+            border-radius: 0.25rem;
+            font-weight: 600;
+        }
+
+        .exercise-item {
+            border-left: 5px solid #f59e0b;
+            background-color: #fffbeb;
             padding: 1.5rem;
-            border-radius: 0.75rem;
-            shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+            margin: 1.5rem 0;
+            border-radius: 0.5rem;
+        }
+
+        .solution-box {
+            background: white;
+            border: 1px solid #fde68a;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin-top: 1rem;
+        }
+
+        .step-title {
+            color: #1d4ed8;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Custom header style to match the description */
+        .main-header {
+            background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
+            color: white;
+            padding: 3rem 1rem;
+            border-radius: 0 0 2rem 2rem;
+            margin-bottom: 3rem;
+            box-shadow: 0 10px 15px -3px rgba(30, 58, 138, 0.2);
         }
     </style>
 </head>
-<body class="bg-gray-50 text-gray-800">
+<body class="text-slate-800 antialiased">
 
-    <div class="max-w-4xl mx-auto px-4 py-8">
-        <!-- Header -->
-        <header class="text-center mb-12">
-            <h1 class="text-3xl md:text-4xl font-extrabold text-blue-900 mb-4">BÀI 1: MÔ TẢ DAO ĐỘNG</h1>
-            <p class="text-lg text-gray-600 italic">Tóm tắt lý thuyết chi tiết & Bài tập vận dụng phương trình</p>
-        </header>
+    <!-- Header Section Updated to Blue Style -->
+    <header class="main-header text-center">
+        <div class="max-w-4xl mx-auto">
+            <div class="inline-block bg-blue-400/20 backdrop-blur-sm text-blue-100 px-4 py-1 rounded-full text-sm font-bold mb-4 tracking-wide uppercase border border-blue-400/30">
+                Chương 1: Dao Động
+            </div>
+            <h1 class="text-4xl md:text-5xl font-extrabold text-white mb-4 tracking-tight">
+                BÀI 1: MÔ TẢ DAO ĐỘNG
+            </h1>
+            <p class="text-lg text-blue-100/80 max-w-2xl mx-auto font-medium">
+                Tóm tắt hệ thống lý thuyết cốt lõi và hướng dẫn giải các dạng bài tập phương trình dao động điều hòa.
+            </p>
+        </div>
+    </header>
 
+    <div class="max-w-4xl mx-auto px-4">
         <!-- Section I -->
-        <section class="theory-section shadow-md">
-            <h2 class="text-2xl font-bold text-blue-700 border-b-2 border-blue-200 pb-2 mb-4">I. KHÁI NIỆM DAO ĐỘNG CƠ HỌC</h2>
-            <div class="space-y-4">
+        <section class="section-card">
+            <div class="flex items-center gap-3 mb-6">
+                <div class="w-10 h-10 bg-blue-600 text-white rounded-lg flex items-center justify-center font-bold text-xl">I</div>
+                <h2 class="text-2xl font-bold text-slate-900">KHÁI NIỆM DAO ĐỘNG CƠ HỌC</h2>
+            </div>
+            
+            <div class="space-y-6">
                 <div>
-                    <h3 class="font-bold text-lg text-blue-600">1. Định nghĩa dao động cơ</h3>
-                    <p>Dao động cơ học là chuyển động có tính chất <span class="highlight">lặp đi lặp lại</span> quanh một vị trí đặc biệt gọi là <span class="font-semibold">vị trí cân bằng</span>.</p>
+                    <h3 class="text-lg font-bold text-blue-700 mb-2 flex items-center">
+                        <span class="w-1.5 h-6 bg-blue-600 rounded-full mr-3"></span>
+                        1. Định nghĩa dao động cơ
+                    </h3>
+                    <p class="text-slate-600 leading-relaxed pl-4">
+                        Dao động cơ học là chuyển động có tính chất <span class="highlight-yellow">lặp đi lặp lại</span> quanh một vị trí đặc biệt gọi là <span class="font-bold text-slate-800">vị trí cân bằng</span>.
+                    </p>
                 </div>
+
                 <div>
-                    <h3 class="font-bold text-lg text-blue-600">2. Phân biệt dao động tuần hoàn và không tuần hoàn</h3>
-                    <div class="grid md:grid-cols-2 gap-4 mt-2">
-                        <div class="p-4 border rounded-lg bg-green-50">
-                            <p class="font-bold text-green-700 underline">Dao động tuần hoàn:</p>
-                            <p>Sau những khoảng thời gian <span class="font-semibold text-green-800">bằng nhau</span>, vật trở lại vị trí cũ theo hướng cũ. Khoảng thời gian này gọi là Chu kỳ.</p>
-                            <p class="text-sm italic mt-2">Ví dụ: Con lắc đồng hồ.</p>
+                    <h3 class="text-lg font-bold text-blue-700 mb-3 flex items-center">
+                        <span class="w-1.5 h-6 bg-blue-600 rounded-full mr-3"></span>
+                        2. Phân biệt dao động
+                    </h3>
+                    <div class="grid md:grid-cols-2 gap-4 pl-4">
+                        <div class="p-4 border border-emerald-100 rounded-xl bg-emerald-50/50">
+                            <h4 class="font-bold text-emerald-700 mb-2">Dao động tuần hoàn</h4>
+                            <p class="text-sm text-slate-600">Sau những khoảng thời gian <span class="font-bold">bằng nhau</span>, vật trở lại vị trí cũ theo hướng cũ. Khoảng thời gian này là Chu kỳ.</p>
+                            <p class="text-xs italic text-emerald-600 mt-2">Ví dụ: Con lắc đồng hồ.</p>
                         </div>
-                        <div class="p-4 border rounded-lg bg-red-50">
-                            <p class="font-bold text-red-700 underline">Dao động không tuần hoàn:</p>
-                            <p>Trạng thái vật không lặp lại như cũ sau những khoảng thời gian bằng nhau.</p>
-                            <p class="text-sm italic mt-2">Ví dụ: Cành cây đung đưa.</p>
+                        <div class="p-4 border border-rose-100 rounded-xl bg-rose-50/50">
+                            <h4 class="font-bold text-rose-700 mb-2">Dao động không tuần hoàn</h4>
+                            <p class="text-sm text-slate-600">Trạng thái vật không lặp lại như cũ sau những khoảng thời gian bằng nhau.</p>
+                            <p class="text-xs italic text-rose-600 mt-2">Ví dụ: Cành cây đung đưa trong gió.</p>
                         </div>
                     </div>
                 </div>
+
                 <div>
-                    <h3 class="font-bold text-lg text-blue-600">3. Thế nào là dao động tự do?</h3>
-                    <p>Dao động tự do là dao động mà chu kỳ (hoặc tần số) của nó chỉ phụ thuộc vào <span class="highlight">đặc tính riêng của hệ</span>, không phụ thuộc vào các yếu tố bên ngoài.</p>
+                    <h3 class="text-lg font-bold text-blue-700 mb-2 flex items-center">
+                        <span class="w-1.5 h-6 bg-blue-600 rounded-full mr-3"></span>
+                        3. Dao động tự do
+                    </h3>
+                    <p class="text-slate-600 leading-relaxed pl-4">
+                        Là dao động mà chu kỳ (hoặc tần số) chỉ phụ thuộc vào <span class="highlight-yellow">đặc tính riêng của hệ</span>, không phụ thuộc vào các yếu tố bên ngoài.
+                    </p>
                 </div>
             </div>
         </section>
 
         <!-- Section II -->
-        <section class="theory-section shadow-md">
-            <h2 class="text-2xl font-bold text-blue-700 border-b-2 border-blue-200 pb-2 mb-4">II. DAO ĐỘNG ĐIỀU HÒA</h2>
+        <section class="section-card">
+            <div class="flex items-center gap-3 mb-6">
+                <div class="w-10 h-10 bg-blue-600 text-white rounded-lg flex items-center justify-center font-bold text-xl">II</div>
+                <h2 class="text-2xl font-bold text-slate-900">DAO ĐỘNG ĐIỀU HÒA</h2>
+            </div>
             
-            <div class="mb-6">
-                <h3 class="font-bold text-lg text-blue-600 mb-2">1. Khảo sát sự phụ thuộc x theo thời gian</h3>
-                <p class="italic"><a href='mophong.html' target="">a. Mô tả thí nghiệm:</a></p>
-                <p class="text-sm">Khảo sát tọa độ vật ứng từng thời điểm khác nhau</p>
-                
-                <p class="italic mt-3">b. Lập bảng số liệu & c. Vẽ đồ thị:</p>
-                <p class="text-sm mb-2">Đồ thị li độ - thời gian là một đường <span class="font-bold text-red-600">hình sin</span>.</p>
-                <div class="flex justify-center py-4 bg-gray-50 rounded border">
-                    <svg viewBox="0 0 400 120" class="w-full max-w-sm">
-                        <line x1="20" y1="60" x2="380" y2="60" stroke="black" stroke-width="1" />
-                        <line x1="40" y1="10" x2="40" y2="110" stroke="black" stroke-width="1" />
-                        <path d="M 40 20 Q 80 20 120 60 T 200 100 T 280 60 T 360 20" fill="none" stroke="blue" stroke-width="2" />
-                        <text x="370" y="75" font-size="12">t</text>
-                        <text x="25" y="20" font-size="12">x</text>
-                    </svg>
+            <div class="mb-8">
+                <h3 class="text-lg font-bold text-blue-700 mb-3">1. Khảo sát li độ theo thời gian</h3>
+                <div class="bg-slate-50 border rounded-xl p-4 text-center mb-4">
+                    <p class="text-sm text-slate-500 mb-4 font-medium italic">Đồ thị li độ - thời gian (x - t) có dạng hình sin</p>
+                    <div class="flex justify-center">
+                        <svg viewBox="0 0 400 120" class="w-full max-w-sm drop-shadow-sm">
+                            <line x1="20" y1="60" x2="380" y2="60" stroke="#94a3b8" stroke-width="1.5" />
+                            <line x1="40" y1="10" x2="40" y2="110" stroke="#94a3b8" stroke-width="1.5" />
+                            <path d="M 40 20 Q 80 20 120 60 T 200 100 T 280 60 T 360 20" fill="none" stroke="#2563eb" stroke-width="2.5" />
+                            <text x="375" y="55" font-size="12" fill="#64748b" font-weight="bold">t</text>
+                            <text x="25" y="20" font-size="12" fill="#64748b" font-weight="bold">x</text>
+                        </svg>
+                    </div>
                 </div>
             </div>
 
-            <div class="mb-6">
-                <h3 class="font-bold text-lg text-blue-600 mb-2">2. Khái niệm cơ bản</h3>
-                <p class="math text-2xl text-center my-4 bg-blue-50 p-2 rounded">x = A cos(ωt + φ)</p>
-                <ul class="list-disc ml-6 space-y-1">
-                    <li><span class="font-bold">Li độ (x):</span> Vị trí của vật so với VCB.</li>
-                    <li><span class="font-bold">Biên độ (A):</span> Li độ cực đại ($A > 0$).</li>
-                    <li><span class="font-bold">Tần số góc (ω):</span> Đơn vị rad/s.</li>
-                    <li><span class="font-bold">Chu kỳ (T):</span> $T = 2\pi/\omega$ (s).</li>
-                    <li><span class="font-bold">Tần số (f):</span> $f = 1/T$ (Hz).</li>
-                </ul>
-            </div>
-
-            <div>
-                <h3 class="font-bold text-lg text-blue-600 mb-2">3. Pha dao động, độ lệch pha</h3>
-                <p>- <span class="font-bold">Pha dao động (ωt + φ):</span> Xác định trạng thái dao động.</p>
-                <p>- <span class="font-bold">Độ lệch pha (Δφ):</span> Hiệu số pha giữa hai dao động cùng tần số.</p>
+            <div class="mb-8">
+                <h3 class="text-lg font-bold text-blue-700 mb-4">2. Phương trình dao động</h3>
+                <div class="bg-blue-600 text-white p-6 rounded-2xl text-center shadow-lg shadow-blue-200 mb-6">
+                    <p class="text-3xl font-bold tracking-widest">x = A cos(ωt + φ)</p>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <ul class="space-y-3">
+                        <li class="flex items-start gap-2">
+                            <span class="text-blue-500 mt-1">●</span>
+                            <span><strong>Li độ (x):</strong> Vị trí của vật so với VCB (cm, m).</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="text-blue-500 mt-1">●</span>
+                            <span><strong>Biên độ (A):</strong> Li độ cực đại ($A > 0$).</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="text-blue-500 mt-1">●</span>
+                            <span><strong>Tần số góc (ω):</strong> Đơn vị (rad/s).</span>
+                        </li>
+                    </ul>
+                    <ul class="space-y-3">
+                        <li class="flex items-start gap-2">
+                            <span class="text-blue-500 mt-1">●</span>
+                            <span><strong>Chu kỳ (T):</strong> $T = 2\pi/\omega$ (s).</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="text-blue-500 mt-1">●</span>
+                            <span><strong>Tần số (f):</strong> $f = 1/T$ (Hz).</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="text-blue-500 mt-1">●</span>
+                            <span><strong>Pha (ωt + φ):</strong> Xác định trạng thái tại thời điểm t.</span>
+                        </li>
+                    </ul>
+                </div>
             </div>
         </section>
 
         <!-- Section III -->
-        <section class="theory-section shadow-md border-t-4 border-orange-500">
-            <h2 class="text-2xl font-bold text-orange-700 border-b-2 border-orange-100 pb-2 mb-6">III. VẬN DỤNG TRỌNG TÂM</h2>
+        <section class="section-card border-t-8 border-orange-500">
+            <div class="flex items-center gap-3 mb-6">
+                <div class="w-10 h-10 bg-orange-600 text-white rounded-lg flex items-center justify-center font-bold text-xl">III</div>
+                <h2 class="text-2xl font-bold text-slate-900 uppercase tracking-tight">Vận dụng trọng tâm</h2>
+            </div>
 
             <!-- Bài 1 -->
-            <div class="exercise-box">
-                <h3 class="font-bold text-lg text-orange-800">Bài 1: Khai thác phương trình và tìm pha thời gian</h3>
-                <p class="mt-2 text-gray-700">Cho phương trình: <span class="math">x = 6 cos(4πt + π/3)</span> (cm). Tính li độ x và pha dao động của vật tại thời điểm <span class="math">t = 0,25s</span>.</p>
-                <div class="mt-3 p-3 bg-white rounded border border-orange-200 text-sm">
-                    <p class="font-bold text-green-700">Giải:</p>
-                    <p>- Pha dao động: <span class="math">Φ = 4π(0,25) + π/3 = 4π/3</span> (rad).</p>
-                    <p>- Li độ: <span class="math">x = 6 cos(4π/3) = 6 \(\times\) (-0,5) = -3</span> (cm).</p>
+            <div class="exercise-item">
+                <div class="flex justify-between items-start mb-2">
+                    <h3 class="font-bold text-lg text-orange-900">Dạng 1: Khai thác phương trình và tìm pha</h3>
+                    <span class="bg-orange-200 text-orange-800 text-xs font-bold px-2 py-1 rounded">CƠ BẢN</span>
+                </div>
+                <p class="text-slate-700 italic mb-4">
+                    Cho phương trình: <span class="math-text">x = 6 cos(4πt + π/3)</span> (cm). Tính li độ x và pha dao động của vật tại thời điểm <span class="math-text">t = 0,25s</span>.
+                </p>
+                <div class="solution-box">
+                    <p class="step-title mb-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                        Hướng dẫn giải:
+                    </p>
+                    <div class="pl-6 space-y-2 text-sm">
+                        <p>• Pha dao động: <span class="math-text">Φ = 4π(0,25) + π/3 = 4π/3</span> (rad).</p>
+                        <p>• Li độ: <span class="math-text">x = 6 cos(4π/3) = 6 \(\times\) (-0,5) = -3</span> (cm).</p>
+                    </div>
                 </div>
             </div>
 
             <!-- Bài 2 -->
-            <div class="exercise-box">
-                <h3 class="font-bold text-lg text-orange-800">Bài 2: Xác định pha ban đầu φ</h3>
-                <p class="mt-2 text-gray-700">Vật dao động với biên độ <span class="math">A = 10cm</span>, <span class="math">ω = 2π rad/s</span>. Tại <span class="math">t = 0</span>, vật ở biên âm. Viết phương trình dao động.</p>
-                <div class="mt-3 p-3 bg-white rounded border border-orange-200 text-sm">
-                    <p class="font-bold text-green-700">Giải:</p>
-                    <p>- Tại <span class="math">\(t = 0, x = -A \Rightarrow -10\) = 10 cos(φ) \(\Rightarrow cos(φ) = -1 \Rightarrow φ = π\)</span> (rad)</p>
-                    <p>➜ Phương trình: <span class="math">x = 10 cos(2πt + π)</span> (cm).</p>
+            <div class="exercise-item">
+                <div class="flex justify-between items-start mb-2">
+                    <h3 class="font-bold text-lg text-orange-900">Dạng 2: Xác định pha ban đầu φ</h3>
+                    <span class="bg-orange-200 text-orange-800 text-xs font-bold px-2 py-1 rounded">THÔNG HIỂU</span>
+                </div>
+                <p class="text-slate-700 mb-4">
+                    Vật dao động với biên độ <span class="math-text">A = 10cm</span>, <span class="math-text">ω = 2π rad/s</span>. Tại <span class="math-text">t = 0</span>, vật ở biên âm. Viết phương trình dao động.
+                </p>
+                <div class="solution-box">
+                    <p class="step-title mb-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                        Hướng dẫn giải:
+                    </p>
+                    <div class="pl-6 space-y-2 text-sm">
+                        <p>• Tại <span class="math-text">\(t = 0, x = -A \Rightarrow -10\) = 10 cos(φ) \(\Rightarrow cos(φ) = -1 \Rightarrow φ = π\)</span> (rad)</p>
+                        <p class="font-bold text-blue-700">➜ Phương trình: <span class="math-text">x = 10 cos(2πt + π)</span> (cm).</p>
+                    </div>
                 </div>
             </div>
 
             <!-- Bài 3 -->
-            <div class="exercise-box">
-                <h3 class="font-bold text-lg text-orange-800">Bài 3: Độ lệch pha giữa hai dao động</h3>
-                <p class="mt-2 text-gray-700">Cho <span class="math">\(x_1 = 4 cos(10πt - π/6)\)</span> và <span class="math">\(x_2 = 7 cos(10πt + π/3)\)</span>. Tìm độ lệch pha?</p>
-                <div class="mt-3 p-3 bg-white rounded border border-orange-200 text-sm">
-                    <p class="font-bold text-green-700">Giải:</p>
-                    <p>- <span class="math">\(Δφ = |φ_2 - φ_1| = |π/3 - (-π/6)| = π/2\)</span> (rad).</p>
-                    <p>➜ Hai dao động vuông pha, dao động 2 sớm pha hơn dao động 1 góc <span class="math">π/2</span>.</p>
+            <div class="exercise-item">
+                <div class="flex justify-between items-start mb-2">
+                    <h3 class="font-bold text-lg text-orange-900">Dạng 3: Độ lệch pha giữa hai dao động</h3>
+                    <span class="bg-orange-200 text-orange-800 text-xs font-bold px-2 py-1 rounded">VẬN DỤNG</span>
+                </div>
+                <p class="text-slate-700 mb-4">
+                    Cho <span class="math-text">\(x_1 = 4 cos(10πt - π/6)\)</span> và <span class="math-text">\(x_2 = 7 cos(10πt + π/3)\)</span>. Tìm độ lệch pha?
+                </p>
+                <div class="solution-box">
+                    <p class="step-title mb-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                        Hướng dẫn giải:
+                    </p>
+                    <div class="pl-6 space-y-2 text-sm">
+                        <p>• <span class="math-text">\(Δφ = |φ_2 - φ_1| = |π/3 - (-π/6)| = π/2\)</span> (rad).</p>
+                        <p class="text-emerald-700 font-semibold">➜ Hai dao động vuông pha, dao động 2 sớm pha hơn dao động 1 góc <span class="math-text">π/2</span>.</p>
+                    </div>
                 </div>
             </div>
         </section>
 
-        <footer class="text-center text-gray-400 text-sm mt-12 pb-8">
-            © 2024 - Vật lí 11: Bài 1 - Mô tả dao động
+        <!-- Footer -->
+        <footer class="text-center text-slate-400 text-sm mt-12 pb-8 border-t border-slate-200 pt-8">
+            <p class="font-semibold text-slate-500 mb-1">Hệ thống ôn tập Vật lí 11</p>
+            <p>© 2024 - Bài 1: Mô tả dao động. Tất cả nội dung được tối ưu cho học tập.</p>
         </footer>
     </div>
 
