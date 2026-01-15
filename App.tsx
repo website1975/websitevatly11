@@ -1,6 +1,6 @@
 
-import React, { useState, useEffect, useCallback } from 'react';
-import { Routes, Route, useNavigate, Link, useLocation, Navigate } from 'react-router-dom';
+import React, { useState, useEffect, useCallback } from 'https://esm.sh/react@^19.2.3';
+import { Routes, Route, useNavigate, Link, useLocation, Navigate } from 'https://esm.sh/react-router-dom@^6.22.3';
 import { 
   Book, X, Pencil, Plus, Globe, Maximize2, Loader2, LogOut, GraduationCap, 
   KeyRound, Trash2, AlertTriangle, CloudCheck, BrainCircuit, Trophy, RotateCcw,
