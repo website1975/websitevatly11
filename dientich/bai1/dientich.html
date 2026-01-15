@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bài 1: Điện tích - Định luật Coulomb</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']]
+      }
+    };
+    </script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+        }
+        .math {
+            font-family: 'Times New Roman', Times, serif;
+            font-style: italic;
+            font-weight: bold;
+            color: #1d4ed8;
+        }
+        .section-card {
+            background: white;
+            border-radius: 1rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            border: 1px solid #e5e7eb;
+            margin-bottom: 2rem;
+            overflow: hidden;
+        }
+        .section-header {
+            background: linear-gradient(to right, #0d9488, #0f766e);
+            color: white;
+            padding: 1rem 1.5rem;
+            font-weight: bold;
+            font-size: 1.25rem;
+            text-transform: uppercase;
+        }
+        .exercise-box {
+            background-color: #fff7ed;
+            border: 1px solid #ffedd5;
+            padding: 1.5rem;
+            border-radius: 0.75rem;
+            margin-bottom: 1.5rem;
+        }
+        .formula-display {
+            background: #f0fdfa;
+            border: 1px solid #ccfbf1;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            text-align: center;
+            margin: 1rem 0;
+        }
+        .explain-box {
+            background: #f8fafc;
+            border-left: 4px solid #0d9488;
+            padding: 1rem;
+            margin-top: 1rem;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+
+    <!-- Header -->
+    <header class="bg-teal-600 text-white py-10 px-4 text-center shadow-lg mb-8">
+        <h1 class="text-3xl font-extrabold uppercase tracking-widest">Chương 3: Điện tích - Điện trường</h1>
+        <p class="mt-2 text-xl opacity-90">Bài 1: Điện tích - Định luật Coulomb</p>
+    </header>
+
+    <div class="max-w-4xl mx-auto px-4 pb-12">
+        
+        <!-- Phần I -->
+        <div class="section-card">
+            <div class="section-header">I. Sự nhiễm điện - Tương tác điện</div>
+            <div class="p-6">
+                <h3 class="text-lg font-bold text-teal-700 mb-2">1. Sự nhiễm điện của các vật</h3>
+                <p class="mb-4">Hiện tượng vật có khả năng hút các vật nhẹ (như mẩu giấy, sợi bông) sau khi cọ xát gọi là <strong>sự nhiễm điện</strong>. Có 3 cách nhiễm điện:</p>
+                <ul class="list-disc pl-6 mb-4 space-y-1">
+                    <li><span class="font-semibold text-teal-600">Nhiễm điện do cọ xát:</span> Hai vật cọ xát vào nhau (VD: thước nhựa cọ vào dạ).</li>
+                    <li><span class="font-semibold text-teal-600">Nhiễm điện do tiếp xúc:</span> Vật chưa mang điện chạm vào vật mang điện.</li>
+                    <li><span class="font-semibold text-teal-600">Nhiễm điện do hưởng ứng:</span> Đưa vật mang điện lại gần vật kim loại (không chạm).</li>
+                </ul>
+
+                <h3 class="text-lg font-bold text-teal-700 mb-2">2. Điện tích. Điện tích điểm</h3>
+                <p class="mb-4">Vật bị nhiễm điện gọi là vật mang điện hay một điện tích. <span class="bg-yellow-100 px-1 italic">Điện tích điểm</span> là vật tích điện có kích thước rất nhỏ so với khoảng cách ta xét.</p>
+
+                <h3 class="text-lg font-bold text-teal-700 mb-2">3. Tương tác điện</h3>
+                <div class="bg-gray-100 p-4 rounded-lg flex flex-col items-center">
+                    <p class="mb-4 text-center font-medium">Hai điện tích <span class="text-red-600">cùng dấu thì đẩy nhau</span>, <span class="text-blue-600">trái dấu thì hút nhau</span>.</p>
+                    <svg width="350" height="100" viewBox="0 0 400 100">
+                        <!-- Đẩy nhau -->
+                        <circle cx="50" cy="40" r="15" fill="#ef4444" />
+                        <text x="44" y="46" fill="white" font-weight="bold">+</text>
+                        <circle cx="120" cy="40" r="15" fill="#ef4444" />
+                        <text x="114" y="46" fill="white" font-weight="bold">+</text>
+                        <path d="M30,40 L10,40" stroke="black" stroke-width="2" marker-end="url(#arrow)" />
+                        <path d="M140,40 L160,40" stroke="black" stroke-width="2" marker-end="url(#arrow)" />
+                        
+                        <!-- Hút nhau -->
+                        <circle cx="280" cy="40" r="15" fill="#ef4444" />
+                        <text x="274" y="46" fill="white" font-weight="bold">+</text>
+                        <circle cx="350" cy="40" r="15" fill="#3b82f6" />
+                        <text x="346" y="46" fill="white" font-weight="bold">-</text>
+                        <path d="M298,40 L315,40" stroke="black" stroke-width="2" marker-end="url(#arrow)" />
+                        <path d="M332,40 L315,40" stroke="black" stroke-width="2" marker-end="url(#arrow)" />
+                        
+                        <defs>
+                            <marker id="arrow" markerWidth="10" markerHeight="10" refX="0" refY="3" orient="auto">
+                                <path d="M0,0 L0,6 L9,3 z" fill="black" />
+                            </marker>
+                        </defs>
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <!-- Phần II -->
+        <div class="section-card">
+            <div class="section-header">II. Định luật Coulomb. Hằng số điện môi</div>
+            <div class="p-6">
+                <h3 class="text-lg font-bold text-teal-700 mb-2">1. Định luật Coulomb (Trong chân không)</h3>
+                <div class="formula-display">
+                    <span class="text-3xl math">$F = k \frac{|q_1 q_2|}{r^2}$</span>
+                </div>
+
+                <div class="explain-box">
+                    <p class="font-bold text-teal-800 mb-2 underline">Giải thích chi tiết công thức:</p>
+                    <ul class="space-y-2 text-sm">
+                        <li><span class="math">F</span>: <strong>Lực tương tác</strong> (Đơn vị: Newton - N).</li>
+                        <li><span class="math">q_1, q_2</span>: <strong>Điện tích</strong> của 2 vật (Đơn vị: Coulomb - C). Dấu trị tuyệt đối $| |$ nghĩa là ta chỉ xét độ lớn, không quan tâm âm hay dương khi tính lực.</li>
+                        <li><span class="math">r</span>: <strong>Khoảng cách</strong> giữa 2 điện tích (Đơn vị: mét - m). <span class="text-red-600 font-bold">Lưu ý:</span> Trong bài tập thường cho cm, bạn phải đổi sang m.</li>
+                        <li><span class="math">k</span>: <strong>Hằng số tỉ lệ</strong>. Trong chân không $k = 9.10^9 \, N.m^2/C^2$.</li>
+                    </ul>
+                </div>
+
+                <div class="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                    <p class="font-bold text-blue-800 italic">💡 Mẹo hiểu nhanh:</p>
+                    <ul class="list-disc pl-5 text-sm text-blue-900">
+                        <li>Điện tích ($q$) càng lớn $\Rightarrow$ Lực càng mạnh.</li>
+                        <li>Khoảng cách ($r$) càng xa $\Rightarrow$ Lực càng yếu (yếu đi rất nhanh vì tỉ lệ nghịch với bình phương $r^2$).</li>
+                    </ul>
+                </div>
+
+                <h3 class="text-lg font-bold text-teal-700 mt-6 mb-2">2. Trong môi trường điện môi</h3>
+                <p>Môi trường điện môi (như dầu hỏa, nước tinh khiết) làm yếu lực tương tác đi <span class="math">\(\epsilon\)</span> lần:</p>
+                <div class="formula-display bg-gray-50 border-gray-200">
+                    <span class="text-3xl math">$F = k \frac{|q_1 q_2|}{\epsilon r^2}$</span>
+                </div>
+                <p class="text-sm italic text-gray-600">* Chân không và không khí có $\epsilon = 1$. Các môi trường khác có $\epsilon > 1$.</p>
+            </div>
+        </div>
+
+        <!-- Phần III -->
+        <div class="section-card">
+            <div class="section-header">III. Bài tập vận dụng</div>
+            <div class="p-6">
+                
+                <!-- Bài 1 -->
+                <div class="exercise-box">
+                    <h3 class="font-bold text-lg text-orange-800">Bài 1: Tính lực cơ bản</h3>
+                    <p class="mt-2 text-gray-700">Hai điện tích $q_1 = 2.10^{-8} C$ và $q_2 = -2.10^{-8} C$ đặt cách nhau 10 cm trong chân không. Tính lực tương tác.</p>
+                    <div class="mt-3 p-3 bg-white rounded border border-orange-200 text-sm">
+                        <p class="font-bold text-green-700">Giải:</p>
+                        <p>- <strong>Bước 1:</strong> Đổi $r = 10 cm = 0,1 m$.</p>
+                        <p>- <strong>Bước 2:</strong> Thay số vào công thức:</p>
+                        <p class="py-2 text-center">$F = 9.10^9 \frac{|2.10^{-8} \cdot (-2.10^{-8})|}{0,1^2} = 3,6.10^{-4} N$.</p>
+                        <p>➜ <strong>Kết luận:</strong> Vì $q_1, q_2$ trái dấu nên đây là <strong>lực hút</strong> có độ lớn $3,6.10^{-4} N$.</p>
+                    </div>
+                </div>
+
+                <!-- Bài 2 -->
+                <div class="exercise-box">
+                    <h3 class="font-bold text-lg text-orange-800">Bài 2: Tìm độ lớn điện tích</h3>
+                    <p class="mt-2 text-gray-700">Hai điện tích giống nhau ($q_1 = q_2 = q$) đặt trong chân không cách nhau 4 cm đẩy nhau một lực $9.10^{-5} N$. Tìm $|q|$.</p>
+                    <div class="mt-3 p-3 bg-white rounded border border-orange-200 text-sm">
+                        <p class="font-bold text-green-700">Giải:</p>
+                        <p>- Đổi $r = 4cm = 0,04m$.</p>
+                        <p>- Từ công thức $F = k \frac{q^2}{r^2} \Rightarrow q^2 = \frac{F \cdot r^2}{k}$</p>
+                        <p>- Thay số: $q^2 = \frac{9.10^{-5} \cdot 0,04^2}{9.10^9} = 1,6.10^{-17}$</p>
+                        <p>- Lấy căn bậc hai: $|q| = \sqrt{1,6.10^{-17}} \approx 4.10^{-9} C$.</p>
+                    </div>
+                </div>
+
+                <!-- Bài 3 -->
+                <div class="exercise-box border-red-200 bg-red-50">
+                    <h3 class="font-bold text-lg text-red-800">Bài 3: Bài toán tiếp xúc (Khó)</h3>
+                    <p class="mt-2 text-gray-700">Hai quả cầu $q_1, q_2$ hút nhau lực $F_1 = 10^{-5} N$. Sau khi tiếp xúc rồi đưa về khoảng cũ thì đẩy nhau lực $F_2 = 1,25.10^{-6} N$. Tìm tỷ số $|q_1/q_2|$.</p>
+                    <div class="mt-3 p-3 bg-white rounded border border-red-200 text-sm">
+                        <p class="font-bold text-red-700 text-center uppercase mb-2">Hướng dẫn giải nâng cao</p>
+                        <p>1. Ban đầu hút nhau nên $q_1, q_2$ trái dấu: $F_1 = k \frac{|q_1 q_2|}{r^2}$.</p>
+                        <p>2. Khi tiếp xúc, điện tích chia đều: $q' = \frac{q_1 + q_2}{2}$. Khi đó $F_2 = k \frac{(q')^2}{r^2}$.</p>
+                        <p>3. Lập tỷ số lực để triệt tiêu $k$ và $r$: $\frac{F_1}{F_2} = \frac{4|q_1 q_2|}{(q_1 + q_2)^2} = \frac{10^{-5}}{1,25.10^{-6}} = 8$.</p>
+                        <p>4. Từ đây giải toán đại số để tìm tỷ số giữa $q_1$ và $q_2$.</p>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+
+    <footer class="bg-gray-800 text-white text-center py-6">
+        <p class="text-sm opacity-75">&copy; 2024 - Tài liệu học tập Vật lí 11 - Giao diện cập nhật</p>
+    </footer>
+
+</body>
+</html>
