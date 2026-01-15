@@ -5,8 +5,8 @@ import {
   Loader2, LogOut, GraduationCap, KeyRound, Trash2, AlertTriangle, Cloud, CloudCheck, CloudOff,
   ShieldCheck, Sparkles, Cpu, Zap, Info, AlertCircle, CheckCircle2, BrainCircuit, Trophy, RotateCcw
 } from 'lucide-react';
-import { createClient } from '@supabase/supabase-js';
-import { GoogleGenAI, Type } from "@google/genai";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { GoogleGenAI, Type } from "https://esm.sh/@google/genai";
 import { BookNode, NodeType, AppData, ResourceLink, QuizQuestion } from './types';
 import { INITIAL_DATA } from './constants';
 import TreeItem from './components/TreeItem';
@@ -16,14 +16,7 @@ const SUPABASE_URL = 'https://ktottoplusantmadclpg.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_Fa4z8bEgByw3pGTJdvBqmQ_D_KeDGdl';
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-// Helper to get environment variables securely
-const getEnvValue = (key: string): string | undefined => {
-  const metaEnv = (import.meta as any).env;
-  return metaEnv[`VITE_${key}`] || metaEnv[key] || (process.env as any)[`VITE_${key}`] || (process.env as any)[key];
-};
-
-const TEACHER_PWD = getEnvValue('TEACHER_PASSWORD') || '1234';
-const IS_USING_CUSTOM_PWD = !!getEnvValue('TEACHER_PASSWORD');
+const TEACHER_PWD = (process.env as any).TEACHER_PASSWORD || '1234';
 
 const PHYSICS_QUOTES = [
   "Cái chúng ta biết là một giọt nước, cái chúng ta chưa biết là cả đại dương. - Isaac Newton",
@@ -38,7 +31,6 @@ const App: React.FC = () => {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [iframeLoading, setIframeLoading] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
-  const [cloudStatus, setCloudStatus] = useState<'connected' | 'error' | 'local'>('local');
   const [currentSlogan, setCurrentSlogan] = useState(PHYSICS_QUOTES[0]);
 
   // Quiz States
@@ -58,18 +50,15 @@ const App: React.FC = () => {
   const [resourceModalData, setResourceModalData] = useState<{ id?: string; isGlobal: boolean; title: string; url: string; }>({ isGlobal: false, title: '', url: '' });
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<{ type: 'node' | 'resource'; id: string; isGlobal?: boolean; title: string; } | null>(null);
 
-  // Load cloud data on startup
   const fetchCloudData = useCallback(async () => {
     setIsSyncing(true);
     try {
       const { data: cloudRows, error } = await supabase.from('app_settings').select('data').eq('id', 1).single();
       if (!error && cloudRows?.data) {
         setData(cloudRows.data);
-        setCloudStatus('connected');
       }
     } catch (err) {
-      console.warn('Could not sync with cloud, using local storage.');
-      setCloudStatus('error');
+      console.warn('Could not sync with cloud, using local state.');
     } finally {
       setIsSyncing(false);
     }
@@ -78,14 +67,12 @@ const App: React.FC = () => {
   useEffect(() => { fetchCloudData(); }, [fetchCloudData]);
 
   const saveToCloud = async (newData: AppData) => {
-    localStorage.setItem('v7_app_data', JSON.stringify(newData));
     if (role !== 'teacher') return;
     setIsSyncing(true);
     try {
       await supabase.from('app_settings').upsert({ id: 1, data: newData });
-      setCloudStatus('connected');
     } catch (err) {
-      setCloudStatus('error');
+      console.error('Cloud sync error:', err);
     } finally {
       setIsSyncing(false);
     }
@@ -113,7 +100,6 @@ const App: React.FC = () => {
     setUserAnswers([null, null, null, null, null]);
 
     try {
-      // Use the standard process.env.API_KEY injected by the platform
       const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
       const response = await ai.models.generateContent({
         model: "gemini-3-flash-preview",
@@ -140,7 +126,7 @@ const App: React.FC = () => {
       setQuizQuestions(quizData);
     } catch (error) {
       console.error("Gemini Error:", error);
-      alert("Hệ thống AI chưa sẵn sàng hoặc Key chưa đúng. Vui lòng kiểm tra lại Vercel.");
+      alert("Hệ thống AI đang bận hoặc Key không hợp lệ.");
       setIsQuizModalOpen(false);
     } finally {
       setQuizLoading(false);
@@ -164,6 +150,11 @@ const App: React.FC = () => {
     setShowNodeModal(false);
   };
 
+  const openResourceModal = (isGlobal: boolean, res?: ResourceLink) => {
+    setResourceModalData(res ? { id: res.id, title: res.title, url: res.url, isGlobal } : { isGlobal, title: '', url: '' });
+    setShowResourceModal(true);
+  };
+
   const saveResource = (e: React.FormEvent) => {
     e.preventDefault();
     const { id, title, url, isGlobal } = resourceModalData;
@@ -182,13 +173,6 @@ const App: React.FC = () => {
     setShowResourceModal(false);
   };
 
-  // Fix: Added missing openResourceModal function
-  const openResourceModal = (isGlobal: boolean, res?: ResourceLink) => {
-    setResourceModalData(res ? { id: res.id, title: res.title, url: res.url, isGlobal } : { isGlobal, title: '', url: '' });
-    setShowResourceModal(true);
-  };
-
-  // Fix: Added missing executeDelete function
   const executeDelete = () => {
     if (!showDeleteConfirm) return;
     const { type, id, isGlobal } = showDeleteConfirm;
@@ -232,7 +216,6 @@ const App: React.FC = () => {
                   <button type="submit" className="flex-2 px-8 py-4 bg-amber-500 text-white rounded-2xl font-black uppercase shadow-lg">Mở khóa</button>
                 </div>
               </form>
-              <p className="text-[10px] font-black uppercase text-gray-400">{IS_USING_CUSTOM_PWD ? 'Đã nhận biến Vercel' : 'Đang dùng mật mã 1234'}</p>
             </div>
           )}
         </div>
@@ -249,7 +232,7 @@ const App: React.FC = () => {
       {isQuizModalOpen && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 bg-slate-900/80 backdrop-blur-xl">
           <div className="bg-white rounded-[40px] shadow-2xl w-full max-w-2xl max-h-[85vh] flex flex-col overflow-hidden animate-in zoom-in duration-300">
-            <header className="p-8 bg-indigo-600 text-white flex justify-between items-center">
+            <header className="p-8 bg-indigo-600 text-white flex justify-between items-center shrink-0">
               <div className="flex items-center gap-4">
                 <BrainCircuit size={32} />
                 <div>
@@ -300,7 +283,7 @@ const App: React.FC = () => {
               )}
             </div>
 
-            <footer className="p-8 bg-slate-50 flex justify-between items-center">
+            <footer className="p-8 bg-slate-50 flex justify-between items-center shrink-0">
               {!showResults ? (
                 <button disabled={quizLoading || userAnswers.some(a => a === null)} onClick={() => setShowResults(true)} className="w-full py-5 bg-indigo-600 text-white rounded-2xl font-black uppercase tracking-widest shadow-xl disabled:opacity-30">Nộp bài ngay</button>
               ) : (
@@ -324,7 +307,7 @@ const App: React.FC = () => {
       <aside className={`w-80 border-r flex flex-col shrink-0 ${isAdmin ? 'bg-amber-50/30' : 'bg-slate-50'}`}>
         <div className={`p-8 flex justify-between items-center text-white ${isAdmin ? 'bg-amber-500' : 'bg-indigo-600'} shadow-lg`}>
           <div className="flex items-center gap-3"><Book size={24} /><h1 className="font-black text-xl uppercase tracking-tighter">Vật Lý 11</h1></div>
-          {isAdmin && <button onClick={() => setShowNodeModal(true)} className="p-2 bg-white/20 rounded-xl"><Plus size={20}/></button>}
+          {isAdmin && <button onClick={() => { setNodeModalData({ parentId: null, type: 'folder', title: '', url: '' }); setShowNodeModal(true); }} className="p-2 bg-white/20 rounded-xl"><Plus size={20}/></button>}
         </div>
         <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
           {data.nodes.filter(n => n.parentId === null).map(node => (
@@ -332,10 +315,10 @@ const App: React.FC = () => {
           ))}
         </div>
         <div className="p-4 border-t border-gray-100 flex flex-col gap-2">
-          <div className="flex items-center justify-center gap-2 text-[10px] font-black uppercase text-gray-400 py-2 bg-white/50 rounded-xl">
-             <CloudCheck size={14} className="text-green-500" /> Hệ thống Online
+           <div className="flex items-center justify-center gap-2 text-[10px] font-black uppercase text-gray-400 py-2 bg-white/50 rounded-xl">
+             {isSyncing ? <Loader2 size={14} className="animate-spin text-indigo-500" /> : <CloudCheck size={14} className="text-green-500" />} {isSyncing ? 'Đang đồng bộ...' : 'Hệ thống Online'}
           </div>
-          <button onClick={() => setRole('none')} className="w-full py-4 bg-white border border-gray-100 text-gray-400 font-black uppercase text-[10px] rounded-xl flex items-center justify-center gap-2 hover:text-red-500 transition-colors"><LogOut size={14}/> Thoát phiên làm việc</button>
+          <button onClick={() => setRole('none')} className="w-full py-4 bg-white border border-gray-100 text-gray-400 font-black uppercase text-[10px] rounded-xl flex items-center justify-center gap-2 hover:text-red-500 transition-colors"><LogOut size={14}/> Thoát phiên</button>
         </div>
       </aside>
 
@@ -350,28 +333,28 @@ const App: React.FC = () => {
               </div>
               <div className="flex items-center gap-3">
                 {selectedNode?.type === 'lesson' && (
-                  <button onClick={generateAIQuiz} className="flex items-center gap-2 px-6 py-3 bg-indigo-600 text-white rounded-2xl font-black text-[10px] uppercase shadow-lg shadow-indigo-100 hover:scale-105 transition-all"><BrainCircuit size={18}/> AI Quiz</button>
+                  <button onClick={generateAIQuiz} className="flex items-center gap-2 px-6 py-3 bg-indigo-600 text-white rounded-2xl font-black text-[10px] uppercase shadow-lg hover:scale-105 transition-all"><BrainCircuit size={18}/> AI Quiz</button>
                 )}
                 {selectedNode?.url && <a href={selectedNode.url} target="_blank" rel="noreferrer" className="p-3 bg-gray-50 text-gray-400 rounded-xl hover:bg-gray-100"><Maximize2 size={18}/></a>}
               </div>
             </header>
-            <div className="flex-1 bg-slate-100 relative">
+            <div className="flex-1 bg-slate-100 relative overflow-hidden">
               {iframeLoading && (
                 <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/90 z-20">
                   <Loader2 size={40} className="animate-spin text-indigo-500 mb-4" />
-                  <p className="font-black text-[10px] text-gray-400 uppercase tracking-[0.2em]">Nạp bài giảng...</p>
+                  <p className="font-black text-[10px] text-gray-400 uppercase tracking-[0.2em]">Nạp nội dung...</p>
                 </div>
               )}
               {selectedNode?.url ? (
-                <iframe src={selectedNode.url} className="w-full h-full border-none shadow-inner" onLoad={() => setIframeLoading(false)} />
+                <iframe src={selectedNode.url} className="w-full h-full border-none" onLoad={() => setIframeLoading(false)} />
               ) : (
-                <div className="w-full h-full flex items-center justify-center text-gray-300 italic">Nội dung đang được chuẩn bị</div>
+                <div className="w-full h-full flex items-center justify-center text-gray-300 italic">Chọn bài học để hiển thị nội dung</div>
               )}
             </div>
           </>
         ) : (
           <div className="flex-1 flex flex-col items-center justify-center space-y-8 bg-slate-50">
-             <div className="p-20 bg-white rounded-[60px] shadow-2xl animate-pulse"><Book size={100} className="text-indigo-100" /></div>
+             <div className="p-20 bg-white rounded-[60px] shadow-2xl"><Book size={100} className="text-indigo-100" /></div>
              <h2 className="text-3xl font-black text-slate-200 uppercase tracking-tighter">Chọn bài giảng để bắt đầu</h2>
           </div>
         )}
@@ -384,7 +367,7 @@ const App: React.FC = () => {
              <h3 className="font-black text-[10px] text-gray-400 uppercase tracking-widest">Tài liệu riêng</h3>
              {isAdmin && selectedId && <button onClick={() => openResourceModal(false)} className="text-indigo-600"><Plus size={20}/></button>}
            </div>
-           <div className="flex-1 overflow-y-auto p-4 space-y-3">
+           <div className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar">
               {selectedNode?.lessonResources.map(res => (
                 <div key={res.id} className="group relative">
                   <a href={res.url} target="_blank" rel="noreferrer" className="block p-4 bg-white border border-gray-100 rounded-2xl font-bold text-xs text-indigo-600 hover:shadow-md transition-all truncate shadow-sm">
@@ -398,7 +381,7 @@ const App: React.FC = () => {
                   )}
                 </div>
               ))}
-              {(!selectedNode?.lessonResources.length) && <p className="text-center text-[10px] text-gray-300 italic pt-10">Chưa có tài liệu bổ trợ</p>}
+              {(!selectedNode?.lessonResources.length) && <p className="text-center text-[10px] text-gray-300 italic pt-10">Trống</p>}
            </div>
         </div>
         <div className="flex-1 flex flex-col bg-white/40">
@@ -406,7 +389,7 @@ const App: React.FC = () => {
              <h3 className="font-black text-[10px] text-gray-400 uppercase tracking-widest">Thư viện chung</h3>
              {isAdmin && <button onClick={() => openResourceModal(true)} className="text-indigo-600"><Plus size={20}/></button>}
            </div>
-           <div className="flex-1 overflow-y-auto p-4 space-y-3">
+           <div className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar">
               {data.globalResources.map(res => (
                 <div key={res.id} className="group relative">
                   <a href={res.url} target="_blank" rel="noreferrer" className="block p-4 bg-white border border-gray-100 rounded-2xl font-bold text-xs text-slate-600 hover:shadow-md transition-all truncate shadow-sm">
@@ -424,14 +407,14 @@ const App: React.FC = () => {
         </div>
       </aside>
 
-      {/* Fix: Added missing RESOURCE MODAL */}
+      {/* RESOURCE MODAL */}
       {showResourceModal && (
         <div className="fixed inset-0 z-[210] flex items-center justify-center p-6 bg-black/40 backdrop-blur-sm">
           <div className="bg-white rounded-[40px] shadow-2xl w-full max-w-sm p-10 space-y-6">
-            <h3 className="font-black uppercase text-gray-800 tracking-tight">Cấu hình tài liệu</h3>
+            <h3 className="font-black uppercase text-gray-800">Thông tin tài liệu</h3>
             <form onSubmit={saveResource} className="space-y-4">
                <input type="text" autoFocus value={resourceModalData.title} onChange={(e) => setResourceModalData({...resourceModalData, title: e.target.value})} placeholder="Tên tài liệu..." className="w-full px-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl font-bold" />
-               <input type="text" value={resourceModalData.url} onChange={(e) => setResourceModalData({...resourceModalData, url: e.target.value})} placeholder="URL (YouTube, Drive...)..." className="w-full px-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl font-mono text-xs" />
+               <input type="text" value={resourceModalData.url} onChange={(e) => setResourceModalData({...resourceModalData, url: e.target.value})} placeholder="URL (YouTube, Drive...)" className="w-full px-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl font-mono text-xs" />
                <div className="flex gap-4 pt-4">
                  <button type="button" onClick={() => setShowResourceModal(false)} className="flex-1 py-4 font-black text-gray-400 uppercase">Hủy</button>
                  <button type="submit" className="flex-2 px-10 py-4 bg-indigo-600 text-white rounded-2xl font-black uppercase shadow-lg">Lưu lại</button>
@@ -445,10 +428,10 @@ const App: React.FC = () => {
       {showNodeModal && (
         <div className="fixed inset-0 z-[210] flex items-center justify-center p-6 bg-black/40 backdrop-blur-sm">
           <div className="bg-white rounded-[40px] shadow-2xl w-full max-w-sm p-10 space-y-6">
-            <h3 className="font-black uppercase text-gray-800 tracking-tight">Cấu trúc thư viện</h3>
+            <h3 className="font-black uppercase text-gray-800">Cấu trúc nội dung</h3>
             <form onSubmit={saveNode} className="space-y-4">
-               <input type="text" autoFocus value={nodeModalData.title} onChange={(e) => setNodeModalData({...nodeModalData, title: e.target.value})} placeholder="Tên bài giảng..." className="w-full px-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl font-bold" />
-               <input type="text" value={nodeModalData.url} onChange={(e) => setNodeModalData({...nodeModalData, url: e.target.value})} placeholder="URL nội dung (nếu có)..." className="w-full px-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl font-mono text-xs" />
+               <input type="text" autoFocus value={nodeModalData.title} onChange={(e) => setNodeModalData({...nodeModalData, title: e.target.value})} placeholder="Tiêu đề..." className="w-full px-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl font-bold" />
+               <input type="text" value={nodeModalData.url} onChange={(e) => setNodeModalData({...nodeModalData, url: e.target.value})} placeholder="URL bài học (Wikipedia, Docs...)" className="w-full px-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl font-mono text-xs" />
                <div className="flex gap-4 pt-4">
                  <button type="button" onClick={() => setShowNodeModal(false)} className="flex-1 py-4 font-black text-gray-400 uppercase">Hủy</button>
                  <button type="submit" className="flex-2 px-10 py-4 bg-indigo-600 text-white rounded-2xl font-black uppercase shadow-lg">Lưu lại</button>
@@ -463,10 +446,9 @@ const App: React.FC = () => {
         <div className="fixed inset-0 z-[220] flex items-center justify-center p-6 bg-black/50 backdrop-blur-sm">
           <div className="bg-white rounded-[40px] shadow-2xl w-full max-w-xs p-10 text-center space-y-6">
             <div className="w-20 h-20 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto"><AlertTriangle size={40}/></div>
-            <p className="font-bold text-gray-800 leading-relaxed">Xóa vĩnh viễn mục <br/><span className="text-red-500 font-black">"{showDeleteConfirm.title}"</span>?</p>
+            <p className="font-bold text-gray-800">Xóa vĩnh viễn <br/><span className="text-red-500 font-black">"{showDeleteConfirm.title}"</span>?</p>
             <div className="flex gap-4">
                <button onClick={() => setShowDeleteConfirm(null)} className="flex-1 py-4 font-black text-gray-400 uppercase">Hủy</button>
-               {/* Fix: executeDelete is now defined */}
                <button onClick={executeDelete} className="flex-1 py-4 bg-red-500 text-white rounded-2xl font-black uppercase">Xóa</button>
             </div>
           </div>
