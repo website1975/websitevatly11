@@ -3,7 +3,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { 
   Book, X, Pencil, Plus, Globe, Maximize2, Loader2, LogOut, GraduationCap, 
   KeyRound, Trash2, AlertTriangle, CloudCheck, BrainCircuit, Trophy, RotateCcw,
-  ShieldCheck, Folder, ChevronRight, ChevronDown
+  ShieldCheck, Folder, ChevronLeft, ChevronRight
 } from 'https://esm.sh/lucide-react@^0.562.0';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { GoogleGenAI, Type } from "https://esm.sh/@google/genai";
@@ -11,24 +11,16 @@ import { BookNode, NodeType, AppData, ResourceLink, QuizQuestion } from './types
 import { INITIAL_DATA } from './constants';
 import TreeItem from './components/TreeItem';
 
-// Helper để lấy biến môi trường an toàn trên cả Vite và Node environment
 const getSafeEnv = (key: string): string | undefined => {
-  // 1. Thử lấy từ process.env (Chuẩn Node/Vercel)
   try {
-    const val = (process.env as any)[key];
-    if (val) return val;
+    const fromProcess = (process.env as any)[key] || (process.env as any)[`VITE_${key}`];
+    if (fromProcess) return fromProcess;
+    const fromMeta = (import.meta as any).env[key] || (import.meta as any).env[`VITE_${key}`];
+    if (fromMeta) return fromMeta;
   } catch (e) {}
-
-  // 2. Thử lấy từ import.meta.env (Chuẩn Vite)
-  try {
-    const val = (import.meta as any).env[key] || (import.meta as any).env[`VITE_${key}`];
-    if (val) return val;
-  } catch (e) {}
-
   return undefined;
 };
 
-// Supabase config
 const SUPABASE_URL = 'https://ktottoplusantmadclpg.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_Fa4z8bEgByw3pGTJdvBqmQ_D_KeDGdl';
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -36,10 +28,9 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 const TEACHER_PWD = getSafeEnv('TEACHER_PASSWORD') || '1234';
 
 const PHYSICS_QUOTES = [
-  "Cái chúng ta biết là một giọt nước, cái chúng ta chưa biết là cả đại dương. - Isaac Newton",
-  "Trí tưởng tượng quan trọng hơn kiến thức. - Albert Einstein",
-  "Mọi quy luật tự nhiên đều ẩn chứa một vẻ đẹp toán học sâu sắc.",
-  "Khoa học là để phục vụ con người, không phải để điều khiển họ."
+  "Cái chúng ta biết là một giọt nước, cái chúng ta chưa biết là cả đại dương.",
+  "Trí tưởng tượng quan trọng hơn kiến thức.",
+  "Mọi quy luật tự nhiên đều ẩn chứa một vẻ đẹp toán học sâu sắc."
 ];
 
 const App: React.FC = () => {
@@ -56,6 +47,7 @@ const App: React.FC = () => {
   const [quizLoading, setQuizLoading] = useState(false);
   const [userAnswers, setUserAnswers] = useState<(number | null)[]>([]);
   const [showResults, setShowResults] = useState(false);
+  const [currentQuizIdx, setCurrentQuizIdx] = useState(0);
 
   // UI Modals
   const [showPassInput, setShowPassInput] = useState(false);
@@ -71,11 +63,9 @@ const App: React.FC = () => {
     setIsSyncing(true);
     try {
       const { data: cloudRows, error } = await supabase.from('app_settings').select('data').eq('id', 1).single();
-      if (!error && cloudRows?.data) {
-        setData(cloudRows.data);
-      }
+      if (!error && cloudRows?.data) setData(cloudRows.data);
     } catch (err) {
-      console.warn('Cloud sync unavailable');
+      console.warn('Offline mode');
     } finally {
       setIsSyncing(false);
     }
@@ -89,7 +79,7 @@ const App: React.FC = () => {
     try {
       await supabase.from('app_settings').upsert({ id: 1, data: newData });
     } catch (err) {
-      console.error('Cloud sync error:', err);
+      console.error('Cloud save error');
     } finally {
       setIsSyncing(false);
     }
@@ -104,29 +94,31 @@ const App: React.FC = () => {
     setSelectedId(id);
     const node = data.nodes.find(n => n.id === id);
     if (node && node.url) setIframeLoading(true);
-    setIsQuizModalOpen(false);
   };
 
   const generateAIQuiz = async () => {
     const selectedNode = data.nodes.find(n => n.id === selectedId);
     if (!selectedNode) return;
 
+    setIsQuizModalOpen(true);
+    setQuizLoading(true);
+    setShowResults(false);
+    setCurrentQuizIdx(0);
+    setUserAnswers([]);
+
     const apiKey = getSafeEnv('API_KEY');
     if (!apiKey) {
-      alert("Lỗi: Không tìm thấy API_KEY. Hãy kiểm tra cài đặt Environment Variables trên Vercel.");
+      alert("Lỗi: Vui lòng cấu hình API_KEY trong phần Environment Variables của Vercel.");
+      setQuizLoading(false);
+      setIsQuizModalOpen(false);
       return;
     }
-
-    setQuizLoading(true);
-    setIsQuizModalOpen(true);
-    setShowResults(false);
-    setUserAnswers([null, null, null, null, null]);
 
     try {
       const ai = new GoogleGenAI({ apiKey });
       const response = await ai.models.generateContent({
         model: "gemini-3-flash-preview",
-        contents: `Bạn là giáo viên Vật Lý. Hãy tạo 5 câu hỏi trắc nghiệm tiếng Việt về chủ đề: "${selectedNode.title}". Định dạng JSON với question, options (mảng 4 chuỗi), correctIndex (0-3), và explanation.`,
+        contents: `Bạn là giáo viên Vật Lý. Hãy tạo đúng 5 câu hỏi trắc nghiệm tiếng Việt về chủ đề: "${selectedNode.title}". Định dạng JSON với question, options (mảng 4 chuỗi), correctIndex (0-3), và explanation.`,
         config: {
           responseMimeType: "application/json",
           responseSchema: {
@@ -147,9 +139,10 @@ const App: React.FC = () => {
 
       const quizData = JSON.parse(response.text || "[]");
       setQuizQuestions(quizData);
+      setUserAnswers(new Array(quizData.length).fill(null));
     } catch (error) {
       console.error("Gemini Error:", error);
-      alert("Hệ thống AI không phản hồi hoặc Key không hợp lệ.");
+      alert("Hệ thống AI đang bận. Vui lòng thử lại sau.");
       setIsQuizModalOpen(false);
     } finally {
       setQuizLoading(false);
@@ -183,11 +176,8 @@ const App: React.FC = () => {
     const { id, title, url, isGlobal } = resourceModalData;
     if (!title.trim() || !url.trim()) return;
     if (id) {
-      if (isGlobal) {
-        updateData({ ...data, globalResources: data.globalResources.map(r => r.id === id ? { ...r, title, url } : r) });
-      } else if (selectedId) {
-        updateData({ ...data, nodes: data.nodes.map(n => n.id === selectedId ? { ...n, lessonResources: n.lessonResources.map(r => r.id === id ? { ...r, title, url } : r) } : n) });
-      }
+      if (isGlobal) updateData({ ...data, globalResources: data.globalResources.map(r => r.id === id ? { ...r, title, url } : r) });
+      else if (selectedId) updateData({ ...data, nodes: data.nodes.map(n => n.id === selectedId ? { ...n, lessonResources: n.lessonResources.map(r => r.id === id ? { ...r, title, url } : r) } : n) });
     } else {
       const newRes: ResourceLink = { id: `res-${Date.now()}`, title, url };
       if (isGlobal) updateData({ ...data, globalResources: [...data.globalResources, newRes] });
@@ -204,41 +194,37 @@ const App: React.FC = () => {
       updateData({ ...data, nodes: nextNodes });
       if (selectedId === id) setSelectedId(null);
     } else {
-      if (isGlobal) {
-        updateData({ ...data, globalResources: data.globalResources.filter(r => r.id !== id) });
-      } else if (selectedId) {
-        updateData({ ...data, nodes: data.nodes.map(n => n.id === selectedId ? { ...n, lessonResources: n.lessonResources.filter(r => r.id !== id) } : n) });
-      }
+      if (isGlobal) updateData({ ...data, globalResources: data.globalResources.filter(r => r.id !== id) });
+      else if (selectedId) updateData({ ...data, nodes: data.nodes.map(n => n.id === selectedId ? { ...n, lessonResources: n.lessonResources.filter(r => r.id !== id) } : n) });
     }
     setShowDeleteConfirm(null);
   };
 
   if (role === 'none') {
     return (
-      <div className="h-screen w-full flex items-center justify-center bg-slate-50 p-6">
-        <div className="max-w-4xl w-full grid grid-cols-1 md:grid-cols-2 gap-8">
-          <button onClick={() => setRole('student')} className="group bg-white p-12 rounded-[50px] shadow-2xl hover:scale-105 transition-all flex flex-col items-center text-center space-y-6">
-            <div className="w-24 h-24 bg-indigo-100 text-indigo-600 rounded-[30px] flex items-center justify-center"><GraduationCap size={48} /></div>
-            <h2 className="text-3xl font-black text-gray-800 uppercase">Học sinh</h2>
-            <div className="px-10 py-4 bg-indigo-600 text-white rounded-2xl font-black uppercase tracking-widest shadow-xl">Vào học</div>
+      <div className="h-screen w-full flex items-center justify-center bg-indigo-50/30 p-6">
+        <div className="max-w-4xl w-full grid grid-cols-1 md:grid-cols-2 gap-10">
+          <button onClick={() => setRole('student')} className="group bg-white p-12 rounded-[60px] shadow-2xl hover:-translate-y-2 transition-all flex flex-col items-center text-center space-y-6">
+            <div className="w-24 h-24 bg-sky-100 text-sky-600 rounded-[30px] flex items-center justify-center"><GraduationCap size={48} /></div>
+            <h2 className="text-3xl font-black text-slate-800 uppercase tracking-tighter">Học sinh</h2>
+            <div className="px-12 py-4 bg-sky-600 text-white rounded-2xl font-black uppercase tracking-widest shadow-xl group-hover:bg-sky-700">Vào lớp học</div>
           </button>
           
           {!showPassInput ? (
-            <button onClick={() => setShowPassInput(true)} className="group bg-white p-12 rounded-[50px] shadow-2xl hover:scale-105 transition-all flex flex-col items-center text-center space-y-6">
+            <button onClick={() => setShowPassInput(true)} className="group bg-white p-12 rounded-[60px] shadow-2xl hover:-translate-y-2 transition-all flex flex-col items-center text-center space-y-6">
               <div className="w-24 h-24 bg-amber-100 text-amber-600 rounded-[30px] flex items-center justify-center"><ShieldCheck size={48} /></div>
-              <h2 className="text-3xl font-black text-gray-800 uppercase">Giáo viên</h2>
-              <div className="px-10 py-4 bg-amber-500 text-white rounded-2xl font-black uppercase tracking-widest shadow-xl">Soạn bài</div>
+              <h2 className="text-3xl font-black text-slate-800 uppercase tracking-tighter">Giáo viên</h2>
+              <div className="px-12 py-4 bg-amber-500 text-white rounded-2xl font-black uppercase tracking-widest shadow-xl group-hover:bg-amber-600">Bảng điều khiển</div>
             </button>
           ) : (
-            <div className="bg-white p-12 rounded-[50px] shadow-2xl border-4 border-amber-500 flex flex-col items-center justify-center space-y-6 animate-in zoom-in duration-300">
+            <div className="bg-white p-12 rounded-[60px] shadow-2xl border-4 border-amber-500 flex flex-col items-center justify-center space-y-6 animate-in zoom-in duration-300">
               <KeyRound size={40} className="text-amber-500" />
               <form onSubmit={(e) => { e.preventDefault(); if (teacherPass.trim() === TEACHER_PWD.trim()) { setRole('teacher'); setShowPassInput(false); } else setPassError(true); }} className="w-full space-y-4">
-                <input type="password" autoFocus value={teacherPass} onChange={(e) => { setTeacherPass(e.target.value); setPassError(false); }} placeholder="Mật mã..." className={`w-full px-6 py-5 bg-gray-50 border-2 rounded-3xl text-center text-xl font-black ${passError ? 'border-red-500 animate-pulse' : 'border-gray-100 focus:border-amber-400'}`} />
+                <input type="password" autoFocus value={teacherPass} onChange={(e) => { setTeacherPass(e.target.value); setPassError(false); }} placeholder="Nhập mã pin..." className={`w-full px-6 py-5 bg-slate-50 border-2 rounded-3xl text-center text-xl font-black ${passError ? 'border-red-500 animate-pulse' : 'border-slate-100 focus:border-amber-400 focus:ring-4 focus:ring-amber-100'}`} />
                 <div className="flex gap-4">
-                  <button type="button" onClick={() => setShowPassInput(false)} className="flex-1 py-4 font-black text-gray-400 uppercase">Hủy</button>
-                  <button type="submit" className="flex-2 px-8 py-4 bg-amber-500 text-white rounded-2xl font-black uppercase shadow-lg">Mở khóa</button>
+                  <button type="button" onClick={() => setShowPassInput(false)} className="flex-1 py-4 font-black text-slate-400 uppercase text-xs">Hủy</button>
+                  <button type="submit" className="flex-2 px-8 py-4 bg-amber-500 text-white rounded-2xl font-black uppercase shadow-lg text-xs">Xác nhận</button>
                 </div>
-                {passError && <p className="text-red-500 text-[10px] font-black uppercase">Sai mật mã, vui lòng kiểm tra lại!</p>}
               </form>
             </div>
           )}
@@ -249,100 +235,160 @@ const App: React.FC = () => {
 
   const isAdmin = role === 'teacher';
   const selectedNode = data.nodes.find(n => n.id === selectedId);
+  const currentQ = quizQuestions[currentQuizIdx];
 
   return (
     <div className="flex h-screen bg-white overflow-hidden font-sans">
-      {/* AI QUIZ MODAL */}
+      {/* AI QUIZ MODAL - IMPROVED STEP-BY-STEP */}
       {isQuizModalOpen && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 bg-slate-900/80 backdrop-blur-xl">
-          <div className="bg-white rounded-[40px] shadow-2xl w-full max-w-2xl max-h-[85vh] flex flex-col overflow-hidden animate-in zoom-in duration-300">
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-900/90 backdrop-blur-xl">
+          <div className="bg-white rounded-[40px] shadow-2xl w-full max-w-2xl overflow-hidden animate-in zoom-in duration-300 flex flex-col max-h-[90vh]">
             <header className="p-8 bg-indigo-600 text-white flex justify-between items-center shrink-0">
               <div className="flex items-center gap-4">
-                <BrainCircuit size={32} />
+                <div className="p-3 bg-white/20 rounded-2xl"><BrainCircuit size={28} /></div>
                 <div>
                   <h3 className="text-xl font-black uppercase leading-tight">AI Quiz Master</h3>
-                  <p className="text-[10px] font-bold uppercase opacity-60 truncate max-w-[300px]">{selectedNode?.title}</p>
+                  <p className="text-[10px] font-bold uppercase opacity-60 tracking-widest">Đang kiểm tra: {selectedNode?.title}</p>
                 </div>
               </div>
-              <button onClick={() => setIsQuizModalOpen(false)} className="p-2 hover:bg-white/20 rounded-full"><X /></button>
+              <button onClick={() => setIsQuizModalOpen(false)} className="p-2 hover:bg-white/20 rounded-full transition-colors"><X /></button>
             </header>
 
-            <div className="flex-1 overflow-y-auto p-8 space-y-8 custom-scrollbar">
+            <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
               {quizLoading ? (
                 <div className="flex flex-col items-center justify-center py-20">
-                  <Loader2 size={60} className="animate-spin text-indigo-500 mb-6" />
-                  <p className="font-black text-indigo-400 uppercase animate-pulse">Giáo viên AI đang ra đề...</p>
+                  <div className="relative mb-8">
+                    <Loader2 size={80} className="animate-spin text-indigo-500" />
+                    <BrainCircuit size={30} className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-indigo-300" />
+                  </div>
+                  <p className="font-black text-indigo-400 uppercase animate-pulse text-sm">Giáo viên AI đang biên soạn đề...</p>
                 </div>
               ) : (
-                quizQuestions.map((q, qIdx) => (
-                  <div key={qIdx} className={`p-6 rounded-3xl border-2 transition-all ${showResults ? (userAnswers[qIdx] === q.correctIndex ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200') : 'bg-slate-50 border-transparent'}`}>
-                    <h4 className="font-bold text-gray-800 mb-4 flex gap-3 text-sm">
-                      <span className="w-6 h-6 shrink-0 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center text-[10px] font-black">{qIdx + 1}</span>
-                      {q.question}
-                    </h4>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pl-9">
-                      {q.options.map((opt, oIdx) => {
-                        const isSelected = userAnswers[qIdx] === oIdx;
-                        const isCorrect = q.correctIndex === oIdx;
-                        let style = "bg-white border-slate-200 hover:border-indigo-300";
-                        if (showResults) {
-                          if (isCorrect) style = "bg-green-500 border-green-500 text-white";
-                          else if (isSelected) style = "bg-red-500 border-red-500 text-white";
-                          else style = "bg-white border-slate-100 opacity-50";
-                        } else if (isSelected) {
-                          style = "bg-indigo-600 border-indigo-600 text-white shadow-xl";
-                        }
-                        return (
-                          <button key={oIdx} disabled={showResults} onClick={() => { const n = [...userAnswers]; n[qIdx] = oIdx; setUserAnswers(n); }} className={`p-3 rounded-xl border-2 text-left text-[11px] font-bold transition-all ${style}`}>{opt}</button>
-                        );
-                      })}
-                    </div>
-                    {showResults && (
-                      <div className="mt-4 ml-9 p-4 bg-white/50 rounded-2xl border border-dashed border-gray-300 text-[10px] text-gray-600 italic">
-                        <strong>Giải thích:</strong> {q.explanation}
-                      </div>
-                    )}
+                <div className="space-y-8 animate-in slide-in-from-right duration-500">
+                  {/* Progress Bar */}
+                  <div className="flex gap-2">
+                    {quizQuestions.map((_, i) => (
+                      <div key={i} className={`h-2 flex-1 rounded-full transition-all duration-500 ${i <= currentQuizIdx ? 'bg-indigo-500' : 'bg-slate-100'}`} />
+                    ))}
                   </div>
-                ))
+
+                  {!showResults ? (
+                    currentQ && (
+                      <div className="space-y-6">
+                        <div className="flex items-start gap-4">
+                          <span className="shrink-0 w-10 h-10 bg-indigo-600 text-white rounded-2xl flex items-center justify-center font-black text-lg shadow-lg shadow-indigo-200">
+                            {currentQuizIdx + 1}
+                          </span>
+                          <h4 className="text-xl font-bold text-slate-800 leading-tight pt-1">
+                            {currentQ.question}
+                          </h4>
+                        </div>
+                        
+                        <div className="grid grid-cols-1 gap-4 mt-8">
+                          {currentQ.options.map((opt, oIdx) => {
+                            const isSelected = userAnswers[currentQuizIdx] === oIdx;
+                            return (
+                              <button 
+                                key={oIdx}
+                                onClick={() => {
+                                  const n = [...userAnswers];
+                                  n[currentQuizIdx] = oIdx;
+                                  setUserAnswers(n);
+                                }}
+                                className={`group p-5 rounded-3xl border-2 text-left transition-all duration-200 active:scale-[0.98] flex items-center gap-4 ${
+                                  isSelected 
+                                    ? 'bg-indigo-600 border-indigo-600 text-white shadow-xl shadow-indigo-100 translate-x-2' 
+                                    : 'bg-slate-50 border-slate-100 hover:border-indigo-300 hover:bg-white text-slate-700'
+                                }`}
+                              >
+                                <span className={`w-8 h-8 rounded-xl flex items-center justify-center font-black text-xs shrink-0 ${isSelected ? 'bg-white/20 text-white' : 'bg-white border border-slate-200 text-indigo-500 shadow-sm'}`}>
+                                  {String.fromCharCode(65 + oIdx)}
+                                </span>
+                                <span className="font-bold text-sm">{opt}</span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )
+                  ) : (
+                    <div className="text-center py-10 space-y-6">
+                      <div className="relative inline-block">
+                        <Trophy size={100} className="text-amber-400 mx-auto" />
+                        <div className="absolute inset-0 animate-ping bg-amber-200 rounded-full opacity-20" />
+                      </div>
+                      <h3 className="text-4xl font-black text-slate-800 uppercase tracking-tighter">Kết quả: {calculateScore()}/{quizQuestions.length}</h3>
+                      <p className="text-slate-400 font-bold">Bạn đã hoàn thành thử thách từ AI!</p>
+                      
+                      <div className="space-y-4 text-left mt-10">
+                         {quizQuestions.map((q, idx) => (
+                           <div key={idx} className={`p-4 rounded-2xl border ${userAnswers[idx] === q.correctIndex ? 'bg-green-50 border-green-100' : 'bg-red-50 border-red-100'}`}>
+                             <p className="text-xs font-bold text-slate-800">Câu {idx + 1}: {userAnswers[idx] === q.correctIndex ? 'Chính xác' : 'Chưa đúng'}</p>
+                             <p className="text-[10px] text-slate-500 mt-1 italic">{q.explanation}</p>
+                           </div>
+                         ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
               )}
             </div>
 
-            <footer className="p-8 bg-slate-50 flex justify-between items-center shrink-0">
-              {!showResults ? (
-                <button disabled={quizLoading || userAnswers.some(a => a === null)} onClick={() => setShowResults(true)} className="w-full py-5 bg-indigo-600 text-white rounded-2xl font-black uppercase tracking-widest shadow-xl disabled:opacity-30">Hoàn thành bài tập</button>
-              ) : (
-                <div className="w-full flex justify-between items-center">
-                  <div className="flex items-center gap-4">
-                    <Trophy className="text-amber-500" size={32} />
-                    <span className="text-2xl font-black text-gray-800">{calculateScore()}/5 câu đúng</span>
-                  </div>
-                  <div className="flex gap-4">
-                    <button onClick={generateAIQuiz} className="px-6 py-4 bg-white border-2 border-slate-200 rounded-2xl font-black uppercase text-xs flex items-center gap-2"><RotateCcw size={14}/> Đổi đề AI</button>
-                    <button onClick={() => setIsQuizModalOpen(false)} className="px-8 py-4 bg-slate-800 text-white rounded-2xl font-black uppercase text-xs">Thoát</button>
-                  </div>
+            <footer className="p-8 bg-slate-50 border-t border-slate-100 flex justify-between items-center shrink-0">
+              {!showResults && !quizLoading ? (
+                <>
+                  <button 
+                    disabled={currentQuizIdx === 0}
+                    onClick={() => setCurrentQuizIdx(p => p - 1)}
+                    className="flex items-center gap-2 px-6 py-4 rounded-2xl font-black text-xs uppercase text-slate-400 hover:text-indigo-600 disabled:opacity-20 transition-all"
+                  >
+                    <ChevronLeft size={20} /> Câu trước
+                  </button>
+                  
+                  {currentQuizIdx === quizQuestions.length - 1 ? (
+                    <button 
+                      disabled={userAnswers.some(a => a === null)}
+                      onClick={() => setShowResults(true)}
+                      className="px-10 py-4 bg-indigo-600 text-white rounded-2xl font-black uppercase tracking-widest shadow-xl shadow-indigo-200 hover:bg-indigo-700 disabled:opacity-30 transition-all active:scale-95"
+                    >
+                      Nộp bài ngay
+                    </button>
+                  ) : (
+                    <button 
+                      onClick={() => setCurrentQuizIdx(p => p + 1)}
+                      className="flex items-center gap-2 px-8 py-4 bg-white border-2 border-slate-200 rounded-2xl font-black text-xs uppercase text-indigo-600 hover:border-indigo-600 transition-all active:scale-95 shadow-sm"
+                    >
+                      Câu tiếp <ChevronRight size={20} />
+                    </button>
+                  )}
+                </>
+              ) : showResults ? (
+                <div className="w-full flex gap-4">
+                  <button onClick={generateAIQuiz} className="flex-1 py-5 bg-indigo-600 text-white rounded-2xl font-black uppercase text-xs shadow-xl shadow-indigo-100 flex items-center justify-center gap-3"><RotateCcw size={18}/> Thử đề mới</button>
+                  <button onClick={() => setIsQuizModalOpen(false)} className="px-10 py-5 bg-slate-800 text-white rounded-2xl font-black uppercase text-xs">Kết thúc</button>
                 </div>
-              )}
+              ) : <div className="h-14 w-full" />}
             </footer>
           </div>
         </div>
       )}
 
       {/* LEFT PANEL */}
-      <aside className={`w-80 border-r flex flex-col shrink-0 ${isAdmin ? 'bg-amber-50/30' : 'bg-slate-50'}`}>
+      <aside className={`w-80 border-r flex flex-col shrink-0 ${isAdmin ? 'bg-amber-50/20' : 'bg-slate-50'}`}>
         <div className={`p-8 flex justify-between items-center text-white ${isAdmin ? 'bg-amber-500' : 'bg-indigo-600'} shadow-lg`}>
           <div className="flex items-center gap-3"><Book size={24} /><h1 className="font-black text-xl uppercase tracking-tighter">Vật Lý 11</h1></div>
-          {isAdmin && <button onClick={() => { setNodeModalData({ parentId: null, type: 'folder', title: '', url: '' }); setShowNodeModal(true); }} className="p-2 bg-white/20 rounded-xl"><Plus size={20}/></button>}
+          {isAdmin && <button onClick={() => { setNodeModalData({ parentId: null, type: 'folder', title: '', url: '' }); setShowNodeModal(true); }} className="p-2 bg-white/20 rounded-xl hover:bg-white/40 transition-colors"><Plus size={20}/></button>}
         </div>
         <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
           {data.nodes.filter(n => n.parentId === null).map(node => (
             <TreeItem key={node.id} node={node} allNodes={data.nodes} selectedId={selectedId} isAdmin={isAdmin} onSelect={handleSelectNode} onAdd={(p, t) => { setNodeModalData({ parentId: p, type: t, title: '', url: '' }); setShowNodeModal(true); }} onEdit={(n) => { setNodeModalData({ id: n.id, parentId: n.parentId, type: n.type, title: n.title, url: n.url }); setShowNodeModal(true); }} onDelete={(id) => setShowDeleteConfirm({ type: 'node', id, title: data.nodes.find(n => n.id === id)?.title || '' })} level={0} />
           ))}
         </div>
-        <div className="p-4 border-t border-gray-100 flex flex-col gap-2">
-           <div className="flex items-center justify-center gap-2 text-[10px] font-black uppercase text-gray-400 py-2 bg-white/50 rounded-xl">
-             {isSyncing ? <Loader2 size={14} className="animate-spin text-indigo-500" /> : <CloudCheck size={14} className="text-green-500" />} {isSyncing ? 'Đồng bộ...' : 'Trực tuyến'}
+        <div className="p-4 border-t border-slate-100 flex flex-col gap-2">
+           <div className="flex items-center justify-center gap-2 text-[9px] font-black uppercase text-slate-400 py-2 bg-white/50 rounded-xl">
+             {isSyncing ? <Loader2 size={12} className="animate-spin text-indigo-500" /> : <CloudCheck size={12} className="text-green-500" />} {isSyncing ? 'Đang lưu...' : 'Hệ thống Trực tuyến'}
           </div>
-          <button onClick={() => setRole('none')} className="w-full py-3 bg-white border border-gray-100 text-gray-400 font-black uppercase text-[10px] rounded-xl flex items-center justify-center gap-2 hover:text-red-500 transition-colors"><LogOut size={14}/> Đăng xuất</button>
+          <button onClick={() => setRole('none')} className="w-full py-3 bg-white border border-slate-100 text-slate-400 font-black uppercase text-[10px] rounded-xl flex items-center justify-center gap-2 hover:text-red-500 transition-colors"><LogOut size={14}/> Thoát phiên</button>
         </div>
       </aside>
 
@@ -350,77 +396,80 @@ const App: React.FC = () => {
       <main className="flex-1 flex flex-col relative bg-white">
         {selectedId ? (
           <>
-            <header className="h-20 px-8 border-b border-gray-100 flex justify-between items-center bg-white/80 backdrop-blur-md z-10 shrink-0">
+            <header className="h-20 px-8 border-b border-slate-100 flex justify-between items-center bg-white/80 backdrop-blur-md z-10 shrink-0">
               <div className="min-w-0">
-                <h2 className="text-xl font-black text-gray-800 uppercase truncate leading-none">{selectedNode?.title}</h2>
-                <p className="text-[10px] font-bold text-indigo-500 mt-1 uppercase opacity-60 tracking-widest">{currentSlogan}</p>
+                <h2 className="text-xl font-black text-slate-800 uppercase truncate leading-none">{selectedNode?.title}</h2>
+                <p className="text-[10px] font-bold text-indigo-500 mt-1 uppercase opacity-60 tracking-widest italic">"{currentSlogan}"</p>
               </div>
               <div className="flex items-center gap-3">
                 {selectedNode?.type === 'lesson' && (
-                  <button onClick={generateAIQuiz} className="flex items-center gap-2 px-6 py-3 bg-indigo-600 text-white rounded-2xl font-black text-[10px] uppercase shadow-lg hover:scale-105 transition-all"><BrainCircuit size={18}/> Làm Quiz AI</button>
+                  <button onClick={generateAIQuiz} className="flex items-center gap-2 px-6 py-3 bg-indigo-600 text-white rounded-2xl font-black text-[10px] uppercase shadow-lg shadow-indigo-100 hover:bg-indigo-700 transition-all active:scale-95"><BrainCircuit size={18}/> Quiz AI</button>
                 )}
-                {selectedNode?.url && <a href={selectedNode.url} target="_blank" rel="noreferrer" className="p-3 bg-gray-50 text-gray-400 rounded-xl hover:bg-gray-100"><Maximize2 size={18}/></a>}
+                {selectedNode?.url && <a href={selectedNode.url} target="_blank" rel="noreferrer" className="p-3 bg-slate-50 text-slate-400 rounded-xl hover:bg-slate-100 transition-colors"><Maximize2 size={18}/></a>}
               </div>
             </header>
             <div className="flex-1 bg-slate-100 relative overflow-hidden">
               {iframeLoading && (
                 <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/90 z-20">
-                  <Loader2 size={40} className="animate-spin text-indigo-500 mb-4" />
-                  <p className="font-black text-[10px] text-gray-400 uppercase tracking-[0.2em]">Đang mở trang...</p>
+                  <div className="relative">
+                    <Loader2 size={40} className="animate-spin text-indigo-500" />
+                    <Book size={16} className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-indigo-300" />
+                  </div>
+                  <p className="font-black text-[9px] text-slate-400 uppercase tracking-[0.3em] mt-4">Đang tải học liệu...</p>
                 </div>
               )}
               {selectedNode?.url ? (
                 <iframe src={selectedNode.url} className="w-full h-full border-none" onLoad={() => setIframeLoading(false)} />
               ) : (
-                <div className="w-full h-full flex items-center justify-center text-gray-300 italic">Chọn bài học để bắt đầu</div>
+                <div className="w-full h-full flex items-center justify-center text-slate-300 italic text-sm">Chưa có nội dung cho đề mục này</div>
               )}
             </div>
           </>
         ) : (
           <div className="flex-1 flex flex-col items-center justify-center space-y-8 bg-slate-50">
-             <div className="p-20 bg-white rounded-[60px] shadow-2xl"><Book size={100} className="text-indigo-100" /></div>
-             <h2 className="text-3xl font-black text-slate-200 uppercase tracking-tighter">Chào mừng bạn đến với khóa học</h2>
+             <div className="p-20 bg-white rounded-[70px] shadow-2xl animate-pulse"><Book size={100} className="text-indigo-100" /></div>
+             <h2 className="text-3xl font-black text-slate-200 uppercase tracking-tighter">Chọn một bài học để bắt đầu</h2>
           </div>
         )}
       </main>
 
       {/* RIGHT PANEL */}
-      <aside className="w-72 border-l border-gray-100 bg-slate-50 flex flex-col shrink-0">
+      <aside className="w-72 border-l border-slate-100 bg-slate-50 flex flex-col shrink-0">
         <div className="flex-1 flex flex-col border-b">
            <div className="p-6 flex justify-between items-center border-b bg-white">
-             <h3 className="font-black text-[10px] text-gray-400 uppercase tracking-widest">Tài nguyên</h3>
-             {isAdmin && selectedId && <button onClick={() => openResourceModal(false)} className="text-indigo-600"><Plus size={20}/></button>}
+             <h3 className="font-black text-[10px] text-slate-400 uppercase tracking-widest">Tài liệu riêng</h3>
+             {isAdmin && selectedId && <button onClick={() => openResourceModal(false)} className="text-indigo-600 hover:bg-indigo-50 p-1 rounded-lg"><Plus size={18}/></button>}
            </div>
            <div className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar">
               {selectedNode?.lessonResources.map(res => (
                 <div key={res.id} className="group relative">
-                  <a href={res.url} target="_blank" rel="noreferrer" className="block p-4 bg-white border border-gray-100 rounded-2xl font-bold text-xs text-indigo-600 hover:shadow-md transition-all truncate shadow-sm">
+                  <a href={res.url} target="_blank" rel="noreferrer" className="block p-4 bg-white border border-slate-100 rounded-2xl font-bold text-xs text-indigo-600 hover:shadow-md transition-all truncate shadow-sm">
                      {res.title}
                   </a>
                   {isAdmin && (
-                    <div className="hidden group-hover:flex absolute right-2 top-1/2 -translate-y-1/2 gap-1 bg-white p-1 rounded-lg shadow-sm border border-gray-100">
+                    <div className="hidden group-hover:flex absolute right-2 top-1/2 -translate-y-1/2 gap-1 bg-white p-1 rounded-lg shadow-sm border border-slate-100">
                       <button onClick={() => openResourceModal(false, res)} className="p-1 text-amber-500 hover:bg-amber-50 rounded"><Pencil size={12}/></button>
                       <button onClick={() => setShowDeleteConfirm({ type: 'resource', id: res.id, isGlobal: false, title: res.title })} className="p-1 text-red-500 hover:bg-red-50 rounded"><Trash2 size={12}/></button>
                     </div>
                   )}
                 </div>
               ))}
-              {(!selectedNode?.lessonResources.length) && <p className="text-center text-[10px] text-gray-300 italic pt-10">Không có tài liệu</p>}
+              {(!selectedNode?.lessonResources.length) && <p className="text-center text-[10px] text-slate-300 italic pt-10">Không có tài liệu</p>}
            </div>
         </div>
         <div className="flex-1 flex flex-col bg-white/40">
            <div className="p-6 flex justify-between items-center border-b bg-white">
-             <h3 className="font-black text-[10px] text-gray-400 uppercase tracking-widest">Thư viện lớp</h3>
-             {isAdmin && <button onClick={() => openResourceModal(true)} className="text-indigo-600"><Plus size={20}/></button>}
+             <h3 className="font-black text-[10px] text-slate-400 uppercase tracking-widest">Thư viện lớp</h3>
+             {isAdmin && <button onClick={() => openResourceModal(true)} className="text-indigo-600 hover:bg-indigo-50 p-1 rounded-lg"><Plus size={18}/></button>}
            </div>
            <div className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar">
               {data.globalResources.map(res => (
                 <div key={res.id} className="group relative">
-                  <a href={res.url} target="_blank" rel="noreferrer" className="block p-4 bg-white border border-gray-100 rounded-2xl font-bold text-xs text-slate-600 hover:shadow-md transition-all truncate shadow-sm">
+                  <a href={res.url} target="_blank" rel="noreferrer" className="block p-4 bg-white border border-slate-100 rounded-2xl font-bold text-xs text-slate-600 hover:shadow-md transition-all truncate shadow-sm">
                      {res.title}
                   </a>
                   {isAdmin && (
-                    <div className="hidden group-hover:flex absolute right-2 top-1/2 -translate-y-1/2 gap-1 bg-white p-1 rounded-lg shadow-sm border border-gray-100">
+                    <div className="hidden group-hover:flex absolute right-2 top-1/2 -translate-y-1/2 gap-1 bg-white p-1 rounded-lg shadow-sm border border-slate-100">
                       <button onClick={() => openResourceModal(true, res)} className="p-1 text-amber-500 hover:bg-amber-50 rounded"><Pencil size={12}/></button>
                       <button onClick={() => setShowDeleteConfirm({ type: 'resource', id: res.id, isGlobal: true, title: res.title })} className="p-1 text-red-500 hover:bg-red-50 rounded"><Trash2 size={12}/></button>
                     </div>
@@ -431,17 +480,17 @@ const App: React.FC = () => {
         </div>
       </aside>
 
-      {/* MODALS CÒN LẠI GIỮ NGUYÊN NHƯ PHIÊN BẢN TRƯỚC NHƯNG CẬP NHẬT CÁCH GỌI */}
+      {/* MODALS CƠ BẢN */}
       {showResourceModal && (
         <div className="fixed inset-0 z-[210] flex items-center justify-center p-6 bg-black/40 backdrop-blur-sm">
           <div className="bg-white rounded-[40px] shadow-2xl w-full max-w-sm p-10 space-y-6">
-            <h3 className="font-black uppercase text-gray-800">Tài liệu</h3>
+            <h3 className="font-black uppercase text-slate-800 text-sm">Thiết lập tài liệu</h3>
             <form onSubmit={saveResource} className="space-y-4">
-               <input type="text" autoFocus value={resourceModalData.title} onChange={(e) => setResourceModalData({...resourceModalData, title: e.target.value})} placeholder="Tên..." className="w-full px-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl font-bold text-sm" />
-               <input type="text" value={resourceModalData.url} onChange={(e) => setResourceModalData({...resourceModalData, url: e.target.value})} placeholder="URL..." className="w-full px-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl font-mono text-xs" />
+               <input type="text" autoFocus value={resourceModalData.title} onChange={(e) => setResourceModalData({...resourceModalData, title: e.target.value})} placeholder="Tên tài liệu..." className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl font-bold text-xs" />
+               <input type="text" value={resourceModalData.url} onChange={(e) => setResourceModalData({...resourceModalData, url: e.target.value})} placeholder="Đường dẫn URL..." className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl font-mono text-[10px]" />
                <div className="flex gap-4 pt-4">
-                 <button type="button" onClick={() => setShowResourceModal(false)} className="flex-1 py-4 font-black text-gray-400 uppercase text-[10px]">Hủy</button>
-                 <button type="submit" className="flex-2 px-10 py-4 bg-indigo-600 text-white rounded-2xl font-black uppercase shadow-lg text-[10px]">Lưu lại</button>
+                 <button type="button" onClick={() => setShowResourceModal(false)} className="flex-1 py-4 font-black text-slate-400 uppercase text-[10px]">Đóng</button>
+                 <button type="submit" className="flex-2 px-10 py-4 bg-indigo-600 text-white rounded-2xl font-black uppercase shadow-lg text-[10px]">Lưu cấu hình</button>
                </div>
             </form>
           </div>
@@ -451,13 +500,13 @@ const App: React.FC = () => {
       {showNodeModal && (
         <div className="fixed inset-0 z-[210] flex items-center justify-center p-6 bg-black/40 backdrop-blur-sm">
           <div className="bg-white rounded-[40px] shadow-2xl w-full max-w-sm p-10 space-y-6">
-            <h3 className="font-black uppercase text-gray-800">Cấu trúc đề mục</h3>
+            <h3 className="font-black uppercase text-slate-800 text-sm">Cấu trúc đề mục</h3>
             <form onSubmit={saveNode} className="space-y-4">
-               <input type="text" autoFocus value={nodeModalData.title} onChange={(e) => setNodeModalData({...nodeModalData, title: e.target.value})} placeholder="Tiêu đề..." className="w-full px-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl font-bold text-sm" />
-               <input type="text" value={nodeModalData.url} onChange={(e) => setNodeModalData({...nodeModalData, url: e.target.value})} placeholder="Link (Docs/PDF)..." className="w-full px-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl font-mono text-xs" />
+               <input type="text" autoFocus value={nodeModalData.title} onChange={(e) => setNodeModalData({...nodeModalData, title: e.target.value})} placeholder="Tiêu đề..." className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl font-bold text-xs" />
+               <input type="text" value={nodeModalData.url} onChange={(e) => setNodeModalData({...nodeModalData, url: e.target.value})} placeholder="Link tài liệu/Slides..." className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl font-mono text-[10px]" />
                <div className="flex gap-4 pt-4">
-                 <button type="button" onClick={() => setShowNodeModal(false)} className="flex-1 py-4 font-black text-gray-400 uppercase text-[10px]">Hủy</button>
-                 <button type="submit" className="flex-2 px-10 py-4 bg-indigo-600 text-white rounded-2xl font-black uppercase shadow-lg text-[10px]">Xác nhận</button>
+                 <button type="button" onClick={() => setShowNodeModal(false)} className="flex-1 py-4 font-black text-slate-400 uppercase text-[10px]">Hủy bỏ</button>
+                 <button type="submit" className="flex-2 px-10 py-4 bg-indigo-600 text-white rounded-2xl font-black uppercase shadow-lg text-[10px]">Lưu thay đổi</button>
                </div>
             </form>
           </div>
@@ -467,11 +516,11 @@ const App: React.FC = () => {
       {showDeleteConfirm && (
         <div className="fixed inset-0 z-[220] flex items-center justify-center p-6 bg-black/50 backdrop-blur-sm">
           <div className="bg-white rounded-[40px] shadow-2xl w-full max-w-xs p-10 text-center space-y-6">
-            <div className="w-20 h-20 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto"><AlertTriangle size={40}/></div>
-            <p className="font-bold text-gray-800 text-sm">Xóa vĩnh viễn <br/><span className="text-red-500 font-black">"{showDeleteConfirm.title}"</span>?</p>
+            <div className="w-16 h-16 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto"><AlertTriangle size={32}/></div>
+            <p className="font-bold text-slate-800 text-xs leading-relaxed">Xóa vĩnh viễn <br/><span className="text-red-500 font-black">"{showDeleteConfirm.title}"</span>?</p>
             <div className="flex gap-4">
-               <button onClick={() => setShowDeleteConfirm(null)} className="flex-1 py-4 font-black text-gray-400 uppercase text-[10px]">Hủy</button>
-               <button onClick={executeDelete} className="flex-1 py-4 bg-red-500 text-white rounded-2xl font-black uppercase text-[10px]">Xóa</button>
+               <button onClick={() => setShowDeleteConfirm(null)} className="flex-1 py-4 font-black text-slate-400 uppercase text-[10px]">Hủy</button>
+               <button onClick={executeDelete} className="flex-1 py-4 bg-red-500 text-white rounded-2xl font-black uppercase text-[10px]">Đồng ý xóa</button>
             </div>
           </div>
         </div>
