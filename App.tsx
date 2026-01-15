@@ -16,24 +16,19 @@ const SUPABASE_ANON_KEY = 'sb_publishable_Fa4z8bEgByw3pGTJdvBqmQ_D_KeDGdl';
 
 /**
  * HÀM LẤY BIẾN MÔI TRƯỜNG THÔNG MINH
- * Thử nghiệm nhiều cách tiếp cận khác nhau để lấy Key từ Vercel/Vite/Static
  */
 const getEnv = (key: string): string | undefined => {
   try {
-    // 1. Thử với process.env (Dành cho build tool truyền thống)
     if (typeof process !== 'undefined' && process.env?.[key]) return process.env[key];
     
-    // 2. Thử với import.meta.env (Dành cho Vite - phổ biến trên Vercel hiện nay)
-    // Lưu ý: Vite yêu cầu tiền tố VITE_
     const viteKey = `VITE_${key}`;
     const metaEnv = (import.meta as any).env;
     if (metaEnv?.[viteKey]) return metaEnv[viteKey];
     if (metaEnv?.[key]) return metaEnv[key];
 
-    // 3. Thử với window._env_ (Dành cho Docker/Runtime injection)
     if (typeof (window as any)._env_ !== 'undefined' && (window as any)._env_[key]) return (window as any)._env_[key];
   } catch (e) {
-    // Trình duyệt có thể chặn truy cập một số thuộc tính hệ thống
+    // Trình duyệt chặn truy cập
   }
   return undefined;
 };
@@ -68,7 +63,6 @@ const App: React.FC = () => {
   const [cloudStatus, setCloudStatus] = useState<'connected' | 'error' | 'local'>('local');
   const [currentSlogan, setCurrentSlogan] = useState(PHYSICS_QUOTES[0]);
 
-  // Modal States
   const [showPassInput, setShowPassInput] = useState(false);
   const [teacherPass, setTeacherPass] = useState('');
   const [passError, setPassError] = useState(false);
@@ -78,7 +72,6 @@ const App: React.FC = () => {
   const [resourceModalData, setResourceModalData] = useState<{ id?: string; isGlobal: boolean; title: string; url: string; }>({ isGlobal: false, title: '', url: '' });
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<{ type: 'node' | 'resource'; id: string; isGlobal?: boolean; title: string; } | null>(null);
 
-  // Rotate slogans every 7s for students
   useEffect(() => {
     if (role !== 'student') return;
     const interval = setInterval(() => {
@@ -287,7 +280,7 @@ const App: React.FC = () => {
 
   return (
     <div className="flex h-screen bg-white overflow-hidden font-sans relative">
-      {/* Modals (Giữ nguyên) */}
+      {/* Modals */}
       {showNodeModal && (
         <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
           <div className="bg-white rounded-3xl shadow-2xl w-full max-w-sm p-8 animate-in zoom-in duration-200">
@@ -341,13 +334,11 @@ const App: React.FC = () => {
         
         {/* KHU VỰC TRẠNG THÁI HỆ THỐNG */}
         <div className="p-4 border-t border-gray-200 bg-white/40 space-y-2">
-          {/* Cloud Sync Status */}
           <div className="flex items-center justify-center space-x-2 py-1 px-3 bg-white/60 rounded-lg shadow-sm border border-gray-100 group relative">
             {isSyncing ? <Loader2 size={12} className="animate-spin text-indigo-400" /> : cloudStatus === 'connected' ? <CloudCheck size={12} className="text-green-500" /> : cloudStatus === 'error' ? <CloudOff size={12} className="text-red-400" /> : <Cloud size={12} className="text-gray-300" />}
             <span className="text-[8px] font-black uppercase tracking-widest text-gray-400">{isSyncing ? 'Đang đồng bộ...' : cloudStatus === 'connected' ? 'Cloud: Connected' : 'Cloud: Offline'}</span>
           </div>
           
-          {/* AI Readiness Signal - TỐI ƯU HÓA CHO VERCEL */}
           <div className="flex items-center justify-center space-x-2 py-1 px-3 bg-white/60 rounded-lg shadow-sm border border-gray-100 group relative cursor-help">
             <div className={`w-1.5 h-1.5 rounded-full ${HAS_AI_KEY ? 'bg-green-500 animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.6)]' : 'bg-gray-300'}`}></div>
             <span className={`text-[8px] font-black uppercase tracking-widest flex items-center gap-1 ${HAS_AI_KEY ? 'text-gray-400' : 'text-red-400'}`}>
@@ -356,16 +347,14 @@ const App: React.FC = () => {
             </span>
             {!HAS_AI_KEY && <AlertCircle size={10} className="text-red-400" />}
             
-            {/* Tooltip Hướng dẫn khắc phục lỗi Vercel */}
             <div className="absolute bottom-full left-0 mb-2 hidden group-hover:block bg-gray-900 text-white text-[8px] p-4 rounded-2xl w-60 z-50 shadow-2xl font-bold border border-white/10">
               <div className="flex items-center gap-2 mb-2 text-amber-400 border-b border-white/10 pb-2">
                 <Info size={12} /> <span className="uppercase tracking-widest">Hướng dẫn Vercel</span>
               </div>
               <ul className="space-y-2 text-gray-300 font-medium">
-                <li>1. Vào <span className="text-indigo-300">Settings -> Env Variables</span></li>
-                <li>2. Thêm <span className="text-amber-300">API_KEY</span> (Value: Mã Gemini của bạn)</li>
-                <li>3. <span className="text-red-300">QUAN TRỌNG:</span> Bạn phải bấm <span className="bg-white/10 px-1 rounded">Redeploy</span> bản mới nhất thì web mới nhận Key.</li>
-                <li className="italic opacity-60">* Nếu dùng Vite, hãy đặt tên là VITE_API_KEY</li>
+                <li>{"1. Vào Settings -> Env Variables"}</li>
+                <li>{"2. Thêm API_KEY (Value: Mã Gemini của bạn)"}</li>
+                <li>{"3. Bấm Redeploy bản mới nhất để nhận Key."}</li>
               </ul>
             </div>
           </div>
@@ -376,7 +365,7 @@ const App: React.FC = () => {
         </div>
       </aside>
 
-      {/* NỘI DUNG CHÍNH (Giữ nguyên) */}
+      {/* NỘI DUNG CHÍNH */}
       <main className="flex-1 flex flex-col min-w-0 relative bg-white z-0">
         {selectedId ? (
           <>
@@ -389,10 +378,7 @@ const App: React.FC = () => {
                       <h1 className="text-lg font-black text-gray-800 truncate tracking-tight uppercase leading-tight">{selectedNode?.title}</h1>
                       {role === 'student' && (
                         <div key={currentSlogan} className="flex items-center space-x-1.5 mt-1 animate-in fade-in slide-in-from-left-2 duration-700">
-                          <Sparkles size={10} className="text-indigo-400 shrink-0" />
-                          <p className="text-[10px] text-indigo-500 font-medium italic truncate">
-                            {currentSlogan}
-                          </p>
+                          <p className="text-[10px] text-indigo-500 font-medium italic truncate">{currentSlogan}</p>
                         </div>
                       )}
                     </div>
@@ -415,7 +401,6 @@ const App: React.FC = () => {
                 <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-300 p-10 text-center">
                     <Globe size={60} className="mb-4 opacity-5" />
                     <p className="text-sm font-bold opacity-30 italic">Nội dung bài học chưa được chuẩn bị</p>
-                    {isAdmin && selectedNode && <button onClick={() => openEditNodeModal(selectedNode)} className="mt-4 px-6 py-3 bg-amber-500 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg">Gắn link bài học ngay</button>}
                 </div>
               )}
             </div>
@@ -424,16 +409,11 @@ const App: React.FC = () => {
           <div className="flex-1 flex flex-col items-center justify-center bg-white">
             <div className="p-12 bg-gray-50 rounded-full shadow-inner border-8 border-white"><Book size={80} className="text-indigo-100" /></div>
             <h2 className="mt-8 text-xl font-black uppercase tracking-tighter text-gray-200">Chọn bài học để bắt đầu</h2>
-            {role === 'student' && (
-              <p key={currentSlogan} className="mt-4 text-[11px] text-indigo-400 font-medium italic animate-in fade-in duration-1000">
-                "{currentSlogan}"
-              </p>
-            )}
           </div>
         )}
       </main>
 
-      {/* PANEL PHẢI (Giữ nguyên) */}
+      {/* PANEL PHẢI */}
       <aside className="w-60 border-l border-gray-100 bg-slate-100/50 flex flex-col shrink-0 shadow-inner">
         <div className="h-1/2 flex flex-col border-b border-gray-200 overflow-hidden">
           <div className="p-4 border-b border-gray-200 bg-white/80 backdrop-blur-sm flex justify-between items-center sticky top-0 z-10">
