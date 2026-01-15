@@ -108,7 +108,7 @@ const App: React.FC = () => {
 
     const apiKey = getSafeEnv('API_KEY');
     if (!apiKey) {
-      alert("Lỗi: Vui lòng cấu hình API_KEY trong phần Environment Variables của Vercel.");
+      alert("Lỗi: Vui lòng cấu hình API_KEY.");
       setQuizLoading(false);
       setIsQuizModalOpen(false);
       return;
@@ -142,7 +142,7 @@ const App: React.FC = () => {
       setUserAnswers(new Array(quizData.length).fill(null));
     } catch (error) {
       console.error("Gemini Error:", error);
-      alert("Hệ thống AI đang bận. Vui lòng thử lại sau.");
+      alert("Hệ thống AI đang bận.");
       setIsQuizModalOpen(false);
     } finally {
       setQuizLoading(false);
@@ -239,52 +239,52 @@ const App: React.FC = () => {
 
   return (
     <div className="flex h-screen bg-white overflow-hidden font-sans">
-      {/* AI QUIZ MODAL - IMPROVED STEP-BY-STEP */}
+      {/* AI QUIZ MODAL - COMPACT VERSION */}
       {isQuizModalOpen && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-900/90 backdrop-blur-xl">
-          <div className="bg-white rounded-[40px] shadow-2xl w-full max-w-2xl overflow-hidden animate-in zoom-in duration-300 flex flex-col max-h-[90vh]">
-            <header className="p-8 bg-indigo-600 text-white flex justify-between items-center shrink-0">
+          <div className="bg-white rounded-[40px] shadow-2xl w-full max-w-2xl overflow-hidden animate-in zoom-in duration-300 flex flex-col max-h-[95vh]">
+            <header className="px-8 py-5 bg-indigo-600 text-white flex justify-between items-center shrink-0">
               <div className="flex items-center gap-4">
-                <div className="p-3 bg-white/20 rounded-2xl"><BrainCircuit size={28} /></div>
+                <div className="p-2 bg-white/20 rounded-xl"><BrainCircuit size={24} /></div>
                 <div>
-                  <h3 className="text-xl font-black uppercase leading-tight">AI Quiz Master</h3>
-                  <p className="text-[10px] font-bold uppercase opacity-60 tracking-widest">Đang kiểm tra: {selectedNode?.title}</p>
+                  <h3 className="text-lg font-black uppercase leading-tight">AI Quiz Master</h3>
+                  <p className="text-[9px] font-bold uppercase opacity-60 tracking-widest">{selectedNode?.title}</p>
                 </div>
               </div>
-              <button onClick={() => setIsQuizModalOpen(false)} className="p-2 hover:bg-white/20 rounded-full transition-colors"><X /></button>
+              <button onClick={() => setIsQuizModalOpen(false)} className="p-2 hover:bg-white/20 rounded-full transition-colors"><X size={20}/></button>
             </header>
 
-            <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
+            <div className="flex-1 overflow-y-auto p-6 custom-scrollbar">
               {quizLoading ? (
-                <div className="flex flex-col items-center justify-center py-20">
-                  <div className="relative mb-8">
-                    <Loader2 size={80} className="animate-spin text-indigo-500" />
-                    <BrainCircuit size={30} className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-indigo-300" />
+                <div className="flex flex-col items-center justify-center py-16">
+                  <div className="relative mb-6">
+                    <Loader2 size={60} className="animate-spin text-indigo-500" />
+                    <BrainCircuit size={24} className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-indigo-300" />
                   </div>
-                  <p className="font-black text-indigo-400 uppercase animate-pulse text-sm">Giáo viên AI đang biên soạn đề...</p>
+                  <p className="font-black text-indigo-400 uppercase animate-pulse text-xs">Đang soạn câu hỏi...</p>
                 </div>
               ) : (
-                <div className="space-y-8 animate-in slide-in-from-right duration-500">
-                  {/* Progress Bar */}
-                  <div className="flex gap-2">
-                    {quizQuestions.map((_, i) => (
-                      <div key={i} className={`h-2 flex-1 rounded-full transition-all duration-500 ${i <= currentQuizIdx ? 'bg-indigo-500' : 'bg-slate-100'}`} />
-                    ))}
+                <div className="space-y-6 animate-in slide-in-from-right duration-500">
+                  {/* Progress Indicator */}
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-[10px] font-black text-indigo-500 uppercase tracking-widest">Câu hỏi {currentQuizIdx + 1}/{quizQuestions.length}</span>
+                    <div className="flex gap-1.5 w-1/2">
+                      {quizQuestions.map((_, i) => (
+                        <div key={i} className={`h-1.5 flex-1 rounded-full transition-all duration-500 ${i <= currentQuizIdx ? 'bg-indigo-500' : 'bg-slate-100'}`} />
+                      ))}
+                    </div>
                   </div>
 
                   {!showResults ? (
                     currentQ && (
-                      <div className="space-y-6">
-                        <div className="flex items-start gap-4">
-                          <span className="shrink-0 w-10 h-10 bg-indigo-600 text-white rounded-2xl flex items-center justify-center font-black text-lg shadow-lg shadow-indigo-200">
-                            {currentQuizIdx + 1}
-                          </span>
-                          <h4 className="text-xl font-bold text-slate-800 leading-tight pt-1">
+                      <div className="space-y-5">
+                        <div className="bg-indigo-50/50 p-5 rounded-3xl border border-indigo-100">
+                          <h4 className="text-lg font-bold text-slate-800 leading-snug">
                             {currentQ.question}
                           </h4>
                         </div>
                         
-                        <div className="grid grid-cols-1 gap-4 mt-8">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-4">
                           {currentQ.options.map((opt, oIdx) => {
                             const isSelected = userAnswers[currentQuizIdx] === oIdx;
                             return (
@@ -295,16 +295,16 @@ const App: React.FC = () => {
                                   n[currentQuizIdx] = oIdx;
                                   setUserAnswers(n);
                                 }}
-                                className={`group p-5 rounded-3xl border-2 text-left transition-all duration-200 active:scale-[0.98] flex items-center gap-4 ${
+                                className={`group p-4 rounded-2xl border-2 text-left transition-all duration-200 flex items-center gap-3 ${
                                   isSelected 
-                                    ? 'bg-indigo-600 border-indigo-600 text-white shadow-xl shadow-indigo-100 translate-x-2' 
-                                    : 'bg-slate-50 border-slate-100 hover:border-indigo-300 hover:bg-white text-slate-700'
+                                    ? 'bg-indigo-600 border-indigo-600 text-white shadow-lg shadow-indigo-100' 
+                                    : 'bg-white border-slate-100 hover:border-indigo-300 text-slate-700 shadow-sm'
                                 }`}
                               >
-                                <span className={`w-8 h-8 rounded-xl flex items-center justify-center font-black text-xs shrink-0 ${isSelected ? 'bg-white/20 text-white' : 'bg-white border border-slate-200 text-indigo-500 shadow-sm'}`}>
+                                <span className={`w-7 h-7 rounded-lg flex items-center justify-center font-black text-[10px] shrink-0 ${isSelected ? 'bg-white/20 text-white' : 'bg-slate-50 border border-slate-200 text-indigo-500'}`}>
                                   {String.fromCharCode(65 + oIdx)}
                                 </span>
-                                <span className="font-bold text-sm">{opt}</span>
+                                <span className="font-bold text-xs">{opt}</span>
                               </button>
                             );
                           })}
@@ -312,19 +312,20 @@ const App: React.FC = () => {
                       </div>
                     )
                   ) : (
-                    <div className="text-center py-10 space-y-6">
-                      <div className="relative inline-block">
-                        <Trophy size={100} className="text-amber-400 mx-auto" />
-                        <div className="absolute inset-0 animate-ping bg-amber-200 rounded-full opacity-20" />
+                    <div className="text-center py-6 space-y-4">
+                      <div className="relative inline-block mb-2">
+                        <Trophy size={64} className="text-amber-400 mx-auto" />
                       </div>
-                      <h3 className="text-4xl font-black text-slate-800 uppercase tracking-tighter">Kết quả: {calculateScore()}/{quizQuestions.length}</h3>
-                      <p className="text-slate-400 font-bold">Bạn đã hoàn thành thử thách từ AI!</p>
+                      <h3 className="text-3xl font-black text-slate-800 uppercase tracking-tighter">KẾT QUẢ: {calculateScore()}/{quizQuestions.length}</h3>
                       
-                      <div className="space-y-4 text-left mt-10">
+                      <div className="grid grid-cols-1 gap-3 text-left mt-6">
                          {quizQuestions.map((q, idx) => (
-                           <div key={idx} className={`p-4 rounded-2xl border ${userAnswers[idx] === q.correctIndex ? 'bg-green-50 border-green-100' : 'bg-red-50 border-red-100'}`}>
-                             <p className="text-xs font-bold text-slate-800">Câu {idx + 1}: {userAnswers[idx] === q.correctIndex ? 'Chính xác' : 'Chưa đúng'}</p>
-                             <p className="text-[10px] text-slate-500 mt-1 italic">{q.explanation}</p>
+                           <div key={idx} className={`p-4 rounded-2xl border transition-all ${userAnswers[idx] === q.correctIndex ? 'bg-green-50 border-green-100' : 'bg-red-50 border-red-100'}`}>
+                             <div className="flex justify-between items-center mb-1">
+                               <p className="text-[10px] font-black uppercase text-slate-800">Câu {idx + 1}: {userAnswers[idx] === q.correctIndex ? 'Đúng' : 'Sai'}</p>
+                               <span className="text-[10px] font-bold text-indigo-500">Đáp án: {String.fromCharCode(65 + q.correctIndex)}</span>
+                             </div>
+                             <p className="text-[10px] text-slate-600 leading-relaxed italic">{q.explanation}</p>
                            </div>
                          ))}
                       </div>
@@ -334,40 +335,40 @@ const App: React.FC = () => {
               )}
             </div>
 
-            <footer className="p-8 bg-slate-50 border-t border-slate-100 flex justify-between items-center shrink-0">
+            <footer className="px-8 py-5 bg-slate-50 border-t border-slate-100 flex justify-between items-center shrink-0">
               {!showResults && !quizLoading ? (
                 <>
                   <button 
                     disabled={currentQuizIdx === 0}
                     onClick={() => setCurrentQuizIdx(p => p - 1)}
-                    className="flex items-center gap-2 px-6 py-4 rounded-2xl font-black text-xs uppercase text-slate-400 hover:text-indigo-600 disabled:opacity-20 transition-all"
+                    className="flex items-center gap-1.5 px-4 py-3 rounded-xl font-black text-[10px] uppercase text-slate-400 hover:text-indigo-600 disabled:opacity-20 transition-all"
                   >
-                    <ChevronLeft size={20} /> Câu trước
+                    <ChevronLeft size={16} /> Lùi lại
                   </button>
                   
                   {currentQuizIdx === quizQuestions.length - 1 ? (
                     <button 
                       disabled={userAnswers.some(a => a === null)}
                       onClick={() => setShowResults(true)}
-                      className="px-10 py-4 bg-indigo-600 text-white rounded-2xl font-black uppercase tracking-widest shadow-xl shadow-indigo-200 hover:bg-indigo-700 disabled:opacity-30 transition-all active:scale-95"
+                      className="px-8 py-3.5 bg-indigo-600 text-white rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-xl shadow-indigo-100 hover:bg-indigo-700 disabled:opacity-30 transition-all active:scale-95"
                     >
-                      Nộp bài ngay
+                      Nộp bài
                     </button>
                   ) : (
                     <button 
                       onClick={() => setCurrentQuizIdx(p => p + 1)}
-                      className="flex items-center gap-2 px-8 py-4 bg-white border-2 border-slate-200 rounded-2xl font-black text-xs uppercase text-indigo-600 hover:border-indigo-600 transition-all active:scale-95 shadow-sm"
+                      className="flex items-center gap-1.5 px-6 py-3.5 bg-white border-2 border-slate-200 rounded-2xl font-black text-[10px] uppercase text-indigo-600 hover:border-indigo-600 transition-all active:scale-95 shadow-sm"
                     >
-                      Câu tiếp <ChevronRight size={20} />
+                      Tiếp tục <ChevronRight size={16} />
                     </button>
                   )}
                 </>
               ) : showResults ? (
-                <div className="w-full flex gap-4">
-                  <button onClick={generateAIQuiz} className="flex-1 py-5 bg-indigo-600 text-white rounded-2xl font-black uppercase text-xs shadow-xl shadow-indigo-100 flex items-center justify-center gap-3"><RotateCcw size={18}/> Thử đề mới</button>
-                  <button onClick={() => setIsQuizModalOpen(false)} className="px-10 py-5 bg-slate-800 text-white rounded-2xl font-black uppercase text-xs">Kết thúc</button>
+                <div className="w-full flex gap-3">
+                  <button onClick={generateAIQuiz} className="flex-1 py-4 bg-indigo-600 text-white rounded-2xl font-black uppercase text-[10px] shadow-lg flex items-center justify-center gap-2"><RotateCcw size={16}/> Làm lại</button>
+                  <button onClick={() => setIsQuizModalOpen(false)} className="px-8 py-4 bg-slate-800 text-white rounded-2xl font-black uppercase text-[10px]">Đóng</button>
                 </div>
-              ) : <div className="h-14 w-full" />}
+              ) : <div className="h-10 w-full" />}
             </footer>
           </div>
         </div>
@@ -386,9 +387,9 @@ const App: React.FC = () => {
         </div>
         <div className="p-4 border-t border-slate-100 flex flex-col gap-2">
            <div className="flex items-center justify-center gap-2 text-[9px] font-black uppercase text-slate-400 py-2 bg-white/50 rounded-xl">
-             {isSyncing ? <Loader2 size={12} className="animate-spin text-indigo-500" /> : <CloudCheck size={12} className="text-green-500" />} {isSyncing ? 'Đang lưu...' : 'Hệ thống Trực tuyến'}
+             {isSyncing ? <Loader2 size={12} className="animate-spin text-indigo-500" /> : <CloudCheck size={12} className="text-green-500" />} {isSyncing ? 'Syncing...' : 'Online'}
           </div>
-          <button onClick={() => setRole('none')} className="w-full py-3 bg-white border border-slate-100 text-slate-400 font-black uppercase text-[10px] rounded-xl flex items-center justify-center gap-2 hover:text-red-500 transition-colors"><LogOut size={14}/> Thoát phiên</button>
+          <button onClick={() => setRole('none')} className="w-full py-3 bg-white border border-slate-100 text-slate-400 font-black uppercase text-[10px] rounded-xl flex items-center justify-center gap-2 hover:text-red-500 transition-colors"><LogOut size={14}/> Thoát</button>
         </div>
       </aside>
 
@@ -399,7 +400,7 @@ const App: React.FC = () => {
             <header className="h-20 px-8 border-b border-slate-100 flex justify-between items-center bg-white/80 backdrop-blur-md z-10 shrink-0">
               <div className="min-w-0">
                 <h2 className="text-xl font-black text-slate-800 uppercase truncate leading-none">{selectedNode?.title}</h2>
-                <p className="text-[10px] font-bold text-indigo-500 mt-1 uppercase opacity-60 tracking-widest italic">"{currentSlogan}"</p>
+                <p className="text-[10px] font-bold text-indigo-500 mt-1 uppercase opacity-60 tracking-widest italic truncate max-w-md">"{currentSlogan}"</p>
               </div>
               <div className="flex items-center gap-3">
                 {selectedNode?.type === 'lesson' && (
@@ -411,24 +412,21 @@ const App: React.FC = () => {
             <div className="flex-1 bg-slate-100 relative overflow-hidden">
               {iframeLoading && (
                 <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/90 z-20">
-                  <div className="relative">
-                    <Loader2 size={40} className="animate-spin text-indigo-500" />
-                    <Book size={16} className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-indigo-300" />
-                  </div>
-                  <p className="font-black text-[9px] text-slate-400 uppercase tracking-[0.3em] mt-4">Đang tải học liệu...</p>
+                  <Loader2 size={32} className="animate-spin text-indigo-500 mb-3" />
+                  <p className="font-black text-[8px] text-slate-400 uppercase tracking-widest">Đang tải...</p>
                 </div>
               )}
               {selectedNode?.url ? (
                 <iframe src={selectedNode.url} className="w-full h-full border-none" onLoad={() => setIframeLoading(false)} />
               ) : (
-                <div className="w-full h-full flex items-center justify-center text-slate-300 italic text-sm">Chưa có nội dung cho đề mục này</div>
+                <div className="w-full h-full flex items-center justify-center text-slate-300 italic text-sm">Chưa cập nhật nội dung</div>
               )}
             </div>
           </>
         ) : (
           <div className="flex-1 flex flex-col items-center justify-center space-y-8 bg-slate-50">
              <div className="p-20 bg-white rounded-[70px] shadow-2xl animate-pulse"><Book size={100} className="text-indigo-100" /></div>
-             <h2 className="text-3xl font-black text-slate-200 uppercase tracking-tighter">Chọn một bài học để bắt đầu</h2>
+             <h2 className="text-2xl font-black text-slate-200 uppercase tracking-tighter text-center">Chọn đề mục để bắt đầu học tập</h2>
           </div>
         )}
       </main>
@@ -454,12 +452,12 @@ const App: React.FC = () => {
                   )}
                 </div>
               ))}
-              {(!selectedNode?.lessonResources.length) && <p className="text-center text-[10px] text-slate-300 italic pt-10">Không có tài liệu</p>}
+              {(!selectedNode?.lessonResources.length) && <p className="text-center text-[10px] text-slate-300 italic pt-8 opacity-50">Không có tài liệu</p>}
            </div>
         </div>
         <div className="flex-1 flex flex-col bg-white/40">
            <div className="p-6 flex justify-between items-center border-b bg-white">
-             <h3 className="font-black text-[10px] text-slate-400 uppercase tracking-widest">Thư viện lớp</h3>
+             <h3 className="font-black text-[10px] text-slate-400 uppercase tracking-widest">Thư viện chung</h3>
              {isAdmin && <button onClick={() => openResourceModal(true)} className="text-indigo-600 hover:bg-indigo-50 p-1 rounded-lg"><Plus size={18}/></button>}
            </div>
            <div className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar">
@@ -517,10 +515,10 @@ const App: React.FC = () => {
         <div className="fixed inset-0 z-[220] flex items-center justify-center p-6 bg-black/50 backdrop-blur-sm">
           <div className="bg-white rounded-[40px] shadow-2xl w-full max-w-xs p-10 text-center space-y-6">
             <div className="w-16 h-16 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto"><AlertTriangle size={32}/></div>
-            <p className="font-bold text-slate-800 text-xs leading-relaxed">Xóa vĩnh viễn <br/><span className="text-red-500 font-black">"{showDeleteConfirm.title}"</span>?</p>
+            <p className="font-bold text-slate-800 text-xs leading-relaxed">Bạn có chắc muốn xóa vĩnh viễn <br/><span className="text-red-500 font-black">"{showDeleteConfirm.title}"</span>?</p>
             <div className="flex gap-4">
                <button onClick={() => setShowDeleteConfirm(null)} className="flex-1 py-4 font-black text-slate-400 uppercase text-[10px]">Hủy</button>
-               <button onClick={executeDelete} className="flex-1 py-4 bg-red-500 text-white rounded-2xl font-black uppercase text-[10px]">Đồng ý xóa</button>
+               <button onClick={executeDelete} className="flex-1 py-4 bg-red-500 text-white rounded-2xl font-black uppercase text-[10px]">Xóa ngay</button>
             </div>
           </div>
         </div>
