@@ -3,194 +3,267 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Giao Thoa Sóng - Vật Lý 12</title>
+    <title>Bài 8: Giao thoa sóng - Vật lí 12</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']]
+      }
+    };
+    </script>
     <style>
-        body { background-color: #f1f5f9; font-family: 'Inter', sans-serif; }
-        .paper { background: white; border-radius: 12px; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1); overflow: hidden; }
-        .header-bg { background-color: #1e40af; color: white; padding: 3rem 1rem; text-align: center; border-bottom: 6px solid #3b82f6; }
-        .section-title-box { display: flex; align-items: center; margin-bottom: 1.5rem; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.5rem; }
-        .formula-card { background: #f8fafc; border: 1px solid #e2e8f0; border-left: 4px solid #3b82f6; border-radius: 8px; }
-        .point-marker { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 8px; background-color: #3b82f6; }
-        .placeholder-box { background: #f8fafc; border: 2px dashed #e2e8f0; border-radius: 8px; width: 100%; height: 180px; display: flex; align-items: center; justify-content: center; color: #94a3b8; font-weight: bold; }
-        .exercise-box { border-left: 4px solid #10b981; background-color: #f0fdf4; border-radius: 8px; padding: 1.5rem; margin-bottom: 1.5rem; }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f1f5f9;
+        }
+        
+        .math-text {
+            font-family: 'Times New Roman', Times, serif;
+            font-style: italic;
+            font-weight: 600;
+            color: #065f46;
+        }
+
+        .header-bg {
+            background: linear-gradient(135deg, #065f46 0%, #059669 100%);
+            color: white;
+            padding: 3rem 1rem;
+            border-radius: 0 0 2rem 2rem;
+            box-shadow: 0 10px 15px -3px rgba(6, 95, 70, 0.2);
+        }
+
+        .section-card {
+            background: white;
+            border-radius: 1rem;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05);
+            border: 1px solid #e2e8f0;
+            transition: transform 0.2s;
+        }
+
+        .section-card:hover {
+            transform: translateY(-2px);
+        }
+
+        .solution-box {
+            background: #f0fdf4;
+            border-left: 4px solid #10b981;
+            padding: 1rem;
+            border-radius: 0 0.5rem 0.5rem 0;
+        }
+
+        .step-title {
+            color: #047857;
+            font-weight: 700;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.05em;
+        }
+
+        .formula-highlight {
+            background: #ecfdf5;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            border: 1px dashed #10b981;
+            text-align: center;
+        }
+
+        .svg-container {
+            background: #ffffff;
+            border-radius: 0.75rem;
+            padding: 1rem;
+            border: 1px solid #f1f5f9;
+        }
     </style>
 </head>
-<body class="py-10 px-4">
-    <div class="max-w-4xl mx-auto paper">
-        <!-- Header -->
-        <header class="header-bg">
-            <h1 class="text-4xl md:text-5xl font-extrabold tracking-tight mb-3">GIAO THOA SÓNG</h1>
-            <div class="h-1 w-20 bg-white mx-auto mb-4 opacity-50 rounded-full"></div>
-            <p class="text-blue-100 font-medium uppercase tracking-[0.2em] text-sm italic italic">Bài 8 - Chương II: Sóng cơ và sóng âm</p>
-        </header>
-        
-        <div class="p-8 md:p-12">
-            <!-- I. Hiện tượng -->
-            <section class="mb-12">
-                <div class="section-title-box">
-                    <span class="bg-blue-600 text-white w-8 h-8 flex items-center justify-center rounded-lg font-bold mr-3">I</span>
-                    <h2 class="text-2xl font-bold text-slate-800 uppercase tracking-tight">Hiện tượng giao thoa hai sóng mặt nước</h2>
-                </div>
-                
-                <div class="grid md:grid-cols-2 gap-8">
-                    <div class="space-y-4">
-                        <h3 class="text-lg font-bold text-blue-800 flex items-center italic italic"><span class="point-marker"></span> 1. Thí nghiệm</h3>
-                        <p class="text-slate-600 leading-relaxed text-sm">Gõ nhẹ cần rung có hai mũi nhọn $S_1, S_2$ dao động cùng tần số. Trên mặt nước xuất hiện hệ gợn sóng ổn định hình hypebol.</p>
-                        <div class="placeholder-box">[HÌNH THÍ NGHIỆM 8.1 & 8.2]</div>
-                    </div>
-                    
-                    <div class="space-y-4">
-                        <h3 class="text-lg font-bold text-blue-800 flex items-center italic italic"><span class="point-marker"></span> 2. Giải thích</h3>
-                        <p class="text-slate-600 text-sm">Trong miền hai sóng gặp nhau, có những điểm hai sóng tăng cường lẫn nhau (<b>cực đại</b>) và những điểm hai sóng triệt tiêu nhau (<b>cực tiểu</b>).</p>
-                        <p class="text-slate-700 bg-blue-50 p-4 border-l-4 border-blue-400 rounded text-sm italic italic italic">
-                            <b>Định nghĩa:</b> Hiện tượng hai sóng gặp nhau tạo nên các gợn sóng ổn định gọi là hiện tượng giao thoa sóng.
-                        </p>
-                    </div>
-                </div>
-            </section>
-
-            <!-- II. Cực đại và Cực tiểu -->
-            <section class="mb-12">
-                <div class="section-title-box">
-                    <span class="bg-blue-600 text-white w-8 h-8 flex items-center justify-center rounded-lg font-bold mr-3">II</span>
-                    <h2 class="text-2xl font-bold text-slate-800 uppercase tracking-tight">Cực đại và cực tiểu</h2>
-                </div>
-
-                <div class="space-y-8">
-                    <div>
-                        <h3 class="text-lg font-bold text-blue-800 mb-4 flex items-center italic italic"><span class="point-marker"></span> 1. Khảo sát dao động tại một điểm trong vùng giao thoa</h3>
-                        <div class="grid md:grid-cols-2 gap-6">
-                            <div class="bg-slate-50 p-4 rounded-lg border border-slate-200">
-                                <p class="text-xs font-bold text-slate-500 mb-2">PHƯƠNG TRÌNH SÓNG</p>
-                                <p class="text-sm text-slate-600">Giả sử hai nguồn dao động: $u_1 = u_2 = A\cos\omega t$</p>
-                                <p class="text-sm text-slate-600 mt-2">Phương trình sóng tại $M$ cách nguồn $d_1, d_2$:</p>
-                                <div class="text-center py-3 font-serif font-bold text-blue-900">
-                                    $u_M = 2A\cos\frac{\pi(d_2-d_1)}{\lambda}\cos(\omega t - \frac{\pi(d_1+d_2)}{\lambda})$
-                                </div>
-                            </div>
-                            <div class="bg-blue-900 text-white p-4 rounded-lg shadow-md flex flex-col justify-center items-center">
-                                <p class="text-xs opacity-70 mb-2 uppercase tracking-widest">Biên độ tổng hợp</p>
-                                <div class="text-2xl font-bold">$A_M = 2A \left| \cos \frac{\pi(d_2 - d_1)}{\lambda} \right|$</div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div>
-                        <h3 class="text-lg font-bold text-blue-800 mb-4 flex items-center italic italic"><span class="point-marker"></span> 2. Vị trí cực đại, cực tiểu</h3>
-                        <div class="grid md:grid-cols-5 gap-6">
-                            <div class="md:col-span-3 space-y-4">
-                                <div class="formula-card p-4 border-green-200 bg-green-50/20">
-                                    <p class="text-green-700 font-bold text-sm">CỰC ĐẠI (Vân sáng/Lồi):</p>
-                                    <div class="text-xl font-bold text-center bg-white my-2 py-2 rounded border border-green-100">$d_2 - d_1 = k\lambda$</div>
-                                    <p class="text-[10px] text-slate-500 italic italic">Hiệu đường đi bằng số nguyên lần bước sóng ($k=0, \pm 1...$)</p>
-                                </div>
-                                <div class="formula-card p-4 border-red-200 bg-red-50/20">
-                                    <p class="text-red-700 font-bold text-sm">CỰC TIỂU (Vân tối/Đứng yên):</p>
-                                    <div class="text-xl font-bold text-center bg-white my-2 py-2 rounded border border-red-100">$d_2 - d_1 = (k+\frac{1}{2})\lambda$</div>
-                                    <p class="text-[10px] text-slate-500 italic italic">Hiệu đường đi bằng số nửa nguyên lần bước sóng ($k=0, \pm 1...$)</p>
-                                </div>
-                            </div>
-                            <div class="md:col-span-2 bg-slate-50 border border-slate-200 p-4 rounded-xl flex flex-col items-center">
-                                <svg width="100%" height="150" viewBox="0 0 200 150">
-                                    <rect width="200" height="150" fill="#fff" rx="8"/>
-                                    <circle cx="60" cy="75" r="3" fill="#1e40af"/><circle cx="140" cy="75" r="3" fill="#1e40af"/>
-                                    <line x1="100" y1="20" x2="100" y2="130" stroke="#ef4444" stroke-width="2"/>
-                                    <path d="M 80,20 Q 90,75 80,130" fill="none" stroke="#ef4444" stroke-width="1"/>
-                                    <path d="M 120,20 Q 110,75 120,130" fill="none" stroke="#ef4444" stroke-width="1"/>
-                                    <path d="M 90,20 Q 95,75 90,130" fill="none" stroke="#94a3b8" stroke-dasharray="3,2"/>
-                                    <path d="M 110,20 Q 105,75 110,130" fill="none" stroke="#94a3b8" stroke-dasharray="3,2"/>
-                                </svg>
-                                <p class="text-[10px] text-slate-400 mt-2 italic italic italic">Sơ đồ hệ vân hypebol</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- III. Điều kiện -->
-            <section class="mb-12">
-                <div class="section-title-box">
-                    <span class="bg-blue-600 text-white w-8 h-8 flex items-center justify-center rounded-lg font-bold mr-3">III</span>
-                    <h2 class="text-2xl font-bold text-slate-800 uppercase tracking-tight">Điều kiện giao thoa sóng. Sóng kết hợp</h2>
-                </div>
-                <div class="bg-blue-900 text-white p-6 rounded-xl shadow-lg border-l-8 border-yellow-400">
-                    <p class="text-yellow-400 font-bold mb-3 uppercase tracking-wider italic">Điều kiện để có giao thoa:</p>
-                    <p class="mb-2">Hai sóng phải xuất phát từ hai <b>nguồn kết hợp</b>:</p>
-                    <ul class="list-disc list-inside space-y-2 text-blue-50 ml-2">
-                        <li>Cùng phương, cùng tần số.</li>
-                        <li>Có hiệu số pha không đổi theo thời gian.</li>
-                    </ul>
-                </div>
-            </section>
-
-            <!-- IV. Bài tập ví dụ -->
-            <section>
-                <div class="section-title-box">
-                    <span class="bg-green-600 text-white w-8 h-8 flex items-center justify-center rounded-lg font-bold mr-3">IV</span>
-                    <h2 class="text-2xl font-bold text-slate-800 uppercase tracking-tight">Bài tập ví dụ củng cố</h2>
-                </div>
-
-                <div class="space-y-6">
-                    <!-- VD 1 -->
-                    <div class="exercise-box">
-                        <p class="font-bold text-slate-800 mb-2">Ví dụ 1: Tìm bước sóng</p>
-                        <p class="text-sm text-slate-600 mb-4">Trong thí nghiệm giao thoa sóng mặt nước, hai nguồn $S_1, S_2$ dao động với tần số $f = 20Hz$. Tốc độ truyền sóng $v = 0,8m/s$. Tính bước sóng $\lambda$.</p>
-                        <div class="bg-white p-3 rounded border border-green-100 text-sm">
-                            <p class="font-bold text-green-700 mb-1 italic italic">Lời giải:</p>
-                            Áp dụng công thức bước sóng: $\lambda = \frac{v}{f} = \frac{0,8}{20} = 0,04m = 4cm$.
-                        </div>
-                    </div>
-
-                    <!-- VD 2 -->
-                    <div class="exercise-box">
-                        <p class="font-bold text-slate-800 mb-2">Ví dụ 2: Xác định điểm cực đại</p>
-                        <p class="text-sm text-slate-600 mb-4">Tại mặt nước có 2 nguồn kết hợp $S_1, S_2$ dao động cùng pha với bước sóng $\lambda = 3cm$. Điểm $M$ có $d_1 = 15cm$ và $d_2 = 21cm$ là cực đại hay cực tiểu?</p>
-                        <div class="bg-white p-3 rounded border border-green-100 text-sm">
-                            <p class="font-bold text-green-700 mb-1 italic italic">Lời giải:</p>
-                            Xét hiệu đường đi: $\Delta d = d_2 - d_1 = 21 - 15 = 6cm$.<br>
-                            Lập tỉ số: $\frac{\Delta d}{\lambda} = \frac{6}{3} = 2$.<br>
-                            Vì $\Delta d = 2\lambda$ (số nguyên lần bước sóng) nên $M$ là một <b>điểm cực đại</b> (ứng với $k=2$).
-                        </div>
-                    </div>
-
-                    <!-- VD 3 -->
-                    <div class="exercise-box">
-                        <p class="font-bold text-slate-800 mb-2">Ví dụ 3: Xác định điểm cực tiểu</p>
-                        <p class="text-sm text-slate-600 mb-4">Hai nguồn kết hợp $S_1, S_2$ có bước sóng $\lambda = 4cm$. Điểm $N$ cách $S_1$ là $10cm$ và cách $S_2$ là $14cm$. Hỏi tại $N$ sóng dao động như thế nào?</p>
-                        <div class="bg-white p-3 rounded border border-green-100 text-sm">
-                            <p class="font-bold text-green-700 mb-1 italic italic">Lời giải:</p>
-                            Xét hiệu đường đi: $\Delta d = d_2 - d_1 = 14 - 10 = 4cm$.<br>
-                            Lập tỉ số: $\frac{\Delta d}{\lambda} = \frac{4}{4} = 1$.<br>
-                            <b>Lưu ý:</b> Nếu hiệu đường đi bằng số nguyên lần bước sóng thì là cực đại. Tuy nhiên, nếu đề bài hỏi về cực tiểu, ta kiểm tra dạng $(k+0,5)\lambda$. Ở đây $\Delta d = 1\lambda \Rightarrow$ <b>N là cực đại bậc 1.</b>
-                        </div>
-                    </div>
-                </div>
-            </section>
+<body class="pb-12">
+    <!-- Header -->
+    <div class="header-bg mb-10 text-center">
+        <div class="max-w-4xl mx-auto">
+            <nav class="text-emerald-100 text-sm font-medium mb-3 uppercase tracking-widest">Vật lí 12 • Chương II • Sóng cơ</nav>
+            <h1 class="text-4xl md:text-5xl font-extrabold tracking-tight">Bài 8: Giao thoa sóng</h1>
+            <div class="h-1 w-20 bg-emerald-300 mx-auto mt-6 rounded-full"></div>
         </div>
-
-        <footer class="bg-slate-50 p-6 border-t border-slate-100 flex justify-between items-center text-slate-400 text-[10px] font-medium uppercase tracking-widest">
-            <span>© VẬT LÝ 12</span>
-            <span>GIAO THOA SÓNG - BÀI 8</span>
-        </footer>
     </div>
 
-    <script>
-        window.addEventListener('load', () => {
-            const mathElements = document.getElementsByTagName('body')[0];
-            const renderMath = (el) => {
-                if (window.katex) {
-                    const text = el.innerHTML;
-                    const regex = /\$([^$]+)\$/g;
-                    el.innerHTML = text.replace(regex, (match, math) => {
-                        return katex.renderToString(math, { throwOnError: false });
-                    });
-                }
-            };
-            renderMath(mathElements);
-        });
-    </script>
+    <div class="max-w-4xl mx-auto px-4">
+        <!-- I. Hiện tượng -->
+        <div class="section-card p-6 mb-8">
+            <div class="flex items-center mb-6">
+                <span class="bg-emerald-600 text-white w-8 h-8 rounded-lg flex items-center justify-center font-bold mr-3 shadow-lg">I</span>
+                <h2 class="text-xl font-extrabold text-slate-800 uppercase">Hiện tượng giao thoa sóng mặt nước</h2>
+            </div>
+            
+            <div class="space-y-6 text-slate-700">
+                <div class="pl-2 md:pl-11">
+                    <h3 class="font-bold text-emerald-800 mb-2 flex items-center">
+                        <span class="w-1.5 h-1.5 bg-emerald-500 rounded-full mr-2"></span>1. Thí nghiệm
+                    </h3>
+                    <p class="leading-relaxed">Dùng một cần rung có hai mũi nhọn $S_1, S_2$ gõ nhẹ xuống mặt nước. Kết quả trên mặt nước xuất hiện hệ gợn sóng ổn định có hình các đường <span class="math-text">hypebol</span> có tiêu điểm $S_1, S_2$.</p>
+                </div>
+
+                <div class="pl-2 md:pl-11">
+                    <h3 class="font-bold text-emerald-800 mb-2 flex items-center">
+                        <span class="w-1.5 h-1.5 bg-emerald-500 rounded-full mr-2"></span>2. Định nghĩa
+                    </h3>
+                    <div class="p-4 bg-emerald-50 text-emerald-900 rounded-lg border border-emerald-200 leading-relaxed shadow-sm">
+                        Hiện tượng hai sóng kết hợp khi gặp nhau có những điểm chúng luôn luôn tăng cường nhau, có những điểm chúng luôn luôn triệt tiêu nhau gọi là <b>hiện tượng giao thoa sóng</b>.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- II. Cực đại & Cực tiểu -->
+        <div class="section-card p-6 mb-8">
+            <div class="flex items-center mb-6">
+                <span class="bg-emerald-600 text-white w-8 h-8 rounded-lg flex items-center justify-center font-bold mr-3 shadow-lg">II</span>
+                <h2 class="text-xl font-extrabold text-slate-800 uppercase">Cực đại và cực tiểu giao thoa</h2>
+            </div>
+            
+            <div class="pl-2 md:pl-11 space-y-8">
+                <!-- Minh họa SVG đưa vào đây -->
+                <div class="svg-container flex flex-col items-center">
+                    <svg viewBox="0 0 400 240" class="w-full max-w-md h-auto">
+                        <!-- S1, S2 Sources -->
+                        <circle cx="120" cy="120" r="4" fill="#065f46" />
+                        <circle cx="280" cy="120" r="4" fill="#065f46" />
+                        <text x="110" y="140" font-size="12" font-style="italic" font-weight="bold" fill="#065f46">S₁</text>
+                        <text x="275" y="140" font-size="12" font-style="italic" font-weight="bold" fill="#065f46">S₂</text>
+                        
+                        <!-- Central Maximum (k=0) -->
+                        <line x1="200" y1="20" x2="200" y2="220" stroke="#10b981" stroke-width="2.5" />
+                        <text x="205" y="30" font-size="10" fill="#047857" font-weight="bold">k = 0</text>
+                        
+                        <!-- Maxima (k=1, -1) -->
+                        <path d="M 180 20 Q 210 120 180 220" fill="none" stroke="#10b981" stroke-width="2" />
+                        <path d="M 220 20 Q 190 120 220 220" fill="none" stroke="#10b981" stroke-width="2" />
+                        
+                        <!-- Maxima (k=2, -2) -->
+                        <path d="M 150 30 Q 225 120 150 210" fill="none" stroke="#10b981" stroke-width="1.5" />
+                        <path d="M 250 30 Q 175 120 250 210" fill="none" stroke="#10b981" stroke-width="1.5" />
+
+                        <!-- Minima (Dashed lines) -->
+                        <path d="M 190 20 Q 205 120 190 220" fill="none" stroke="#94a3b8" stroke-width="1" stroke-dasharray="4,3" />
+                        <path d="M 210 20 Q 195 120 210 220" fill="none" stroke="#94a3b8" stroke-width="1" stroke-dasharray="4,3" />
+                        <path d="M 165 25 Q 220 120 165 215" fill="none" stroke="#94a3b8" stroke-width="1" stroke-dasharray="4,3" />
+                        <path d="M 235 25 Q 180 120 235 215" fill="none" stroke="#94a3b8" stroke-width="1" stroke-dasharray="4,3" />
+                        
+                        <!-- Legend -->
+                        <rect x="300" y="20" width="12" height="2" fill="#10b981" />
+                        <text x="318" y="25" font-size="10" fill="#475569">Cực đại</text>
+                        <line x1="300" y1="40" x2="312" y2="40" stroke="#94a3b8" stroke-dasharray="2,2" />
+                        <text x="318" y="44" font-size="10" fill="#475569">Cực tiểu</text>
+                    </svg>
+                    <p class="text-xs text-slate-500 font-medium mt-3 italic">Hình 8.3: Hệ vân giao thoa thực tế</p>
+                </div>
+
+                <div>
+                    <h3 class="font-bold text-emerald-800 mb-4 uppercase text-sm tracking-wider">Vị trí các vân giao thoa</h3>
+                    <div class="grid md:grid-cols-2 gap-6">
+                        <!-- Cực đại -->
+                        <div class="p-5 border border-emerald-100 rounded-2xl bg-emerald-50/50 shadow-sm relative overflow-hidden">
+                            <div class="absolute top-0 right-0 p-2 bg-emerald-500 text-white text-[8px] font-bold rounded-bl-lg uppercase">Sáng / Lồi</div>
+                            <p class="text-xs font-black text-emerald-700 mb-3 underline uppercase tracking-tighter italic">Cực đại giao thoa</p>
+                            <p class="math-text text-2xl text-center mb-1">$d_2 - d_1 = k\lambda$</p>
+                            <p class="text-[10px] text-slate-400 text-center uppercase font-bold">($k = 0, \pm1, \pm2, ...$)</p>
+                            <p class="text-[11px] text-slate-600 mt-3 border-t pt-2">Hiệu đường đi bằng một số nguyên lần bước sóng.</p>
+                        </div>
+                        
+                        <!-- Cực tiểu -->
+                        <div class="p-5 border border-slate-200 rounded-2xl bg-slate-50/50 shadow-sm relative overflow-hidden">
+                            <div class="absolute top-0 right-0 p-2 bg-slate-400 text-white text-[8px] font-bold rounded-bl-lg uppercase">Tối / Lõm</div>
+                            <p class="text-xs font-black text-slate-600 mb-3 underline uppercase tracking-tighter italic">Cực tiểu giao thoa</p>
+                            <p class="math-text text-2xl text-center mb-1">$d_2 - d_1 = (k + 0,5)\lambda$</p>
+                            <p class="text-[10px] text-slate-400 text-center uppercase font-bold">($k = 0, \pm1, \pm2, ...$)</p>
+                            <p class="text-[11px] text-slate-600 mt-3 border-t pt-2">Hiệu đường đi bằng một số nửa nguyên lần bước sóng.</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="formula-highlight">
+                    <p class="text-xs text-emerald-700 font-bold uppercase mb-2">Biên độ tại điểm M</p>
+                    <span class="text-2xl math-text">\(A_M = 2A \left| \cos \frac{\pi(d_2 - d_1)}{\lambda} \right|\)</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- III. Điều kiện -->
+        <div class="section-card p-6 mb-8 border-t-4 border-t-emerald-600 shadow-emerald-100 shadow-lg">
+            <div class="flex items-center mb-4">
+                <span class="bg-emerald-600 text-white w-8 h-8 rounded-lg flex items-center justify-center font-bold mr-3 shadow-lg">III</span>
+                <h2 class="text-xl font-extrabold text-slate-800 uppercase">Điều kiện giao thoa</h2>
+            </div>
+            <div class="pl-2 md:pl-11">
+                <p class="text-slate-700 font-medium mb-4">Để có các vân giao thoa ổn định, hai nguồn sóng phải là hai <span class="text-emerald-700 font-bold">nguồn kết hợp</span>:</p>
+                <div class="space-y-3">
+                    <div class="flex items-center p-4 bg-emerald-50/50 rounded-xl border border-emerald-100">
+                        <div class="w-2 h-2 bg-emerald-500 rounded-full mr-4"></div>
+                        <span class="text-sm font-semibold text-slate-700 italic">Dao động cùng phương, cùng tần số.</span>
+                    </div>
+                    <div class="flex items-center p-4 bg-emerald-50/50 rounded-xl border border-emerald-100">
+                        <div class="w-2 h-2 bg-emerald-500 rounded-full mr-4"></div>
+                        <span class="text-sm font-semibold text-slate-700 italic">Có hiệu số pha không đổi theo thời gian.</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- IV. Bài tập ví dụ -->
+        <div class="section-card p-6 shadow-xl">
+            <div class="flex items-center mb-8 border-b border-slate-100 pb-4">
+                <span class="bg-emerald-600 text-white w-8 h-8 rounded-lg flex items-center justify-center font-bold mr-3 shadow-lg">IV</span>
+                <h2 class="text-xl font-extrabold text-slate-800 uppercase tracking-tight">Bài tập vận dụng</h2>
+            </div>
+
+            <div class="space-y-12">
+                <!-- Ví dụ 1 -->
+                <div>
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="font-bold text-emerald-900 border-l-4 border-emerald-500 pl-3">Ví dụ 1: Điểm cực đại / cực tiểu</h3>
+                        <span class="bg-emerald-100 text-emerald-700 text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-tighter">Nhận biết</span>
+                    </div>
+                    <p class="text-slate-700 mb-5 pl-4 leading-relaxed">
+                        Trong thí nghiệm giao thoa sóng nước, điểm M có $d_1 = 15cm, d_2 = 20cm$. Bước sóng $\lambda = 2cm$. Xác định trạng thái của điểm M.
+                    </p>
+                    <div class="solution-box">
+                        <p class="step-title mb-3">Hướng dẫn giải:</p>
+                        <div class="space-y-3 text-sm text-emerald-950">
+                            <p><span class="font-bold">Bước 1:</span> Hiệu đường đi $\Delta d = d_2 - d_1 = 20 - 15 = 5cm$.</p>
+                            <p><span class="font-bold">Bước 2:</span> Xét tỉ số $k = \Delta d / \lambda = 5 / 2 = 2,5$.</p>
+                            <p><span class="font-bold">Kết luận:</span> Vì $k = 2,5$ (số nửa nguyên), nên M là <b>Cực tiểu giao thoa thứ 3</b>.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Ví dụ 2 -->
+                <div class="pt-4">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="font-bold text-emerald-900 border-l-4 border-emerald-500 pl-3">Ví dụ 2: Khoảng cách vân</h3>
+                        <span class="bg-blue-100 text-blue-700 text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-tighter">Thông hiểu</span>
+                    </div>
+                    <p class="text-slate-700 mb-5 pl-4 leading-relaxed">
+                        Tốc độ truyền sóng $v = 0,5m/s$, tần số $f = 40Hz$. Tính khoảng cách ngắn nhất giữa hai cực đại liên tiếp trên đường nối hai nguồn.
+                    </p>
+                    <div class="solution-box">
+                        <p class="step-title mb-3">Hướng dẫn giải:</p>
+                        <div class="space-y-3 text-sm text-emerald-950">
+                            <p><span class="font-bold">Bước 1:</span> Tính bước sóng $\lambda = v/f = 0,5 / 40 = 0,0125m = 1,25cm$.</p>
+                            <p><span class="font-bold">Bước 2:</span> Khoảng cách ngắn nhất giữa 2 cực đại trên đường nối nguồn là $d = \lambda / 2$.</p>
+                            <p><span class="font-bold">Kết quả:</span> $d = 1,25 / 2 = 0,625cm$.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="text-center text-slate-400 text-[10px] font-bold uppercase tracking-widest py-12 mt-10 border-t border-slate-200">
+            Hệ thống học tập Vật lí 12 • Trang 41-45 SGK
+        </footer>
+    </div>
 </body>
 </html>
