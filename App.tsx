@@ -4,7 +4,7 @@ import { Routes, Route, useNavigate, Link, useLocation, Navigate } from 'https:/
 import { 
   Book, X, Pencil, Plus, Globe, Maximize2, Loader2, LogOut, GraduationCap, 
   KeyRound, Trash2, AlertTriangle, CloudCheck, BrainCircuit, Trophy, RotateCcw,
-  ShieldCheck, Folder, ChevronLeft, ChevronRight, Home
+  ShieldCheck, Folder, ChevronLeft, ChevronRight, Home, Copy, Check
 } from 'https://esm.sh/lucide-react@^0.562.0';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { GoogleGenAI, Type } from "https://esm.sh/@google/genai";
@@ -119,10 +119,8 @@ const LandingPage = () => {
 
   return (
     <div className="h-screen w-full flex flex-col items-center justify-center bg-indigo-50/30 p-4 overflow-hidden">
-      {/* Title - Moved down with mt-12 */}
       <div className="text-center mt-12 mb-10 space-y-2 animate-in fade-in slide-in-from-top-10 duration-1000">
         <h1 className="text-5xl font-black text-slate-900 tracking-tighter uppercase leading-none">VẬT LÝ 11</h1>
-        {/* Slogan removed as requested */}
       </div>
 
       <div className="max-w-2xl w-full grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -162,13 +160,20 @@ const MainView: React.FC<{ isAdmin: boolean; data: AppData; updateData: (d: AppD
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [iframeLoading, setIframeLoading] = useState(false);
   const [sloganIdx, setSloganIdx] = useState(0);
+  const [copied, setCopied] = useState(false);
   const navigate = useNavigate();
   
-  // Rotating Slogan Logic
+  const handleCopyLink = () => {
+    const studentUrl = window.location.origin + '/student';
+    navigator.clipboard.writeText(studentUrl);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
   useEffect(() => {
     const timer = setInterval(() => {
       setSloganIdx((prev) => (prev + 1) % SLOGANS.length);
-    }, 30000); // 30 seconds
+    }, 30000);
     return () => clearInterval(timer);
   }, []);
 
@@ -333,6 +338,12 @@ const MainView: React.FC<{ isAdmin: boolean; data: AppData; updateData: (d: AppD
           ))}
         </div>
         <footer className="p-3 border-t flex flex-col gap-2 shrink-0">
+           {isAdmin && (
+             <button onClick={handleCopyLink} className="w-full py-2 bg-indigo-50 text-indigo-600 font-bold uppercase text-[8px] rounded-xl flex items-center justify-center gap-2 hover:bg-indigo-100 transition-all">
+               {copied ? <Check size={10} /> : <Copy size={10} />}
+               {copied ? 'Đã sao chép' : 'Link học sinh'}
+             </button>
+           )}
            <div className="flex items-center justify-center gap-2 text-[8px] font-medium uppercase text-slate-400 py-2 bg-white/50 rounded-xl">
              {isSyncing ? <Loader2 size={10} className="animate-spin text-indigo-500" /> : <CloudCheck size={10} className="text-green-500" />} {isAdmin ? 'Teacher' : 'Student'}
            </div>
@@ -378,7 +389,12 @@ const MainView: React.FC<{ isAdmin: boolean; data: AppData; updateData: (d: AppD
                {selectedNode?.lessonResources.map(r => (
                  <div key={r.id} className="group relative">
                     <a href={r.url} target="_blank" className="block p-3 bg-white border border-slate-100 rounded-xl font-medium text-[10px] text-indigo-600 truncate shadow-sm hover:shadow-md transition-all">{r.title}</a>
-                    {isAdmin && <button onClick={()=>setShowDeleteConfirm({type:'resource', id:r.id, title:r.title, isGlobal:false})} className="absolute top-1.5 right-1.5 hidden group-hover:block p-1 bg-red-50 text-red-500 rounded-md shadow-sm border border-red-100"><Trash2 size={10}/></button>}
+                    {isAdmin && (
+                      <div className="absolute top-1.5 right-1.5 hidden group-hover:flex items-center gap-1">
+                        <button onClick={()=> { setResourceModalData({ id: r.id, isGlobal: false, title: r.title, url: r.url }); setShowResourceModal(true); }} className="p-1 bg-amber-50 text-amber-600 rounded-md shadow-sm border border-amber-100"><Pencil size={10}/></button>
+                        <button onClick={()=>setShowDeleteConfirm({type:'resource', id:r.id, title:r.title, isGlobal:false})} className="p-1 bg-red-50 text-red-500 rounded-md shadow-sm border border-red-100"><Trash2 size={10}/></button>
+                      </div>
+                    )}
                  </div>
                ))}
                {(!selectedNode?.lessonResources.length) && <p className="text-center text-[8px] text-slate-300 font-bold uppercase pt-8 opacity-50 tracking-widest">Trống</p>}
@@ -390,7 +406,12 @@ const MainView: React.FC<{ isAdmin: boolean; data: AppData; updateData: (d: AppD
                {data.globalResources.map(r => (
                  <div key={r.id} className="group relative">
                     <a href={r.url} target="_blank" className="block p-3 bg-white border border-slate-100 rounded-xl font-medium text-[10px] text-slate-600 truncate shadow-sm hover:shadow-md transition-all">{r.title}</a>
-                    {isAdmin && <button onClick={()=>setShowDeleteConfirm({type:'resource', id:r.id, title:r.title, isGlobal:true})} className="absolute top-1.5 right-1.5 hidden group-hover:block p-1 bg-red-50 text-red-500 rounded-md shadow-sm border border-red-100"><Trash2 size={10}/></button>}
+                    {isAdmin && (
+                      <div className="absolute top-1.5 right-1.5 hidden group-hover:flex items-center gap-1">
+                        <button onClick={()=> { setResourceModalData({ id: r.id, isGlobal: true, title: r.title, url: r.url }); setShowResourceModal(true); }} className="p-1 bg-amber-50 text-amber-600 rounded-md shadow-sm border border-amber-100"><Pencil size={10}/></button>
+                        <button onClick={()=>setShowDeleteConfirm({type:'resource', id:r.id, title:r.title, isGlobal:true})} className="p-1 bg-red-50 text-red-500 rounded-md shadow-sm border border-red-100"><Trash2 size={10}/></button>
+                      </div>
+                    )}
                  </div>
                ))}
             </div>
@@ -432,12 +453,25 @@ const MainView: React.FC<{ isAdmin: boolean; data: AppData; updateData: (d: AppD
            <form onSubmit={(e)=> {
              e.preventDefault();
              if(!resourceModalData.title.trim() || !resourceModalData.url.trim()) return;
-             const newRes = {id:`r-${Date.now()}`, title: resourceModalData.title, url: resourceModalData.url};
-             if(resourceModalData.isGlobal) updateData({...data, globalResources: [...data.globalResources, newRes]});
-             else if(selectedId) updateData({...data, nodes: data.nodes.map(n=> n.id === selectedId ? {...n, lessonResources: [...n.lessonResources, newRes]} : n)});
+             
+             if(resourceModalData.id) {
+               // Update Mode
+               if(resourceModalData.isGlobal) {
+                 updateData({...data, globalResources: data.globalResources.map(r => r.id === resourceModalData.id ? { id: r.id, title: resourceModalData.title, url: resourceModalData.url } : r)});
+               } else if(selectedId) {
+                 updateData({...data, nodes: data.nodes.map(n => n.id === selectedId ? {...n, lessonResources: n.lessonResources.map(r => r.id === resourceModalData.id ? { id: r.id, title: resourceModalData.title, url: resourceModalData.url } : r)} : n)});
+               }
+             } else {
+               // Add Mode
+               const newRes = {id:`r-${Date.now()}`, title: resourceModalData.title, url: resourceModalData.url};
+               if(resourceModalData.isGlobal) updateData({...data, globalResources: [...data.globalResources, newRes]});
+               else if(selectedId) updateData({...data, nodes: data.nodes.map(n=> n.id === selectedId ? {...n, lessonResources: [...n.lessonResources, newRes]} : n)});
+             }
              setShowResourceModal(false);
            }} className="bg-white p-10 rounded-[40px] shadow-2xl w-full max-w-sm space-y-5 animate-in slide-in-from-bottom-10 duration-300">
-              <h3 className="font-bold uppercase text-sm text-slate-800 border-b pb-4">{resourceModalData.isGlobal ? 'Thư viện chung' : 'Tài liệu bài học'}</h3>
+              <h3 className="font-bold uppercase text-sm text-slate-800 border-b pb-4">
+                {resourceModalData.id ? 'Sửa tài liệu' : (resourceModalData.isGlobal ? 'Thêm vào thư viện' : 'Thêm tài liệu bài học')}
+              </h3>
               <div className="space-y-4">
                 <div className="space-y-1">
                   <label className="text-[10px] font-bold uppercase text-slate-400 ml-2">Tiêu đề tài liệu</label>
@@ -450,7 +484,9 @@ const MainView: React.FC<{ isAdmin: boolean; data: AppData; updateData: (d: AppD
               </div>
               <div className="flex gap-4 pt-4">
                 <button type="button" onClick={()=>setShowResourceModal(false)} className="flex-1 font-bold text-slate-400 uppercase text-[10px]">Đóng</button>
-                <button type="submit" className="flex-1 py-4 bg-indigo-600 text-white rounded-xl font-bold uppercase text-[10px] shadow-lg shadow-indigo-100 hover:bg-indigo-700 transition-all">Thêm ngay</button>
+                <button type="submit" className="flex-1 py-4 bg-indigo-600 text-white rounded-xl font-bold uppercase text-[10px] shadow-lg shadow-indigo-100 hover:bg-indigo-700 transition-all">
+                  {resourceModalData.id ? 'Cập nhật' : 'Thêm ngay'}
+                </button>
               </div>
            </form>
         </div>
