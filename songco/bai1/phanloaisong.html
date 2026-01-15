@@ -101,7 +101,6 @@
 <body>
 
 <div class="canvas-container">
-    <!-- Phần bên trái: Mô phỏng chia 2 phần đều nhau -->
     <div class="simulation-area">
         <!-- Trên: Sóng ngang -->
         <div class="wave-section">
@@ -115,7 +114,6 @@
         </div>
     </div>
 
-    <!-- Phần bên phải: Điều khiển -->
     <div class="controls">
         <div>
             <h2 class="text-xl font-bold text-white">Mô phỏng Sóng</h2>
@@ -143,11 +141,11 @@
         </div>
 
         <div class="info-card">
-            <p class="font-bold text-white mb-2">Quan sát phần tử đỏ:</p>
+            <p class="font-bold text-white mb-2">Đánh dấu bước sóng (λ):</p>
             <ul class="space-y-2 text-slate-300">
-                <li>• <strong>Sóng ngang:</strong> Phần tử dao động vuông góc phương truyền.</li>
-                <li>• <strong>Sóng dọc:</strong> Phần tử dao động trùng phương truyền.</li>
-                <li>• <strong>Cốt lõi:</strong> Phần tử vật chất <strong>không</strong> đi theo sóng, chỉ có năng lượng truyền đi.</li>
+                <li>• Khoảng cách giữa 2 vạch trắng dưới cùng là <strong>1 bước sóng</strong>.</li>
+                <li>• λ phụ thuộc vào Tốc độ (v) và Tần số (f) theo công thức: <span class="text-sky-400">λ = v / f</span>.</li>
+                <li>• Hãy thử tăng tốc độ v hoặc giảm tần số f để thấy λ dài ra.</li>
             </ul>
         </div>
 
@@ -188,6 +186,39 @@
 
     window.addEventListener('resize', resize);
     resize();
+
+    // Hàm vẽ thước đo bước sóng
+    function drawWavelengthMarker(ctx, canvas, amp, freq, speed, color) {
+        // λ trong mô phỏng này tỷ lệ thuận với speed và nghịch đảo với freq
+        // Dựa vào công thức pha: phase = time * speed - i * freq * 15
+        // Bước sóng λ (khoảng cách giữa 2 điểm cùng pha) tính bằng pixel là:
+        const lambdaPixels = (2 * Math.PI) / (freq * 15) * (tCanvas.width / (parseInt(inputs.density.value) + 1));
+        
+        const startX = 50;
+        const endX = startX + lambdaPixels;
+        const y = canvas.height - 30;
+
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.6)';
+        ctx.lineWidth = 2;
+
+        // Vẽ đường ngang
+        ctx.beginPath();
+        ctx.moveTo(startX, y);
+        ctx.lineTo(endX, y);
+        ctx.stroke();
+
+        // Vẽ 2 vạch đứng chặn đầu
+        ctx.beginPath();
+        ctx.moveTo(startX, y - 10); ctx.lineTo(startX, y + 10);
+        ctx.moveTo(endX, y - 10); ctx.lineTo(endX, y + 10);
+        ctx.stroke();
+
+        // Vẽ chữ Lambda
+        ctx.fillStyle = 'white';
+        ctx.font = 'bold 16px serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('λ', (startX + endX) / 2, y - 10);
+    }
 
     function draw() {
         const amp = parseFloat(inputs.amplitude.value);
@@ -237,7 +268,6 @@
             }
             tCtx.fill();
             
-            // Vẽ kết nối mảnh
             if (i > 1) {
                 const prevX = (i - 1) * spacing;
                 const prevY = centerY_T + amp * Math.sin(time * speed - (i - 1) * freq * 15);
@@ -249,9 +279,10 @@
                 tCtx.stroke();
             }
         }
+        drawWavelengthMarker(tCtx, tCanvas, amp, freq, speed, '#38bdf8');
 
         // Vẽ Sóng Dọc
-        tCtx.shadowBlur = 0; // Reset shadow cho loop tiếp theo
+        tCtx.shadowBlur = 0; 
         for (let i = 1; i <= count; i++) {
             const baseX = i * spacing;
             const phase = time * speed - i * freq * 15;
@@ -262,7 +293,6 @@
             const isRed = (i === Math.floor(count / 4));
             
             lCtx.beginPath();
-            // Vẽ thanh dọc để thấy rõ sự nén/giãn hơn là chấm tròn
             lCtx.roundRect(x - 2, y - 25, isRed ? 6 : 3, 50, 5);
             lCtx.fillStyle = isRed ? '#f87171' : '#fbbf24';
             
@@ -275,6 +305,8 @@
             }
             lCtx.fill();
         }
+        lCtx.shadowBlur = 0;
+        drawWavelengthMarker(lCtx, lCanvas, amp, freq, speed, '#fbbf24');
 
         time += 1;
         requestAnimationFrame(draw);
@@ -287,10 +319,8 @@
         inputs.density.value = 50;
     });
 
-    // Khởi tạo
     setTimeout(resize, 0);
     draw();
-
 </script>
 </body>
 </html>
