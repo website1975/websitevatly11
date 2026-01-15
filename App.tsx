@@ -7,6 +7,7 @@ import {
 } from 'https://esm.sh/lucide-react@^0.562.0';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { GoogleGenAI, Type } from "https://esm.sh/@google/genai";
+import katex from 'https://esm.sh/katex@0.16.11';
 import { BookNode, NodeType, AppData, ResourceLink, QuizQuestion } from './types';
 import { INITIAL_DATA } from './constants';
 import TreeItem from './components/TreeItem';
@@ -32,6 +33,24 @@ const PHYSICS_QUOTES = [
   "Trí tưởng tượng quan trọng hơn kiến thức.",
   "Mọi quy luật tự nhiên đều ẩn chứa một vẻ đẹp toán học sâu sắc."
 ];
+
+// Helper để render LaTeX an toàn
+const renderLatex = (text: string) => {
+  if (!text) return null;
+  const parts = text.split(/(\$[^\$]+\$)/g);
+  return parts.map((part, i) => {
+    if (part.startsWith('$') && part.endsWith('$')) {
+      const math = part.slice(1, -1);
+      try {
+        const html = katex.renderToString(math, { throwOnError: false });
+        return <span key={i} dangerouslySetInnerHTML={{ __html: html }} />;
+      } catch (e) {
+        return <span key={i}>{part}</span>;
+      }
+    }
+    return <span key={i}>{part}</span>;
+  });
+};
 
 const App: React.FC = () => {
   const [data, setData] = useState<AppData>(INITIAL_DATA);
@@ -118,7 +137,9 @@ const App: React.FC = () => {
       const ai = new GoogleGenAI({ apiKey });
       const response = await ai.models.generateContent({
         model: "gemini-3-flash-preview",
-        contents: `Bạn là giáo viên Vật Lý. Hãy tạo đúng 5 câu hỏi trắc nghiệm tiếng Việt về chủ đề: "${selectedNode.title}". Định dạng JSON với question, options (mảng 4 chuỗi), correctIndex (0-3), và explanation.`,
+        contents: `Bạn là giáo viên Vật Lý xuất sắc. Hãy tạo đúng 5 câu hỏi trắc nghiệm tiếng Việt về chủ đề: "${selectedNode.title}". 
+        YÊU CẦU QUAN TRỌNG: Hãy sử dụng ký hiệu LaTeX cho mọi công thức toán học và vật lý, bao bọc chúng trong dấu $ (ví dụ: $E=mc^2$ hoặc $\\frac{v}{t}$). 
+        Định dạng JSON với question, options (mảng 4 chuỗi), correctIndex (0-3), và explanation.`,
         config: {
           responseMimeType: "application/json",
           responseSchema: {
@@ -239,7 +260,7 @@ const App: React.FC = () => {
 
   return (
     <div className="flex h-screen bg-white overflow-hidden font-sans">
-      {/* AI QUIZ MODAL - COMPACT VERSION */}
+      {/* AI QUIZ MODAL - LATEX OPTIMIZED */}
       {isQuizModalOpen && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-900/90 backdrop-blur-xl">
           <div className="bg-white rounded-[40px] shadow-2xl w-full max-w-2xl overflow-hidden animate-in zoom-in duration-300 flex flex-col max-h-[95vh]">
@@ -261,11 +282,10 @@ const App: React.FC = () => {
                     <Loader2 size={60} className="animate-spin text-indigo-500" />
                     <BrainCircuit size={24} className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-indigo-300" />
                   </div>
-                  <p className="font-black text-indigo-400 uppercase animate-pulse text-xs">Đang soạn câu hỏi...</p>
+                  <p className="font-black text-indigo-400 uppercase animate-pulse text-xs">Đang chuẩn bị công thức...</p>
                 </div>
               ) : (
                 <div className="space-y-6 animate-in slide-in-from-right duration-500">
-                  {/* Progress Indicator */}
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-[10px] font-black text-indigo-500 uppercase tracking-widest">Câu hỏi {currentQuizIdx + 1}/{quizQuestions.length}</span>
                     <div className="flex gap-1.5 w-1/2">
@@ -279,8 +299,8 @@ const App: React.FC = () => {
                     currentQ && (
                       <div className="space-y-5">
                         <div className="bg-indigo-50/50 p-5 rounded-3xl border border-indigo-100">
-                          <h4 className="text-lg font-bold text-slate-800 leading-snug">
-                            {currentQ.question}
+                          <h4 className="text-lg font-bold text-slate-800 leading-relaxed">
+                            {renderLatex(currentQ.question)}
                           </h4>
                         </div>
                         
@@ -304,7 +324,7 @@ const App: React.FC = () => {
                                 <span className={`w-7 h-7 rounded-lg flex items-center justify-center font-black text-[10px] shrink-0 ${isSelected ? 'bg-white/20 text-white' : 'bg-slate-50 border border-slate-200 text-indigo-500'}`}>
                                   {String.fromCharCode(65 + oIdx)}
                                 </span>
-                                <span className="font-bold text-xs">{opt}</span>
+                                <span className="font-bold text-xs">{renderLatex(opt)}</span>
                               </button>
                             );
                           })}
@@ -316,16 +336,19 @@ const App: React.FC = () => {
                       <div className="relative inline-block mb-2">
                         <Trophy size={64} className="text-amber-400 mx-auto" />
                       </div>
-                      <h3 className="text-3xl font-black text-slate-800 uppercase tracking-tighter">KẾT QUẢ: {calculateScore()}/{quizQuestions.length}</h3>
+                      <h3 className="text-3xl font-black text-slate-800 uppercase tracking-tighter">Đạt {calculateScore()}/{quizQuestions.length} ĐIỂM</h3>
                       
                       <div className="grid grid-cols-1 gap-3 text-left mt-6">
                          {quizQuestions.map((q, idx) => (
-                           <div key={idx} className={`p-4 rounded-2xl border transition-all ${userAnswers[idx] === q.correctIndex ? 'bg-green-50 border-green-100' : 'bg-red-50 border-red-100'}`}>
-                             <div className="flex justify-between items-center mb-1">
+                           <div key={idx} className={`p-5 rounded-2xl border transition-all ${userAnswers[idx] === q.correctIndex ? 'bg-green-50 border-green-100' : 'bg-red-50 border-red-100'}`}>
+                             <div className="flex justify-between items-center mb-2">
                                <p className="text-[10px] font-black uppercase text-slate-800">Câu {idx + 1}: {userAnswers[idx] === q.correctIndex ? 'Đúng' : 'Sai'}</p>
                                <span className="text-[10px] font-bold text-indigo-500">Đáp án: {String.fromCharCode(65 + q.correctIndex)}</span>
                              </div>
-                             <p className="text-[10px] text-slate-600 leading-relaxed italic">{q.explanation}</p>
+                             <div className="text-[11px] text-slate-700 font-medium mb-2">{renderLatex(q.question)}</div>
+                             <div className="text-[10px] text-slate-500 leading-relaxed italic bg-white/50 p-2 rounded-lg border border-slate-100">
+                               <strong>Giải thích:</strong> {renderLatex(q.explanation)}
+                             </div>
                            </div>
                          ))}
                       </div>
@@ -343,7 +366,7 @@ const App: React.FC = () => {
                     onClick={() => setCurrentQuizIdx(p => p - 1)}
                     className="flex items-center gap-1.5 px-4 py-3 rounded-xl font-black text-[10px] uppercase text-slate-400 hover:text-indigo-600 disabled:opacity-20 transition-all"
                   >
-                    <ChevronLeft size={16} /> Lùi lại
+                    <ChevronLeft size={16} /> Quay lại
                   </button>
                   
                   {currentQuizIdx === quizQuestions.length - 1 ? (
@@ -352,7 +375,7 @@ const App: React.FC = () => {
                       onClick={() => setShowResults(true)}
                       className="px-8 py-3.5 bg-indigo-600 text-white rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-xl shadow-indigo-100 hover:bg-indigo-700 disabled:opacity-30 transition-all active:scale-95"
                     >
-                      Nộp bài
+                      Kết thúc
                     </button>
                   ) : (
                     <button 
@@ -365,8 +388,8 @@ const App: React.FC = () => {
                 </>
               ) : showResults ? (
                 <div className="w-full flex gap-3">
-                  <button onClick={generateAIQuiz} className="flex-1 py-4 bg-indigo-600 text-white rounded-2xl font-black uppercase text-[10px] shadow-lg flex items-center justify-center gap-2"><RotateCcw size={16}/> Làm lại</button>
-                  <button onClick={() => setIsQuizModalOpen(false)} className="px-8 py-4 bg-slate-800 text-white rounded-2xl font-black uppercase text-[10px]">Đóng</button>
+                  <button onClick={generateAIQuiz} className="flex-1 py-4 bg-indigo-600 text-white rounded-2xl font-black uppercase text-[10px] shadow-lg flex items-center justify-center gap-2 transition-all hover:bg-indigo-700"><RotateCcw size={16}/> Thử lại</button>
+                  <button onClick={() => setIsQuizModalOpen(false)} className="px-8 py-4 bg-slate-800 text-white rounded-2xl font-black uppercase text-[10px] transition-all hover:bg-slate-900">Hoàn thành</button>
                 </div>
               ) : <div className="h-10 w-full" />}
             </footer>
@@ -528,6 +551,7 @@ const App: React.FC = () => {
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .katex { font-size: 1.1em; }
       `}</style>
     </div>
   );
