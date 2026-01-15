@@ -239,7 +239,11 @@ const MainView: React.FC<{ isAdmin: boolean; data: AppData; updateData: (d: AppD
       const qData = JSON.parse(response.text || "[]");
       setQuizQuestions(qData);
       setUserAnswers(new Array(qData.length).fill(null));
-    } catch (e) { alert("AI đang bận hoặc có lỗi kết nối. Vui lòng thử lại."); setIsQuizModalOpen(false); }
+    } catch (e) { 
+      console.error(e);
+      alert("AI đang bận hoặc có lỗi kết nối. Vui lòng thử lại."); 
+      setIsQuizModalOpen(false); 
+    }
     finally { setQuizLoading(false); }
   };
 
@@ -248,6 +252,14 @@ const MainView: React.FC<{ isAdmin: boolean; data: AppData; updateData: (d: AppD
   const handleLogout = () => {
     if (isAdmin) sessionStorage.removeItem('teacher_auth');
     navigate('/');
+  };
+
+  const handleQuizSubmit = () => {
+    if (userAnswers.includes(null)) {
+      alert("Bạn chưa trả lời hết các câu hỏi. Vui lòng hoàn thành trước khi nộp bài!");
+      return;
+    }
+    setShowResults(true);
   };
 
   return (
@@ -274,14 +286,26 @@ const MainView: React.FC<{ isAdmin: boolean; data: AppData; updateData: (d: AppD
                            <span>Câu hỏi {currentQuizIdx+1}/{quizQuestions.length}</span>
                            <span>{Math.round(((currentQuizIdx+1)/quizQuestions.length)*100)}% Hoàn thành</span>
                          </div>
-                         <div className="bg-indigo-50/50 p-6 rounded-3xl border border-indigo-100 text-lg font-bold text-slate-800">
+                         <div className="bg-indigo-50/50 p-6 rounded-3xl border border-indigo-100 text-xl font-bold text-slate-800 leading-snug">
                            {renderLatex(quizQuestions[currentQuizIdx]?.question)}
                          </div>
-                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                         <div className="grid grid-cols-1 gap-4">
                            {quizQuestions[currentQuizIdx]?.options.map((opt, i) => (
-                             <button key={i} onClick={() => { const n = [...userAnswers]; n[currentQuizIdx] = i; setUserAnswers(n); }} className={`p-5 rounded-2xl border-2 text-left transition-all duration-200 flex items-center gap-4 ${userAnswers[currentQuizIdx] === i ? 'bg-indigo-600 border-indigo-600 text-white shadow-lg' : 'bg-white border-slate-100 hover:border-indigo-200 text-slate-700'}`}>
-                               <span className={`w-8 h-8 rounded-lg flex items-center justify-center font-bold text-xs ${userAnswers[currentQuizIdx] === i ? 'bg-white/20' : 'bg-slate-100 text-indigo-500'}`}>{String.fromCharCode(65 + i)}</span>
-                               <span className="font-medium text-xs">{renderLatex(opt)}</span>
+                             <button 
+                                key={i} 
+                                onClick={() => { 
+                                  const n = [...userAnswers]; 
+                                  n[currentQuizIdx] = i; 
+                                  setUserAnswers(n); 
+                                }} 
+                                className={`p-6 rounded-2xl border-2 text-left transition-all duration-200 flex items-center gap-5 shadow-sm ${
+                                  userAnswers[currentQuizIdx] === i 
+                                    ? 'bg-indigo-600 border-indigo-600 text-white ring-4 ring-indigo-100' 
+                                    : 'bg-white border-slate-100 hover:border-indigo-200 text-slate-700 hover:bg-slate-50'
+                                }`}
+                             >
+                               <span className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold text-sm shrink-0 ${userAnswers[currentQuizIdx] === i ? 'bg-white/20' : 'bg-slate-100 text-indigo-500'}`}>{String.fromCharCode(65 + i)}</span>
+                               <span className="font-semibold text-sm md:text-base">{renderLatex(opt)}</span>
                              </button>
                            ))}
                          </div>
@@ -297,8 +321,8 @@ const MainView: React.FC<{ isAdmin: boolean; data: AppData; updateData: (d: AppD
                                 <span className="text-[10px] font-bold uppercase text-slate-500">Câu {i+1}</span>
                                 <span className="text-[10px] font-bold text-indigo-500">Đúng: {String.fromCharCode(65 + q.correctIndex)}</span>
                               </div>
-                              <p className="text-xs font-bold mb-2 text-slate-800">{renderLatex(q.question)}</p>
-                              <div className="bg-white/60 p-3 rounded-xl border border-white/50 text-[10px] leading-relaxed text-slate-600 italic">
+                              <p className="text-sm font-bold mb-2 text-slate-800">{renderLatex(q.question)}</p>
+                              <div className="bg-white/60 p-3 rounded-xl border border-white/50 text-[11px] leading-relaxed text-slate-600 italic">
                                 <strong>Giải thích:</strong> {renderLatex(q.explanation)}
                               </div>
                             </div>
@@ -314,12 +338,17 @@ const MainView: React.FC<{ isAdmin: boolean; data: AppData; updateData: (d: AppD
                   <>
                     <button disabled={currentQuizIdx===0} onClick={()=>setCurrentQuizIdx(p=>p-1)} className="flex items-center gap-2 font-bold text-[10px] uppercase text-slate-400 hover:text-indigo-600 disabled:opacity-20 transition-all"><ChevronLeft size={16}/> Quay lại</button>
                     {currentQuizIdx === quizQuestions.length - 1 ? 
-                      <button disabled={userAnswers.includes(null)} onClick={()=>setShowResults(true)} className="px-10 py-4 bg-indigo-600 text-white rounded-xl font-bold uppercase text-[10px] shadow-xl hover:bg-indigo-700 transition-all">Nộp bài</button> :
+                      <button 
+                        onClick={handleQuizSubmit} 
+                        className={`px-10 py-4 rounded-xl font-bold uppercase text-[10px] shadow-xl transition-all active:scale-95 ${userAnswers[currentQuizIdx] !== null ? 'bg-indigo-600 text-white hover:bg-indigo-700' : 'bg-slate-300 text-white cursor-not-allowed'}`}
+                      >
+                        Nộp bài
+                      </button> :
                       <button onClick={()=>setCurrentQuizIdx(p=>p+1)} className="flex items-center gap-2 px-10 py-4 bg-white border-2 rounded-xl font-bold text-[10px] uppercase text-indigo-600 hover:border-indigo-600 transition-all active:scale-95">Câu tiếp <ChevronRight size={16}/></button>
                     }
                   </>
                 )}
-                {showResults && <button onClick={()=>setIsQuizModalOpen(false)} className="w-full py-4 bg-slate-800 text-white rounded-xl font-bold uppercase text-[10px] hover:bg-slate-900 transition-all">Hoàn thành & Xem lại</button>}
+                {showResults && <button onClick={() => { setIsQuizModalOpen(false); setShowResults(false); }} className="w-full py-4 bg-slate-800 text-white rounded-xl font-bold uppercase text-[10px] hover:bg-slate-900 transition-all">Hoàn thành & Xem lại</button>}
               </footer>
            </div>
         </div>
