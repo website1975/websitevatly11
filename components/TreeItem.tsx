@@ -1,6 +1,6 @@
 
-import React, { useState } from 'react';
-import { ChevronRight, ChevronDown, Folder, Globe, Plus, Pencil, Trash2 } from 'lucide-react';
+import React, { useState } from 'https://esm.sh/react@^19.2.3';
+import { ChevronRight, ChevronDown, Folder, Globe, Plus, Pencil, Trash2 } from 'https://esm.sh/lucide-react@^0.562.0';
 import { BookNode, NodeType } from '../types';
 
 interface TreeItemProps {
@@ -34,10 +34,10 @@ const TreeItem: React.FC<TreeItemProps> = ({
   return (
     <div className="select-none mb-1">
       <div 
-        className={`group flex items-center py-2 px-3 rounded-xl cursor-pointer transition-all ${
+        className={`group flex items-center py-2.5 px-3 rounded-xl cursor-pointer transition-all ${
           isSelected 
-            ? 'bg-indigo-600 text-white shadow-md' 
-            : 'hover:bg-gray-100 text-gray-600'
+            ? 'bg-indigo-600 text-white shadow-lg' 
+            : 'hover:bg-indigo-50 text-slate-600'
         }`}
         style={{ marginLeft: `${level * 0.75}rem` }}
         onClick={() => onSelect(node.id)}
@@ -46,44 +46,44 @@ const TreeItem: React.FC<TreeItemProps> = ({
           {node.type === 'folder' ? (
             <button 
               onClick={(e) => { e.stopPropagation(); setIsOpen(!isOpen); }}
-              className={`p-1 mr-1 rounded-md ${isSelected ? 'text-white/50 hover:text-white' : 'text-gray-400 hover:bg-gray-200'}`}
+              className={`p-1 mr-1 rounded-md transition-colors ${isSelected ? 'text-white/50 hover:text-white' : 'text-slate-400 hover:bg-slate-200'}`}
             >
-              {isOpen ? <ChevronDown size={12} strokeWidth={3} /> : <ChevronRight size={12} strokeWidth={3} />}
+              {isOpen ? <ChevronDown size={14} strokeWidth={3} /> : <ChevronRight size={14} strokeWidth={3} />}
             </button>
           ) : (
-            <div className="w-4 mr-1" />
+            <div className="w-5 mr-1" />
           )}
           
           {node.type === 'folder' ? (
-            <Folder size={14} className={`mr-2 shrink-0 ${isSelected ? 'text-white' : 'text-amber-400'}`} />
+            <Folder size={16} className={`mr-2 shrink-0 ${isSelected ? 'text-white' : 'text-amber-500'}`} />
           ) : (
-            <Globe size={14} className={`mr-2 shrink-0 ${isSelected ? 'text-white' : 'text-blue-400'}`} />
+            <Globe size={16} className={`mr-2 shrink-0 ${isSelected ? 'text-white' : 'text-sky-500'}`} />
           )}
           
-          <span className={`truncate text-xs ${isSelected ? 'font-black' : 'font-medium'}`}>{node.title}</span>
+          <span className={`truncate text-xs tracking-tight ${isSelected ? 'font-bold' : 'font-medium'}`}>{node.title}</span>
         </div>
 
         {isAdmin && (
-          <div className="hidden group-hover:flex items-center space-x-1 ml-2">
+          <div className="flex items-center space-x-1 ml-2 opacity-0 group-hover:opacity-100 transition-opacity">
             {node.type === 'folder' && (
               <button 
                 onClick={(e) => { e.stopPropagation(); onAdd(node.id, 'lesson'); }}
                 className={`p-1 rounded-lg ${isSelected ? 'hover:bg-white/20' : 'hover:bg-indigo-100 text-indigo-500'}`}
               >
-                <Plus size={12} />
+                <Plus size={14} />
               </button>
             )}
             <button 
               onClick={(e) => { e.stopPropagation(); onEdit(node); }}
-              className={`p-1 rounded-lg ${isSelected ? 'hover:bg-white/20' : 'hover:bg-amber-100 text-amber-500'}`}
+              className={`p-1 rounded-lg ${isSelected ? 'hover:bg-white/20' : 'hover:bg-amber-100 text-amber-600'}`}
             >
-              <Pencil size={12} />
+              <Pencil size={14} />
             </button>
             <button 
               onClick={(e) => { e.stopPropagation(); onDelete(node.id); }}
               className={`p-1 rounded-lg ${isSelected ? 'hover:bg-white/20' : 'hover:bg-red-100 text-red-500'}`}
             >
-              <Trash2 size={12} />
+              <Trash2 size={14} />
             </button>
           </div>
         )}
