@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mô phỏng Dao động Tắt dần</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']], // Bắt buộc nhận diện $...$
+        displayMath: [['$$', '$$'], ['\\[', '\\]']]
+      },
+      // ...
+    };
+    </script>
+
+    <style>
+        body {
+            background-color: #f0f2f5;
+            overflow: hidden;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+        canvas {
+            background: white;
+            border-radius: 8px;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
+        }
+        .slider-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 4px;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+        input[type="range"] {
+            width: 100%;
+            margin-bottom: 16px;
+        }
+        .scrollable-content {
+            overflow-y: auto;
+            max-height: calc(100vh - 120px);
+        }
+    </style>
+</head>
+<body class="h-screen flex flex-col p-4">
+    <header class="mb-4">
+        <h1 class="text-2xl font-bold text-gray-800 text-center">Thí nghiệm Dao động Tắt dần</h1>
+    </header>
+
+    <div class="flex flex-1 gap-4 overflow-hidden">
+        <!-- Panel Trái: Bảng điều khiển và Nhận xét -->
+        <aside class="w-96 bg-white p-6 rounded-xl shadow-lg flex flex-col gap-4 scrollable-content">
+            <section>
+                <h2 class="text-lg font-semibold border-b pb-2 mb-4">Thông số vật lý</h2>
+                
+                <div>
+                    <div class="slider-label">
+                        <span>Khối lượng (m):</span>
+                        <span id="mVal">1.0</span> kg
+                    </div>
+                    <input type="range" id="mSlider" min="0.5" max="5" step="0.1" value="1">
+                </div>
+
+                <div>
+                    <div class="slider-label">
+                        <span>Độ cứng (k):</span>
+                        <span id="kVal">10.0</span> N/m
+                    </div>
+                    <input type="range" id="kSlider" min="5" max="50" step="1" value="10">
+                </div>
+
+                <div>
+                    <div class="slider-label">
+                        <span>Hệ số cản (b):</span>
+                        <span id="bVal">0.5</span> Ns/m
+                    </div>
+                    <input type="range" id="bSlider" min="0" max="30" step="0.1" value="0.5">
+                </div>
+
+                <div class="mt-4 p-4 bg-blue-50 rounded-lg">
+                    <h3 class="font-bold text-blue-800 mb-2">Trạng thái:</h3>
+                    <div id="statusText" class="text-sm font-medium">Đang tính toán...</div>
+                    <div id="zetaVal" class="text-xs text-blue-600 mt-1">ζ = 0.00</div>
+                </div>
+
+                <div class="mt-4 grid grid-cols-3 gap-2">
+                    <button id="playBtn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-1 rounded transition text-sm">
+                        Phát (Play)
+                    </button>
+                    <button id="stopBtn" class="bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-2 px-1 rounded transition text-sm">
+                        Dừng (Stop)
+                    </button>
+                    <button id="resetBtn" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-1 rounded transition text-sm">
+                        Làm mới
+                    </button>
+                </div>
+            </section>
+
+            <!-- Phần Nhận xét Thí nghiệm -->
+            <section class="mt-4 border-t pt-4 text-gray-700">
+                <h2 class="text-lg font-semibold mb-2">Kết quả thí nghiệm</h2>
+                
+                <div class="text-sm space-y-3">
+                    <div>
+                        <p class="font-bold text-blue-700">1. Nguyên nhân tắt dần:</p>
+                        <p class="italic text-xs">Do lực cản môi trường tiêu tán năng lượng.</p>
+                        <ul class="list-disc ml-4 mt-1 text-xs space-y-1">
+                            <li><strong>Dưới hạn ($\zeta < 1$):</strong> Lực cản nhỏ, vật thực hiện nhiều dao động trước khi dừng.</li>
+                            <li><strong>Tới hạn ($\zeta \approx 1$):</strong> Lực cản vừa đủ để vật về cân bằng nhanh nhất mà không bị quá đà.</li>
+                            <li><strong>Vượt hạn ($\zeta > 1$):</strong> Lực cản quá lớn, vật di chuyển chậm chạp về cân bằng.</li>
+                        </ul>
+                    </div>
+
+                    <div>
+                        <p class="font-bold text-blue-700">2. Nhận xét đặc điểm:</p>
+                        <ul class="list-disc ml-4 text-xs space-y-1">
+                            <li><strong>Biên độ:</strong> Giảm dần theo thời gian (với trường hợp dưới hạn).</li>
+                            <li><strong>Cơ năng:</strong> Giảm dần do công của lực cản chuyển hóa thành nhiệt năng.</li>
+                            <li><strong>Chu kỳ (T) & Tần số (f):</strong> Trong dao động tắt dần, chu kỳ "giả" kéo dài hơn so với dao động tự do (khi hệ số cản tăng, T tăng).</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+        </aside>
+
+        <!-- Panel Phải: Mô phỏng và Đồ thị -->
+        <main class="flex-1 flex flex-col gap-4">
+            <div class="h-1/3 flex gap-4">
+                <div class="flex-1 flex flex-col">
+                    <span class="text-sm font-bold text-gray-600 mb-1">Con lắc lò xo</span>
+                    <canvas id="simCanvasSpring" class="flex-1"></canvas>
+                </div>
+                <div class="flex-1 flex flex-col">
+                    <span class="text-sm font-bold text-gray-600 mb-1">Con lắc đơn</span>
+                    <canvas id="simCanvasPendulum" class="flex-1"></canvas>
+                </div>
+            </div>
+            
+            <div class="flex-1 flex flex-col">
+                <span class="text-sm font-bold text-gray-600 mb-1">Đồ thị Li độ - Thời gian x(t)</span>
+                <canvas id="graphCanvas" class="flex-1"></canvas>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const simCanvasSpring = document.getElementById('simCanvasSpring');
+        const simCanvasPendulum = document.getElementById('simCanvasPendulum');
+        const graphCanvas = document.getElementById('graphCanvas');
+        
+        const ctxSpring = simCanvasSpring.getContext('2d');
+        const ctxPendulum = simCanvasPendulum.getContext('2d');
+        const ctxGraph = graphCanvas.getContext('2d');
+
+        const mSlider = document.getElementById('mSlider');
+        const kSlider = document.getElementById('kSlider');
+        const bSlider = document.getElementById('bSlider');
+        const mValDisp = document.getElementById('mVal');
+        const kValDisp = document.getElementById('kVal');
+        const bValDisp = document.getElementById('bVal');
+        const statusText = document.getElementById('statusText');
+        const zetaDisp = document.getElementById('zetaVal');
+        
+        const playBtn = document.getElementById('playBtn');
+        const stopBtn = document.getElementById('stopBtn');
+        const resetBtn = document.getElementById('resetBtn');
+
+        // Physics State
+        let m = 1.0;
+        let k = 10.0;
+        let b = 0.5;
+        let x0 = 80; 
+        let time = 0;
+        let history = [];
+        let isRunning = true;
+        const dt = 0.016; 
+
+        function resize() {
+            simCanvasSpring.width = simCanvasSpring.clientWidth;
+            simCanvasSpring.height = simCanvasSpring.clientHeight;
+            simCanvasPendulum.width = simCanvasPendulum.clientWidth;
+            simCanvasPendulum.height = simCanvasPendulum.clientHeight;
+            graphCanvas.width = graphCanvas.clientWidth;
+            graphCanvas.height = graphCanvas.clientHeight;
+        }
+
+        window.addEventListener('resize', resize);
+        resize();
+
+        function updateParams() {
+            m = parseFloat(mSlider.value);
+            k = parseFloat(kSlider.value);
+            b = parseFloat(bSlider.value);
+            
+            mValDisp.innerText = m.toFixed(1);
+            kValDisp.innerText = k.toFixed(1);
+            bValDisp.innerText = b.toFixed(1);
+
+            const omega0 = Math.sqrt(k / m);
+            const zeta = b / (2 * Math.sqrt(m * k));
+            zetaDisp.innerHTML = `Hệ số cản tương đối &zeta; = ${zeta.toFixed(3)}`;
+
+            if (zeta < 1) {
+                statusText.innerText = "Tắt dần DƯỚI HẠN (Underdamped)";
+                statusText.className = "text-sm font-medium text-blue-600";
+            } else if (Math.abs(zeta - 1) < 0.05) {
+                statusText.innerText = "Tắt dần TỚI HẠN (Critically Damped)";
+                statusText.className = "text-sm font-medium text-green-600";
+            } else {
+                statusText.innerText = "Tắt dần VƯỢT HẠN (Overdamped)";
+                statusText.className = "text-sm font-medium text-red-600";
+            }
+        }
+
+        function resetSim() {
+            time = 0;
+            history = [];
+            isRunning = true;
+            updateParams();
+        }
+
+        playBtn.addEventListener('click', () => isRunning = true);
+        stopBtn.addEventListener('click', () => isRunning = false);
+        resetBtn.addEventListener('click', resetSim);
+
+        [mSlider, kSlider, bSlider].forEach(s => s.addEventListener('input', () => {
+            updateParams();
+        }));
+
+        function getPosition(t) {
+            const omega0 = Math.sqrt(k / m);
+            const gamma = b / (2 * m);
+            
+            if (gamma < omega0) {
+                const wd = Math.sqrt(omega0**2 - gamma**2);
+                return x0 * Math.exp(-gamma * t) * Math.cos(wd * t);
+            } else if (Math.abs(gamma - omega0) < 0.001) {
+                return x0 * (1 + gamma * t) * Math.exp(-gamma * t);
+            } else {
+                const r1 = -gamma + Math.sqrt(gamma**2 - omega0**2);
+                const r2 = -gamma - Math.sqrt(gamma**2 - omega0**2);
+                const C1 = x0 * r2 / (r2 - r1);
+                const C2 = -x0 * r1 / (r2 - r1);
+                return C1 * Math.exp(r1 * t) + C2 * Math.exp(r2 * t);
+            }
+        }
+
+        function drawSpring(ctx, x) {
+            const w = ctx.canvas.width;
+            const h = ctx.canvas.height;
+            const centerY = h / 2;
+            const startX = 40;
+            const currentX = startX + 100 + x;
+
+            ctx.clearRect(0, 0, w, h);
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.moveTo(startX, centerY - 40);
+            ctx.lineTo(startX, centerY + 40);
+            ctx.stroke();
+
+            ctx.strokeStyle = '#888';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(startX, centerY);
+            
+            const coils = 15;
+            const springWidth = currentX - startX - 20;
+            for(let i=0; i<=coils; i++) {
+                const px = startX + (i/coils) * springWidth;
+                const py = centerY + (i % 2 === 0 ? -15 : 15);
+                ctx.lineTo(px, py);
+            }
+            ctx.lineTo(currentX - 20, centerY);
+            ctx.stroke();
+
+            ctx.fillStyle = '#3b82f6';
+            ctx.beginPath();
+            ctx.roundRect(currentX - 20, centerY - 20, 40, 40, 4);
+            ctx.fill();
+            ctx.stroke();
+            
+            ctx.setLineDash([5, 5]);
+            ctx.strokeStyle = '#ccc';
+            ctx.beginPath();
+            ctx.moveTo(startX + 100, 0);
+            ctx.lineTo(startX + 100, h);
+            ctx.stroke();
+            ctx.setLineDash([]);
+        }
+
+        function drawPendulum(ctx, x) {
+            const w = ctx.canvas.width;
+            const h = ctx.canvas.height;
+            const centerX = w / 2;
+            const startY = 20;
+            const length = h - 80;
+            const theta = x / 100; 
+
+            const px = centerX + length * Math.sin(theta);
+            const py = startY + length * Math.cos(theta);
+
+            ctx.clearRect(0, 0, w, h);
+            ctx.fillStyle = '#333';
+            ctx.fillRect(centerX - 20, startY - 5, 40, 10);
+
+            ctx.strokeStyle = '#666';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(centerX, startY);
+            ctx.lineTo(px, py);
+            ctx.stroke();
+
+            ctx.fillStyle = '#ef4444';
+            ctx.beginPath();
+            ctx.arc(px, py, 15, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+
+            ctx.setLineDash([5, 5]);
+            ctx.strokeStyle = '#ccc';
+            ctx.beginPath();
+            ctx.moveTo(centerX, startY);
+            ctx.lineTo(centerX, h);
+            ctx.stroke();
+            ctx.setLineDash([]);
+        }
+
+        function drawGraph() {
+            const w = graphCanvas.width;
+            const h = graphCanvas.height;
+            const centerY = h / 2;
+            
+            ctxGraph.clearRect(0, 0, w, h);
+            ctxGraph.strokeStyle = '#ddd';
+            ctxGraph.beginPath();
+            ctxGraph.moveTo(0, centerY);
+            ctxGraph.lineTo(w, centerY);
+            ctxGraph.moveTo(50, 0);
+            ctxGraph.lineTo(50, h);
+            ctxGraph.stroke();
+
+            ctxGraph.fillStyle = '#999';
+            ctxGraph.font = '12px Arial';
+            ctxGraph.fillText("t (s)", w - 30, centerY + 20);
+            ctxGraph.fillText("x (li độ)", 10, 20);
+
+            if (history.length < 2) return;
+
+            ctxGraph.strokeStyle = '#3b82f6';
+            ctxGraph.lineWidth = 2;
+            ctxGraph.beginPath();
+            
+            const timeScale = (w - 100) / 10; 
+            const amplitudeScale = (h / 2 - 20) / x0;
+
+            for (let i = 0; i < history.length; i++) {
+                const point = history[i];
+                const dx = 50 + point.t * timeScale;
+                const dy = centerY - point.x * amplitudeScale;
+                
+                if (i === 0) ctxGraph.moveTo(dx, dy);
+                else ctxGraph.lineTo(dx, dy);
+
+                if (dx > w) break;
+            }
+            ctxGraph.stroke();
+        }
+
+        function animate() {
+            if (isRunning) {
+                const currentX = getPosition(time);
+                if (time < 15) {
+                    history.push({ t: time, x: currentX });
+                }
+                drawSpring(ctxSpring, currentX);
+                drawPendulum(ctxPendulum, currentX);
+                drawGraph();
+                time += dt;
+            }
+            requestAnimationFrame(animate);
+        }
+
+        updateParams();
+        animate();
+    </script>
+</body>
+</html>
