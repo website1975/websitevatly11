@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mô phỏng Truyền Sóng Vật Lý</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-color: #0f172a;
+            color: #f1f5f9;
+            overflow: hidden;
+            font-family: system-ui, -apple-system, sans-serif;
+        }
+        canvas {
+            display: block;
+            background: #1e293b;
+            border-radius: 8px;
+            cursor: crosshair;
+        }
+        .panel-glass {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        input[type="range"] {
+            accent-color: #3b82f6;
+        }
+        .label-value {
+            font-family: monospace;
+            color: #60a5fa;
+        }
+    </style>
+</head>
+<body class="flex h-screen w-screen p-2 gap-2">
+
+    <!-- Panel Trái: Khu vực hiển thị mô phỏng -->
+    <div class="flex-grow flex flex-col gap-2 h-full">
+        <!-- Mô phỏng 1 -->
+        <div class="relative flex-1 bg-slate-800 rounded-lg overflow-hidden shadow-inner">
+            <div class="absolute top-2 left-4 z-10 bg-slate-900/50 px-3 py-1 rounded text-xs font-bold uppercase tracking-wider text-blue-400 border border-blue-500/30">
+                Mô phỏng 1: Quá trình lan truyền sóng & Năng lượng
+            </div>
+            <canvas id="canvas1"></canvas>
+        </div>
+        
+        <!-- Mô phỏng 2 -->
+        <div class="relative flex-1 bg-slate-800 rounded-lg overflow-hidden shadow-inner border-t border-slate-700">
+            <div class="absolute top-2 left-4 z-10 bg-slate-900/50 px-3 py-1 rounded text-xs font-bold uppercase tracking-wider text-emerald-400 border border-emerald-500/30">
+                Mô phỏng 2: Vận tốc & Bước sóng trong 2 môi trường
+            </div>
+            <canvas id="canvas2"></canvas>
+        </div>
+    </div>
+
+    <!-- Panel Phải: Điều khiển -->
+    <div class="w-80 flex flex-col gap-4 p-4 panel-glass rounded-lg overflow-y-auto shadow-2xl">
+        <h2 class="text-xl font-bold border-b border-slate-700 pb-2 flex items-center gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-blue-500"><path d="M12 2v4"/><path d="m16.2 7.8 2.9-2.9"/><path d="M18 12h4"/><path d="m16.2 16.2 2.9 2.9"/><path d="M12 18v4"/><path d="m4.9 19.1 2.9-2.9"/><path d="M2 12h4"/><path d="m4.9 4.9 2.9 2.9"/></svg>
+            Điều khiển
+        </h2>
+
+        <!-- Nút Chung -->
+        <div class="flex flex-col gap-2">
+            <button id="btnPlay" class="bg-blue-600 hover:bg-blue-500 transition-colors py-2 rounded-md font-semibold flex items-center justify-center gap-2">
+                <span>Tạm dừng</span>
+            </button>
+            <button id="btnReset" class="bg-slate-700 hover:bg-slate-600 transition-colors py-2 rounded-md text-sm">
+                Bắt đầu lại (t=0)
+            </button>
+        </div>
+
+        <!-- Nhóm Mô phỏng 1 -->
+        <div class="space-y-4 pt-4 border-t border-slate-700">
+            <div class="flex justify-between items-center">
+                <h3 class="text-sm font-semibold text-blue-400 uppercase">Thông số Sóng 1</h3>
+                <span id="waveFront" class="text-[10px] text-slate-400">Đầu sóng: 0%</span>
+            </div>
+            <div class="space-y-1">
+                <div class="flex justify-between text-xs">
+                    <label>Tần số (f)</label>
+                    <span id="valF1" class="label-value">1.0 Hz</span>
+                </div>
+                <input type="range" id="freq1" min="0.5" max="3" step="0.1" value="1" class="w-full">
+            </div>
+            <div class="space-y-1">
+                <div class="flex justify-between text-xs">
+                    <label>Biên độ (A)</label>
+                    <span id="valA1" class="label-value">40 px</span>
+                </div>
+                <input type="range" id="amp1" min="10" max="80" step="1" value="40" class="w-full">
+            </div>
+            <div class="flex items-center gap-2">
+                <input type="checkbox" id="freeze1" class="w-4 h-4">
+                <label for="freeze1" class="text-xs">Hiện quỹ đạo hạt</label>
+            </div>
+        </div>
+
+        <!-- Nhóm Mô phỏng 2 -->
+        <div class="space-y-4 pt-4 border-t border-slate-700">
+            <h3 class="text-sm font-semibold text-emerald-400 uppercase">Môi trường Sóng 2</h3>
+            <div class="p-3 bg-slate-900/50 rounded-md space-y-3">
+                <div class="space-y-1">
+                    <div class="flex justify-between text-xs">
+                        <label>Vận tốc MT 1 (v₁)</label>
+                        <span id="valV1" class="label-value">120 px/s</span>
+                    </div>
+                    <input type="range" id="v1" min="50" max="200" step="5" value="120" class="w-full">
+                </div>
+                <div class="space-y-1">
+                    <div class="flex justify-between text-xs text-emerald-300">
+                        <label>Vận tốc MT 2 (v₂)</label>
+                        <span id="valV2" class="label-value">60 px/s</span>
+                    </div>
+                    <input type="range" id="v2" min="30" max="150" step="5" value="60" class="w-full">
+                </div>
+            </div>
+        </div>
+
+        <!-- Kết quả đo lường -->
+        <div class="mt-auto p-3 bg-blue-900/20 border border-blue-500/20 rounded-md">
+            <h3 class="text-xs font-bold mb-2 text-blue-300">Trạng thái phao:</h3>
+            <div id="phaoStatus" class="text-[11px] text-slate-300">Đang đợi sóng...</div>
+        </div>
+    </div>
+
+    <script>
+        const canvas1 = document.getElementById('canvas1');
+        const canvas2 = document.getElementById('canvas2');
+        const ctx1 = canvas1.getContext('2d');
+        const ctx2 = canvas2.getContext('2d');
+
+        // Trạng thái chung
+        let isRunning = true;
+        let time = 0;
+        let lastTimestamp = 0;
+
+        // Cấu hình mô phỏng 1
+        const sim1 = {
+            freq: 1,
+            amp: 40,
+            v: 150, // Vận tốc truyền pha
+            showOrbit: false,
+            numParticles: 50,
+            phaoXRatio: 0.6 // Đặt phao ở 60% chiều dài để thấy rõ thời gian đợi
+        };
+
+        // Cấu hình mô phỏng 2
+        const sim2 = {
+            freq: 0.8,
+            amp: 30,
+            v1: 120,
+            v2: 60,
+            boundary: 0.5 
+        };
+
+        function resize() {
+            const container1 = canvas1.parentElement;
+            canvas1.width = container1.clientWidth;
+            canvas1.height = container1.clientHeight;
+            
+            const container2 = canvas2.parentElement;
+            canvas2.width = container2.clientWidth;
+            canvas2.height = container2.clientHeight;
+        }
+
+        window.addEventListener('resize', resize);
+        resize();
+
+        document.getElementById('btnPlay').onclick = () => {
+            isRunning = !isRunning;
+            document.getElementById('btnPlay').textContent = isRunning ? "Tạm dừng" : "Tiếp tục";
+        };
+
+        document.getElementById('btnReset').onclick = () => {
+            time = 0;
+            if(!isRunning) {
+                isRunning = true;
+                document.getElementById('btnPlay').textContent = "Tạm dừng";
+            }
+        };
+
+        const updateVal = (id, val, unit) => document.getElementById(id).textContent = `${val}${unit}`;
+
+        document.getElementById('freq1').oninput = (e) => {
+            sim1.freq = parseFloat(e.target.value);
+            updateVal('valF1', sim1.freq, ' Hz');
+        };
+        document.getElementById('amp1').oninput = (e) => {
+            sim1.amp = parseFloat(e.target.value);
+            updateVal('valA1', sim1.amp, ' px');
+        };
+        document.getElementById('freeze1').onchange = (e) => {
+            sim1.showOrbit = e.target.checked;
+        };
+        document.getElementById('v1').oninput = (e) => {
+            sim2.v1 = parseFloat(e.target.value);
+            updateVal('valV1', sim2.v1, ' px/s');
+        };
+        document.getElementById('v2').oninput = (e) => {
+            sim2.v2 = parseFloat(e.target.value);
+            updateVal('valV2', sim2.v2, ' px/s');
+        };
+
+        function drawWave1() {
+            const w = canvas1.width;
+            const h = canvas1.height;
+            const centerY = h / 2;
+            
+            ctx1.clearRect(0, 0, w, h);
+
+            // Vẽ lưới nền
+            ctx1.strokeStyle = '#334155';
+            ctx1.lineWidth = 1;
+            ctx1.beginPath();
+            for(let i=0; i<w; i+=50) { ctx1.moveTo(i, 0); ctx1.lineTo(i, h); }
+            for(let j=0; j<h; j+=50) { ctx1.moveTo(0, j); ctx1.lineTo(w, j); }
+            ctx1.stroke();
+
+            const lambda = sim1.v / sim1.freq;
+            const waveFrontX = sim1.v * time; // Vị trí đầu sóng lan tới
+            document.getElementById('waveFront').textContent = `Đầu sóng: ${Math.min(100, (waveFrontX/w*100)).toFixed(0)}%`;
+
+            // Vẽ đường sóng lan dần
+            ctx1.beginPath();
+            ctx1.strokeStyle = 'rgba(59, 130, 246, 0.4)';
+            ctx1.lineWidth = 2;
+            for(let x = 0; x < w; x++) {
+                if (x > waveFrontX) break; // Chưa có sóng truyền tới x
+                const y = centerY + sim1.amp * Math.sin(2 * Math.PI * (sim1.freq * (time - x/sim1.v)));
+                if(x === 0) ctx1.moveTo(x, y);
+                else ctx1.lineTo(x, y);
+            }
+            ctx1.stroke();
+
+            // Vẽ các hạt môi trường
+            const step = w / sim1.numParticles;
+            for(let i = 0; i <= sim1.numParticles; i++) {
+                const baseX = i * step;
+                let y = centerY;
+                let active = false;
+
+                // Hạt chỉ dao động nếu đầu sóng đã đi qua nó
+                if (baseX <= waveFrontX) {
+                    y = centerY + sim1.amp * Math.sin(2 * Math.PI * (sim1.freq * (time - baseX/sim1.v)));
+                    active = true;
+                }
+                
+                const energyRatio = active ? Math.abs((y - centerY) / sim1.amp) : 0;
+                const r = active ? Math.floor(100 + 155 * energyRatio) : 100;
+                const g = active ? Math.floor(150 * (1 - energyRatio)) : 100;
+                const b = active ? 255 : 150;
+
+                ctx1.fillStyle = `rgb(${r}, ${g}, ${b})`;
+                ctx1.beginPath();
+                ctx1.arc(baseX, y, active ? 5 : 3, 0, Math.PI * 2);
+                ctx1.fill();
+
+                if(sim1.showOrbit && active) {
+                    ctx1.strokeStyle = 'rgba(255,255,255,0.05)';
+                    ctx1.beginPath();
+                    ctx1.moveTo(baseX, centerY - sim1.amp);
+                    ctx1.lineTo(baseX, centerY + sim1.amp);
+                    ctx1.stroke();
+                }
+            }
+
+            // Vẽ cái phao
+            const phaoX = w * sim1.phaoXRatio;
+            let phaoY = centerY;
+            const phaoStatusEl = document.getElementById('phaoStatus');
+
+            if (phaoX <= waveFrontX) {
+                phaoY = centerY + sim1.amp * Math.sin(2 * Math.PI * (sim1.freq * (time - phaoX/sim1.v)));
+                phaoStatusEl.innerHTML = "<span class='text-green-400'>● Sóng đã đến:</span> Phao đang nhận năng lượng và dao động.";
+            } else {
+                phaoStatusEl.innerHTML = "<span class='text-yellow-500'>○ Đang đợi sóng:</span> Năng lượng chưa truyền tới phao.";
+            }
+            
+            // Vẽ thân phao
+            ctx1.save();
+            ctx1.translate(phaoX, phaoY);
+            ctx1.fillStyle = '#ef4444';
+            ctx1.beginPath();
+            ctx1.arc(0, -10, 8, 0, Math.PI, true);
+            ctx1.fill();
+            ctx1.fillStyle = '#ffffff';
+            ctx1.fillRect(-10, -10, 20, 4);
+            ctx1.restore();
+            
+            // Chỉ dẫn
+            ctx1.fillStyle = '#60a5fa';
+            ctx1.font = '11px Arial';
+            ctx1.fillText("Năng lượng lan truyền →", waveFrontX - 120, 20);
+            ctx1.beginPath();
+            ctx1.strokeStyle = '#60a5fa';
+            ctx1.moveTo(0, centerY);
+            ctx1.setLineDash([5, 5]);
+            ctx1.lineTo(w, centerY);
+            ctx1.stroke();
+            ctx1.setLineDash([]);
+        }
+
+        function drawWave2() {
+            const w = canvas2.width;
+            const h = canvas2.height;
+            const centerY = h / 2;
+            const boundaryX = w * sim2.boundary;
+
+            ctx2.clearRect(0, 0, w, h);
+
+            ctx2.fillStyle = 'rgba(30, 58, 138, 0.3)';
+            ctx2.fillRect(0, 0, boundaryX, h);
+            ctx2.fillStyle = 'rgba(6, 78, 59, 0.3)';
+            ctx2.fillRect(boundaryX, 0, w - boundaryX, h);
+
+            ctx2.setLineDash([5, 5]);
+            ctx2.strokeStyle = 'rgba(255,255,255,0.5)';
+            ctx2.beginPath(); ctx2.moveTo(boundaryX, 0); ctx2.lineTo(boundaryX, h); ctx2.stroke();
+            ctx2.setLineDash([]);
+
+            const lambda1 = sim2.v1 / sim2.freq;
+            const lambda2 = sim2.v2 / sim2.freq;
+            
+            ctx2.beginPath();
+            ctx2.lineWidth = 3;
+            
+            for(let x = 0; x < w; x++) {
+                let y;
+                if(x <= boundaryX) {
+                    y = centerY + sim2.amp * Math.sin(2 * Math.PI * (time * sim2.freq - x / lambda1));
+                } else {
+                    const phaseAtBoundary = 2 * Math.PI * (time * sim2.freq - boundaryX / lambda1);
+                    y = centerY + sim2.amp * Math.sin(phaseAtBoundary - 2 * Math.PI * (x - boundaryX) / lambda2);
+                }
+                if(x === 0) ctx2.moveTo(x, y);
+                else ctx2.lineTo(x, y);
+            }
+
+            const gradient = ctx2.createLinearGradient(0, 0, w, 0);
+            gradient.addColorStop(0, '#3b82f6');
+            gradient.addColorStop(sim2.boundary, '#60a5fa');
+            gradient.addColorStop(sim2.boundary, '#34d399');
+            gradient.addColorStop(1, '#10b981');
+            ctx2.strokeStyle = gradient;
+            ctx2.stroke();
+
+            ctx2.fillStyle = 'white';
+            ctx2.font = 'bold 12px Arial';
+            ctx2.fillText(`Môi trường 1 (v₁=${sim2.v1})`, 10, 25);
+            ctx2.fillText(`Môi trường 2 (v₂=${sim2.v2})`, boundaryX + 10, 25);
+            ctx2.font = '10px Arial';
+            ctx2.fillStyle = '#94a3b8';
+            ctx2.fillText(`λ₁ = ${lambda1.toFixed(1)} px`, 10, 40);
+            ctx2.fillText(`λ₂ = ${lambda2.toFixed(1)} px`, boundaryX + 10, 40);
+        }
+
+        function animate(timestamp) {
+            if (!lastTimestamp) lastTimestamp = timestamp;
+            const deltaTime = (timestamp - lastTimestamp) / 1000;
+            lastTimestamp = timestamp;
+
+            if (isRunning) {
+                time += deltaTime;
+                drawWave1();
+                drawWave2();
+            }
+
+            requestAnimationFrame(animate);
+        }
+
+        requestAnimationFrame(animate);
+    </script>
+</body>
+</html>
