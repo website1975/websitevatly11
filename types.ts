@@ -11,7 +11,7 @@ export interface BookNode {
   id: string;
   title: string;
   type: NodeType;
-  url: string; // Đổi từ content sang url
+  url: string;
   parentId: string | null;
   lessonResources: ResourceLink[];
 }
@@ -19,4 +19,11 @@ export interface BookNode {
 export interface AppData {
   nodes: BookNode[];
   globalResources: ResourceLink[];
+}
+
+export interface QuizQuestion {
+  question: string;
+  options: string[];
+  correctIndex: number;
+  explanation: string;
 }
