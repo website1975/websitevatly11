@@ -1,7 +1,7 @@
 
-import React from 'react';
-import ReactDOM from 'react-dom/client';
-import { BrowserRouter } from 'react-router-dom';
+import React from 'https://esm.sh/react@^19.2.3';
+import ReactDOM from 'https://esm.sh/react-dom@^19.2.3/client';
+import { BrowserRouter } from 'https://esm.sh/react-router-dom@^6.22.3';
 import App from './App';
 
 const rootElement = document.getElementById('root');
