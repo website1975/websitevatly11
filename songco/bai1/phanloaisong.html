@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mô phỏng Lan truyền Sóng</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-color: #0f172a;
+            color: #f8fafc;
+            overflow: hidden;
+            font-family: system-ui, -apple-system, sans-serif;
+        }
+        .canvas-container {
+            position: relative;
+            width: 100%;
+            height: 100vh;
+            display: grid;
+            grid-template-columns: 1fr 300px;
+        }
+        .simulation-area {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            border-right: 1px solid #334155;
+        }
+        .wave-section {
+            position: relative;
+            flex: 1; /* Chia đều không gian 50/50 */
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            background: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%);
+        }
+        .wave-section:first-child {
+            border-bottom: 2px solid #334155;
+        }
+        .label {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            background: rgba(15, 23, 42, 0.9);
+            padding: 6px 16px;
+            border-radius: 6px;
+            font-weight: bold;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            border: 1px solid #38bdf8;
+            color: #38bdf8;
+            z-index: 10;
+        }
+        canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+        .controls {
+            padding: 24px;
+            background: #1e293b;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+            overflow-y: auto;
+            box-shadow: -4px 0 15px rgba(0,0,0,0.3);
+        }
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        label {
+            font-size: 0.9rem;
+            color: #94a3b8;
+            display: flex;
+            justify-content: space-between;
+        }
+        input[type="range"] {
+            width: 100%;
+            cursor: pointer;
+            accent-color: #38bdf8;
+        }
+        .highlight-text {
+            color: #38bdf8;
+            font-family: monospace;
+            font-size: 1rem;
+        }
+        .info-card {
+            background: rgba(30, 41, 59, 0.5);
+            border-left: 4px solid #38bdf8;
+            padding: 16px;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            line-height: 1.6;
+        }
+    </style>
+</head>
+<body>
+
+<div class="canvas-container">
+    <!-- Phần bên trái: Mô phỏng chia 2 phần đều nhau -->
+    <div class="simulation-area">
+        <!-- Trên: Sóng ngang -->
+        <div class="wave-section">
+            <div class="label">Sóng Ngang (Transverse Wave)</div>
+            <canvas id="transverseCanvas"></canvas>
+        </div>
+        <!-- Dưới: Sóng dọc -->
+        <div class="wave-section">
+            <div class="label" style="border-color: #fbbf24; color: #fbbf24;">Sóng Dọc (Longitudinal Wave)</div>
+            <canvas id="longitudinalCanvas"></canvas>
+        </div>
+    </div>
+
+    <!-- Phần bên phải: Điều khiển -->
+    <div class="controls">
+        <div>
+            <h2 class="text-xl font-bold text-white">Mô phỏng Sóng</h2>
+            <p class="text-xs text-slate-400 mt-1">Trực quan hóa vật lý cơ bản</p>
+        </div>
+        
+        <div class="control-group">
+            <label>Biên độ (A) <span id="ampVal" class="highlight-text">40</span></label>
+            <input type="range" id="amplitude" min="5" max="100" value="40">
+        </div>
+
+        <div class="control-group">
+            <label>Tần số (f) <span id="freqVal" class="highlight-text">0.02</span></label>
+            <input type="range" id="frequency" min="0.005" max="0.05" step="0.001" value="0.02">
+        </div>
+
+        <div class="control-group">
+            <label>Tốc độ (v) <span id="speedVal" class="highlight-text">0.1</span></label>
+            <input type="range" id="speed" min="0.02" max="0.4" step="0.01" value="0.1">
+        </div>
+
+        <div class="control-group">
+            <label>Mật độ phần tử <span id="densityVal" class="highlight-text">50</span></label>
+            <input type="range" id="density" min="20" max="120" value="50">
+        </div>
+
+        <div class="info-card">
+            <p class="font-bold text-white mb-2">Quan sát phần tử đỏ:</p>
+            <ul class="space-y-2 text-slate-300">
+                <li>• <strong>Sóng ngang:</strong> Phần tử dao động vuông góc phương truyền.</li>
+                <li>• <strong>Sóng dọc:</strong> Phần tử dao động trùng phương truyền.</li>
+                <li>• <strong>Cốt lõi:</strong> Phần tử vật chất <strong>không</strong> đi theo sóng, chỉ có năng lượng truyền đi.</li>
+            </ul>
+        </div>
+
+        <button id="resetBtn" class="mt-4 bg-slate-700 hover:bg-slate-600 text-white font-semibold py-2 px-4 rounded transition border border-slate-500">
+            Cài đặt lại
+        </button>
+    </div>
+</div>
+
+<script>
+    const tCanvas = document.getElementById('transverseCanvas');
+    const lCanvas = document.getElementById('longitudinalCanvas');
+    const tCtx = tCanvas.getContext('2d');
+    const lCtx = lCanvas.getContext('2d');
+
+    const inputs = {
+        amplitude: document.getElementById('amplitude'),
+        frequency: document.getElementById('frequency'),
+        speed: document.getElementById('speed'),
+        density: document.getElementById('density')
+    };
+
+    const displays = {
+        amplitude: document.getElementById('ampVal'),
+        frequency: document.getElementById('freqVal'),
+        speed: document.getElementById('speedVal'),
+        density: document.getElementById('densityVal')
+    };
+
+    let time = 0;
+
+    function resize() {
+        tCanvas.width = tCanvas.offsetWidth;
+        tCanvas.height = tCanvas.offsetHeight;
+        lCanvas.width = lCanvas.offsetWidth;
+        lCanvas.height = lCanvas.offsetHeight;
+    }
+
+    window.addEventListener('resize', resize);
+    resize();
+
+    function draw() {
+        const amp = parseFloat(inputs.amplitude.value);
+        const freq = parseFloat(inputs.frequency.value);
+        const speed = parseFloat(inputs.speed.value);
+        const count = parseInt(inputs.density.value);
+
+        displays.amplitude.innerText = amp;
+        displays.frequency.innerText = freq;
+        displays.speed.innerText = speed;
+        displays.density.innerText = count;
+
+        tCtx.clearRect(0, 0, tCanvas.width, tCanvas.height);
+        lCtx.clearRect(0, 0, lCanvas.width, lCanvas.height);
+
+        const spacing = tCanvas.width / (count + 1);
+        const centerY_T = tCanvas.height / 2;
+        const centerY_L = lCanvas.height / 2;
+
+        // Vẽ lưới mờ
+        tCtx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+        tCtx.beginPath();
+        tCtx.moveTo(0, centerY_T); tCtx.lineTo(tCanvas.width, centerY_T);
+        tCtx.stroke();
+
+        lCtx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+        lCtx.beginPath();
+        lCtx.moveTo(0, centerY_L); lCtx.lineTo(lCanvas.width, centerY_L);
+        lCtx.stroke();
+
+        // Vẽ Sóng Ngang
+        for (let i = 1; i <= count; i++) {
+            const x = i * spacing;
+            const phase = time * speed - i * freq * 15;
+            const y = centerY_T + amp * Math.sin(phase);
+
+            const isRed = (i === Math.floor(count / 4));
+            
+            tCtx.beginPath();
+            tCtx.arc(x, y, isRed ? 7 : 4, 0, Math.PI * 2);
+            tCtx.fillStyle = isRed ? '#f87171' : '#38bdf8';
+            if (isRed) {
+                tCtx.shadowBlur = 15;
+                tCtx.shadowColor = '#f87171';
+            } else {
+                tCtx.shadowBlur = 0;
+            }
+            tCtx.fill();
+            
+            // Vẽ kết nối mảnh
+            if (i > 1) {
+                const prevX = (i - 1) * spacing;
+                const prevY = centerY_T + amp * Math.sin(time * speed - (i - 1) * freq * 15);
+                tCtx.beginPath();
+                tCtx.moveTo(prevX, prevY);
+                tCtx.lineTo(x, y);
+                tCtx.strokeStyle = 'rgba(56, 189, 248, 0.15)';
+                tCtx.lineWidth = 1;
+                tCtx.stroke();
+            }
+        }
+
+        // Vẽ Sóng Dọc
+        tCtx.shadowBlur = 0; // Reset shadow cho loop tiếp theo
+        for (let i = 1; i <= count; i++) {
+            const baseX = i * spacing;
+            const phase = time * speed - i * freq * 15;
+            const xOffset = amp * Math.sin(phase);
+            const x = baseX + xOffset;
+            const y = centerY_L;
+
+            const isRed = (i === Math.floor(count / 4));
+            
+            lCtx.beginPath();
+            // Vẽ thanh dọc để thấy rõ sự nén/giãn hơn là chấm tròn
+            lCtx.roundRect(x - 2, y - 25, isRed ? 6 : 3, 50, 5);
+            lCtx.fillStyle = isRed ? '#f87171' : '#fbbf24';
+            
+            if (isRed) {
+                lCtx.shadowBlur = 15;
+                lCtx.shadowColor = '#f87171';
+            } else {
+                lCtx.shadowBlur = 4;
+                lCtx.shadowColor = 'rgba(251, 191, 36, 0.3)';
+            }
+            lCtx.fill();
+        }
+
+        time += 1;
+        requestAnimationFrame(draw);
+    }
+
+    document.getElementById('resetBtn').addEventListener('click', () => {
+        inputs.amplitude.value = 40;
+        inputs.frequency.value = 0.02;
+        inputs.speed.value = 0.1;
+        inputs.density.value = 50;
+    });
+
+    // Khởi tạo
+    setTimeout(resize, 0);
+    draw();
+
+</script>
+</body>
+</html>
