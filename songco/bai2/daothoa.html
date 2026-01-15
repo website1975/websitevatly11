@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mô phỏng Giao thoa sóng mặt nước</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-color: #0f172a;
+            color: #f8fafc;
+            overflow: hidden;
+        }
+        canvas {
+            cursor: crosshair;
+            background: #0f172a;
+            border-radius: 8px;
+        }
+        .control-panel {
+            background: rgba(30, 41, 59, 0.8);
+            backdrop-filter: blur(10px);
+        }
+        input[type="range"] {
+            accent-color: #3b82f6;
+        }
+        #probe-info {
+            pointer-events: none;
+        }
+        .tab-btn.active {
+            border-bottom: 2px solid #3b82f6;
+            color: #3b82f6;
+        }
+    </style>
+</head>
+<body class="h-screen flex flex-col md:flex-row p-4 gap-4">
+
+    <!-- Panel Trái: Khu vực mô phỏng -->
+    <div class="flex-1 flex flex-col relative min-h-0 gap-2">
+        <div class="flex justify-between items-center">
+            <h2 class="text-xl font-bold text-blue-400">Màn Hình Mô Phỏng</h2>
+            <div class="text-xs text-slate-400 text-right">
+                Kéo quả cầu đỏ để thăm dò dao động<br>
+                Vàng: Cực đại | Xanh đậm: Cực tiểu
+            </div>
+        </div>
+        
+        <!-- Khu vực Canvas chia đôi -->
+        <div id="canvas-container" class="flex-1 flex flex-col gap-2 min-h-0">
+            <!-- Phần trên: Bản đồ 2D -->
+            <div class="flex-[2.5] relative bg-slate-900 rounded-lg overflow-hidden border border-slate-700">
+                <canvas id="waveCanvas"></canvas>
+                <div id="probe-info" class="absolute top-2 left-2 bg-black/60 p-2 rounded text-[10px] border border-white/10">
+                    <div>Vị trí Probe: <span id="probe-pos">0, 0</span></div>
+                    <div>Li độ tức thời (u): <span id="probe-amp" class="text-yellow-400">0</span></div>
+                </div>
+            </div>
+
+            <!-- Phần dưới: Biểu đồ dao động tử -->
+            <div class="flex-1 bg-slate-900 rounded-lg overflow-hidden border border-slate-700 relative">
+                <canvas id="oscillatorCanvas"></canvas>
+                <div class="absolute top-2 right-4 text-[10px] text-slate-500 uppercase tracking-widest text-right">Đồ thị dao động tại Probe<br>(Mô phỏng phần tử sóng)</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Panel Phải: Điều khiển & Nhận xét -->
+    <div class="w-full md:w-96 control-panel rounded-xl border border-slate-700 flex flex-col overflow-hidden">
+        <!-- Tab Headers -->
+        <div class="flex border-b border-slate-700 bg-slate-800/50">
+            <button onclick="switchTab('control')" id="tab-control" class="tab-btn flex-1 py-3 text-xs font-bold uppercase tracking-wider active">Điều khiển</button>
+            <button onclick="switchTab('report')" id="tab-report" class="tab-btn flex-1 py-3 text-xs font-bold uppercase tracking-wider">Nhận xét</button>
+        </div>
+
+        <div class="flex-1 overflow-y-auto p-4">
+            <!-- Tab nội dung 1: Điều khiển -->
+            <div id="content-control" class="space-y-4">
+                <div class="space-y-4">
+                    <!-- Tần số f -->
+                    <div class="space-y-1">
+                        <div class="flex justify-between">
+                            <label class="text-xs font-medium uppercase text-slate-400">Tần số (f): <span id="f-val" class="text-blue-400 font-mono">2.0</span> Hz</label>
+                        </div>
+                        <input type="range" id="freq" min="0.5" max="5" step="0.1" value="2" class="w-full h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer">
+                    </div>
+
+                    <!-- Tốc độ v -->
+                    <div class="space-y-1">
+                        <div class="flex justify-between">
+                            <label class="text-xs font-medium uppercase text-slate-400">Tốc độ (v): <span id="v-val" class="text-blue-400 font-mono">40</span> cm/s</label>
+                        </div>
+                        <input type="range" id="velocity" min="10" max="100" step="5" value="40" class="w-full h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer">
+                    </div>
+
+                    <!-- Khoảng cách d -->
+                    <div class="space-y-1">
+                        <div class="flex justify-between">
+                            <label class="text-xs font-medium uppercase text-slate-400">Khoảng cách (d): <span id="d-val" class="text-blue-400 font-mono">120</span> px</label>
+                        </div>
+                        <input type="range" id="dist" min="20" max="300" step="10" value="120" class="w-full h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer">
+                    </div>
+
+                    <!-- Biên độ A -->
+                    <div class="space-y-1">
+                        <div class="flex justify-between">
+                            <label class="text-xs font-medium uppercase text-slate-400">Biên độ (A): <span id="a-val" class="text-blue-400 font-mono">20</span></label>
+                        </div>
+                        <input type="range" id="amp" min="5" max="40" step="1" value="20" class="w-full h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer">
+                    </div>
+
+                    <div class="bg-slate-800/80 p-3 rounded-lg border border-slate-700 text-[11px] space-y-1 shadow-inner">
+                        <div class="flex justify-between text-slate-400"><span>Bước sóng (λ):</span> <span id="lambda-val" class="text-white font-mono">20.00</span></div>
+                        <div class="flex justify-between text-slate-400"><span>Chu kỳ (T):</span> <span id="period-val" class="text-white font-mono">0.50s</span></div>
+                    </div>
+                    
+                    <button id="resetBtn" class="w-full py-2.5 bg-blue-600 hover:bg-blue-500 rounded-lg text-xs font-bold transition-all shadow-lg active:scale-95">ĐẶT LẠI THÍ NGHIỆM</button>
+                </div>
+            </div>
+
+            <!-- Tab nội dung 2: Nhận xét thực nghiệm -->
+            <div id="content-report" class="hidden space-y-4">
+                <div class="space-y-4">
+                    <!-- Mục 1: Cực đại -->
+                    <section class="bg-slate-800/40 p-3 rounded-lg border-l-4 border-yellow-500">
+                        <h3 class="text-sm font-bold text-yellow-400 mb-2 underline">1. Vân Cực Đại (Bụng sóng)</h3>
+                        <p class="text-[11px] leading-relaxed text-slate-300">
+                            Quan sát các vùng màu vàng rực rỡ trên mặt nước:
+                        </p>
+                        <ul class="list-disc list-inside text-[10px] mt-1 text-slate-400 space-y-1 ml-1">
+                            <li><span class="text-white font-bold">Hình dáng:</span> Các đường Hyperbol xen kẽ.</li>
+                            <li><span class="text-white font-bold">Biên độ:</span> Đồ thị u-t dao động mạnh nhất ($A_{max} = 2A$).</li>
+                            <li><span class="text-white font-bold">Lý do:</span> Hai sóng truyền tới <span class="italic text-yellow-200">cùng pha</span>, tăng cường lẫn nhau.</li>
+                        </ul>
+                    </section>
+
+                    <!-- Mục 2: Cực tiểu -->
+                    <section class="bg-slate-800/40 p-3 rounded-lg border-l-4 border-blue-500">
+                        <h3 class="text-sm font-bold text-blue-400 mb-2 underline">2. Vân Cực Tiểu (Nút sóng)</h3>
+                        <p class="text-[11px] leading-relaxed text-slate-300">
+                            Quan sát các vùng tối/xanh đậm xen giữa các vân cực đại:
+                        </p>
+                        <ul class="list-disc list-inside text-[10px] mt-1 text-slate-400 space-y-1 ml-1">
+                            <li><span class="text-white font-bold">Hình dáng:</span> Cũng là các đường Hyperbol nằm giữa các cực đại.</li>
+                            <li><span class="text-white font-bold">Biên độ:</span> Đồ thị u-t là một đường thẳng hoặc dao động rất yếu ($A_{min} = 0$).</li>
+                            <li><span class="text-white font-bold">Lý do:</span> Hai sóng truyền tới <span class="italic text-blue-200">ngược pha</span>, triệt tiêu lẫn nhau.</li>
+                        </ul>
+                    </section>
+
+                    <!-- Mục 3: Điều kiện thực nghiệm -->
+                    <section class="bg-slate-800/40 p-3 rounded-lg border-l-4 border-slate-500">
+                        <h3 class="text-sm font-bold text-slate-300 mb-2 underline">3. Tổng kết điều kiện vật lý</h3>
+                        <div class="text-[10px] space-y-2 text-slate-400">
+                            <p>Vị trí các điểm trên mặt nước phụ thuộc vào hiệu đường đi $\Delta d = d_2 - d_1$:</p>
+                            <div class="grid grid-cols-2 gap-2 mt-1">
+                                <div class="bg-black/40 p-2 rounded border border-yellow-500/20 text-center">
+                                    <span class="block text-yellow-500 font-bold underline">CỰC ĐẠI</span>
+                                    $d_2 - d_1 = k\lambda$
+                                </div>
+                                <div class="bg-black/40 p-2 rounded border border-blue-500/20 text-center">
+                                    <span class="block text-blue-400 font-bold underline">CỰC TIỂU</span>
+                                    $d_2 - d_1 = (k + 0.5)\lambda$
+                                </div>
+                            </div>
+                            <p class="italic text-slate-500 mt-2">*Trong đó $k = 0, \pm 1, \pm 2...$ là bậc của vân giao thoa.</p>
+                        </div>
+                    </section>
+                </div>
+            </div>
+        </div>
+
+        <div class="p-4 border-t border-slate-700 bg-slate-900/50">
+            <h3 class="text-[10px] font-bold text-slate-500 uppercase mb-2">Chú thích thí nghiệm</h3>
+            <div class="grid grid-cols-2 gap-2">
+                <div class="flex items-center gap-2 text-[9px]">
+                    <div class="w-2.5 h-2.5 bg-yellow-400 rounded-full shadow-[0_0_5px_#facc15]"></div>
+                    <span>Cực đại (Bụng)</span>
+                </div>
+                <div class="flex items-center gap-2 text-[9px]">
+                    <div class="w-2.5 h-2.5 bg-blue-900 border border-blue-400 rounded-full"></div>
+                    <span>Cực tiểu (Nút)</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('waveCanvas');
+        const ctx = canvas.getContext('2d');
+        const oscCanvas = document.getElementById('oscillatorCanvas');
+        const oscCtx = oscCanvas.getContext('2d');
+        const container = document.getElementById('canvas-container');
+
+        // UI Elements
+        const freqInput = document.getElementById('freq');
+        const velInput = document.getElementById('velocity');
+        const distInput = document.getElementById('dist');
+        const ampInput = document.getElementById('amp');
+        const resetBtn = document.getElementById('resetBtn');
+        const probePosLabel = document.getElementById('probe-pos');
+        const probeAmpLabel = document.getElementById('probe-amp');
+
+        let width, height, oscWidth, oscHeight;
+        let time = 0;
+        let history = []; 
+        const maxHistory = 200;
+
+        const state = {
+            f: 2.0,
+            v: 40.0,
+            d: 120.0,
+            A: 20.0,
+            lambda: 20.0,
+            probe: { x: 0, y: 0, dragging: false, currentU: 0 }
+        };
+
+        window.switchTab = function(tab) {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById('content-control').classList.add('hidden');
+            document.getElementById('content-report').classList.add('hidden');
+            
+            document.getElementById('tab-' + tab).classList.add('active');
+            document.getElementById('content-' + tab).classList.remove('hidden');
+        };
+
+        function resize() {
+            width = canvas.parentElement.clientWidth;
+            height = canvas.parentElement.clientHeight;
+            canvas.width = width;
+            canvas.height = height;
+
+            oscWidth = oscCanvas.parentElement.clientWidth;
+            oscHeight = oscCanvas.parentElement.clientHeight;
+            oscCanvas.width = oscWidth;
+            oscCanvas.height = oscHeight;
+
+            if (state.probe.x === 0) {
+                state.probe.x = width / 2;
+                state.probe.y = height / 2 - 45;
+            }
+        }
+
+        window.addEventListener('resize', resize);
+        resize();
+
+        function updateParams() {
+            state.f = parseFloat(freqInput.value);
+            state.v = parseFloat(velInput.value);
+            state.d = parseFloat(distInput.value);
+            state.A = parseFloat(ampInput.value);
+            state.lambda = state.v / state.f;
+
+            document.getElementById('f-val').innerText = state.f.toFixed(1);
+            document.getElementById('v-val').innerText = state.v;
+            document.getElementById('d-val').innerText = state.d;
+            document.getElementById('a-val').innerText = state.A;
+            document.getElementById('lambda-val').innerText = state.lambda.toFixed(2);
+            document.getElementById('period-val').innerText = (1/state.f).toFixed(2) + "s";
+        }
+
+        canvas.addEventListener('mousedown', e => {
+            const rect = canvas.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
+            const dist = Math.sqrt((mouseX - state.probe.x)**2 + (mouseY - state.probe.y)**2);
+            if (dist < 25) state.probe.dragging = true;
+        });
+
+        window.addEventListener('mousemove', e => {
+            if (state.probe.dragging) {
+                const rect = canvas.getBoundingClientRect();
+                state.probe.x = Math.max(0, Math.min(width, e.clientX - rect.left));
+                state.probe.y = Math.max(0, Math.min(height, e.clientY - rect.top));
+                probePosLabel.innerText = `${Math.round(state.probe.x)}, ${Math.round(state.probe.y)}`;
+            }
+        });
+
+        window.addEventListener('mouseup', () => { state.probe.dragging = false; });
+
+        [freqInput, velInput, distInput, ampInput].forEach(input => {
+            input.addEventListener('input', updateParams);
+        });
+
+        resetBtn.addEventListener('click', () => {
+            freqInput.value = 2;
+            velInput.value = 40;
+            distInput.value = 120;
+            ampInput.value = 20;
+            state.probe.x = width/2;
+            state.probe.y = height/2 - 45;
+            updateParams();
+        });
+
+        function calculateU(x, y, t) {
+            const centerX = width / 2;
+            const centerY = height / 2;
+            const s1 = { x: centerX - state.d / 2, y: centerY };
+            const s2 = { x: centerX + state.d / 2, y: centerY };
+
+            const d1 = Math.sqrt((x - s1.x) ** 2 + (y - s1.y) ** 2);
+            const d2 = Math.sqrt((x - s2.x) ** 2 + (y - s2.y) ** 2);
+
+            const w = 2 * Math.PI * state.f;
+            const phase1 = (w * t) - (2 * Math.PI * d1 / state.lambda);
+            const phase2 = (w * t) - (2 * Math.PI * d2 / state.lambda);
+
+            return (Math.sin(phase1) + Math.sin(phase2)) * state.A;
+        }
+
+        function draw() {
+            ctx.fillStyle = '#0f172a';
+            ctx.fillRect(0, 0, width, height);
+
+            const step = 5; 
+            for (let x = 0; x < width; x += step) {
+                for (let y = 0; y < height; y += step) {
+                    const u = calculateU(x, y, time);
+                    let alpha = Math.abs(u) / (state.A * 2.2);
+                    if (u > 0) {
+                        ctx.fillStyle = `rgba(250, 204, 21, ${alpha})`; 
+                    } else {
+                        ctx.fillStyle = `rgba(30, 58, 138, ${alpha})`;
+                    }
+                    ctx.fillRect(x, y, step, step);
+                }
+            }
+
+            const centerX = width / 2;
+            const centerY = height / 2;
+            const s1 = { x: centerX - state.d / 2, y: centerY };
+            const s2 = { x: centerX + state.d / 2, y: centerY };
+
+            ctx.fillStyle = '#60a5fa';
+            ctx.shadowBlur = 10;
+            ctx.shadowColor = '#3b82f6';
+            [s1, s2].forEach(s => {
+                ctx.beginPath();
+                ctx.arc(s.x, s.y, 4, 0, Math.PI * 2);
+                ctx.fill();
+            });
+            ctx.shadowBlur = 0;
+
+            state.probe.currentU = calculateU(state.probe.x, state.probe.y, time);
+            probeAmpLabel.innerText = state.probe.currentU.toFixed(1);
+
+            ctx.save();
+            ctx.translate(state.probe.x, state.probe.y);
+            const scale = 1 + (state.probe.currentU / 100);
+            ctx.scale(scale, scale);
+            ctx.fillStyle = '#ef4444';
+            ctx.strokeStyle = 'white';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(0, 0, 8, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+            ctx.restore();
+
+            oscCtx.fillStyle = '#0f172a';
+            oscCtx.fillRect(0, 0, oscWidth, oscHeight);
+            
+            oscCtx.strokeStyle = '#1e293b';
+            oscCtx.lineWidth = 1;
+            oscCtx.beginPath();
+            for(let i=0; i<5; i++) {
+                let y = (oscHeight/4) * i;
+                oscCtx.moveTo(0, y);
+                oscCtx.lineTo(oscWidth, y);
+            }
+            oscCtx.stroke();
+
+            oscCtx.strokeStyle = '#334155';
+            oscCtx.beginPath();
+            oscCtx.moveTo(0, oscHeight/2);
+            oscCtx.lineTo(oscWidth, oscHeight/2);
+            oscCtx.stroke();
+
+            history.push(state.probe.currentU);
+            if (history.length > maxHistory) history.shift();
+
+            oscCtx.strokeStyle = '#ef4444';
+            oscCtx.lineWidth = 2.5;
+            oscCtx.beginPath();
+            for (let i = 0; i < history.length; i++) {
+                const x = (oscWidth / maxHistory) * i;
+                const y = (oscHeight / 2) - history[i] * (oscHeight / (state.A * 4.5));
+                if (i === 0) oscCtx.moveTo(x, y);
+                else oscCtx.lineTo(x, y);
+            }
+            oscCtx.stroke();
+
+            oscCtx.fillStyle = 'white';
+            const lastX = (oscWidth / maxHistory) * (history.length - 1);
+            const lastY = (oscHeight / 2) - history[history.length - 1] * (oscHeight / (state.A * 4.5));
+            oscCtx.beginPath();
+            oscCtx.arc(lastX, lastY, 3, 0, Math.PI * 2);
+            oscCtx.fill();
+
+            time += 0.016; 
+            requestAnimationFrame(draw);
+        }
+
+        updateParams();
+        draw();
+    </script>
+</body>
+</html>
