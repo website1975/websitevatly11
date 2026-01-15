@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mô phỏng Giao thoa Sóng 3D</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { margin: 0; overflow: hidden; background-color: #0f172a; color: white; font-family: sans-serif; }
+        canvas { display: block; }
+        .panel-container { display: flex; height: 100vh; width: 100vw; }
+        .left-panel { flex: 1; display: flex; flex-direction: column; border-right: 1px solid #334155; }
+        .right-panel { width: 320px; padding: 20px; background: #1e293b; overflow-y: auto; }
+        .simulation-3d { flex: 2; position: relative; border-bottom: 1px solid #334155; }
+        .simulation-2d { flex: 1; background: #020617; position: relative; }
+        .label { position: absolute; top: 10px; left: 10px; background: rgba(0,0,0,0.5); padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; pointer-events: none; }
+        input[type=range] { width: 100%; cursor: pointer; }
+        .control-group { margin-bottom: 20px; }
+        .value-display { float: right; font-family: monospace; color: #38bdf8; }
+    </style>
+</head>
+<body>
+
+<div class="panel-container">
+    <!-- Panel Trái: Khu vực mô phỏng -->
+    <div class="left-panel">
+        <div id="sim3d" class="simulation-3d">
+            <div class="label">Mô phỏng 3D (Giao thoa mặt nước)</div>
+        </div>
+        <div class="simulation-2d">
+            <div class="label">Sóng dừng (Mặt cắt trên phương nối 2 nguồn)</div>
+            <canvas id="canvas2d"></canvas>
+        </div>
+    </div>
+
+    <!-- Panel Phải: Điều khiển -->
+    <div class="right-panel">
+        <h2 class="text-xl font-bold mb-6 border-bottom border-slate-600 pb-2">Điều khiển</h2>
+        
+        <div class="control-group">
+            <label>Bước sóng ($\lambda$): <span id="lambda-val" class="value-display">20</span></label>
+            <input type="range" id="lambda" min="10" max="50" value="20">
+        </div>
+
+        <div class="control-group">
+            <label>Biên độ ($A$): <span id="amp-val" class="value-display">5</span></label>
+            <input type="range" id="amplitude" min="1" max="15" value="5">
+        </div>
+
+        <div class="control-group">
+            <label>Khoảng cách nguồn ($d$): <span id="dist-val" class="value-display">60</span></label>
+            <input type="range" id="distance" min="20" max="150" value="60">
+        </div>
+
+        <div class="control-group">
+            <label>Tốc độ thời gian: <span id="speed-val" class="value-display">1.0</span></label>
+            <input type="range" id="speed" min="0" max="30" value="10">
+        </div>
+
+        <div class="mt-8 p-4 bg-slate-800 rounded-lg text-sm text-slate-300">
+            <p class="mb-2"><strong>Giải thích:</strong></p>
+            <ul class="list-disc ml-4 space-y-1">
+                <li>Hai nguồn đồng pha đặt tại $(-d/2, 0)$ và $(d/2, 0)$.</li>
+                <li>Phần trên: Cao độ mặt nước $z = A\cos(k r_1 - \omega t) + A\cos(k r_2 - \omega t)$.</li>
+                <li>Phần dưới: Hình ảnh sóng dừng hình thành trên đoạn thẳng nối hai nguồn.</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<script>
+    // --- Cấu hình thông số ---
+    const state = {
+        lambda: 20,
+        amplitude: 5,
+        distance: 60,
+        speed: 0.1,
+        time: 0
+    };
+
+    // --- Khởi tạo 3D (Three.js) ---
+    const scene = new THREE.Scene();
+    const container3d = document.getElementById('sim3d');
+    const camera = new THREE.PerspectiveCamera(75, container3d.clientWidth / container3d.clientHeight, 0.1, 1000);
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(container3d.clientWidth, container3d.clientHeight);
+    container3d.appendChild(renderer.domElement);
+
+    // Ánh sáng
+    const ambientLight = new THREE.AmbientLight(0x404040);
+    scene.add(ambientLight);
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+    directionalLight.position.set(1, 1, 1).normalize();
+    scene.add(directionalLight);
+
+    // Mặt nước (Grid)
+    const gridSize = 200;
+    const gridSegments = 80;
+    const geometry = new THREE.PlaneBufferGeometry(gridSize, gridSize, gridSegments, gridSegments);
+    const material = new THREE.MeshPhongMaterial({
+        color: 0x0ea5e9,
+        side: THREE.DoubleSide,
+        wireframe: true,
+        transparent: true,
+        opacity: 0.8
+    });
+    const water = new THREE.Mesh(geometry, material);
+    water.rotation.x = -Math.PI / 2;
+    scene.add(water);
+
+    // Điểm nguồn
+    const sourceGeom = new THREE.SphereGeometry(2, 16, 16);
+    const sourceMat = new THREE.MeshBasicMaterial({ color: 0xef4444 });
+    const source1 = new THREE.Mesh(sourceGeom, sourceMat);
+    const source2 = new THREE.Mesh(sourceGeom, sourceMat);
+    scene.add(source1);
+    scene.add(source2);
+
+    camera.position.set(0, 80, 100);
+    camera.lookAt(0, 0, 0);
+
+    // --- Khởi tạo 2D (Sóng dừng) ---
+    const canvas2d = document.getElementById('canvas2d');
+    const ctx2d = canvas2d.getContext('2d');
+
+    function resize2d() {
+        const parent = canvas2d.parentElement;
+        canvas2d.width = parent.clientWidth;
+        canvas2d.height = parent.clientHeight;
+    }
+    window.addEventListener('resize', () => {
+        resize2d();
+        camera.aspect = container3d.clientWidth / container3d.clientHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(container3d.clientWidth, container3d.clientHeight);
+    });
+    resize2d();
+
+    // --- Xử lý sự kiện Điều khiển ---
+    const inputs = {
+        lambda: document.getElementById('lambda'),
+        amplitude: document.getElementById('amplitude'),
+        distance: document.getElementById('distance'),
+        speed: document.getElementById('speed')
+    };
+
+    inputs.lambda.oninput = (e) => {
+        state.lambda = parseFloat(e.target.value);
+        document.getElementById('lambda-val').innerText = state.lambda;
+    };
+    inputs.amplitude.oninput = (e) => {
+        state.amplitude = parseFloat(e.target.value);
+        document.getElementById('amp-val').innerText = state.amplitude;
+    };
+    inputs.distance.oninput = (e) => {
+        state.distance = parseFloat(e.target.value);
+        document.getElementById('dist-val').innerText = state.distance;
+    };
+    inputs.speed.oninput = (e) => {
+        state.speed = parseFloat(e.target.value) / 100;
+        document.getElementById('speed-val').innerText = (state.speed * 10).toFixed(1);
+    };
+
+    // --- Vòng lặp cập nhật ---
+    function update() {
+        state.time += state.speed;
+
+        // Cập nhật vị trí nguồn trong 3D
+        source1.position.x = -state.distance / 2;
+        source2.position.x = state.distance / 2;
+
+        // Cập nhật đỉnh mặt nước 3D
+        const positions = geometry.attributes.position.array;
+        const k = (2 * Math.PI) / state.lambda;
+        const omega = 1; // Giả định omega cố định tỉ lệ với thời gian
+
+        for (let i = 0; i < positions.length; i += 3) {
+            const x = positions[i];
+            const y = positions[i + 1];
+            
+            // Khoảng cách từ điểm tới 2 nguồn (nguồn nằm trên trục X)
+            const r1 = Math.sqrt(Math.pow(x - (-state.distance / 2), 2) + Math.pow(y - 0, 2));
+            const r2 = Math.sqrt(Math.pow(x - (state.distance / 2), 2) + Math.pow(y - 0, 2));
+            
+            // Phương trình giao thoa: z = A*cos(kr1 - wt) + A*cos(kr2 - wt)
+            // Lưu ý: Trong Three.js Plane, z là cao độ trước khi rotate, 
+            // nhưng sau khi rotate -PI/2 thì ta thay đổi tọa độ Z của mesh
+            const z1 = state.amplitude * Math.cos(k * r1 - state.time * 5);
+            const z2 = state.amplitude * Math.cos(k * r2 - state.time * 5);
+            
+            positions[i + 2] = z1 + z2;
+        }
+        geometry.attributes.position.needsUpdate = true;
+
+        // Vẽ 2D: Sóng dừng trên trục nối 2 nguồn
+        draw2D();
+
+        renderer.render(scene, camera);
+        requestAnimationFrame(update);
+    }
+
+    function draw2D() {
+        ctx2d.clearRect(0, 0, canvas2d.width, canvas2d.height);
+        
+        const w = canvas2d.width;
+        const h = canvas2d.height;
+        const centerY = h / 2;
+        const margin = 50;
+        const drawWidth = w - 2 * margin;
+        
+        // Vẽ trục ngang
+        ctx2d.strokeStyle = '#334155';
+        ctx2d.beginPath();
+        ctx2d.moveTo(margin, centerY);
+        ctx2d.lineTo(w - margin, centerY);
+        ctx2d.stroke();
+
+        const k = (2 * Math.PI) / state.lambda;
+        const scaleX = drawWidth / 200; // Tỉ lệ mapping tọa độ vật lý sang pixel
+
+        // Vẽ đường sóng
+        ctx2d.beginPath();
+        ctx2d.strokeStyle = '#38bdf8';
+        ctx2d.lineWidth = 2;
+
+        for (let px = 0; px <= drawWidth; px++) {
+            // Chuyển pixel sang tọa độ x vật lý (từ -100 đến 100 tương ứng 3D)
+            const x = (px / drawWidth) * 200 - 100;
+            
+            const r1 = Math.abs(x - (-state.distance / 2));
+            const r2 = Math.abs(x - (state.distance / 2));
+            
+            const z1 = state.amplitude * Math.cos(k * r1 - state.time * 5);
+            const z2 = state.amplitude * Math.cos(k * r2 - state.time * 5);
+            const totalZ = z1 + z2;
+
+            const py = centerY - totalZ * 3; // Scale cao độ để dễ nhìn
+            if (px === 0) ctx2d.moveTo(margin + px, py);
+            else ctx2d.lineTo(margin + px, py);
+        }
+        ctx2d.stroke();
+
+        // Vẽ 2 nguồn
+        const s1_px = (( -state.distance / 2 + 100 ) / 200 ) * drawWidth;
+        const s2_px = (( state.distance / 2 + 100 ) / 200 ) * drawWidth;
+
+        ctx2d.fillStyle = '#ef4444';
+        ctx2d.beginPath(); ctx2d.arc(margin + s1_px, centerY, 5, 0, Math.PI * 2); ctx2d.fill();
+        ctx2d.beginPath(); ctx2d.arc(margin + s2_px, centerY, 5, 0, Math.PI * 2); ctx2d.fill();
+        
+        ctx2d.fillStyle = 'white';
+        ctx2d.fillText("S1", margin + s1_px - 5, centerY + 20);
+        ctx2d.fillText("S2", margin + s2_px - 5, centerY + 20);
+    }
+
+    // Tương tác chuột đơn giản cho camera 3D
+    let isMouseDown = false;
+    let mouseX = 0;
+    container3d.addEventListener('mousedown', () => isMouseDown = true);
+    window.addEventListener('mouseup', () => isMouseDown = false);
+    window.addEventListener('mousemove', (e) => {
+        if (isMouseDown) {
+            camera.position.x += (e.movementX * -0.5);
+            camera.lookAt(0, 0, 0);
+        }
+    });
+
+    // Bắt đầu
+    window.onload = update;
+
+</script>
+</body>
+</html>
