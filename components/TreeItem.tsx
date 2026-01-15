@@ -32,65 +32,73 @@ const TreeItem: React.FC<TreeItemProps> = ({
   const isSelected = selectedId === node.id;
 
   return (
-    <div className="select-none mb-1">
+    <div className="select-none mb-0.5">
       <div 
-        className={`group flex items-center py-2 px-3 rounded-xl cursor-pointer transition-all ${
+        className={`group flex items-center py-1.5 px-2 rounded-lg cursor-pointer transition-all ${
           isSelected 
-            ? 'bg-indigo-600 text-white shadow-lg' 
-            : 'hover:bg-indigo-50 text-slate-600'
+            ? 'bg-indigo-600 text-white shadow-sm' 
+            : 'hover:bg-slate-100 text-slate-600'
         }`}
         style={{ marginLeft: `${level * 0.75}rem` }}
         onClick={() => onSelect(node.id)}
       >
         <div className="flex items-center flex-1 min-w-0">
-          {node.type === 'folder' ? (
-            <button 
-              onClick={(e) => { e.stopPropagation(); setIsOpen(!isOpen); }}
-              className={`p-0.5 mr-1 rounded-md transition-colors ${isSelected ? 'text-white/50 hover:text-white' : 'text-slate-400 hover:bg-slate-200'}`}
-            >
-              {isOpen ? <ChevronDown size={14} strokeWidth={3} /> : <ChevronRight size={14} strokeWidth={3} />}
-            </button>
-          ) : (
-            <div className="w-5 mr-1" />
-          )}
+          {/* Nút toggle mở rộng - Cố định 20px */}
+          <div className="w-5 flex items-center justify-center shrink-0">
+            {node.type === 'folder' ? (
+              <button 
+                onClick={(e) => { e.stopPropagation(); setIsOpen(!isOpen); }}
+                className={`p-0.5 rounded transition-colors ${isSelected ? 'text-white/70 hover:text-white' : 'text-slate-400 hover:bg-slate-200'}`}
+              >
+                {isOpen ? <ChevronDown size={12} strokeWidth={3} /> : <ChevronRight size={12} strokeWidth={3} />}
+              </button>
+            ) : null}
+          </div>
           
-          {node.type === 'folder' ? (
-            <Folder size={16} className={`mr-2 shrink-0 ${isSelected ? 'text-white' : 'text-amber-500'}`} />
-          ) : (
-            <Globe size={16} className={`mr-2 shrink-0 ${isSelected ? 'text-white' : 'text-sky-500'}`} />
-          )}
+          {/* Icon loại mục - Cố định 20px */}
+          <div className="w-5 flex items-center justify-center shrink-0 mr-1.5">
+            {node.type === 'folder' ? (
+              <Folder size={14} className={`${isSelected ? 'text-white' : 'text-amber-500'}`} />
+            ) : (
+              <Globe size={14} className={`${isSelected ? 'text-white' : 'text-sky-500'}`} />
+            )}
+          </div>
           
-          <span className={`truncate text-xs tracking-tight leading-tight ${isSelected ? 'font-semibold' : 'font-normal'}`}>{node.title}</span>
+          {/* Tiêu đề - Chữ thường, font nhỏ gọn */}
+          <span className={`truncate text-[11px] tracking-tight leading-tight ${isSelected ? 'font-medium' : 'font-normal'}`}>
+            {node.title}
+          </span>
         </div>
 
         {isAdmin && (
-          <div className="flex items-center space-x-0.5 ml-1 opacity-0 group-hover:opacity-100 transition-opacity">
+          <div className="flex items-center space-x-0.5 ml-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
             {node.type === 'folder' && (
               <button 
                 onClick={(e) => { e.stopPropagation(); onAdd(node.id, 'lesson'); }}
-                className={`p-1 rounded-lg ${isSelected ? 'hover:bg-white/20' : 'hover:bg-indigo-100 text-indigo-500'}`}
+                className={`p-1 rounded ${isSelected ? 'hover:bg-white/20 text-white' : 'hover:bg-indigo-100 text-indigo-500'}`}
               >
-                <Plus size={14} />
+                <Plus size={10} />
               </button>
             )}
             <button 
               onClick={(e) => { e.stopPropagation(); onEdit(node); }}
-              className={`p-1 rounded-lg ${isSelected ? 'hover:bg-white/20' : 'hover:bg-amber-100 text-amber-600'}`}
+              className={`p-1 rounded ${isSelected ? 'hover:bg-white/20 text-white' : 'hover:bg-amber-100 text-amber-600'}`}
             >
-              <Pencil size={14} />
+              <Pencil size={10} />
             </button>
             <button 
               onClick={(e) => { e.stopPropagation(); onDelete(node.id); }}
-              className={`p-1 rounded-lg ${isSelected ? 'hover:bg-white/20' : 'hover:bg-red-100 text-red-500'}`}
+              className={`p-1 rounded ${isSelected ? 'hover:bg-white/20 text-white' : 'hover:bg-red-100 text-red-500'}`}
             >
-              <Trash2 size={14} />
+              <Trash2 size={10} />
             </button>
           </div>
         )}
       </div>
 
+      {/* Container cho con - Thêm đường kẻ dọc mờ để dễ quan sát phân cấp */}
       {node.type === 'folder' && isOpen && children.length > 0 && (
-        <div className="mt-1">
+        <div className="mt-0.5 ml-[9px] border-l border-slate-100 pl-1">
           {children.map(child => (
             <TreeItem 
               key={child.id}
@@ -102,7 +110,7 @@ const TreeItem: React.FC<TreeItemProps> = ({
               onAdd={onAdd}
               onEdit={onEdit}
               onDelete={onDelete}
-              level={level + 1}
+              level={0} // Reset level về 0 vì đã dùng margin/border của container cha
             />
           ))}
         </div>
