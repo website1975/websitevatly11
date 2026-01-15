@@ -14,6 +14,15 @@ import { INITIAL_DATA } from './constants';
 import TreeItem from './components/TreeItem';
 
 // --- CONFIG & UTILS ---
+const SLOGANS = [
+  "Vật lý không chỉ là công thức, đó là cách ta hiểu về vũ trụ.",
+  "Khám phá bản chất vạn vật qua từng chuyển động.",
+  "Học tập thông minh — Khám phá đỉnh cao khoa học.",
+  "Mọi sự phức tạp đều bắt nguồn từ những quy luật đơn giản.",
+  "Khoa học là ánh sáng soi đường cho trí tuệ.",
+  "Vật lý lớp 11 - Kết nối tri thức - Khám phá thế giới."
+];
+
 const getSafeEnv = (key: string): string | undefined => {
   try {
     const fromProcess = (process.env as any)[key] || (process.env as any)[`VITE_${key}`];
@@ -110,7 +119,6 @@ const LandingPage = () => {
 
   return (
     <div className="h-screen w-full flex flex-col items-center justify-center bg-indigo-50/30 p-6 overflow-hidden">
-      {/* Hero Section with Slogan */}
       <div className="text-center mb-16 space-y-4 animate-in fade-in slide-in-from-top-10 duration-1000">
         <h1 className="text-7xl font-black text-slate-900 tracking-tighter uppercase leading-none">VẬT LÝ 11</h1>
         <p className="text-xl font-bold text-indigo-500 uppercase tracking-[0.4em] opacity-80">Học tập thông minh — Khám phá đỉnh cao</p>
@@ -152,8 +160,17 @@ const LandingPage = () => {
 const MainView: React.FC<{ isAdmin: boolean; data: AppData; updateData: (d: AppData) => void; isSyncing: boolean }> = ({ isAdmin, data, updateData, isSyncing }) => {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [iframeLoading, setIframeLoading] = useState(false);
+  const [sloganIdx, setSloganIdx] = useState(0);
   const navigate = useNavigate();
   
+  // Rotating Slogan Logic
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setSloganIdx((prev) => (prev + 1) % SLOGANS.length);
+    }, 30000); // 30 seconds
+    return () => clearInterval(timer);
+  }, []);
+
   // Quiz States
   const [isQuizModalOpen, setIsQuizModalOpen] = useState(false);
   const [quizQuestions, setQuizQuestions] = useState<QuizQuestion[]>([]);
@@ -295,16 +312,16 @@ const MainView: React.FC<{ isAdmin: boolean; data: AppData; updateData: (d: AppD
         </div>
       )}
 
-      {/* SIDEBAR (Panel Trái - w-40) */}
-      <aside className={`w-40 border-r flex flex-col shrink-0 ${isAdmin ? 'bg-amber-50/20' : 'bg-indigo-50/10'}`}>
-        <header className={`p-3 text-white ${isAdmin ? 'bg-amber-500' : 'bg-indigo-600'} shadow-lg flex justify-between items-center shrink-0`}>
-          <div className="flex items-center gap-1.5 min-w-0">
-            <Book size={16} className="shrink-0"/> 
-            <h1 className="font-black text-sm tracking-tighter uppercase leading-none truncate">Vật Lý 11</h1>
+      {/* SIDEBAR (Panel Trái - Tăng chiều rộng lên w-64 (~256px)) */}
+      <aside className={`w-64 border-r flex flex-col shrink-0 ${isAdmin ? 'bg-amber-50/20' : 'bg-indigo-50/10'}`}>
+        <header className={`p-4 text-white ${isAdmin ? 'bg-amber-500' : 'bg-indigo-600'} shadow-lg flex justify-between items-center shrink-0`}>
+          <div className="flex items-center gap-2.5 min-w-0">
+            <Book size={20} className="shrink-0"/> 
+            <h1 className="font-black text-lg tracking-tighter uppercase leading-none truncate">Vật Lý 11</h1>
           </div>
-          {isAdmin && <button onClick={() => { setNodeModalData({ parentId: null, type: 'folder', title: '', url: '' }); setShowNodeModal(true); }} className="p-1 bg-white/20 rounded-md hover:bg-white/40 shrink-0"><Plus size={14}/></button>}
+          {isAdmin && <button onClick={() => { setNodeModalData({ parentId: null, type: 'folder', title: '', url: '' }); setShowNodeModal(true); }} className="p-1.5 bg-white/20 rounded-lg hover:bg-white/40 shrink-0"><Plus size={16}/></button>}
         </header>
-        <div className="flex-1 overflow-y-auto p-2 custom-scrollbar">
+        <div className="flex-1 overflow-y-auto p-3 custom-scrollbar">
           {data.nodes.filter(n => n.parentId === null).map(node => (
             <TreeItem key={node.id} node={node} allNodes={data.nodes} selectedId={selectedId} isAdmin={isAdmin} 
               onSelect={(id) => { setSelectedId(id); if(data.nodes.find(n=>n.id===id)?.url) setIframeLoading(true); }} 
@@ -314,11 +331,11 @@ const MainView: React.FC<{ isAdmin: boolean; data: AppData; updateData: (d: AppD
             />
           ))}
         </div>
-        <footer className="p-2 border-t flex flex-col gap-1.5 shrink-0">
-           <div className="flex items-center justify-center gap-1.5 text-[6px] font-black uppercase text-slate-400 py-1.5 bg-white/50 rounded-lg">
-             {isSyncing ? <Loader2 size={8} className="animate-spin text-indigo-500" /> : <CloudCheck size={8} className="text-green-500" />} {isAdmin ? 'Teacher' : 'Student'}
+        <footer className="p-3 border-t flex flex-col gap-2 shrink-0">
+           <div className="flex items-center justify-center gap-2 text-[8px] font-black uppercase text-slate-400 py-2 bg-white/50 rounded-xl">
+             {isSyncing ? <Loader2 size={10} className="animate-spin text-indigo-500" /> : <CloudCheck size={10} className="text-green-500" />} {isAdmin ? 'Teacher Dashboard' : 'Student Mode'}
            </div>
-           <button onClick={handleLogout} className="w-full py-2 bg-white border border-slate-100 text-slate-400 font-black uppercase text-[8px] rounded-lg flex items-center justify-center gap-1.5 hover:text-red-500 transition-colors"><LogOut size={10}/> {isAdmin ? 'Thoát' : 'Về'}</button>
+           <button onClick={handleLogout} className="w-full py-2.5 bg-white border border-slate-100 text-slate-400 font-black uppercase text-[10px] rounded-xl flex items-center justify-center gap-2 hover:text-red-500 transition-colors"><LogOut size={12}/> {isAdmin ? 'Thoát' : 'Về Trang Chủ'}</button>
         </footer>
       </aside>
 
@@ -326,26 +343,28 @@ const MainView: React.FC<{ isAdmin: boolean; data: AppData; updateData: (d: AppD
       <main className="flex-1 flex flex-col bg-white overflow-hidden">
         {selectedId ? (
           <>
-            <header className="h-16 px-6 border-b flex justify-between items-center shrink-0 bg-white/80 backdrop-blur-md">
+            <header className="h-20 px-8 border-b flex justify-between items-center shrink-0 bg-white/80 backdrop-blur-md">
                <div className="min-w-0">
-                 <h2 className="text-lg font-black text-slate-800 uppercase truncate leading-none">{selectedNode?.title}</h2>
-                 <p className="text-[8px] font-bold text-indigo-500 uppercase mt-1 tracking-widest opacity-60">Vật lý lớp 11 - Kết nối tri thức</p>
+                 <h2 className="text-xl font-black text-slate-800 uppercase truncate leading-none">{selectedNode?.title}</h2>
+                 <p key={sloganIdx} className="text-[11px] font-bold text-indigo-500 uppercase mt-1.5 tracking-widest opacity-80 animate-in fade-in slide-in-from-left-2 duration-700">
+                    {SLOGANS[sloganIdx]}
+                 </p>
                </div>
-               <div className="flex items-center gap-2">
-                 {selectedNode?.type === 'lesson' && <button onClick={generateAIQuiz} className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-xl font-black text-[9px] uppercase shadow-md hover:bg-indigo-700 active:scale-95 transition-all"><BrainCircuit size={14}/> Quiz AI</button>}
-                 {selectedNode?.url && <a href={selectedNode.url} target="_blank" className="p-2 bg-slate-50 text-slate-400 rounded-lg hover:bg-slate-100"><Maximize2 size={14}/></a>}
+               <div className="flex items-center gap-3">
+                 {selectedNode?.type === 'lesson' && <button onClick={generateAIQuiz} className="flex items-center gap-2 px-6 py-3 bg-indigo-600 text-white rounded-2xl font-black text-[10px] uppercase shadow-lg shadow-indigo-100 hover:bg-indigo-700 active:scale-95 transition-all"><BrainCircuit size={18}/> Quiz AI</button>}
+                 {selectedNode?.url && <a href={selectedNode.url} target="_blank" className="p-3 bg-slate-50 text-slate-400 rounded-xl hover:bg-slate-100"><Maximize2 size={18}/></a>}
                </div>
             </header>
             <div className="flex-1 bg-slate-100 relative overflow-hidden">
-               {iframeLoading && <div className="absolute inset-0 bg-white flex flex-col items-center justify-center z-10 animate-in fade-in"><Loader2 className="animate-spin text-indigo-500 mb-4" size={32}/><p className="text-[8px] font-black uppercase tracking-widest text-slate-400">Đang tải...</p></div>}
-               {selectedNode?.url ? <iframe src={selectedNode.url} className="w-full h-full border-none" onLoad={()=>setIframeLoading(false)}/> : <div className="h-full flex items-center justify-center text-slate-300 italic text-xs">Nội dung bài học đang được xây dựng...</div>}
+               {iframeLoading && <div className="absolute inset-0 bg-white flex flex-col items-center justify-center z-10 animate-in fade-in"><Loader2 className="animate-spin text-indigo-500 mb-4" size={40}/><p className="text-[9px] font-black uppercase tracking-widest text-slate-400">Đang tải nội dung...</p></div>}
+               {selectedNode?.url ? <iframe src={selectedNode.url} className="w-full h-full border-none" onLoad={()=>setIframeLoading(false)}/> : <div className="h-full flex items-center justify-center text-slate-300 italic text-sm">Nội dung bài học đang được xây dựng...</div>}
             </div>
           </>
         ) : (
           <div className="flex-1 flex flex-col items-center justify-center bg-slate-50 p-10 text-center">
-             <div className="p-12 bg-white rounded-[50px] shadow-xl mb-8 animate-in zoom-in duration-700"><Book size={80} className="text-indigo-100 opacity-50"/></div>
-             <h2 className="text-xl font-black text-slate-300 uppercase tracking-tighter mb-4">Chọn một đề mục để bắt đầu</h2>
-             <p className="max-w-xs text-[10px] font-bold text-slate-400 leading-relaxed italic opacity-70">"Vật lý không chỉ là những công thức, đó là cách chúng ta hiểu về vũ trụ này."</p>
+             <div className="p-16 bg-white rounded-[70px] shadow-2xl mb-10 animate-in zoom-in duration-700"><Book size={100} className="text-indigo-100 opacity-50"/></div>
+             <h2 className="text-2xl font-black text-slate-300 uppercase tracking-tighter mb-4">Chọn một đề mục để bắt đầu</h2>
+             <p className="max-w-xs text-xs font-bold text-slate-400 leading-relaxed italic opacity-70">"Vật lý không chỉ là những công thức, đó là cách chúng ta hiểu về vũ trụ này."</p>
           </div>
         )}
       </main>
@@ -377,7 +396,7 @@ const MainView: React.FC<{ isAdmin: boolean; data: AppData; updateData: (d: AppD
          </div>
       </aside>
 
-      {/* MODALS */}
+      {/* MODALS CŨ (GIỮ NGUYÊN) */}
       {showNodeModal && (
         <div className="fixed inset-0 z-[300] bg-black/40 flex items-center justify-center p-6 backdrop-blur-sm animate-in fade-in duration-200">
            <form onSubmit={(e)=> {
