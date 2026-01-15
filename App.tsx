@@ -3,7 +3,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { 
   Book, Link as LinkIcon, X, Pencil, Plus, Settings, Globe, Maximize2, Save, 
   Loader2, LogOut, GraduationCap, KeyRound, Trash2, AlertTriangle, Cloud, CloudCheck, CloudOff,
-  ShieldCheck, Sparkles, Cpu, Zap, Info
+  ShieldCheck, Sparkles, Cpu, Zap, Info, AlertCircle
 } from 'lucide-react';
 import { createClient } from '@supabase/supabase-js';
 import { BookNode, NodeType, AppData, ResourceLink } from './types';
@@ -15,15 +15,26 @@ const SUPABASE_URL = 'https://ktottoplusantmadclpg.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_Fa4z8bEgByw3pGTJdvBqmQ_D_KeDGdl';
 
 /**
- * QUẢN LÝ BIẾN MÔI TRƯỜNG (VERCEL)
- * Khi bạn đặt Key trên Vercel là TEACHER_PASSWORD, mã nguồn sẽ tự lấy giá trị đó.
- * Nếu không tìm thấy, nó sẽ dùng mặc định là '1234'.
+ * HÀM LẤY BIẾN MÔI TRƯỜNG THÔNG MINH
+ * Thử nghiệm nhiều cách tiếp cận khác nhau để lấy Key từ Vercel/Vite/Static
  */
 const getEnv = (key: string): string | undefined => {
-  // Ưu tiên đọc từ process.env (Vercel/Build time)
-  if (typeof process !== 'undefined' && process.env?.[key]) return process.env[key];
-  // Dự phòng cho một số môi trường đặc biệt
-  if (typeof (window as any)._env_ !== 'undefined' && (window as any)._env_[key]) return (window as any)._env_[key];
+  try {
+    // 1. Thử với process.env (Dành cho build tool truyền thống)
+    if (typeof process !== 'undefined' && process.env?.[key]) return process.env[key];
+    
+    // 2. Thử với import.meta.env (Dành cho Vite - phổ biến trên Vercel hiện nay)
+    // Lưu ý: Vite yêu cầu tiền tố VITE_
+    const viteKey = `VITE_${key}`;
+    const metaEnv = (import.meta as any).env;
+    if (metaEnv?.[viteKey]) return metaEnv[viteKey];
+    if (metaEnv?.[key]) return metaEnv[key];
+
+    // 3. Thử với window._env_ (Dành cho Docker/Runtime injection)
+    if (typeof (window as any)._env_ !== 'undefined' && (window as any)._env_[key]) return (window as any)._env_[key];
+  } catch (e) {
+    // Trình duyệt có thể chặn truy cập một số thuộc tính hệ thống
+  }
   return undefined;
 };
 
@@ -276,7 +287,7 @@ const App: React.FC = () => {
 
   return (
     <div className="flex h-screen bg-white overflow-hidden font-sans relative">
-      {/* Modals */}
+      {/* Modals (Giữ nguyên) */}
       {showNodeModal && (
         <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
           <div className="bg-white rounded-3xl shadow-2xl w-full max-w-sm p-8 animate-in zoom-in duration-200">
@@ -336,18 +347,26 @@ const App: React.FC = () => {
             <span className="text-[8px] font-black uppercase tracking-widest text-gray-400">{isSyncing ? 'Đang đồng bộ...' : cloudStatus === 'connected' ? 'Cloud: Connected' : 'Cloud: Offline'}</span>
           </div>
           
-          {/* AI Readiness Signal (Kiểm tra Key Gemini) */}
-          <div className="flex items-center justify-center space-x-2 py-1 px-3 bg-white/60 rounded-lg shadow-sm border border-gray-100 group cursor-help">
+          {/* AI Readiness Signal - TỐI ƯU HÓA CHO VERCEL */}
+          <div className="flex items-center justify-center space-x-2 py-1 px-3 bg-white/60 rounded-lg shadow-sm border border-gray-100 group relative cursor-help">
             <div className={`w-1.5 h-1.5 rounded-full ${HAS_AI_KEY ? 'bg-green-500 animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.6)]' : 'bg-gray-300'}`}></div>
-            <span className="text-[8px] font-black uppercase tracking-widest text-gray-400 flex items-center gap-1">
+            <span className={`text-[8px] font-black uppercase tracking-widest flex items-center gap-1 ${HAS_AI_KEY ? 'text-gray-400' : 'text-red-400'}`}>
               <Zap size={10} className={HAS_AI_KEY ? 'text-amber-500 fill-amber-500' : 'text-gray-300'} /> 
               AI ENGINE: {HAS_AI_KEY ? 'READY' : 'WAITING KEY'}
             </span>
-            {/* Tooltip giải thích nhanh khi hover */}
-            <div className="absolute bottom-full mb-2 hidden group-hover:block bg-gray-800 text-white text-[7px] p-2 rounded-lg w-40 z-50 shadow-xl font-bold uppercase tracking-wider leading-relaxed">
-              {HAS_AI_KEY 
-                ? "Gemini API đã sẵn sàng phát triển các tính năng AI!" 
-                : "Hãy thêm API_KEY vào Environment Variables trên Vercel và Redeploy."}
+            {!HAS_AI_KEY && <AlertCircle size={10} className="text-red-400" />}
+            
+            {/* Tooltip Hướng dẫn khắc phục lỗi Vercel */}
+            <div className="absolute bottom-full left-0 mb-2 hidden group-hover:block bg-gray-900 text-white text-[8px] p-4 rounded-2xl w-60 z-50 shadow-2xl font-bold border border-white/10">
+              <div className="flex items-center gap-2 mb-2 text-amber-400 border-b border-white/10 pb-2">
+                <Info size={12} /> <span className="uppercase tracking-widest">Hướng dẫn Vercel</span>
+              </div>
+              <ul className="space-y-2 text-gray-300 font-medium">
+                <li>1. Vào <span className="text-indigo-300">Settings -> Env Variables</span></li>
+                <li>2. Thêm <span className="text-amber-300">API_KEY</span> (Value: Mã Gemini của bạn)</li>
+                <li>3. <span className="text-red-300">QUAN TRỌNG:</span> Bạn phải bấm <span className="bg-white/10 px-1 rounded">Redeploy</span> bản mới nhất thì web mới nhận Key.</li>
+                <li className="italic opacity-60">* Nếu dùng Vite, hãy đặt tên là VITE_API_KEY</li>
+              </ul>
             </div>
           </div>
 
