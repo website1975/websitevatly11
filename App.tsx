@@ -1,9 +1,9 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { 
-  Book, Link as LinkIcon, X, Pencil, Plus, Settings, Globe, Maximize2, Save, 
-  Loader2, LogOut, GraduationCap, KeyRound, Trash2, AlertTriangle, Cloud, CloudCheck, CloudOff,
-  ShieldCheck, Sparkles, Cpu, Zap, Info, AlertCircle, CheckCircle2, BrainCircuit, Trophy, RotateCcw
+  Book, X, Pencil, Plus, Globe, Maximize2, Loader2, LogOut, GraduationCap, 
+  KeyRound, Trash2, AlertTriangle, CloudCheck, BrainCircuit, Trophy, RotateCcw,
+  ShieldCheck, Folder
 } from 'lucide-react';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { GoogleGenAI, Type } from "https://esm.sh/@google/genai";
@@ -16,7 +16,16 @@ const SUPABASE_URL = 'https://ktottoplusantmadclpg.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_Fa4z8bEgByw3pGTJdvBqmQ_D_KeDGdl';
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-const TEACHER_PWD = (process.env as any).TEACHER_PASSWORD || '1234';
+// Truy cập process.env một cách an toàn để tránh lỗi ReferenceError
+const getEnv = (key: string): string | undefined => {
+  try {
+    return (process.env as any)[key];
+  } catch (e) {
+    return undefined;
+  }
+};
+
+const TEACHER_PWD = getEnv('TEACHER_PASSWORD') || '1234';
 
 const PHYSICS_QUOTES = [
   "Cái chúng ta biết là một giọt nước, cái chúng ta chưa biết là cả đại dương. - Isaac Newton",
@@ -31,7 +40,7 @@ const App: React.FC = () => {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [iframeLoading, setIframeLoading] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
-  const [currentSlogan, setCurrentSlogan] = useState(PHYSICS_QUOTES[0]);
+  const [currentSlogan] = useState(PHYSICS_QUOTES[Math.floor(Math.random() * PHYSICS_QUOTES.length)]);
 
   // Quiz States
   const [isQuizModalOpen, setIsQuizModalOpen] = useState(false);
@@ -58,7 +67,7 @@ const App: React.FC = () => {
         setData(cloudRows.data);
       }
     } catch (err) {
-      console.warn('Could not sync with cloud, using local state.');
+      console.warn('Cloud sync unavailable');
     } finally {
       setIsSyncing(false);
     }
@@ -99,8 +108,16 @@ const App: React.FC = () => {
     setShowResults(false);
     setUserAnswers([null, null, null, null, null]);
 
+    const apiKey = getEnv('API_KEY');
+    if (!apiKey) {
+      alert("Lỗi: Không tìm thấy API Key trong biến môi trường (process.env.API_KEY).");
+      setQuizLoading(false);
+      setIsQuizModalOpen(false);
+      return;
+    }
+
     try {
-      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+      const ai = new GoogleGenAI({ apiKey });
       const response = await ai.models.generateContent({
         model: "gemini-3-flash-preview",
         contents: `Bạn là giáo viên Vật Lý. Hãy tạo 5 câu hỏi trắc nghiệm tiếng Việt cực ngắn về chủ đề: "${selectedNode.title}". Định dạng JSON với question, options (mảng 4 chuỗi), correctIndex (0-3), và explanation.`,
@@ -126,7 +143,7 @@ const App: React.FC = () => {
       setQuizQuestions(quizData);
     } catch (error) {
       console.error("Gemini Error:", error);
-      alert("Hệ thống AI đang bận hoặc Key không hợp lệ.");
+      alert("Có lỗi khi gọi AI. Hãy đảm bảo Vercel đã được cấu hình API_KEY đúng.");
       setIsQuizModalOpen(false);
     } finally {
       setQuizLoading(false);
@@ -247,12 +264,12 @@ const App: React.FC = () => {
               {quizLoading ? (
                 <div className="flex flex-col items-center justify-center py-20">
                   <Loader2 size={60} className="animate-spin text-indigo-500 mb-6" />
-                  <p className="font-black text-indigo-400 uppercase animate-pulse">Đang yêu cầu giáo viên AI soạn đề...</p>
+                  <p className="font-black text-indigo-400 uppercase animate-pulse">Đang nạp dữ liệu từ AI...</p>
                 </div>
               ) : (
                 quizQuestions.map((q, qIdx) => (
                   <div key={qIdx} className={`p-6 rounded-3xl border-2 transition-all ${showResults ? (userAnswers[qIdx] === q.correctIndex ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200') : 'bg-slate-50 border-transparent'}`}>
-                    <h4 className="font-bold text-gray-800 mb-4 flex gap-3">
+                    <h4 className="font-bold text-gray-800 mb-4 flex gap-3 text-sm">
                       <span className="w-6 h-6 shrink-0 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center text-[10px] font-black">{qIdx + 1}</span>
                       {q.question}
                     </h4>
@@ -269,12 +286,12 @@ const App: React.FC = () => {
                           style = "bg-indigo-600 border-indigo-600 text-white shadow-xl";
                         }
                         return (
-                          <button key={oIdx} disabled={showResults} onClick={() => { const n = [...userAnswers]; n[qIdx] = oIdx; setUserAnswers(n); }} className={`p-4 rounded-2xl border-2 text-left text-xs font-bold transition-all ${style}`}>{opt}</button>
+                          <button key={oIdx} disabled={showResults} onClick={() => { const n = [...userAnswers]; n[qIdx] = oIdx; setUserAnswers(n); }} className={`p-3 rounded-xl border-2 text-left text-[11px] font-bold transition-all ${style}`}>{opt}</button>
                         );
                       })}
                     </div>
                     {showResults && (
-                      <div className="mt-4 ml-9 p-4 bg-white/50 rounded-2xl border border-dashed border-gray-300 text-[11px] text-gray-600 italic">
+                      <div className="mt-4 ml-9 p-4 bg-white/50 rounded-2xl border border-dashed border-gray-300 text-[10px] text-gray-600 italic">
                         <strong>Giải thích:</strong> {q.explanation}
                       </div>
                     )}
@@ -285,7 +302,7 @@ const App: React.FC = () => {
 
             <footer className="p-8 bg-slate-50 flex justify-between items-center shrink-0">
               {!showResults ? (
-                <button disabled={quizLoading || userAnswers.some(a => a === null)} onClick={() => setShowResults(true)} className="w-full py-5 bg-indigo-600 text-white rounded-2xl font-black uppercase tracking-widest shadow-xl disabled:opacity-30">Nộp bài ngay</button>
+                <button disabled={quizLoading || userAnswers.some(a => a === null)} onClick={() => setShowResults(true)} className="w-full py-5 bg-indigo-600 text-white rounded-2xl font-black uppercase tracking-widest shadow-xl disabled:opacity-30">Nộp bài</button>
               ) : (
                 <div className="w-full flex justify-between items-center">
                   <div className="flex items-center gap-4">
@@ -316,9 +333,9 @@ const App: React.FC = () => {
         </div>
         <div className="p-4 border-t border-gray-100 flex flex-col gap-2">
            <div className="flex items-center justify-center gap-2 text-[10px] font-black uppercase text-gray-400 py-2 bg-white/50 rounded-xl">
-             {isSyncing ? <Loader2 size={14} className="animate-spin text-indigo-500" /> : <CloudCheck size={14} className="text-green-500" />} {isSyncing ? 'Đang đồng bộ...' : 'Hệ thống Online'}
+             {isSyncing ? <Loader2 size={14} className="animate-spin text-indigo-500" /> : <CloudCheck size={14} className="text-green-500" />} {isSyncing ? 'Đồng bộ...' : 'Hệ thống Online'}
           </div>
-          <button onClick={() => setRole('none')} className="w-full py-4 bg-white border border-gray-100 text-gray-400 font-black uppercase text-[10px] rounded-xl flex items-center justify-center gap-2 hover:text-red-500 transition-colors"><LogOut size={14}/> Thoát phiên</button>
+          <button onClick={() => setRole('none')} className="w-full py-3 bg-white border border-gray-100 text-gray-400 font-black uppercase text-[10px] rounded-xl flex items-center justify-center gap-2 hover:text-red-500 transition-colors"><LogOut size={14}/> Thoát phiên</button>
         </div>
       </aside>
 
@@ -342,20 +359,20 @@ const App: React.FC = () => {
               {iframeLoading && (
                 <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/90 z-20">
                   <Loader2 size={40} className="animate-spin text-indigo-500 mb-4" />
-                  <p className="font-black text-[10px] text-gray-400 uppercase tracking-[0.2em]">Nạp nội dung...</p>
+                  <p className="font-black text-[10px] text-gray-400 uppercase tracking-[0.2em]">Đang tải bài giảng...</p>
                 </div>
               )}
               {selectedNode?.url ? (
                 <iframe src={selectedNode.url} className="w-full h-full border-none" onLoad={() => setIframeLoading(false)} />
               ) : (
-                <div className="w-full h-full flex items-center justify-center text-gray-300 italic">Chọn bài học để hiển thị nội dung</div>
+                <div className="w-full h-full flex items-center justify-center text-gray-300 italic">Nội dung đang soạn thảo</div>
               )}
             </div>
           </>
         ) : (
           <div className="flex-1 flex flex-col items-center justify-center space-y-8 bg-slate-50">
              <div className="p-20 bg-white rounded-[60px] shadow-2xl"><Book size={100} className="text-indigo-100" /></div>
-             <h2 className="text-3xl font-black text-slate-200 uppercase tracking-tighter">Chọn bài giảng để bắt đầu</h2>
+             <h2 className="text-3xl font-black text-slate-200 uppercase tracking-tighter">Chào mừng bạn đến với lớp Vật Lý</h2>
           </div>
         )}
       </main>
@@ -411,13 +428,13 @@ const App: React.FC = () => {
       {showResourceModal && (
         <div className="fixed inset-0 z-[210] flex items-center justify-center p-6 bg-black/40 backdrop-blur-sm">
           <div className="bg-white rounded-[40px] shadow-2xl w-full max-w-sm p-10 space-y-6">
-            <h3 className="font-black uppercase text-gray-800">Thông tin tài liệu</h3>
+            <h3 className="font-black uppercase text-gray-800">Cấu hình tài liệu</h3>
             <form onSubmit={saveResource} className="space-y-4">
-               <input type="text" autoFocus value={resourceModalData.title} onChange={(e) => setResourceModalData({...resourceModalData, title: e.target.value})} placeholder="Tên tài liệu..." className="w-full px-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl font-bold" />
-               <input type="text" value={resourceModalData.url} onChange={(e) => setResourceModalData({...resourceModalData, url: e.target.value})} placeholder="URL (YouTube, Drive...)" className="w-full px-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl font-mono text-xs" />
+               <input type="text" autoFocus value={resourceModalData.title} onChange={(e) => setResourceModalData({...resourceModalData, title: e.target.value})} placeholder="Tên..." className="w-full px-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl font-bold" />
+               <input type="text" value={resourceModalData.url} onChange={(e) => setResourceModalData({...resourceModalData, url: e.target.value})} placeholder="Đường dẫn (URL)..." className="w-full px-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl font-mono text-xs" />
                <div className="flex gap-4 pt-4">
-                 <button type="button" onClick={() => setShowResourceModal(false)} className="flex-1 py-4 font-black text-gray-400 uppercase">Hủy</button>
-                 <button type="submit" className="flex-2 px-10 py-4 bg-indigo-600 text-white rounded-2xl font-black uppercase shadow-lg">Lưu lại</button>
+                 <button type="button" onClick={() => setShowResourceModal(false)} className="flex-1 py-4 font-black text-gray-400 uppercase text-xs">Hủy</button>
+                 <button type="submit" className="flex-2 px-10 py-4 bg-indigo-600 text-white rounded-2xl font-black uppercase shadow-lg text-xs">Lưu</button>
                </div>
             </form>
           </div>
@@ -428,13 +445,13 @@ const App: React.FC = () => {
       {showNodeModal && (
         <div className="fixed inset-0 z-[210] flex items-center justify-center p-6 bg-black/40 backdrop-blur-sm">
           <div className="bg-white rounded-[40px] shadow-2xl w-full max-w-sm p-10 space-y-6">
-            <h3 className="font-black uppercase text-gray-800">Cấu trúc nội dung</h3>
+            <h3 className="font-black uppercase text-gray-800">Cấu trúc giáo trình</h3>
             <form onSubmit={saveNode} className="space-y-4">
-               <input type="text" autoFocus value={nodeModalData.title} onChange={(e) => setNodeModalData({...nodeModalData, title: e.target.value})} placeholder="Tiêu đề..." className="w-full px-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl font-bold" />
-               <input type="text" value={nodeModalData.url} onChange={(e) => setNodeModalData({...nodeModalData, url: e.target.value})} placeholder="URL bài học (Wikipedia, Docs...)" className="w-full px-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl font-mono text-xs" />
+               <input type="text" autoFocus value={nodeModalData.title} onChange={(e) => setNodeModalData({...nodeModalData, title: e.target.value})} placeholder="Tên đề mục..." className="w-full px-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl font-bold" />
+               <input type="text" value={nodeModalData.url} onChange={(e) => setNodeModalData({...nodeModalData, url: e.target.value})} placeholder="Link nhúng nội dung..." className="w-full px-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl font-mono text-xs" />
                <div className="flex gap-4 pt-4">
-                 <button type="button" onClick={() => setShowNodeModal(false)} className="flex-1 py-4 font-black text-gray-400 uppercase">Hủy</button>
-                 <button type="submit" className="flex-2 px-10 py-4 bg-indigo-600 text-white rounded-2xl font-black uppercase shadow-lg">Lưu lại</button>
+                 <button type="button" onClick={() => setShowNodeModal(false)} className="flex-1 py-4 font-black text-gray-400 uppercase text-xs">Hủy</button>
+                 <button type="submit" className="flex-2 px-10 py-4 bg-indigo-600 text-white rounded-2xl font-black uppercase shadow-lg text-xs">Xác nhận</button>
                </div>
             </form>
           </div>
@@ -446,10 +463,10 @@ const App: React.FC = () => {
         <div className="fixed inset-0 z-[220] flex items-center justify-center p-6 bg-black/50 backdrop-blur-sm">
           <div className="bg-white rounded-[40px] shadow-2xl w-full max-w-xs p-10 text-center space-y-6">
             <div className="w-20 h-20 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto"><AlertTriangle size={40}/></div>
-            <p className="font-bold text-gray-800">Xóa vĩnh viễn <br/><span className="text-red-500 font-black">"{showDeleteConfirm.title}"</span>?</p>
+            <p className="font-bold text-gray-800 text-sm">Xóa vĩnh viễn <br/><span className="text-red-500 font-black">"{showDeleteConfirm.title}"</span>?</p>
             <div className="flex gap-4">
-               <button onClick={() => setShowDeleteConfirm(null)} className="flex-1 py-4 font-black text-gray-400 uppercase">Hủy</button>
-               <button onClick={executeDelete} className="flex-1 py-4 bg-red-500 text-white rounded-2xl font-black uppercase">Xóa</button>
+               <button onClick={() => setShowDeleteConfirm(null)} className="flex-1 py-4 font-black text-gray-400 uppercase text-xs">Hủy</button>
+               <button onClick={executeDelete} className="flex-1 py-4 bg-red-500 text-white rounded-2xl font-black uppercase text-xs">Xóa ngay</button>
             </div>
           </div>
         </div>
