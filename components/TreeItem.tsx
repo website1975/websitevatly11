@@ -60,7 +60,7 @@ const TreeItem: React.FC<TreeItemProps> = ({
             <Globe size={16} className={`mr-2 shrink-0 ${isSelected ? 'text-white' : 'text-sky-500'}`} />
           )}
           
-          <span className={`truncate text-xs tracking-tight leading-tight ${isSelected ? 'font-black' : 'font-bold'}`}>{node.title}</span>
+          <span className={`truncate text-xs tracking-tight leading-tight ${isSelected ? 'font-semibold' : 'font-normal'}`}>{node.title}</span>
         </div>
 
         {isAdmin && (
