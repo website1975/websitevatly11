@@ -109,18 +109,24 @@ const LandingPage = () => {
   };
 
   return (
-    <div className="h-screen w-full flex items-center justify-center bg-indigo-50/30 p-6">
+    <div className="h-screen w-full flex flex-col items-center justify-center bg-indigo-50/30 p-6 overflow-hidden">
+      {/* Hero Section with Slogan */}
+      <div className="text-center mb-16 space-y-4 animate-in fade-in slide-in-from-top-10 duration-1000">
+        <h1 className="text-7xl font-black text-slate-900 tracking-tighter uppercase leading-none">VẬT LÝ 11</h1>
+        <p className="text-xl font-bold text-indigo-500 uppercase tracking-[0.4em] opacity-80">Học tập thông minh — Khám phá đỉnh cao</p>
+      </div>
+
       <div className="max-w-4xl w-full grid grid-cols-1 md:grid-cols-2 gap-10">
         <button onClick={() => navigate('/student')} className="group bg-white p-12 rounded-[60px] shadow-2xl hover:-translate-y-2 transition-all flex flex-col items-center text-center space-y-6">
           <div className="w-24 h-24 bg-sky-100 text-sky-600 rounded-[30px] flex items-center justify-center"><GraduationCap size={48} /></div>
-          <h2 className="text-3xl font-black text-slate-800 uppercase tracking-tighter">Học sinh</h2>
+          <h2 className="text-3xl font-black text-slate-800 uppercase tracking-tighter leading-none">Học sinh</h2>
           <div className="px-12 py-4 bg-sky-600 text-white rounded-2xl font-black uppercase tracking-widest shadow-xl group-hover:bg-sky-700">Vào lớp học</div>
         </button>
         
         {!showPass ? (
           <button onClick={() => setShowPass(true)} className="group bg-white p-12 rounded-[60px] shadow-2xl hover:-translate-y-2 transition-all flex flex-col items-center text-center space-y-6">
             <div className="w-24 h-24 bg-amber-100 text-amber-600 rounded-[30px] flex items-center justify-center"><ShieldCheck size={48} /></div>
-            <h2 className="text-3xl font-black text-slate-800 uppercase tracking-tighter">Giáo viên</h2>
+            <h2 className="text-3xl font-black text-slate-800 uppercase tracking-tighter leading-none">Giáo viên</h2>
             <div className="px-12 py-4 bg-amber-500 text-white rounded-2xl font-black uppercase tracking-widest shadow-xl group-hover:bg-amber-600">Bảng điều khiển</div>
           </button>
         ) : (
@@ -136,6 +142,8 @@ const LandingPage = () => {
           </div>
         )}
       </div>
+      
+      <p className="mt-20 text-[10px] font-bold text-slate-400 uppercase tracking-widest opacity-40">Lớp học vật lý - Kết nối tri thức - 2024</p>
     </div>
   );
 };
@@ -287,13 +295,16 @@ const MainView: React.FC<{ isAdmin: boolean; data: AppData; updateData: (d: AppD
         </div>
       )}
 
-      {/* SIDEBAR */}
-      <aside className={`w-80 border-r flex flex-col shrink-0 ${isAdmin ? 'bg-amber-50/20' : 'bg-indigo-50/10'}`}>
-        <header className={`p-8 text-white ${isAdmin ? 'bg-amber-500' : 'bg-indigo-600'} shadow-lg flex justify-between items-center shrink-0`}>
-          <div className="flex items-center gap-3"><Book size={24}/> <h1 className="font-black text-xl tracking-tighter uppercase leading-none">Vật Lý 11</h1></div>
-          {isAdmin && <button onClick={() => { setNodeModalData({ parentId: null, type: 'folder', title: '', url: '' }); setShowNodeModal(true); }} className="p-2 bg-white/20 rounded-lg hover:bg-white/40"><Plus size={18}/></button>}
+      {/* SIDEBAR (Panel Trái - w-40) */}
+      <aside className={`w-40 border-r flex flex-col shrink-0 ${isAdmin ? 'bg-amber-50/20' : 'bg-indigo-50/10'}`}>
+        <header className={`p-3 text-white ${isAdmin ? 'bg-amber-500' : 'bg-indigo-600'} shadow-lg flex justify-between items-center shrink-0`}>
+          <div className="flex items-center gap-1.5 min-w-0">
+            <Book size={16} className="shrink-0"/> 
+            <h1 className="font-black text-sm tracking-tighter uppercase leading-none truncate">Vật Lý 11</h1>
+          </div>
+          {isAdmin && <button onClick={() => { setNodeModalData({ parentId: null, type: 'folder', title: '', url: '' }); setShowNodeModal(true); }} className="p-1 bg-white/20 rounded-md hover:bg-white/40 shrink-0"><Plus size={14}/></button>}
         </header>
-        <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
+        <div className="flex-1 overflow-y-auto p-2 custom-scrollbar">
           {data.nodes.filter(n => n.parentId === null).map(node => (
             <TreeItem key={node.id} node={node} allNodes={data.nodes} selectedId={selectedId} isAdmin={isAdmin} 
               onSelect={(id) => { setSelectedId(id); if(data.nodes.find(n=>n.id===id)?.url) setIframeLoading(true); }} 
@@ -303,11 +314,11 @@ const MainView: React.FC<{ isAdmin: boolean; data: AppData; updateData: (d: AppD
             />
           ))}
         </div>
-        <footer className="p-4 border-t flex flex-col gap-2 shrink-0">
-           <div className="flex items-center justify-center gap-2 text-[8px] font-black uppercase text-slate-400 py-2 bg-white/50 rounded-xl">
-             {isSyncing ? <Loader2 size={12} className="animate-spin text-indigo-500" /> : <CloudCheck size={12} className="text-green-500" />} {isAdmin ? 'Teacher Dashboard' : 'Student Mode'}
+        <footer className="p-2 border-t flex flex-col gap-1.5 shrink-0">
+           <div className="flex items-center justify-center gap-1.5 text-[6px] font-black uppercase text-slate-400 py-1.5 bg-white/50 rounded-lg">
+             {isSyncing ? <Loader2 size={8} className="animate-spin text-indigo-500" /> : <CloudCheck size={8} className="text-green-500" />} {isAdmin ? 'Teacher' : 'Student'}
            </div>
-           <button onClick={handleLogout} className="w-full py-3 bg-white border border-slate-100 text-slate-400 font-black uppercase text-[10px] rounded-xl flex items-center justify-center gap-2 hover:text-red-500 transition-colors"><LogOut size={14}/> {isAdmin ? 'Thoát quản lý' : 'Về trang chủ'}</button>
+           <button onClick={handleLogout} className="w-full py-2 bg-white border border-slate-100 text-slate-400 font-black uppercase text-[8px] rounded-lg flex items-center justify-center gap-1.5 hover:text-red-500 transition-colors"><LogOut size={10}/> {isAdmin ? 'Thoát' : 'Về'}</button>
         </footer>
       </aside>
 
@@ -315,51 +326,51 @@ const MainView: React.FC<{ isAdmin: boolean; data: AppData; updateData: (d: AppD
       <main className="flex-1 flex flex-col bg-white overflow-hidden">
         {selectedId ? (
           <>
-            <header className="h-20 px-8 border-b flex justify-between items-center shrink-0 bg-white/80 backdrop-blur-md">
+            <header className="h-16 px-6 border-b flex justify-between items-center shrink-0 bg-white/80 backdrop-blur-md">
                <div className="min-w-0">
-                 <h2 className="text-xl font-black text-slate-800 uppercase truncate leading-none">{selectedNode?.title}</h2>
-                 <p className="text-[9px] font-bold text-indigo-500 uppercase mt-1 tracking-widest opacity-60">Vật lý lớp 11 - Kết nối tri thức</p>
+                 <h2 className="text-lg font-black text-slate-800 uppercase truncate leading-none">{selectedNode?.title}</h2>
+                 <p className="text-[8px] font-bold text-indigo-500 uppercase mt-1 tracking-widest opacity-60">Vật lý lớp 11 - Kết nối tri thức</p>
                </div>
-               <div className="flex items-center gap-3">
-                 {selectedNode?.type === 'lesson' && <button onClick={generateAIQuiz} className="flex items-center gap-2 px-6 py-3 bg-indigo-600 text-white rounded-2xl font-black text-[10px] uppercase shadow-lg shadow-indigo-100 hover:bg-indigo-700 active:scale-95 transition-all"><BrainCircuit size={18}/> Quiz AI</button>}
-                 {selectedNode?.url && <a href={selectedNode.url} target="_blank" className="p-3 bg-slate-50 text-slate-400 rounded-xl hover:bg-slate-100"><Maximize2 size={18}/></a>}
+               <div className="flex items-center gap-2">
+                 {selectedNode?.type === 'lesson' && <button onClick={generateAIQuiz} className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-xl font-black text-[9px] uppercase shadow-md hover:bg-indigo-700 active:scale-95 transition-all"><BrainCircuit size={14}/> Quiz AI</button>}
+                 {selectedNode?.url && <a href={selectedNode.url} target="_blank" className="p-2 bg-slate-50 text-slate-400 rounded-lg hover:bg-slate-100"><Maximize2 size={14}/></a>}
                </div>
             </header>
             <div className="flex-1 bg-slate-100 relative overflow-hidden">
-               {iframeLoading && <div className="absolute inset-0 bg-white flex flex-col items-center justify-center z-10 animate-in fade-in"><Loader2 className="animate-spin text-indigo-500 mb-4" size={40}/><p className="text-[9px] font-black uppercase tracking-widest text-slate-400">Đang chuẩn bị bài học...</p></div>}
-               {selectedNode?.url ? <iframe src={selectedNode.url} className="w-full h-full border-none" onLoad={()=>setIframeLoading(false)}/> : <div className="h-full flex items-center justify-center text-slate-300 italic text-sm">Nội dung bài học đang được xây dựng...</div>}
+               {iframeLoading && <div className="absolute inset-0 bg-white flex flex-col items-center justify-center z-10 animate-in fade-in"><Loader2 className="animate-spin text-indigo-500 mb-4" size={32}/><p className="text-[8px] font-black uppercase tracking-widest text-slate-400">Đang tải...</p></div>}
+               {selectedNode?.url ? <iframe src={selectedNode.url} className="w-full h-full border-none" onLoad={()=>setIframeLoading(false)}/> : <div className="h-full flex items-center justify-center text-slate-300 italic text-xs">Nội dung bài học đang được xây dựng...</div>}
             </div>
           </>
         ) : (
           <div className="flex-1 flex flex-col items-center justify-center bg-slate-50 p-10 text-center">
-             <div className="p-16 bg-white rounded-[70px] shadow-2xl mb-10 animate-in zoom-in duration-700"><Book size={100} className="text-indigo-100 opacity-50"/></div>
-             <h2 className="text-2xl font-black text-slate-300 uppercase tracking-tighter mb-4">Chọn một đề mục để bắt đầu khám phá</h2>
-             <p className="max-w-xs text-xs font-bold text-slate-400 leading-relaxed italic opacity-70">"Vật lý không chỉ là những công thức, đó là cách chúng ta hiểu về vũ trụ này."</p>
+             <div className="p-12 bg-white rounded-[50px] shadow-xl mb-8 animate-in zoom-in duration-700"><Book size={80} className="text-indigo-100 opacity-50"/></div>
+             <h2 className="text-xl font-black text-slate-300 uppercase tracking-tighter mb-4">Chọn một đề mục để bắt đầu</h2>
+             <p className="max-w-xs text-[10px] font-bold text-slate-400 leading-relaxed italic opacity-70">"Vật lý không chỉ là những công thức, đó là cách chúng ta hiểu về vũ trụ này."</p>
           </div>
         )}
       </main>
 
-      {/* RESOURCES PANEL */}
-      <aside className="w-72 border-l border-slate-100 bg-slate-50 flex flex-col shrink-0 overflow-hidden">
+      {/* RESOURCES PANEL (Panel Phải - w-48) */}
+      <aside className="w-48 border-l border-slate-100 bg-slate-50 flex flex-col shrink-0 overflow-hidden">
          <div className="flex-1 flex flex-col border-b overflow-hidden">
-            <div className="p-6 flex justify-between items-center border-b bg-white text-[10px] font-black text-slate-400 uppercase tracking-widest shrink-0">Tài liệu riêng {isAdmin && selectedId && <button onClick={()=> { setResourceModalData({isGlobal: false, title:'', url:''}); setShowResourceModal(true); }} className="text-indigo-600 hover:bg-indigo-50 p-1 rounded-lg"><Plus size={16}/></button>}</div>
-            <div className="flex-1 p-4 space-y-3 overflow-y-auto custom-scrollbar">
+            <div className="p-4 flex justify-between items-center border-b bg-white text-[9px] font-black text-slate-400 uppercase tracking-widest shrink-0">Tài liệu riêng {isAdmin && selectedId && <button onClick={()=> { setResourceModalData({isGlobal: false, title:'', url:''}); setShowResourceModal(true); }} className="text-indigo-600 hover:bg-indigo-50 p-1 rounded-md"><Plus size={14}/></button>}</div>
+            <div className="flex-1 p-3 space-y-2 overflow-y-auto custom-scrollbar">
                {selectedNode?.lessonResources.map(r => (
                  <div key={r.id} className="group relative">
-                    <a href={r.url} target="_blank" className="block p-4 bg-white border border-slate-100 rounded-2xl font-bold text-xs text-indigo-600 truncate shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all">{r.title}</a>
-                    {isAdmin && <button onClick={()=>setShowDeleteConfirm({type:'resource', id:r.id, title:r.title, isGlobal:false})} className="absolute top-2 right-2 hidden group-hover:block p-1.5 bg-red-50 text-red-500 rounded-lg shadow-sm border border-red-100"><Trash2 size={12}/></button>}
+                    <a href={r.url} target="_blank" className="block p-3 bg-white border border-slate-100 rounded-xl font-bold text-[10px] text-indigo-600 truncate shadow-sm hover:shadow-md transition-all">{r.title}</a>
+                    {isAdmin && <button onClick={()=>setShowDeleteConfirm({type:'resource', id:r.id, title:r.title, isGlobal:false})} className="absolute top-1.5 right-1.5 hidden group-hover:block p-1 bg-red-50 text-red-500 rounded-md shadow-sm border border-red-100"><Trash2 size={10}/></button>}
                  </div>
                ))}
-               {(!selectedNode?.lessonResources.length) && <p className="text-center text-[9px] text-slate-300 font-bold uppercase pt-10 opacity-50 tracking-widest">Không có tài liệu lẻ</p>}
+               {(!selectedNode?.lessonResources.length) && <p className="text-center text-[8px] text-slate-300 font-bold uppercase pt-8 opacity-50 tracking-widest">Trống</p>}
             </div>
          </div>
          <div className="flex-1 flex flex-col overflow-hidden">
-            <div className="p-6 flex justify-between items-center border-b bg-white text-[10px] font-black text-slate-400 uppercase tracking-widest shrink-0">Thư viện chung {isAdmin && <button onClick={()=> { setResourceModalData({isGlobal: true, title:'', url:''}); setShowResourceModal(true); }} className="text-indigo-600 hover:bg-indigo-50 p-1 rounded-lg"><Plus size={16}/></button>}</div>
-            <div className="flex-1 p-4 space-y-3 overflow-y-auto custom-scrollbar bg-white/30">
+            <div className="p-4 flex justify-between items-center border-b bg-white text-[9px] font-black text-slate-400 uppercase tracking-widest shrink-0">Thư viện chung {isAdmin && <button onClick={()=> { setResourceModalData({isGlobal: true, title:'', url:''}); setShowResourceModal(true); }} className="text-indigo-600 hover:bg-indigo-50 p-1 rounded-md"><Plus size={14}/></button>}</div>
+            <div className="flex-1 p-3 space-y-2 overflow-y-auto custom-scrollbar bg-white/30">
                {data.globalResources.map(r => (
                  <div key={r.id} className="group relative">
-                    <a href={r.url} target="_blank" className="block p-4 bg-white border border-slate-100 rounded-2xl font-bold text-xs text-slate-600 truncate shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all">{r.title}</a>
-                    {isAdmin && <button onClick={()=>setShowDeleteConfirm({type:'resource', id:r.id, title:r.title, isGlobal:true})} className="absolute top-2 right-2 hidden group-hover:block p-1.5 bg-red-50 text-red-500 rounded-lg shadow-sm border border-red-100"><Trash2 size={12}/></button>}
+                    <a href={r.url} target="_blank" className="block p-3 bg-white border border-slate-100 rounded-xl font-bold text-[10px] text-slate-600 truncate shadow-sm hover:shadow-md transition-all">{r.title}</a>
+                    {isAdmin && <button onClick={()=>setShowDeleteConfirm({type:'resource', id:r.id, title:r.title, isGlobal:true})} className="absolute top-1.5 right-1.5 hidden group-hover:block p-1 bg-red-50 text-red-500 rounded-md shadow-sm border border-red-100"><Trash2 size={10}/></button>}
                  </div>
                ))}
             </div>
@@ -381,11 +392,11 @@ const MainView: React.FC<{ isAdmin: boolean; data: AppData; updateData: (d: AppD
               <div className="space-y-4">
                 <div className="space-y-1">
                   <label className="text-[10px] font-black uppercase text-slate-400 ml-2">Tên chương/bài</label>
-                  <input autoFocus value={nodeModalData.title} onChange={e=>setNodeModalData({...nodeModalData, title: e.target.value})} placeholder="VD: Chương 1: Động lực học..." className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl font-bold text-xs focus:border-indigo-500 transition-all outline-none" />
+                  <input autoFocus value={nodeModalData.title} onChange={e=>setNodeModalData({...nodeModalData, title: e.target.value})} placeholder="VD: Chương 1..." className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl font-bold text-xs focus:border-indigo-500 transition-all outline-none" />
                 </div>
                 <div className="space-y-1">
                   <label className="text-[10px] font-black uppercase text-slate-400 ml-2">Đường dẫn nội dung (URL)</label>
-                  <input value={nodeModalData.url} onChange={e=>setNodeModalData({...nodeModalData, url: e.target.value})} placeholder="Link PDF/Slides/Web..." className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl font-mono text-[10px] focus:border-indigo-500 transition-all outline-none" />
+                  <input value={nodeModalData.url} onChange={e=>setNodeModalData({...nodeModalData, url: e.target.value})} placeholder="Link PDF/Slides..." className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl font-mono text-[10px] focus:border-indigo-500 transition-all outline-none" />
                 </div>
               </div>
               <div className="flex gap-4 pt-4">
@@ -410,7 +421,7 @@ const MainView: React.FC<{ isAdmin: boolean; data: AppData; updateData: (d: AppD
               <div className="space-y-4">
                 <div className="space-y-1">
                   <label className="text-[10px] font-black uppercase text-slate-400 ml-2">Tiêu đề tài liệu</label>
-                  <input autoFocus value={resourceModalData.title} onChange={e=>setResourceModalData({...resourceModalData, title: e.target.value})} placeholder="VD: File bài tập PDF..." className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl font-bold text-xs outline-none" />
+                  <input autoFocus value={resourceModalData.title} onChange={e=>setResourceModalData({...resourceModalData, title: e.target.value})} placeholder="VD: File bài tập..." className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl font-bold text-xs outline-none" />
                 </div>
                 <div className="space-y-1">
                   <label className="text-[10px] font-black uppercase text-slate-400 ml-2">URL tài liệu</label>
@@ -446,7 +457,7 @@ const MainView: React.FC<{ isAdmin: boolean; data: AppData; updateData: (d: AppD
       )}
 
       <style>{`
-        .custom-scrollbar::-webkit-scrollbar { width: 5px; }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .katex { font-size: 1.1em; }
