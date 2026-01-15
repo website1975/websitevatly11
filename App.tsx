@@ -205,19 +205,27 @@ const MainView: React.FC<{ isAdmin: boolean; data: AppData; updateData: (d: AppD
     const apiKey = getSafeEnv('API_KEY');
     if (!apiKey) { alert("Lỗi: Vui lòng cấu hình API_KEY."); setIsQuizModalOpen(false); return; }
 
+    const randomFactor = Math.random().toString(36).substring(7);
+
     try {
       const ai = new GoogleGenAI({ apiKey });
       const response = await ai.models.generateContent({
         model: "gemini-3-flash-preview",
-        contents: `Bạn là một chuyên gia khảo thí Vật Lý. Hãy tạo bộ đúng 5 câu hỏi trắc nghiệm tiếng Việt dựa trên nội dung bài học: "${selectedNode.title}".
+        contents: `Bạn là một chuyên gia khảo thí Vật Lý đầy sáng tạo. Hãy tạo bộ đúng 5 câu hỏi trắc nghiệm tiếng Việt mới mẻ dựa trên nội dung bài học: "${selectedNode.title}".
+        
+        Mã định danh phiên bản này là: ${randomFactor}. 
+        YÊU CẦU QUAN TRỌNG: 
+        - Phải tạo bộ câu hỏi KHÁC BIỆT hoàn toàn so với các bộ câu hỏi thông thường. 
+        - Khai thác các khía cạnh nhỏ, các trường hợp đặc biệt, hoặc các ứng dụng thực tế đa dạng của bài học này.
+        - Không được lặp lại cấu trúc câu hỏi cũ.
         
         MA TRẬN ĐỘ KHÓ BẮT BUỘC:
-        - 2 câu mức độ NHẬN BIẾT: Hỏi về định nghĩa, đơn vị, khái niệm cơ bản có trong sách giáo khoa.
-        - 1 câu mức độ THÔNG HIỂU: Yêu cầu giải thích hiện tượng hoặc mối liên hệ giữa các đại lượng.
-        - 2 câu mức độ VẬN DỤNG VÀ VẬN DỤNG CAO: Yêu cầu tính toán, giải quyết bài toán thực tế hoặc kết hợp nhiều công thức (trong đó có ít nhất 1 câu khó/phân hóa).
+        - 2 câu mức độ NHẬN BIẾT: Hỏi về định nghĩa, đơn vị, khái niệm cơ bản.
+        - 1 câu mức độ THÔNG HIỂU: Yêu cầu giải thích hiện tượng hoặc mối liên hệ đại lượng.
+        - 2 câu mức độ VẬN DỤNG VÀ VẬN DỤNG CAO: Yêu cầu tính toán thực tế hoặc kết hợp công thức (có ít nhất 1 câu khó).
         
         YÊU CẦU KỸ THUẬT:
-        - Mọi công thức toán học/vật lý PHẢI dùng LaTeX, đặt trong dấu $ (ví dụ: $f = \frac{1}{T}$).
+        - Mọi công thức toán học/vật lý PHẢI dùng LaTeX, đặt trong dấu $ (ví dụ: $P = U.I$).
         - Xuất dữ liệu định dạng JSON gồm: question, options (mảng 4 lựa chọn), correctIndex (0-3), explanation.`,
         config: {
           responseMimeType: "application/json",
@@ -276,7 +284,7 @@ const MainView: React.FC<{ isAdmin: boolean; data: AppData; updateData: (d: AppD
                 {quizLoading ? (
                   <div className="flex flex-col items-center py-20">
                     <Loader2 className="animate-spin text-indigo-500 mb-4" size={48}/>
-                    <p className="font-medium text-xs uppercase text-slate-400 tracking-widest animate-pulse">Đang thiết lập ma trận câu hỏi...</p>
+                    <p className="font-medium text-xs uppercase text-slate-400 tracking-widest animate-pulse">Đang thiết lập ma trận câu hỏi mới...</p>
                   </div>
                 ) : (
                   <div>
