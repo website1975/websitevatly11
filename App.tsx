@@ -1,9 +1,10 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
+import { Routes, Route, useNavigate, Link, useLocation, Navigate } from 'react-router-dom';
 import { 
   Book, X, Pencil, Plus, Globe, Maximize2, Loader2, LogOut, GraduationCap, 
   KeyRound, Trash2, AlertTriangle, CloudCheck, BrainCircuit, Trophy, RotateCcw,
-  ShieldCheck, Folder, ChevronLeft, ChevronRight
+  ShieldCheck, Folder, ChevronLeft, ChevronRight, Home
 } from 'https://esm.sh/lucide-react@^0.562.0';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { GoogleGenAI, Type } from "https://esm.sh/@google/genai";
@@ -12,6 +13,7 @@ import { BookNode, NodeType, AppData, ResourceLink, QuizQuestion } from './types
 import { INITIAL_DATA } from './constants';
 import TreeItem from './components/TreeItem';
 
+// --- CONFIG & UTILS ---
 const getSafeEnv = (key: string): string | undefined => {
   try {
     const fromProcess = (process.env as any)[key] || (process.env as any)[`VITE_${key}`];
@@ -25,16 +27,8 @@ const getSafeEnv = (key: string): string | undefined => {
 const SUPABASE_URL = 'https://ktottoplusantmadclpg.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_Fa4z8bEgByw3pGTJdvBqmQ_D_KeDGdl';
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
 const TEACHER_PWD = getSafeEnv('TEACHER_PASSWORD') || '1234';
 
-const PHYSICS_QUOTES = [
-  "Cái chúng ta biết là một giọt nước, cái chúng ta chưa biết là cả đại dương.",
-  "Trí tưởng tượng quan trọng hơn kiến thức.",
-  "Mọi quy luật tự nhiên đều ẩn chứa một vẻ đẹp toán học sâu sắc."
-];
-
-// Helper để render LaTeX an toàn
 const renderLatex = (text: string) => {
   if (!text) return null;
   const parts = text.split(/(\$[^\$]+\$)/g);
@@ -44,22 +38,114 @@ const renderLatex = (text: string) => {
       try {
         const html = katex.renderToString(math, { throwOnError: false });
         return <span key={i} dangerouslySetInnerHTML={{ __html: html }} />;
-      } catch (e) {
-        return <span key={i}>{part}</span>;
-      }
+      } catch (e) { return <span key={i}>{part}</span>; }
     }
     return <span key={i}>{part}</span>;
   });
 };
 
+// --- CORE APP COMPONENT ---
 const App: React.FC = () => {
   const [data, setData] = useState<AppData>(INITIAL_DATA);
-  const [role, setRole] = useState<'none' | 'teacher' | 'student'>('none');
+  const [isSyncing, setIsSyncing] = useState(false);
+  const navigate = useNavigate();
+
+  const fetchCloudData = useCallback(async () => {
+    setIsSyncing(true);
+    try {
+      const { data: cloudRows, error } = await supabase.from('app_settings').select('data').eq('id', 1).single();
+      if (!error && cloudRows?.data) setData(cloudRows.data);
+    } catch (err) { console.warn('Offline mode'); }
+    finally { setIsSyncing(false); }
+  }, []);
+
+  useEffect(() => { fetchCloudData(); }, [fetchCloudData]);
+
+  const updateData = async (newData: AppData) => {
+    setData(newData);
+    setIsSyncing(true);
+    try {
+      await supabase.from('app_settings').upsert({ id: 1, data: newData });
+    } catch (err) { console.error('Cloud save error'); }
+    finally { setIsSyncing(false); }
+  };
+
+  return (
+    <Routes>
+      <Route path="/" element={<LandingPage />} />
+      <Route path="/teacher" element={
+        <ProtectedRoute>
+          <MainView isAdmin={true} data={data} updateData={updateData} isSyncing={isSyncing} />
+        </ProtectedRoute>
+      } />
+      <Route path="/student" element={<MainView isAdmin={false} data={data} updateData={updateData} isSyncing={isSyncing} />} />
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
+  );
+};
+
+// --- PROTECTED ROUTE FOR TEACHER ---
+const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const isAuth = sessionStorage.getItem('teacher_auth') === 'true';
+  if (!isAuth) return <Navigate to="/" replace />;
+  return <>{children}</>;
+};
+
+// --- LANDING PAGE ---
+const LandingPage = () => {
+  const [showPass, setShowPass] = useState(false);
+  const [pin, setPin] = useState('');
+  const [error, setError] = useState(false);
+  const navigate = useNavigate();
+
+  const handleTeacherLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (pin === TEACHER_PWD) {
+      sessionStorage.setItem('teacher_auth', 'true');
+      navigate('/teacher');
+    } else {
+      setError(true);
+    }
+  };
+
+  return (
+    <div className="h-screen w-full flex items-center justify-center bg-indigo-50/30 p-6">
+      <div className="max-w-4xl w-full grid grid-cols-1 md:grid-cols-2 gap-10">
+        <button onClick={() => navigate('/student')} className="group bg-white p-12 rounded-[60px] shadow-2xl hover:-translate-y-2 transition-all flex flex-col items-center text-center space-y-6">
+          <div className="w-24 h-24 bg-sky-100 text-sky-600 rounded-[30px] flex items-center justify-center"><GraduationCap size={48} /></div>
+          <h2 className="text-3xl font-black text-slate-800 uppercase tracking-tighter">Học sinh</h2>
+          <div className="px-12 py-4 bg-sky-600 text-white rounded-2xl font-black uppercase tracking-widest shadow-xl group-hover:bg-sky-700">Vào lớp học</div>
+        </button>
+        
+        {!showPass ? (
+          <button onClick={() => setShowPass(true)} className="group bg-white p-12 rounded-[60px] shadow-2xl hover:-translate-y-2 transition-all flex flex-col items-center text-center space-y-6">
+            <div className="w-24 h-24 bg-amber-100 text-amber-600 rounded-[30px] flex items-center justify-center"><ShieldCheck size={48} /></div>
+            <h2 className="text-3xl font-black text-slate-800 uppercase tracking-tighter">Giáo viên</h2>
+            <div className="px-12 py-4 bg-amber-500 text-white rounded-2xl font-black uppercase tracking-widest shadow-xl group-hover:bg-amber-600">Bảng điều khiển</div>
+          </button>
+        ) : (
+          <div className="bg-white p-12 rounded-[60px] shadow-2xl border-4 border-amber-500 flex flex-col items-center justify-center space-y-6 animate-in zoom-in duration-300">
+            <KeyRound size={40} className="text-amber-500" />
+            <form onSubmit={handleTeacherLogin} className="w-full space-y-4">
+              <input type="password" autoFocus value={pin} onChange={(e) => { setPin(e.target.value); setError(false); }} placeholder="Nhập mã pin..." className={`w-full px-6 py-5 bg-slate-50 border-2 rounded-3xl text-center text-xl font-black ${error ? 'border-red-500 animate-pulse' : 'border-slate-100 focus:border-amber-400 focus:ring-4 focus:ring-amber-100'}`} />
+              <div className="flex gap-4">
+                <button type="button" onClick={() => setShowPass(false)} className="flex-1 py-4 font-black text-slate-400 uppercase text-xs">Hủy</button>
+                <button type="submit" className="flex-2 px-8 py-4 bg-amber-500 text-white rounded-2xl font-black uppercase shadow-lg text-xs">Xác nhận</button>
+              </div>
+            </form>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+// --- MAIN VIEW ---
+const MainView: React.FC<{ isAdmin: boolean; data: AppData; updateData: (d: AppData) => void; isSyncing: boolean }> = ({ isAdmin, data, updateData, isSyncing }) => {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [iframeLoading, setIframeLoading] = useState(false);
-  const [isSyncing, setIsSyncing] = useState(false);
-  const [currentSlogan] = useState(PHYSICS_QUOTES[Math.floor(Math.random() * PHYSICS_QUOTES.length)]);
-
+  const navigate = useNavigate();
+  
   // Quiz States
   const [isQuizModalOpen, setIsQuizModalOpen] = useState(false);
   const [quizQuestions, setQuizQuestions] = useState<QuizQuestion[]>([]);
@@ -68,57 +154,17 @@ const App: React.FC = () => {
   const [showResults, setShowResults] = useState(false);
   const [currentQuizIdx, setCurrentQuizIdx] = useState(0);
 
-  // UI Modals
-  const [showPassInput, setShowPassInput] = useState(false);
-  const [teacherPass, setTeacherPass] = useState('');
-  const [passError, setPassError] = useState(false);
+  // Modal States
   const [showNodeModal, setShowNodeModal] = useState(false);
   const [nodeModalData, setNodeModalData] = useState<{ id?: string; parentId: string | null; type: NodeType; title: string; url: string; }>({ parentId: null, type: 'lesson', title: '', url: '' });
   const [showResourceModal, setShowResourceModal] = useState(false);
   const [resourceModalData, setResourceModalData] = useState<{ id?: string; isGlobal: boolean; title: string; url: string; }>({ isGlobal: false, title: '', url: '' });
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<{ type: 'node' | 'resource'; id: string; isGlobal?: boolean; title: string; } | null>(null);
 
-  const fetchCloudData = useCallback(async () => {
-    setIsSyncing(true);
-    try {
-      const { data: cloudRows, error } = await supabase.from('app_settings').select('data').eq('id', 1).single();
-      if (!error && cloudRows?.data) setData(cloudRows.data);
-    } catch (err) {
-      console.warn('Offline mode');
-    } finally {
-      setIsSyncing(false);
-    }
-  }, []);
-
-  useEffect(() => { fetchCloudData(); }, [fetchCloudData]);
-
-  const saveToCloud = async (newData: AppData) => {
-    if (role !== 'teacher') return;
-    setIsSyncing(true);
-    try {
-      await supabase.from('app_settings').upsert({ id: 1, data: newData });
-    } catch (err) {
-      console.error('Cloud save error');
-    } finally {
-      setIsSyncing(false);
-    }
-  };
-
-  const updateData = (newData: AppData) => {
-    setData(newData);
-    saveToCloud(newData);
-  };
-
-  const handleSelectNode = (id: string) => {
-    setSelectedId(id);
-    const node = data.nodes.find(n => n.id === id);
-    if (node && node.url) setIframeLoading(true);
-  };
+  const selectedNode = data.nodes.find(n => n.id === selectedId);
 
   const generateAIQuiz = async () => {
-    const selectedNode = data.nodes.find(n => n.id === selectedId);
     if (!selectedNode) return;
-
     setIsQuizModalOpen(true);
     setQuizLoading(true);
     setShowResults(false);
@@ -126,20 +172,15 @@ const App: React.FC = () => {
     setUserAnswers([]);
 
     const apiKey = getSafeEnv('API_KEY');
-    if (!apiKey) {
-      alert("Lỗi: Vui lòng cấu hình API_KEY.");
-      setQuizLoading(false);
-      setIsQuizModalOpen(false);
-      return;
-    }
+    if (!apiKey) { alert("Lỗi: Vui lòng cấu hình API_KEY."); setIsQuizModalOpen(false); return; }
 
     try {
       const ai = new GoogleGenAI({ apiKey });
       const response = await ai.models.generateContent({
         model: "gemini-3-flash-preview",
         contents: `Bạn là giáo viên Vật Lý xuất sắc. Hãy tạo đúng 5 câu hỏi trắc nghiệm tiếng Việt về chủ đề: "${selectedNode.title}". 
-        YÊU CẦU QUAN TRỌNG: Hãy sử dụng ký hiệu LaTeX cho mọi công thức toán học và vật lý, bao bọc chúng trong dấu $ (ví dụ: $E=mc^2$ hoặc $\\frac{v}{t}$). 
-        Định dạng JSON với question, options (mảng 4 chuỗi), correctIndex (0-3), và explanation.`,
+        YÊU CẦU: Hãy sử dụng ký hiệu LaTeX cho mọi công thức toán học và vật lý, bao bọc chúng trong dấu $ (ví dụ: $E=mc^2$ hoặc $\\frac{v}{t}$). 
+        Định dạng JSON với question, options (mảng 4), correctIndex (0-3), và explanation.`,
         config: {
           responseMimeType: "application/json",
           responseSchema: {
@@ -157,401 +198,259 @@ const App: React.FC = () => {
           }
         }
       });
-
-      const quizData = JSON.parse(response.text || "[]");
-      setQuizQuestions(quizData);
-      setUserAnswers(new Array(quizData.length).fill(null));
-    } catch (error) {
-      console.error("Gemini Error:", error);
-      alert("Hệ thống AI đang bận.");
-      setIsQuizModalOpen(false);
-    } finally {
-      setQuizLoading(false);
-    }
+      const qData = JSON.parse(response.text || "[]");
+      setQuizQuestions(qData);
+      setUserAnswers(new Array(qData.length).fill(null));
+    } catch (e) { alert("AI đang bận, vui lòng thử lại."); setIsQuizModalOpen(false); }
+    finally { setQuizLoading(false); }
   };
 
   const calculateScore = () => quizQuestions.filter((q, i) => userAnswers[i] === q.correctIndex).length;
 
-  const saveNode = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!nodeModalData.title.trim()) return;
-    let nextNodes = [...data.nodes];
-    if (nodeModalData.id) {
-      nextNodes = nextNodes.map(n => n.id === nodeModalData.id ? { ...n, title: nodeModalData.title, url: nodeModalData.url } : n);
-    } else {
-      const newNode: BookNode = { id: `node-${Date.now()}`, title: nodeModalData.title, type: nodeModalData.type, url: nodeModalData.url, parentId: nodeModalData.parentId, lessonResources: [] };
-      nextNodes.push(newNode);
-      setSelectedId(newNode.id);
-    }
-    updateData({ ...data, nodes: nextNodes });
-    setShowNodeModal(false);
+  const handleLogout = () => {
+    if (isAdmin) sessionStorage.removeItem('teacher_auth');
+    navigate('/');
   };
-
-  const openResourceModal = (isGlobal: boolean, res?: ResourceLink) => {
-    setResourceModalData(res ? { id: res.id, title: res.title, url: res.url, isGlobal } : { isGlobal, title: '', url: '' });
-    setShowResourceModal(true);
-  };
-
-  const saveResource = (e: React.FormEvent) => {
-    e.preventDefault();
-    const { id, title, url, isGlobal } = resourceModalData;
-    if (!title.trim() || !url.trim()) return;
-    if (id) {
-      if (isGlobal) updateData({ ...data, globalResources: data.globalResources.map(r => r.id === id ? { ...r, title, url } : r) });
-      else if (selectedId) updateData({ ...data, nodes: data.nodes.map(n => n.id === selectedId ? { ...n, lessonResources: n.lessonResources.map(r => r.id === id ? { ...r, title, url } : r) } : n) });
-    } else {
-      const newRes: ResourceLink = { id: `res-${Date.now()}`, title, url };
-      if (isGlobal) updateData({ ...data, globalResources: [...data.globalResources, newRes] });
-      else if (selectedId) updateData({ ...data, nodes: data.nodes.map(n => n.id === selectedId ? { ...n, lessonResources: [...n.lessonResources, newRes] } : n) });
-    }
-    setShowResourceModal(false);
-  };
-
-  const executeDelete = () => {
-    if (!showDeleteConfirm) return;
-    const { type, id, isGlobal } = showDeleteConfirm;
-    if (type === 'node') {
-      const nextNodes = data.nodes.filter(n => n.id !== id);
-      updateData({ ...data, nodes: nextNodes });
-      if (selectedId === id) setSelectedId(null);
-    } else {
-      if (isGlobal) updateData({ ...data, globalResources: data.globalResources.filter(r => r.id !== id) });
-      else if (selectedId) updateData({ ...data, nodes: data.nodes.map(n => n.id === selectedId ? { ...n, lessonResources: n.lessonResources.filter(r => r.id !== id) } : n) });
-    }
-    setShowDeleteConfirm(null);
-  };
-
-  if (role === 'none') {
-    return (
-      <div className="h-screen w-full flex items-center justify-center bg-indigo-50/30 p-6">
-        <div className="max-w-4xl w-full grid grid-cols-1 md:grid-cols-2 gap-10">
-          <button onClick={() => setRole('student')} className="group bg-white p-12 rounded-[60px] shadow-2xl hover:-translate-y-2 transition-all flex flex-col items-center text-center space-y-6">
-            <div className="w-24 h-24 bg-sky-100 text-sky-600 rounded-[30px] flex items-center justify-center"><GraduationCap size={48} /></div>
-            <h2 className="text-3xl font-black text-slate-800 uppercase tracking-tighter">Học sinh</h2>
-            <div className="px-12 py-4 bg-sky-600 text-white rounded-2xl font-black uppercase tracking-widest shadow-xl group-hover:bg-sky-700">Vào lớp học</div>
-          </button>
-          
-          {!showPassInput ? (
-            <button onClick={() => setShowPassInput(true)} className="group bg-white p-12 rounded-[60px] shadow-2xl hover:-translate-y-2 transition-all flex flex-col items-center text-center space-y-6">
-              <div className="w-24 h-24 bg-amber-100 text-amber-600 rounded-[30px] flex items-center justify-center"><ShieldCheck size={48} /></div>
-              <h2 className="text-3xl font-black text-slate-800 uppercase tracking-tighter">Giáo viên</h2>
-              <div className="px-12 py-4 bg-amber-500 text-white rounded-2xl font-black uppercase tracking-widest shadow-xl group-hover:bg-amber-600">Bảng điều khiển</div>
-            </button>
-          ) : (
-            <div className="bg-white p-12 rounded-[60px] shadow-2xl border-4 border-amber-500 flex flex-col items-center justify-center space-y-6 animate-in zoom-in duration-300">
-              <KeyRound size={40} className="text-amber-500" />
-              <form onSubmit={(e) => { e.preventDefault(); if (teacherPass.trim() === TEACHER_PWD.trim()) { setRole('teacher'); setShowPassInput(false); } else setPassError(true); }} className="w-full space-y-4">
-                <input type="password" autoFocus value={teacherPass} onChange={(e) => { setTeacherPass(e.target.value); setPassError(false); }} placeholder="Nhập mã pin..." className={`w-full px-6 py-5 bg-slate-50 border-2 rounded-3xl text-center text-xl font-black ${passError ? 'border-red-500 animate-pulse' : 'border-slate-100 focus:border-amber-400 focus:ring-4 focus:ring-amber-100'}`} />
-                <div className="flex gap-4">
-                  <button type="button" onClick={() => setShowPassInput(false)} className="flex-1 py-4 font-black text-slate-400 uppercase text-xs">Hủy</button>
-                  <button type="submit" className="flex-2 px-8 py-4 bg-amber-500 text-white rounded-2xl font-black uppercase shadow-lg text-xs">Xác nhận</button>
-                </div>
-              </form>
-            </div>
-          )}
-        </div>
-      </div>
-    );
-  }
-
-  const isAdmin = role === 'teacher';
-  const selectedNode = data.nodes.find(n => n.id === selectedId);
-  const currentQ = quizQuestions[currentQuizIdx];
 
   return (
     <div className="flex h-screen bg-white overflow-hidden font-sans">
-      {/* AI QUIZ MODAL - LATEX OPTIMIZED */}
+      {/* AI QUIZ MODAL */}
       {isQuizModalOpen && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-900/90 backdrop-blur-xl">
-          <div className="bg-white rounded-[40px] shadow-2xl w-full max-w-2xl overflow-hidden animate-in zoom-in duration-300 flex flex-col max-h-[95vh]">
-            <header className="px-8 py-5 bg-indigo-600 text-white flex justify-between items-center shrink-0">
-              <div className="flex items-center gap-4">
-                <div className="p-2 bg-white/20 rounded-xl"><BrainCircuit size={24} /></div>
-                <div>
-                  <h3 className="text-lg font-black uppercase leading-tight">AI Quiz Master</h3>
-                  <p className="text-[9px] font-bold uppercase opacity-60 tracking-widest">{selectedNode?.title}</p>
-                </div>
+           <div className="bg-white rounded-[40px] shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[95vh] animate-in zoom-in duration-300">
+              <header className="px-8 py-5 bg-indigo-600 text-white flex justify-between items-center shrink-0">
+                <div className="flex items-center gap-3"><BrainCircuit size={24} /> <h3 className="text-lg font-black uppercase">Quiz AI Vật Lý</h3></div>
+                <button onClick={() => setIsQuizModalOpen(false)} className="hover:rotate-90 transition-transform"><X/></button>
+              </header>
+              <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
+                {quizLoading ? (
+                  <div className="flex flex-col items-center py-20">
+                    <Loader2 className="animate-spin text-indigo-500 mb-4" size={48}/>
+                    <p className="font-black text-xs uppercase text-slate-400 tracking-widest animate-pulse">Đang thiết lập công thức...</p>
+                  </div>
+                ) : (
+                  <div>
+                    {!showResults ? (
+                      <div className="space-y-6">
+                         <div className="flex justify-between items-center text-[10px] font-black text-indigo-500 uppercase tracking-widest">
+                           <span>Câu hỏi {currentQuizIdx+1}/{quizQuestions.length}</span>
+                           <span>{Math.round(((currentQuizIdx+1)/quizQuestions.length)*100)}% Hoàn thành</span>
+                         </div>
+                         <div className="bg-indigo-50/50 p-6 rounded-3xl border border-indigo-100 text-lg font-bold text-slate-800">
+                           {renderLatex(quizQuestions[currentQuizIdx]?.question)}
+                         </div>
+                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                           {quizQuestions[currentQuizIdx]?.options.map((opt, i) => (
+                             <button key={i} onClick={() => { const n = [...userAnswers]; n[currentQuizIdx] = i; setUserAnswers(n); }} className={`p-5 rounded-2xl border-2 text-left transition-all duration-200 flex items-center gap-4 ${userAnswers[currentQuizIdx] === i ? 'bg-indigo-600 border-indigo-600 text-white shadow-lg' : 'bg-white border-slate-100 hover:border-indigo-200 text-slate-700'}`}>
+                               <span className={`w-8 h-8 rounded-lg flex items-center justify-center font-black text-xs ${userAnswers[currentQuizIdx] === i ? 'bg-white/20' : 'bg-slate-100 text-indigo-500'}`}>{String.fromCharCode(65 + i)}</span>
+                               <span className="font-bold text-xs">{renderLatex(opt)}</span>
+                             </button>
+                           ))}
+                         </div>
+                      </div>
+                    ) : (
+                      <div className="text-center py-6 space-y-6">
+                        <Trophy size={80} className="text-amber-400 mx-auto" />
+                        <h2 className="text-4xl font-black text-slate-800">ĐIỂM: {calculateScore()}/{quizQuestions.length}</h2>
+                        <div className="space-y-4 text-left">
+                          {quizQuestions.map((q, i) => (
+                            <div key={i} className={`p-5 rounded-2xl border ${userAnswers[i] === q.correctIndex ? 'bg-green-50 border-green-100' : 'bg-red-50 border-red-100'}`}>
+                              <div className="flex justify-between items-center mb-2">
+                                <span className="text-[10px] font-black uppercase text-slate-500">Câu {i+1}</span>
+                                <span className="text-[10px] font-bold text-indigo-500">Đúng: {String.fromCharCode(65 + q.correctIndex)}</span>
+                              </div>
+                              <p className="text-xs font-bold mb-2 text-slate-800">{renderLatex(q.question)}</p>
+                              <div className="bg-white/60 p-3 rounded-xl border border-white/50 text-[10px] leading-relaxed text-slate-600 italic">
+                                <strong>Giải thích:</strong> {renderLatex(q.explanation)}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
-              <button onClick={() => setIsQuizModalOpen(false)} className="p-2 hover:bg-white/20 rounded-full transition-colors"><X size={20}/></button>
-            </header>
-
-            <div className="flex-1 overflow-y-auto p-6 custom-scrollbar">
-              {quizLoading ? (
-                <div className="flex flex-col items-center justify-center py-16">
-                  <div className="relative mb-6">
-                    <Loader2 size={60} className="animate-spin text-indigo-500" />
-                    <BrainCircuit size={24} className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-indigo-300" />
-                  </div>
-                  <p className="font-black text-indigo-400 uppercase animate-pulse text-xs">Đang chuẩn bị công thức...</p>
-                </div>
-              ) : (
-                <div className="space-y-6 animate-in slide-in-from-right duration-500">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-[10px] font-black text-indigo-500 uppercase tracking-widest">Câu hỏi {currentQuizIdx + 1}/{quizQuestions.length}</span>
-                    <div className="flex gap-1.5 w-1/2">
-                      {quizQuestions.map((_, i) => (
-                        <div key={i} className={`h-1.5 flex-1 rounded-full transition-all duration-500 ${i <= currentQuizIdx ? 'bg-indigo-500' : 'bg-slate-100'}`} />
-                      ))}
-                    </div>
-                  </div>
-
-                  {!showResults ? (
-                    currentQ && (
-                      <div className="space-y-5">
-                        <div className="bg-indigo-50/50 p-5 rounded-3xl border border-indigo-100">
-                          <h4 className="text-lg font-bold text-slate-800 leading-relaxed">
-                            {renderLatex(currentQ.question)}
-                          </h4>
-                        </div>
-                        
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-4">
-                          {currentQ.options.map((opt, oIdx) => {
-                            const isSelected = userAnswers[currentQuizIdx] === oIdx;
-                            return (
-                              <button 
-                                key={oIdx}
-                                onClick={() => {
-                                  const n = [...userAnswers];
-                                  n[currentQuizIdx] = oIdx;
-                                  setUserAnswers(n);
-                                }}
-                                className={`group p-4 rounded-2xl border-2 text-left transition-all duration-200 flex items-center gap-3 ${
-                                  isSelected 
-                                    ? 'bg-indigo-600 border-indigo-600 text-white shadow-lg shadow-indigo-100' 
-                                    : 'bg-white border-slate-100 hover:border-indigo-300 text-slate-700 shadow-sm'
-                                }`}
-                              >
-                                <span className={`w-7 h-7 rounded-lg flex items-center justify-center font-black text-[10px] shrink-0 ${isSelected ? 'bg-white/20 text-white' : 'bg-slate-50 border border-slate-200 text-indigo-500'}`}>
-                                  {String.fromCharCode(65 + oIdx)}
-                                </span>
-                                <span className="font-bold text-xs">{renderLatex(opt)}</span>
-                              </button>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    )
-                  ) : (
-                    <div className="text-center py-6 space-y-4">
-                      <div className="relative inline-block mb-2">
-                        <Trophy size={64} className="text-amber-400 mx-auto" />
-                      </div>
-                      <h3 className="text-3xl font-black text-slate-800 uppercase tracking-tighter">Đạt {calculateScore()}/{quizQuestions.length} ĐIỂM</h3>
-                      
-                      <div className="grid grid-cols-1 gap-3 text-left mt-6">
-                         {quizQuestions.map((q, idx) => (
-                           <div key={idx} className={`p-5 rounded-2xl border transition-all ${userAnswers[idx] === q.correctIndex ? 'bg-green-50 border-green-100' : 'bg-red-50 border-red-100'}`}>
-                             <div className="flex justify-between items-center mb-2">
-                               <p className="text-[10px] font-black uppercase text-slate-800">Câu {idx + 1}: {userAnswers[idx] === q.correctIndex ? 'Đúng' : 'Sai'}</p>
-                               <span className="text-[10px] font-bold text-indigo-500">Đáp án: {String.fromCharCode(65 + q.correctIndex)}</span>
-                             </div>
-                             <div className="text-[11px] text-slate-700 font-medium mb-2">{renderLatex(q.question)}</div>
-                             <div className="text-[10px] text-slate-500 leading-relaxed italic bg-white/50 p-2 rounded-lg border border-slate-100">
-                               <strong>Giải thích:</strong> {renderLatex(q.explanation)}
-                             </div>
-                           </div>
-                         ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-
-            <footer className="px-8 py-5 bg-slate-50 border-t border-slate-100 flex justify-between items-center shrink-0">
-              {!showResults && !quizLoading ? (
-                <>
-                  <button 
-                    disabled={currentQuizIdx === 0}
-                    onClick={() => setCurrentQuizIdx(p => p - 1)}
-                    className="flex items-center gap-1.5 px-4 py-3 rounded-xl font-black text-[10px] uppercase text-slate-400 hover:text-indigo-600 disabled:opacity-20 transition-all"
-                  >
-                    <ChevronLeft size={16} /> Quay lại
-                  </button>
-                  
-                  {currentQuizIdx === quizQuestions.length - 1 ? (
-                    <button 
-                      disabled={userAnswers.some(a => a === null)}
-                      onClick={() => setShowResults(true)}
-                      className="px-8 py-3.5 bg-indigo-600 text-white rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-xl shadow-indigo-100 hover:bg-indigo-700 disabled:opacity-30 transition-all active:scale-95"
-                    >
-                      Kết thúc
-                    </button>
-                  ) : (
-                    <button 
-                      onClick={() => setCurrentQuizIdx(p => p + 1)}
-                      className="flex items-center gap-1.5 px-6 py-3.5 bg-white border-2 border-slate-200 rounded-2xl font-black text-[10px] uppercase text-indigo-600 hover:border-indigo-600 transition-all active:scale-95 shadow-sm"
-                    >
-                      Tiếp tục <ChevronRight size={16} />
-                    </button>
-                  )}
-                </>
-              ) : showResults ? (
-                <div className="w-full flex gap-3">
-                  <button onClick={generateAIQuiz} className="flex-1 py-4 bg-indigo-600 text-white rounded-2xl font-black uppercase text-[10px] shadow-lg flex items-center justify-center gap-2 transition-all hover:bg-indigo-700"><RotateCcw size={16}/> Thử lại</button>
-                  <button onClick={() => setIsQuizModalOpen(false)} className="px-8 py-4 bg-slate-800 text-white rounded-2xl font-black uppercase text-[10px] transition-all hover:bg-slate-900">Hoàn thành</button>
-                </div>
-              ) : <div className="h-10 w-full" />}
-            </footer>
-          </div>
+              <footer className="p-8 border-t bg-slate-50 flex justify-between shrink-0">
+                {!showResults && !quizLoading && (
+                  <>
+                    <button disabled={currentQuizIdx===0} onClick={()=>setCurrentQuizIdx(p=>p-1)} className="flex items-center gap-2 font-black text-[10px] uppercase text-slate-400 hover:text-indigo-600 disabled:opacity-20 transition-all"><ChevronLeft size={16}/> Quay lại</button>
+                    {currentQuizIdx === quizQuestions.length - 1 ? 
+                      <button disabled={userAnswers.includes(null)} onClick={()=>setShowResults(true)} className="px-10 py-4 bg-indigo-600 text-white rounded-xl font-black uppercase text-[10px] shadow-xl hover:bg-indigo-700 transition-all">Nộp bài</button> :
+                      <button onClick={()=>setCurrentQuizIdx(p=>p+1)} className="flex items-center gap-2 px-10 py-4 bg-white border-2 rounded-xl font-black text-[10px] uppercase text-indigo-600 hover:border-indigo-600 transition-all active:scale-95">Câu tiếp <ChevronRight size={16}/></button>
+                    }
+                  </>
+                )}
+                {showResults && <button onClick={()=>setIsQuizModalOpen(false)} className="w-full py-4 bg-slate-800 text-white rounded-xl font-black uppercase text-[10px] hover:bg-slate-900 transition-all">Hoàn thành & Xem lại</button>}
+              </footer>
+           </div>
         </div>
       )}
 
-      {/* LEFT PANEL */}
-      <aside className={`w-80 border-r flex flex-col shrink-0 ${isAdmin ? 'bg-amber-50/20' : 'bg-slate-50'}`}>
-        <div className={`p-8 flex justify-between items-center text-white ${isAdmin ? 'bg-amber-500' : 'bg-indigo-600'} shadow-lg`}>
-          <div className="flex items-center gap-3"><Book size={24} /><h1 className="font-black text-xl uppercase tracking-tighter">Vật Lý 11</h1></div>
-          {isAdmin && <button onClick={() => { setNodeModalData({ parentId: null, type: 'folder', title: '', url: '' }); setShowNodeModal(true); }} className="p-2 bg-white/20 rounded-xl hover:bg-white/40 transition-colors"><Plus size={20}/></button>}
-        </div>
+      {/* SIDEBAR */}
+      <aside className={`w-80 border-r flex flex-col shrink-0 ${isAdmin ? 'bg-amber-50/20' : 'bg-indigo-50/10'}`}>
+        <header className={`p-8 text-white ${isAdmin ? 'bg-amber-500' : 'bg-indigo-600'} shadow-lg flex justify-between items-center shrink-0`}>
+          <div className="flex items-center gap-3"><Book size={24}/> <h1 className="font-black text-xl tracking-tighter uppercase leading-none">Vật Lý 11</h1></div>
+          {isAdmin && <button onClick={() => { setNodeModalData({ parentId: null, type: 'folder', title: '', url: '' }); setShowNodeModal(true); }} className="p-2 bg-white/20 rounded-lg hover:bg-white/40"><Plus size={18}/></button>}
+        </header>
         <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
           {data.nodes.filter(n => n.parentId === null).map(node => (
-            <TreeItem key={node.id} node={node} allNodes={data.nodes} selectedId={selectedId} isAdmin={isAdmin} onSelect={handleSelectNode} onAdd={(p, t) => { setNodeModalData({ parentId: p, type: t, title: '', url: '' }); setShowNodeModal(true); }} onEdit={(n) => { setNodeModalData({ id: n.id, parentId: n.parentId, type: n.type, title: n.title, url: n.url }); setShowNodeModal(true); }} onDelete={(id) => setShowDeleteConfirm({ type: 'node', id, title: data.nodes.find(n => n.id === id)?.title || '' })} level={0} />
+            <TreeItem key={node.id} node={node} allNodes={data.nodes} selectedId={selectedId} isAdmin={isAdmin} 
+              onSelect={(id) => { setSelectedId(id); if(data.nodes.find(n=>n.id===id)?.url) setIframeLoading(true); }} 
+              onAdd={(p, t) => { setNodeModalData({ parentId: p, type: t, title: '', url: '' }); setShowNodeModal(true); }} 
+              onEdit={(n) => { setNodeModalData({ id: n.id, parentId: n.parentId, type: n.type, title: n.title, url: n.url }); setShowNodeModal(true); }} 
+              onDelete={(id) => setShowDeleteConfirm({ type: 'node', id, title: data.nodes.find(n=>n.id===id)?.title || '' })} level={0} 
+            />
           ))}
         </div>
-        <div className="p-4 border-t border-slate-100 flex flex-col gap-2">
-           <div className="flex items-center justify-center gap-2 text-[9px] font-black uppercase text-slate-400 py-2 bg-white/50 rounded-xl">
-             {isSyncing ? <Loader2 size={12} className="animate-spin text-indigo-500" /> : <CloudCheck size={12} className="text-green-500" />} {isSyncing ? 'Syncing...' : 'Online'}
-          </div>
-          <button onClick={() => setRole('none')} className="w-full py-3 bg-white border border-slate-100 text-slate-400 font-black uppercase text-[10px] rounded-xl flex items-center justify-center gap-2 hover:text-red-500 transition-colors"><LogOut size={14}/> Thoát</button>
-        </div>
+        <footer className="p-4 border-t flex flex-col gap-2 shrink-0">
+           <div className="flex items-center justify-center gap-2 text-[8px] font-black uppercase text-slate-400 py-2 bg-white/50 rounded-xl">
+             {isSyncing ? <Loader2 size={12} className="animate-spin text-indigo-500" /> : <CloudCheck size={12} className="text-green-500" />} {isAdmin ? 'Teacher Dashboard' : 'Student Mode'}
+           </div>
+           <button onClick={handleLogout} className="w-full py-3 bg-white border border-slate-100 text-slate-400 font-black uppercase text-[10px] rounded-xl flex items-center justify-center gap-2 hover:text-red-500 transition-colors"><LogOut size={14}/> {isAdmin ? 'Thoát quản lý' : 'Về trang chủ'}</button>
+        </footer>
       </aside>
 
-      {/* MAIN CONTENT */}
-      <main className="flex-1 flex flex-col relative bg-white">
+      {/* MAIN CONTENT AREA */}
+      <main className="flex-1 flex flex-col bg-white overflow-hidden">
         {selectedId ? (
           <>
-            <header className="h-20 px-8 border-b border-slate-100 flex justify-between items-center bg-white/80 backdrop-blur-md z-10 shrink-0">
-              <div className="min-w-0">
-                <h2 className="text-xl font-black text-slate-800 uppercase truncate leading-none">{selectedNode?.title}</h2>
-                <p className="text-[10px] font-bold text-indigo-500 mt-1 uppercase opacity-60 tracking-widest italic truncate max-w-md">"{currentSlogan}"</p>
-              </div>
-              <div className="flex items-center gap-3">
-                {selectedNode?.type === 'lesson' && (
-                  <button onClick={generateAIQuiz} className="flex items-center gap-2 px-6 py-3 bg-indigo-600 text-white rounded-2xl font-black text-[10px] uppercase shadow-lg shadow-indigo-100 hover:bg-indigo-700 transition-all active:scale-95"><BrainCircuit size={18}/> Quiz AI</button>
-                )}
-                {selectedNode?.url && <a href={selectedNode.url} target="_blank" rel="noreferrer" className="p-3 bg-slate-50 text-slate-400 rounded-xl hover:bg-slate-100 transition-colors"><Maximize2 size={18}/></a>}
-              </div>
+            <header className="h-20 px-8 border-b flex justify-between items-center shrink-0 bg-white/80 backdrop-blur-md">
+               <div className="min-w-0">
+                 <h2 className="text-xl font-black text-slate-800 uppercase truncate leading-none">{selectedNode?.title}</h2>
+                 <p className="text-[9px] font-bold text-indigo-500 uppercase mt-1 tracking-widest opacity-60">Vật lý lớp 11 - Kết nối tri thức</p>
+               </div>
+               <div className="flex items-center gap-3">
+                 {selectedNode?.type === 'lesson' && <button onClick={generateAIQuiz} className="flex items-center gap-2 px-6 py-3 bg-indigo-600 text-white rounded-2xl font-black text-[10px] uppercase shadow-lg shadow-indigo-100 hover:bg-indigo-700 active:scale-95 transition-all"><BrainCircuit size={18}/> Quiz AI</button>}
+                 {selectedNode?.url && <a href={selectedNode.url} target="_blank" className="p-3 bg-slate-50 text-slate-400 rounded-xl hover:bg-slate-100"><Maximize2 size={18}/></a>}
+               </div>
             </header>
             <div className="flex-1 bg-slate-100 relative overflow-hidden">
-              {iframeLoading && (
-                <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/90 z-20">
-                  <Loader2 size={32} className="animate-spin text-indigo-500 mb-3" />
-                  <p className="font-black text-[8px] text-slate-400 uppercase tracking-widest">Đang tải...</p>
-                </div>
-              )}
-              {selectedNode?.url ? (
-                <iframe src={selectedNode.url} className="w-full h-full border-none" onLoad={() => setIframeLoading(false)} />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center text-slate-300 italic text-sm">Chưa cập nhật nội dung</div>
-              )}
+               {iframeLoading && <div className="absolute inset-0 bg-white flex flex-col items-center justify-center z-10 animate-in fade-in"><Loader2 className="animate-spin text-indigo-500 mb-4" size={40}/><p className="text-[9px] font-black uppercase tracking-widest text-slate-400">Đang chuẩn bị bài học...</p></div>}
+               {selectedNode?.url ? <iframe src={selectedNode.url} className="w-full h-full border-none" onLoad={()=>setIframeLoading(false)}/> : <div className="h-full flex items-center justify-center text-slate-300 italic text-sm">Nội dung bài học đang được xây dựng...</div>}
             </div>
           </>
         ) : (
-          <div className="flex-1 flex flex-col items-center justify-center space-y-8 bg-slate-50">
-             <div className="p-20 bg-white rounded-[70px] shadow-2xl animate-pulse"><Book size={100} className="text-indigo-100" /></div>
-             <h2 className="text-2xl font-black text-slate-200 uppercase tracking-tighter text-center">Chọn đề mục để bắt đầu học tập</h2>
+          <div className="flex-1 flex flex-col items-center justify-center bg-slate-50 p-10 text-center">
+             <div className="p-16 bg-white rounded-[70px] shadow-2xl mb-10 animate-in zoom-in duration-700"><Book size={100} className="text-indigo-100 opacity-50"/></div>
+             <h2 className="text-2xl font-black text-slate-300 uppercase tracking-tighter mb-4">Chọn một đề mục để bắt đầu khám phá</h2>
+             <p className="max-w-xs text-xs font-bold text-slate-400 leading-relaxed italic opacity-70">"Vật lý không chỉ là những công thức, đó là cách chúng ta hiểu về vũ trụ này."</p>
           </div>
         )}
       </main>
 
-      {/* RIGHT PANEL */}
-      <aside className="w-72 border-l border-slate-100 bg-slate-50 flex flex-col shrink-0">
-        <div className="flex-1 flex flex-col border-b">
-           <div className="p-6 flex justify-between items-center border-b bg-white">
-             <h3 className="font-black text-[10px] text-slate-400 uppercase tracking-widest">Tài liệu riêng</h3>
-             {isAdmin && selectedId && <button onClick={() => openResourceModal(false)} className="text-indigo-600 hover:bg-indigo-50 p-1 rounded-lg"><Plus size={18}/></button>}
-           </div>
-           <div className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar">
-              {selectedNode?.lessonResources.map(res => (
-                <div key={res.id} className="group relative">
-                  <a href={res.url} target="_blank" rel="noreferrer" className="block p-4 bg-white border border-slate-100 rounded-2xl font-bold text-xs text-indigo-600 hover:shadow-md transition-all truncate shadow-sm">
-                     {res.title}
-                  </a>
-                  {isAdmin && (
-                    <div className="hidden group-hover:flex absolute right-2 top-1/2 -translate-y-1/2 gap-1 bg-white p-1 rounded-lg shadow-sm border border-slate-100">
-                      <button onClick={() => openResourceModal(false, res)} className="p-1 text-amber-500 hover:bg-amber-50 rounded"><Pencil size={12}/></button>
-                      <button onClick={() => setShowDeleteConfirm({ type: 'resource', id: res.id, isGlobal: false, title: res.title })} className="p-1 text-red-500 hover:bg-red-50 rounded"><Trash2 size={12}/></button>
-                    </div>
-                  )}
-                </div>
-              ))}
-              {(!selectedNode?.lessonResources.length) && <p className="text-center text-[10px] text-slate-300 italic pt-8 opacity-50">Không có tài liệu</p>}
-           </div>
-        </div>
-        <div className="flex-1 flex flex-col bg-white/40">
-           <div className="p-6 flex justify-between items-center border-b bg-white">
-             <h3 className="font-black text-[10px] text-slate-400 uppercase tracking-widest">Thư viện chung</h3>
-             {isAdmin && <button onClick={() => openResourceModal(true)} className="text-indigo-600 hover:bg-indigo-50 p-1 rounded-lg"><Plus size={18}/></button>}
-           </div>
-           <div className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar">
-              {data.globalResources.map(res => (
-                <div key={res.id} className="group relative">
-                  <a href={res.url} target="_blank" rel="noreferrer" className="block p-4 bg-white border border-slate-100 rounded-2xl font-bold text-xs text-slate-600 hover:shadow-md transition-all truncate shadow-sm">
-                     {res.title}
-                  </a>
-                  {isAdmin && (
-                    <div className="hidden group-hover:flex absolute right-2 top-1/2 -translate-y-1/2 gap-1 bg-white p-1 rounded-lg shadow-sm border border-slate-100">
-                      <button onClick={() => openResourceModal(true, res)} className="p-1 text-amber-500 hover:bg-amber-50 rounded"><Pencil size={12}/></button>
-                      <button onClick={() => setShowDeleteConfirm({ type: 'resource', id: res.id, isGlobal: true, title: res.title })} className="p-1 text-red-500 hover:bg-red-50 rounded"><Trash2 size={12}/></button>
-                    </div>
-                  )}
-                </div>
-              ))}
-           </div>
-        </div>
+      {/* RESOURCES PANEL */}
+      <aside className="w-72 border-l border-slate-100 bg-slate-50 flex flex-col shrink-0 overflow-hidden">
+         <div className="flex-1 flex flex-col border-b overflow-hidden">
+            <div className="p-6 flex justify-between items-center border-b bg-white text-[10px] font-black text-slate-400 uppercase tracking-widest shrink-0">Tài liệu riêng {isAdmin && selectedId && <button onClick={()=> { setResourceModalData({isGlobal: false, title:'', url:''}); setShowResourceModal(true); }} className="text-indigo-600 hover:bg-indigo-50 p-1 rounded-lg"><Plus size={16}/></button>}</div>
+            <div className="flex-1 p-4 space-y-3 overflow-y-auto custom-scrollbar">
+               {selectedNode?.lessonResources.map(r => (
+                 <div key={r.id} className="group relative">
+                    <a href={r.url} target="_blank" className="block p-4 bg-white border border-slate-100 rounded-2xl font-bold text-xs text-indigo-600 truncate shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all">{r.title}</a>
+                    {isAdmin && <button onClick={()=>setShowDeleteConfirm({type:'resource', id:r.id, title:r.title, isGlobal:false})} className="absolute top-2 right-2 hidden group-hover:block p-1.5 bg-red-50 text-red-500 rounded-lg shadow-sm border border-red-100"><Trash2 size={12}/></button>}
+                 </div>
+               ))}
+               {(!selectedNode?.lessonResources.length) && <p className="text-center text-[9px] text-slate-300 font-bold uppercase pt-10 opacity-50 tracking-widest">Không có tài liệu lẻ</p>}
+            </div>
+         </div>
+         <div className="flex-1 flex flex-col overflow-hidden">
+            <div className="p-6 flex justify-between items-center border-b bg-white text-[10px] font-black text-slate-400 uppercase tracking-widest shrink-0">Thư viện chung {isAdmin && <button onClick={()=> { setResourceModalData({isGlobal: true, title:'', url:''}); setShowResourceModal(true); }} className="text-indigo-600 hover:bg-indigo-50 p-1 rounded-lg"><Plus size={16}/></button>}</div>
+            <div className="flex-1 p-4 space-y-3 overflow-y-auto custom-scrollbar bg-white/30">
+               {data.globalResources.map(r => (
+                 <div key={r.id} className="group relative">
+                    <a href={r.url} target="_blank" className="block p-4 bg-white border border-slate-100 rounded-2xl font-bold text-xs text-slate-600 truncate shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all">{r.title}</a>
+                    {isAdmin && <button onClick={()=>setShowDeleteConfirm({type:'resource', id:r.id, title:r.title, isGlobal:true})} className="absolute top-2 right-2 hidden group-hover:block p-1.5 bg-red-50 text-red-500 rounded-lg shadow-sm border border-red-100"><Trash2 size={12}/></button>}
+                 </div>
+               ))}
+            </div>
+         </div>
       </aside>
 
-      {/* MODALS CƠ BẢN */}
-      {showResourceModal && (
-        <div className="fixed inset-0 z-[210] flex items-center justify-center p-6 bg-black/40 backdrop-blur-sm">
-          <div className="bg-white rounded-[40px] shadow-2xl w-full max-w-sm p-10 space-y-6">
-            <h3 className="font-black uppercase text-slate-800 text-sm">Thiết lập tài liệu</h3>
-            <form onSubmit={saveResource} className="space-y-4">
-               <input type="text" autoFocus value={resourceModalData.title} onChange={(e) => setResourceModalData({...resourceModalData, title: e.target.value})} placeholder="Tên tài liệu..." className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl font-bold text-xs" />
-               <input type="text" value={resourceModalData.url} onChange={(e) => setResourceModalData({...resourceModalData, url: e.target.value})} placeholder="Đường dẫn URL..." className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl font-mono text-[10px]" />
-               <div className="flex gap-4 pt-4">
-                 <button type="button" onClick={() => setShowResourceModal(false)} className="flex-1 py-4 font-black text-slate-400 uppercase text-[10px]">Đóng</button>
-                 <button type="submit" className="flex-2 px-10 py-4 bg-indigo-600 text-white rounded-2xl font-black uppercase shadow-lg text-[10px]">Lưu cấu hình</button>
-               </div>
-            </form>
-          </div>
+      {/* MODALS */}
+      {showNodeModal && (
+        <div className="fixed inset-0 z-[300] bg-black/40 flex items-center justify-center p-6 backdrop-blur-sm animate-in fade-in duration-200">
+           <form onSubmit={(e)=> {
+             e.preventDefault();
+             if(!nodeModalData.title.trim()) return;
+             let nextNodes = [...data.nodes];
+             if(nodeModalData.id) nextNodes = nextNodes.map(n=> n.id === nodeModalData.id ? {...n, title: nodeModalData.title, url: nodeModalData.url} : n);
+             else nextNodes.push({id:`n-${Date.now()}`, ...nodeModalData, lessonResources:[]});
+             updateData({...data, nodes: nextNodes}); setShowNodeModal(false);
+           }} className="bg-white p-10 rounded-[40px] shadow-2xl w-full max-w-sm space-y-5 animate-in slide-in-from-bottom-10 duration-300">
+              <h3 className="font-black uppercase text-sm text-slate-800 border-b pb-4">Cập nhật đề mục</h3>
+              <div className="space-y-4">
+                <div className="space-y-1">
+                  <label className="text-[10px] font-black uppercase text-slate-400 ml-2">Tên chương/bài</label>
+                  <input autoFocus value={nodeModalData.title} onChange={e=>setNodeModalData({...nodeModalData, title: e.target.value})} placeholder="VD: Chương 1: Động lực học..." className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl font-bold text-xs focus:border-indigo-500 transition-all outline-none" />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[10px] font-black uppercase text-slate-400 ml-2">Đường dẫn nội dung (URL)</label>
+                  <input value={nodeModalData.url} onChange={e=>setNodeModalData({...nodeModalData, url: e.target.value})} placeholder="Link PDF/Slides/Web..." className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl font-mono text-[10px] focus:border-indigo-500 transition-all outline-none" />
+                </div>
+              </div>
+              <div className="flex gap-4 pt-4">
+                <button type="button" onClick={()=>setShowNodeModal(false)} className="flex-1 font-black text-slate-400 uppercase text-[10px] hover:text-slate-600 transition-colors">Hủy bỏ</button>
+                <button type="submit" className="flex-1 py-4 bg-indigo-600 text-white rounded-xl font-black uppercase text-[10px] shadow-lg shadow-indigo-100 hover:bg-indigo-700 transition-all active:scale-95">Lưu lại</button>
+              </div>
+           </form>
         </div>
       )}
 
-      {showNodeModal && (
-        <div className="fixed inset-0 z-[210] flex items-center justify-center p-6 bg-black/40 backdrop-blur-sm">
-          <div className="bg-white rounded-[40px] shadow-2xl w-full max-w-sm p-10 space-y-6">
-            <h3 className="font-black uppercase text-slate-800 text-sm">Cấu trúc đề mục</h3>
-            <form onSubmit={saveNode} className="space-y-4">
-               <input type="text" autoFocus value={nodeModalData.title} onChange={(e) => setNodeModalData({...nodeModalData, title: e.target.value})} placeholder="Tiêu đề..." className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl font-bold text-xs" />
-               <input type="text" value={nodeModalData.url} onChange={(e) => setNodeModalData({...nodeModalData, url: e.target.value})} placeholder="Link tài liệu/Slides..." className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl font-mono text-[10px]" />
-               <div className="flex gap-4 pt-4">
-                 <button type="button" onClick={() => setShowNodeModal(false)} className="flex-1 py-4 font-black text-slate-400 uppercase text-[10px]">Hủy bỏ</button>
-                 <button type="submit" className="flex-2 px-10 py-4 bg-indigo-600 text-white rounded-2xl font-black uppercase shadow-lg text-[10px]">Lưu thay đổi</button>
-               </div>
-            </form>
-          </div>
+      {showResourceModal && (
+        <div className="fixed inset-0 z-[300] bg-black/40 flex items-center justify-center p-6 backdrop-blur-sm animate-in fade-in duration-200">
+           <form onSubmit={(e)=> {
+             e.preventDefault();
+             if(!resourceModalData.title.trim() || !resourceModalData.url.trim()) return;
+             const newRes = {id:`r-${Date.now()}`, title: resourceModalData.title, url: resourceModalData.url};
+             if(resourceModalData.isGlobal) updateData({...data, globalResources: [...data.globalResources, newRes]});
+             else if(selectedId) updateData({...data, nodes: data.nodes.map(n=> n.id === selectedId ? {...n, lessonResources: [...n.lessonResources, newRes]} : n)});
+             setShowResourceModal(false);
+           }} className="bg-white p-10 rounded-[40px] shadow-2xl w-full max-w-sm space-y-5 animate-in slide-in-from-bottom-10 duration-300">
+              <h3 className="font-black uppercase text-sm text-slate-800 border-b pb-4">{resourceModalData.isGlobal ? 'Thư viện chung' : 'Tài liệu bài học'}</h3>
+              <div className="space-y-4">
+                <div className="space-y-1">
+                  <label className="text-[10px] font-black uppercase text-slate-400 ml-2">Tiêu đề tài liệu</label>
+                  <input autoFocus value={resourceModalData.title} onChange={e=>setResourceModalData({...resourceModalData, title: e.target.value})} placeholder="VD: File bài tập PDF..." className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl font-bold text-xs outline-none" />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[10px] font-black uppercase text-slate-400 ml-2">URL tài liệu</label>
+                  <input value={resourceModalData.url} onChange={e=>setResourceModalData({...resourceModalData, url: e.target.value})} placeholder="Link download..." className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl font-mono text-[10px] outline-none" />
+                </div>
+              </div>
+              <div className="flex gap-4 pt-4">
+                <button type="button" onClick={()=>setShowResourceModal(false)} className="flex-1 font-black text-slate-400 uppercase text-[10px]">Đóng</button>
+                <button type="submit" className="flex-1 py-4 bg-indigo-600 text-white rounded-xl font-black uppercase text-[10px] shadow-lg shadow-indigo-100 hover:bg-indigo-700 transition-all">Thêm ngay</button>
+              </div>
+           </form>
         </div>
       )}
 
       {showDeleteConfirm && (
-        <div className="fixed inset-0 z-[220] flex items-center justify-center p-6 bg-black/50 backdrop-blur-sm">
-          <div className="bg-white rounded-[40px] shadow-2xl w-full max-w-xs p-10 text-center space-y-6">
-            <div className="w-16 h-16 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto"><AlertTriangle size={32}/></div>
-            <p className="font-bold text-slate-800 text-xs leading-relaxed">Bạn có chắc muốn xóa vĩnh viễn <br/><span className="text-red-500 font-black">"{showDeleteConfirm.title}"</span>?</p>
-            <div className="flex gap-4">
-               <button onClick={() => setShowDeleteConfirm(null)} className="flex-1 py-4 font-black text-slate-400 uppercase text-[10px]">Hủy</button>
-               <button onClick={executeDelete} className="flex-1 py-4 bg-red-500 text-white rounded-2xl font-black uppercase text-[10px]">Xóa ngay</button>
-            </div>
-          </div>
+        <div className="fixed inset-0 z-[400] bg-black/60 flex items-center justify-center p-6 backdrop-blur-sm animate-in zoom-in duration-200">
+           <div className="bg-white p-10 rounded-[40px] shadow-2xl text-center w-full max-w-xs space-y-6">
+              <div className="w-16 h-16 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto"><AlertTriangle size={32}/></div>
+              <p className="font-bold text-xs text-slate-800 leading-relaxed">Xác nhận xóa vĩnh viễn <br/><span className="text-red-500 font-black">"{showDeleteConfirm.title}"</span>?</p>
+              <div className="flex gap-4">
+                 <button onClick={()=>setShowDeleteConfirm(null)} className="flex-1 font-black text-slate-400 uppercase text-[10px] hover:text-slate-600 transition-colors">Không xóa</button>
+                 <button onClick={()=> {
+                   if(showDeleteConfirm.type === 'node') { updateData({...data, nodes: data.nodes.filter(n=>n.id !== showDeleteConfirm.id)}); setSelectedId(null); }
+                   else {
+                     if(showDeleteConfirm.isGlobal) updateData({...data, globalResources: data.globalResources.filter(r=>r.id !== showDeleteConfirm.id)});
+                     else if(selectedId) updateData({...data, nodes: data.nodes.map(n=> n.id===selectedId ? {...n, lessonResources: n.lessonResources.filter(r=>r.id!==showDeleteConfirm.id)} : n)});
+                   }
+                   setShowDeleteConfirm(null);
+                 }} className="flex-1 py-4 bg-red-500 text-white rounded-xl font-black uppercase text-[10px] shadow-lg shadow-red-100 hover:bg-red-600 transition-all active:scale-95">Xác nhận</button>
+              </div>
+           </div>
         </div>
       )}
 
       <style>{`
-        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar { width: 5px; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .katex { font-size: 1.1em; }
+        iframe { border-radius: 12px; background: white; }
       `}</style>
     </div>
   );
