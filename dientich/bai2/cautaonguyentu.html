@@ -1,0 +1,253 @@
+import React, { useState, useEffect, useMemo } from 'react';
+import { Plus, Minus, Info, RefreshCw, Zap } from 'lucide-react';
+
+const App = () => {
+  // Trạng thái cấu tạo nguyên tử
+  const [protons, setProtons] = useState(3);
+  const [electrons, setElectrons] = useState(3);
+  const [neutrons, setNeutrons] = useState(3);
+  
+  // Trạng thái hiển thị
+  const [showLabels, setShowLabels] = useState(true);
+  const [showCharge, setShowCharge] = useState(true);
+
+  // Dữ liệu các nguyên tố cơ bản
+  const elements = [
+    { name: "Hydrogen", symbol: "H" },
+    { name: "Helium", symbol: "He" },
+    { name: "Lithium", symbol: "Li" },
+    { name: "Beryllium", symbol: "Be" },
+    { name: "Boron", symbol: "B" },
+    { name: "Carbon", symbol: "C" },
+    { name: "Nitrogen", symbol: "N" },
+    { name: "Oxygen", symbol: "O" },
+    { name: "Fluorine", symbol: "F" },
+    { name: "Neon", symbol: "Ne" },
+  ];
+
+  const netCharge = protons - electrons;
+  const currentElement = elements[protons - 1] || { name: "Unknown", symbol: "?" };
+
+  // Xác định loại trạng thái điện
+  const getStatus = () => {
+    if (netCharge === 0) return { text: "Vật Trung Hòa", color: "text-gray-600", bg: "bg-gray-100" };
+    if (netCharge > 0) return { text: "Ion Dương (Cation)", color: "text-red-600", bg: "bg-red-100" };
+    return { text: "Ion Âm (Anion)", color: "text-blue-600", bg: "bg-blue-100" };
+  };
+
+  const status = getStatus();
+
+  // Tạo tọa độ ngẫu nhiên cho hạt nhân
+  const nucleusParticles = useMemo(() => {
+    const particles = [];
+    const total = protons + neutrons;
+    for (let i = 0; i < total; i++) {
+      const angle = Math.random() * Math.PI * 2;
+      const dist = Math.random() * 25;
+      particles.push({
+        x: Math.cos(angle) * dist,
+        y: Math.sin(angle) * dist,
+        type: i < protons ? 'proton' : 'neutron'
+      });
+    }
+    return particles;
+  }, [protons, neutrons]);
+
+  return (
+    <div className="flex flex-col md:flex-row h-screen w-full bg-slate-50 font-sans text-slate-800">
+      
+      {/* Panel 1: Điều khiển */}
+      <div className="w-full md:w-80 bg-white shadow-xl p-6 flex flex-col gap-6 z-10">
+        <div>
+          <h1 className="text-2xl font-bold text-indigo-700 flex items-center gap-2">
+            <Zap className="fill-indigo-700" size={24} /> 
+            Cấu tạo Nguyên tử
+          </h1>
+          <p className="text-sm text-slate-500 mt-1">Học về điện và Ion</p>
+        </div>
+
+        <div className="space-y-6">
+          {/* Điều chỉnh Proton */}
+          <div className="space-y-2">
+            <div className="flex justify-between items-center">
+              <label className="font-semibold flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full bg-red-500"></div>
+                Proton (p+)
+              </label>
+              <span className="bg-red-50 text-red-700 px-2 py-1 rounded font-bold">{protons}</span>
+            </div>
+            <div className="flex gap-2">
+              <button onClick={() => setProtons(Math.max(1, protons - 1))} className="flex-1 bg-slate-100 hover:bg-slate-200 p-2 rounded transition-colors"><Minus size={16} className="mx-auto"/></button>
+              <button onClick={() => setProtons(Math.min(10, protons + 1))} className="flex-1 bg-slate-100 hover:bg-slate-200 p-2 rounded transition-colors"><Plus size={16} className="mx-auto"/></button>
+            </div>
+          </div>
+
+          {/* Điều chỉnh Electron */}
+          <div className="space-y-2">
+            <div className="flex justify-between items-center">
+              <label className="font-semibold flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full bg-blue-500"></div>
+                Electron (e-)
+              </label>
+              <span className="bg-blue-50 text-blue-700 px-2 py-1 rounded font-bold">{electrons}</span>
+            </div>
+            <div className="flex gap-2">
+              <button onClick={() => setElectrons(Math.max(0, electrons - 1))} className="flex-1 bg-slate-100 hover:bg-slate-200 p-2 rounded transition-colors"><Minus size={16} className="mx-auto"/></button>
+              <button onClick={() => setElectrons(Math.min(12, electrons + 1))} className="flex-1 bg-slate-100 hover:bg-slate-200 p-2 rounded transition-colors"><Plus size={16} className="mx-auto"/></button>
+            </div>
+          </div>
+
+          {/* Điều chỉnh Neutron */}
+          <div className="space-y-2">
+            <div className="flex justify-between items-center text-slate-400">
+              <label className="text-sm flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full bg-gray-400"></div>
+                Neutron (n0)
+              </label>
+              <span className="text-xs px-2 py-1 rounded">{neutrons}</span>
+            </div>
+            <input 
+              type="range" min="0" max="10" value={neutrons} 
+              onChange={(e) => setNeutrons(parseInt(e.target.value))}
+              className="w-full accent-gray-400"
+            />
+          </div>
+        </div>
+
+        <div className="border-t pt-4 space-y-3">
+          <label className="flex items-center gap-2 cursor-pointer select-none">
+            <input type="checkbox" checked={showLabels} onChange={() => setShowLabels(!showLabels)} className="w-4 h-4" />
+            <span className="text-sm font-medium">Hiện nhãn hạt</span>
+          </label>
+          <label className="flex items-center gap-2 cursor-pointer select-none">
+            <input type="checkbox" checked={showCharge} onChange={() => setShowCharge(!showCharge)} className="w-4 h-4" />
+            <span className="text-sm font-medium">Hiện điện tích thuần</span>
+          </label>
+        </div>
+
+        {/* Bảng tóm tắt số liệu */}
+        <div className="mt-auto p-4 rounded-xl bg-indigo-50 border border-indigo-100">
+          <h3 className="text-xs font-bold uppercase text-indigo-400 mb-2">Tóm tắt dữ liệu</h3>
+          <div className="grid grid-cols-2 gap-2 text-sm">
+            <div className="text-slate-500">Nguyên tố:</div>
+            <div className="font-bold text-indigo-700">{currentElement.name} ({currentElement.symbol})</div>
+            <div className="text-slate-500">Điện tích:</div>
+            <div className="font-mono font-bold">Q = {protons} - {electrons} = <span className={netCharge === 0 ? "text-slate-600" : netCharge > 0 ? "text-red-600" : "text-blue-600"}>{netCharge > 0 ? '+' : ''}{netCharge}</span></div>
+          </div>
+          <div className={`mt-3 py-1 px-2 rounded-lg text-center text-xs font-bold ${status.bg} ${status.color}`}>
+            {status.text}
+          </div>
+        </div>
+        
+        <button 
+          onClick={() => {setProtons(3); setElectrons(3); setNeutrons(3);}}
+          className="flex items-center justify-center gap-2 text-xs text-slate-400 hover:text-indigo-600 transition-colors"
+        >
+          <RefreshCw size={12} /> Đặt lại mô phỏng
+        </button>
+      </div>
+
+      {/* Panel 2: Mô phỏng trực quan */}
+      <div className="flex-1 relative overflow-hidden flex items-center justify-center bg-white">
+        
+        {/* Background Grid */}
+        <div className="absolute inset-0 opacity-5" style={{ backgroundImage: 'radial-gradient(#4f46e5 1px, transparent 1px)', backgroundSize: '30px 30px' }}></div>
+
+        {/* Legend */}
+        <div className="absolute top-6 left-6 space-y-2 bg-white/80 backdrop-blur-sm p-3 rounded-lg border shadow-sm">
+           <div className="flex items-center gap-2 text-xs"><div className="w-3 h-3 rounded-full bg-red-500"></div> Proton (+1)</div>
+           <div className="flex items-center gap-2 text-xs"><div className="w-3 h-3 rounded-full bg-blue-500 shadow-[0_0_5px_rgba(59,130,246,0.5)]"></div> Electron (-1)</div>
+           <div className="flex items-center gap-2 text-xs"><div className="w-3 h-3 rounded-full bg-gray-400"></div> Neutron (0)</div>
+        </div>
+
+        {/* SVG Simulation Area */}
+        <svg viewBox="0 0 400 400" className="w-full max-w-[600px] h-auto drop-shadow-2xl">
+          {/* Orbit rings */}
+          {[120, 220, 320].map((size, idx) => (
+            <circle 
+              key={idx}
+              cx="200" cy="200" r={size/2} 
+              fill="none" 
+              stroke="#e2e8f0" 
+              strokeWidth="1.5"
+              strokeDasharray="4 4"
+            />
+          ))}
+
+          {/* Electrons with animation */}
+          {Array.from({ length: electrons }).map((_, i) => {
+            // Logic phân bổ electron vào lớp vỏ (2 - 8 - 18...)
+            const shellIndex = i < 2 ? 0 : 1;
+            const radius = shellIndex === 0 ? 60 : 110;
+            const electronsInShell = shellIndex === 0 ? Math.min(electrons, 2) : electrons - 2;
+            const indexInShell = shellIndex === 0 ? i : i - 2;
+            
+            // Animation Rotation
+            const duration = shellIndex === 0 ? 10 : 20;
+            const startAngle = (360 / electronsInShell) * indexInShell;
+
+            return (
+              <g key={i}>
+                <animateTransform 
+                  attributeName="transform" type="rotate" from={`${startAngle} 200 200`} to={`${startAngle + 360} 200 200`} 
+                  dur={`${duration}s`} repeatCount="indefinite" 
+                />
+                <circle cx={200 + radius} cy="200" r="6" fill="#3b82f6" className="shadow-lg" />
+                {showLabels && (
+                  <text x={200 + radius} y="190" textAnchor="middle" fontSize="10" fill="#1e40af" fontWeight="bold">e-</text>
+                )}
+              </g>
+            );
+          })}
+
+          {/* Nucleus */}
+          <g transform="translate(200, 200)">
+             {nucleusParticles.map((p, i) => (
+               <g key={i} transform={`translate(${p.x}, ${p.y})`}>
+                  <circle 
+                    r="8" 
+                    fill={p.type === 'proton' ? '#ef4444' : '#94a3b8'} 
+                    stroke="white" 
+                    strokeWidth="0.5"
+                  />
+                  {showLabels && p.type === 'proton' && (
+                    <text y="3" textAnchor="middle" fontSize="8" fill="white" fontWeight="bold">+</text>
+                  )}
+               </g>
+             ))}
+          </g>
+
+          {/* Net Charge Display */}
+          {showCharge && (
+            <g transform="translate(320, 80)">
+              <circle r="35" fill={netCharge === 0 ? "#f8fafc" : netCharge > 0 ? "#fef2f2" : "#eff6ff"} stroke={netCharge === 0 ? "#cbd5e1" : netCharge > 0 ? "#fecaca" : "#bfdbfe"} strokeWidth="2" />
+              <text textAnchor="middle" y="-5" fontSize="10" fill="#64748b" fontWeight="bold">TỔNG ĐIỆN</text>
+              <text textAnchor="middle" y="15" fontSize="24" fontWeight="black" fill={netCharge === 0 ? "#475569" : netCharge > 0 ? "#dc2626" : "#2563eb"}>
+                {netCharge > 0 ? `+${netCharge}` : netCharge}
+              </text>
+            </g>
+          )}
+        </svg>
+
+        {/* Bottom Banner Info */}
+        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 w-[90%] md:w-[60%] bg-white/90 backdrop-blur border border-slate-200 p-4 rounded-2xl shadow-xl">
+           <div className="flex items-start gap-4">
+              <div className={`p-2 rounded-full ${status.bg} ${status.color}`}>
+                <Info size={20} />
+              </div>
+              <div>
+                <h4 className={`font-bold ${status.color}`}>{status.text}</h4>
+                <p className="text-xs text-slate-600 leading-relaxed">
+                  {netCharge === 0 && "Nguyên tử trung hòa vì số Proton (+) bằng số Electron (-). Tổng điện tích triệt tiêu nhau."}
+                  {netCharge > 0 && "Đây là Ion Dương vì nguyên tử đã mất bớt Electron. Lực hút hạt nhân mạnh hơn tổng điện tích âm."}
+                  {netCharge < 0 && "Đây là Ion Âm vì nguyên tử nhận thêm Electron. Tổng điện tích âm vượt quá điện tích dương của hạt nhân."}
+                </p>
+              </div>
+           </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default App;
