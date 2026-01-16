@@ -4,7 +4,7 @@ import { Routes, Route, useNavigate, Link, useLocation, Navigate } from 'https:/
 import { 
   Book, X, Pencil, Plus, Globe, Maximize2, Loader2, LogOut, GraduationCap, 
   KeyRound, Trash2, AlertTriangle, CloudCheck, BrainCircuit, Trophy, RotateCcw,
-  ShieldCheck, Folder, ChevronLeft, ChevronRight, Home, Copy, Check
+  ShieldCheck, Folder, ChevronLeft, ChevronRight, Home, Copy, Check, FileText
 } from 'https://esm.sh/lucide-react@^0.562.0';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { GoogleGenAI, Type } from "https://esm.sh/@google/genai";
@@ -270,6 +270,11 @@ const MainView: React.FC<{ isAdmin: boolean; data: AppData; updateData: (d: AppD
     setShowResults(true);
   };
 
+  // Helper for resource grouping
+  const lessonResources = selectedNode?.lessonResources || [];
+  const pdfResources = lessonResources.filter(r => r.url.toLowerCase().endsWith('.pdf'));
+  const htmlResources = lessonResources.filter(r => !r.url.toLowerCase().endsWith('.pdf'));
+
   return (
     <div className="flex h-screen bg-white overflow-hidden font-sans">
       {/* AI QUIZ MODAL */}
@@ -425,35 +430,75 @@ const MainView: React.FC<{ isAdmin: boolean; data: AppData; updateData: (d: AppD
         )}
       </main>
 
-      {/* RESOURCES PANEL */}
+      {/* RESOURCES PANEL (Panel Phải - w-48) */}
       <aside className="w-48 border-l border-slate-100 bg-slate-50 flex flex-col shrink-0 overflow-hidden">
          <div className="flex-1 flex flex-col border-b overflow-hidden">
-            <div className="p-4 flex justify-between items-center border-b bg-white text-[9px] font-bold text-slate-400 uppercase tracking-widest shrink-0">Tài liệu riêng {isAdmin && selectedId && <button onClick={()=> { setResourceModalData({isGlobal: false, title:'', url:''}); setShowResourceModal(true); }} className="text-indigo-600 hover:bg-indigo-50 p-1 rounded-md"><Plus size={14}/></button>}</div>
-            <div className="flex-1 p-3 space-y-2 overflow-y-auto custom-scrollbar">
-               {selectedNode?.lessonResources.map(r => (
-                 <div key={r.id} className="group relative">
-                    <a href={r.url} target="_blank" className="block p-3 bg-white border border-slate-100 rounded-xl font-medium text-[10px] text-indigo-600 truncate shadow-sm hover:shadow-md transition-all">{r.title}</a>
-                    {isAdmin && (
-                      <div className="absolute top-1.5 right-1.5 hidden group-hover:flex items-center gap-1">
-                        <button onClick={()=> { setResourceModalData({ id: r.id, isGlobal: false, title: r.title, url: r.url }); setShowResourceModal(true); }} className="p-1 bg-amber-50 text-amber-600 rounded-md shadow-sm border border-amber-100"><Pencil size={10}/></button>
-                        <button onClick={()=>setShowDeleteConfirm({type:'resource', id:r.id, title:r.title, isGlobal:false})} className="p-1 bg-red-50 text-red-500 rounded-md shadow-sm border border-red-100"><Trash2 size={10}/></button>
-                      </div>
-                    )}
+            <div className="p-3 flex justify-between items-center border-b bg-white text-[9px] font-bold text-slate-400 uppercase tracking-widest shrink-0">
+               Tài liệu riêng 
+               {isAdmin && selectedId && <button onClick={()=> { setResourceModalData({isGlobal: false, title:'', url:''}); setShowResourceModal(true); }} className="text-indigo-600 hover:bg-indigo-50 p-1 rounded-md transition-colors"><Plus size={14}/></button>}
+            </div>
+            <div className="flex-1 p-2 space-y-3 overflow-y-auto custom-scrollbar">
+               {/* PDF Group */}
+               {pdfResources.length > 0 && (
+                 <div className="space-y-1">
+                   <h4 className="px-2 py-1 text-[8px] font-black text-red-400 uppercase tracking-widest bg-red-50/50 rounded-md">Nhóm PDF</h4>
+                   {pdfResources.map(r => (
+                     <div key={r.id} className="group relative">
+                        <a href={r.url} target="_blank" className="flex items-center gap-2 p-1.5 bg-white border border-slate-100 rounded-lg font-medium text-[9px] text-slate-700 shadow-sm hover:shadow-md hover:border-red-200 transition-all">
+                           <FileText size={12} className="text-red-500 shrink-0"/>
+                           <span className="truncate">{r.title}</span>
+                        </a>
+                        {isAdmin && (
+                          <div className="absolute top-1 right-1 hidden group-hover:flex items-center gap-0.5">
+                            <button onClick={()=> { setResourceModalData({ id: r.id, isGlobal: false, title: r.title, url: r.url }); setShowResourceModal(true); }} className="p-0.5 bg-amber-50 text-amber-600 rounded shadow-sm border border-amber-100"><Pencil size={8}/></button>
+                            <button onClick={()=>setShowDeleteConfirm({type:'resource', id:r.id, title:r.title, isGlobal:false})} className="p-0.5 bg-red-50 text-red-500 rounded shadow-sm border border-red-100"><Trash2 size={8}/></button>
+                          </div>
+                        )}
+                     </div>
+                   ))}
                  </div>
-               ))}
-               {(!selectedNode?.lessonResources.length) && <p className="text-center text-[8px] text-slate-300 font-bold uppercase pt-8 opacity-50 tracking-widest">Trống</p>}
+               )}
+
+               {/* HTML Group */}
+               {htmlResources.length > 0 && (
+                 <div className="space-y-1">
+                   <h4 className="px-2 py-1 text-[8px] font-black text-sky-400 uppercase tracking-widest bg-sky-50/50 rounded-md">Nhóm Web / HTML</h4>
+                   {htmlResources.map(r => (
+                     <div key={r.id} className="group relative">
+                        <a href={r.url} target="_blank" className="flex items-center gap-2 p-1.5 bg-white border border-slate-100 rounded-lg font-medium text-[9px] text-slate-700 shadow-sm hover:shadow-md hover:border-sky-200 transition-all">
+                           <Globe size={12} className="text-sky-500 shrink-0"/>
+                           <span className="truncate">{r.title}</span>
+                        </a>
+                        {isAdmin && (
+                          <div className="absolute top-1 right-1 hidden group-hover:flex items-center gap-0.5">
+                            <button onClick={()=> { setResourceModalData({ id: r.id, isGlobal: false, title: r.title, url: r.url }); setShowResourceModal(true); }} className="p-0.5 bg-amber-50 text-amber-600 rounded shadow-sm border border-amber-100"><Pencil size={8}/></button>
+                            <button onClick={()=>setShowDeleteConfirm({type:'resource', id:r.id, title:r.title, isGlobal:false})} className="p-0.5 bg-red-50 text-red-500 rounded shadow-sm border border-red-100"><Trash2 size={8}/></button>
+                          </div>
+                        )}
+                     </div>
+                   ))}
+                 </div>
+               )}
+               
+               {lessonResources.length === 0 && <p className="text-center text-[8px] text-slate-300 font-bold uppercase pt-8 opacity-50 tracking-widest">Trống</p>}
             </div>
          </div>
          <div className="flex-1 flex flex-col overflow-hidden">
-            <div className="p-4 flex justify-between items-center border-b bg-white text-[9px] font-bold text-slate-400 uppercase tracking-widest shrink-0">Thư viện chung {isAdmin && <button onClick={()=> { setResourceModalData({isGlobal: true, title:'', url:''}); setShowResourceModal(true); }} className="text-indigo-600 hover:bg-indigo-50 p-1 rounded-md"><Plus size={14}/></button>}</div>
-            <div className="flex-1 p-3 space-y-2 overflow-y-auto custom-scrollbar bg-white/30">
+            <div className="p-3 flex justify-between items-center border-b bg-white text-[9px] font-bold text-slate-400 uppercase tracking-widest shrink-0">
+               Thư viện chung 
+               {isAdmin && <button onClick={()=> { setResourceModalData({isGlobal: true, title:'', url:''}); setShowResourceModal(true); }} className="text-indigo-600 hover:bg-indigo-50 p-1 rounded-md transition-colors"><Plus size={14}/></button>}
+            </div>
+            <div className="flex-1 p-2 space-y-1 overflow-y-auto custom-scrollbar bg-white/30">
                {data.globalResources.map(r => (
                  <div key={r.id} className="group relative">
-                    <a href={r.url} target="_blank" className="block p-3 bg-white border border-slate-100 rounded-xl font-medium text-[10px] text-slate-600 truncate shadow-sm hover:shadow-md transition-all">{r.title}</a>
+                    <a href={r.url} target="_blank" className="flex items-center gap-2 p-1.5 bg-white border border-slate-100 rounded-lg font-medium text-[9px] text-slate-600 shadow-sm hover:shadow-md transition-all">
+                       {r.url.toLowerCase().endsWith('.pdf') ? <FileText size={12} className="text-red-400 shrink-0"/> : <Globe size={12} className="text-slate-400 shrink-0"/>}
+                       <span className="truncate">{r.title}</span>
+                    </a>
                     {isAdmin && (
-                      <div className="absolute top-1.5 right-1.5 hidden group-hover:flex items-center gap-1">
-                        <button onClick={()=> { setResourceModalData({ id: r.id, isGlobal: true, title: r.title, url: r.url }); setShowResourceModal(true); }} className="p-1 bg-amber-50 text-amber-600 rounded-md shadow-sm border border-amber-100"><Pencil size={10}/></button>
-                        <button onClick={()=>setShowDeleteConfirm({type:'resource', id:r.id, title:r.title, isGlobal:true})} className="p-1 bg-red-50 text-red-500 rounded-md shadow-sm border border-red-100"><Trash2 size={10}/></button>
+                      <div className="absolute top-1 right-1 hidden group-hover:flex items-center gap-0.5">
+                        <button onClick={()=> { setResourceModalData({ id: r.id, isGlobal: true, title: r.title, url: r.url }); setShowResourceModal(true); }} className="p-0.5 bg-amber-50 text-amber-600 rounded shadow-sm border border-amber-100"><Pencil size={8}/></button>
+                        <button onClick={()=>setShowDeleteConfirm({type:'resource', id:r.id, title:r.title, isGlobal:true})} className="p-0.5 bg-red-50 text-red-500 rounded shadow-sm border border-red-100"><Trash2 size={8}/></button>
                       </div>
                     )}
                  </div>
