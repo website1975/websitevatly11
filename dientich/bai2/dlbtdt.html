@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bài 2: Thuyết Electron - Định luật bảo toàn điện tích</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']]
+      }
+    };
+    </script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+        }
+        .math {
+            font-family: 'Times New Roman', Times, serif;
+            font-style: italic;
+            font-weight: bold;
+            color: #1d4ed8;
+        }
+        .section-card {
+            background: white;
+            border-radius: 1rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            border: 1px solid #e5e7eb;
+            margin-bottom: 2rem;
+            overflow: hidden;
+        }
+        .section-header {
+            background: linear-gradient(to right, #0d9488, #0f766e);
+            color: white;
+            padding: 1rem 1.5rem;
+            font-weight: bold;
+            font-size: 1.25rem;
+            text-transform: uppercase;
+        }
+        .exercise-box {
+            background-color: #fff7ed;
+            border: 1px solid #ffedd5;
+            padding: 1.5rem;
+            border-radius: 0.75rem;
+            margin-bottom: 1.5rem;
+        }
+        .formula-display {
+            background: #f0fdfa;
+            border: 1px solid #ccfbf1;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            text-align: center;
+            margin: 1rem 0;
+        }
+        .explain-box {
+            background: #f8fafc;
+            border-left: 4px solid #0d9488;
+            padding: 1rem;
+            margin-top: 1rem;
+        }
+        .highlight-text {
+            color: #0d9488;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+
+    <!-- Header -->
+    <header class="bg-teal-600 text-white py-10 px-4 text-center shadow-lg mb-8">
+        <h1 class="text-3xl font-extrabold uppercase tracking-widest">Chương 3: Điện tích - Điện trường</h1>
+        <p class="mt-2 text-xl opacity-90">Bài 2: Thuyết Electron - Định luật bảo toàn điện tích</p>
+    </header>
+
+    <div class="max-w-4xl mx-auto px-4 pb-12">
+        
+        <!-- Phần I -->
+        <div class="section-card">
+            <div class="section-header">I. Thuyết Electron</div>
+            <div class="p-6">
+                <h3 class="text-lg font-bold text-teal-700 mb-2">1. Cấu tạo nguyên tử về phương diện điện</h3>
+                <p class="mb-4">Nguyên tử gồm hạt nhân mang điện dương ở trung tâm và các electron mang điện âm chuyển động xung quanh.</p>
+                
+                <div class="formula-display">
+                    <ul class="text-left inline-block space-y-2">
+                        <li><span class="math">e = 1,6.10^{-19} C</span> (Điện tích nguyên tố)</li>
+                        <li>Electron: <span class="math">q_e = -e = -1,6.10^{-19} C; m_e = 9,1.10^{-31} kg</span></li>
+                        <li>Proton: <span class="math">q_p = +e = +1,6.10^{-19} C; m_p = 1,67.10^{-27} kg</span></li>
+                    </ul>
+                </div>
+
+                <div class="explain-box mt-4">
+                    <p><strong>Trạng thái trung hòa điện:</strong> Bình thường số proton bằng số electron nên nguyên tử trung hòa về điện. Tổng điện tích của hệ bằng không.</p>
+                </div>
+
+                <h3 class="text-lg font-bold text-teal-700 mt-6 mb-2">2. Nội dung thuyết Electron</h3>
+                <p class="italic mb-4 text-gray-700">Thuyết dựa vào sự cư trú và di chuyển của các electron để giải thích các hiện tượng điện và tính chất điện.</p>
+                <ul class="list-disc pl-6 space-y-2">
+                    <li>Electron có thể rời khỏi nguyên tử để di chuyển từ nơi này sang nơi khác.</li>
+                    <li><span class="highlight-text">Ion dương:</span> Nguyên tử bị mất electron.</li>
+                    <li><span class="highlight-text">Ion âm:</span> Nguyên tử nhận thêm electron.</li>
+                    <li><span class="highlight-text">Vật nhiễm điện âm:</span> Số electron > số proton.</li>
+                    <li><span class="highlight-text">Vật nhiễm điện dương:</span> Số electron < số proton.</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Phần II -->
+        <div class="section-card">
+            <div class="section-header">II. Vận dụng</div>
+            <div class="p-6">
+                <h3 class="text-lg font-bold text-teal-700 mb-2">1. Vật dẫn điện và vật cách điện</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="p-4 bg-teal-50 border border-teal-100 rounded-lg">
+                        <p class="font-bold text-teal-800 underline">Vật dẫn điện:</p>
+                        <p class="text-sm mt-1">Là vật chứa nhiều <span class="italic font-semibold">điện tích tự do</span>.</p>
+                        <p class="text-xs text-gray-600 mt-1">VD: Kim loại (electron tự do), dung dịch muối, axit (ion tự do).</p>
+                    </div>
+                    <div class="p-4 bg-gray-100 border border-gray-200 rounded-lg">
+                        <p class="font-bold text-gray-800 underline">Vật cách điện:</p>
+                        <p class="text-sm mt-1">Là vật không chứa hoặc chứa rất ít điện tích tự do.</p>
+                        <p class="text-xs text-gray-600 mt-1">VD: Không khí khô, nhựa, cao su, thủy tinh.</p>
+                    </div>
+                </div>
+
+                <h3 class="text-lg font-bold text-teal-700 mt-6 mb-2">2. Giải thích các hiện tượng nhiễm điện</h3>
+                <div class="space-y-4">
+                    <div class="bg-white p-4 border rounded-lg shadow-sm">
+                        <p class="font-bold text-orange-700">● Nhiễm điện do tiếp xúc:</p>
+                        <p class="text-sm">Khi vật trung hòa tiếp xúc với vật nhiễm điện, electron sẽ di chuyển qua lại khiến vật trung hòa nhiễm điện <span class="font-bold">cùng dấu</span> với vật ban đầu.</p>
+                    </div>
+                    <div class="bg-white p-4 border rounded-lg shadow-sm">
+                        <p class="font-bold text-blue-700">● Nhiễm điện do hưởng ứng:</p>
+                        <p class="text-sm">Khi đưa vật nhiễm điện lại gần vật dẫn, các electron tự do bị hút hoặc đẩy về một phía, làm hai đầu vật dẫn tích điện trái dấu. Tổng điện tích của vật vẫn bằng không.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Phần III -->
+        <div class="section-card">
+            <div class="section-header">III. Định luật bảo toàn điện tích</div>
+            <div class="p-6">
+                <div class="bg-teal-50 p-6 rounded-xl border-2 border-dashed border-teal-300">
+                    <h3 class="text-xl font-bold text-teal-800 text-center mb-4">NỘI DUNG ĐỊNH LUẬT</h3>
+                    <p class="text-lg text-center italic text-gray-800">
+                        "Trong một hệ vật cô lập về điện, tổng đại số của các điện tích là không đổi."
+                    </p>
+                    <div class="formula-display bg-white mt-4">
+                        <span class="text-2xl math">$q_1 + q_2 + ... + q_n = \text{const}$</span>
+                    </div>
+                </div>
+                <div class="mt-4 p-4 bg-yellow-50 rounded-lg text-sm italic">
+                    <p><strong>Hệ cô lập về điện:</strong> Là hệ không trao đổi điện tích với các vật bên ngoài hệ.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Phần IV -->
+        <div class="section-card">
+            <div class="section-header">IV. Bài tập vận dụng</div>
+            <div class="p-6">
+                
+                <!-- Bài 1 -->
+                <div class="exercise-box">
+                    <h3 class="font-bold text-lg text-orange-800">Bài 1: Tính điện tích sau tiếp xúc</h3>
+                    <p class="mt-2 text-gray-700">Hai quả cầu kim loại giống hệt nhau mang điện tích $q_1 = 4.10^{-8} C$ và $q_2 = -2.10^{-8} C$. Cho chúng tiếp xúc nhau rồi tách ra. Tính điện tích mỗi quả cầu sau đó.</p>
+                    <div class="mt-3 p-3 bg-white rounded border border-orange-200 text-sm">
+                        <p class="font-bold text-green-700">Giải:</p>
+                        <p>- Theo định luật bảo toàn điện tích, tổng điện tích không đổi.</p>
+                        <p>- Sau khi tiếp xúc, vì hai quả cầu giống hệt nhau nên điện tích chia đều:</p>
+                        <p class="py-2 text-center text-lg math">$q_1' = q_2' = \frac{q_1 + q_2}{2} = \frac{4.10^{-8} + (-2.10^{-8})}{2} = 10^{-8} C$.</p>
+                        <p>➜ <strong>Kết luận:</strong> Mỗi quả cầu mang điện dương $10^{-8} C$.</p>
+                    </div>
+                </div>
+
+                <!-- Bài 2 -->
+                <div class="exercise-box">
+                    <h3 class="font-bold text-lg text-orange-800">Bài 2: Tính số electron di chuyển</h3>
+                    <p class="mt-2 text-gray-700">Để một vật trung hòa trở thành vật nhiễm điện âm có độ lớn $3,2 \mu C$ thì cần nhận thêm bao nhiêu electron?</p>
+                    <div class="mt-3 p-3 bg-white rounded border border-orange-200 text-sm">
+                        <p class="font-bold text-green-700">Giải:</p>
+                        <p>- Ta có công thức: $|q| = n \cdot e$</p>
+                        <p>- Đổi: $3,2 \mu C = 3,2.10^{-6} C$.</p>
+                        <p>- Số electron nhận thêm là:</p>
+                        <p class="py-2 text-center text-lg math">$n = \frac{|q|}{e} = \frac{3,2.10^{-6}}{1,6.10^{-19}} = 2.10^{13}$ (hạt).</p>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+
+    <footer class="bg-gray-800 text-white text-center py-6">
+        <p class="text-sm opacity-75">&copy; 2024 - Tài liệu học tập Vật lí 11 - Bài 2: Thuyết Electron</p>
+    </footer>
+
+</body>
+</html>
