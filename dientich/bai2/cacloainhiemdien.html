@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mô phỏng các loại nhiễm điện</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-color: #f0f2f5;
+            overflow: hidden;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .panel-container {
+            display: grid;
+            grid-template-columns: 1fr 280px;
+            height: 100vh;
+        }
+        .sim-grid {
+            display: grid;
+            grid-template-rows: repeat(3, 1fr);
+            gap: 10px;
+            padding: 10px;
+            height: 100vh;
+        }
+        .sim-box {
+            background: #ffffff;
+            border-radius: 12px;
+            position: relative;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+            overflow: hidden;
+            border: 2px solid #e5e7eb;
+        }
+        .label {
+            position: absolute;
+            top: 12px;
+            left: 12px;
+            background: #1e293b;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: bold;
+            z-index: 10;
+        }
+        canvas {
+            width: 100%;
+            height: 100%;
+            touch-action: none;
+            background-image: radial-gradient(#e5e7eb 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+        .explanation {
+            position: absolute;
+            bottom: 12px;
+            left: 12px;
+            right: 12px;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            border-left: 5px solid #ef4444;
+            display: none;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            pointer-events: none;
+            color: #1e293b;
+        }
+    </style>
+</head>
+<body>
+
+<div class="panel-container">
+    <div class="sim-grid">
+        <div class="sim-box">
+            <div class="label">1. Nhiễm điện do Cọ xát</div>
+            <canvas id="canvas-friction"></canvas>
+            <div class="explanation">
+                <strong>Cơ chế:</strong> Electron bứt khỏi bề mặt vật này sang vật khác khi có ma sát.
+            </div>
+        </div>
+        <div class="sim-box">
+            <div class="label">2. Nhiễm điện do Tiếp xúc</div>
+            <canvas id="canvas-contact"></canvas>
+            <div class="explanation">
+                <strong>Cơ chế:</strong> Khi chạm nhau, các electron tự do chuyển động hỗn loạn sẽ tràn sang vật có điện thế thấp hơn.
+            </div>
+        </div>
+        <div class="sim-box">
+            <div class="label">3. Nhiễm điện do Hưởng ứng</div>
+            <canvas id="canvas-induction"></canvas>
+            <div class="explanation">
+                <strong>Cơ chế:</strong> Khi đưa vật mang điện ra xa, lực điện trường yếu dần, chuyển động nhiệt hỗn loạn làm electron phân tán đều trở lại trạng thái trung hòa.
+            </div>
+        </div>
+    </div>
+
+    <div class="bg-white border-l p-6 flex flex-col gap-6 shadow-2xl">
+        <h2 class="text-xl font-bold text-slate-800 border-b-2 border-slate-100 pb-3">Bảng Điều Khiển</h2>
+        
+        <button id="btn-reset" class="bg-slate-800 hover:bg-slate-900 text-white py-3 px-4 rounded-xl transition-all font-bold active:scale-95">
+            LÀM MỚI TOÀN BỘ
+        </button>
+
+        <div class="space-y-4">
+            <div class="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
+                <span class="text-sm font-bold text-slate-700">Hiện điện tích</span>
+                <label class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" id="toggle-charges" class="sr-only peer" checked>
+                    <div class="w-11 h-6 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                </label>
+            </div>
+            <div class="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
+                <span class="text-sm font-bold text-slate-700">Giải thích</span>
+                <input type="checkbox" id="toggle-exp" class="hidden peer">
+                <label for="toggle-exp" class="w-11 h-6 bg-gray-300 rounded-full cursor-pointer relative peer-checked:bg-red-500 transition-all after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-5"></label>
+            </div>
+        </div>
+
+        <div class="space-y-3 p-3 bg-slate-50 rounded-lg">
+            <div class="flex justify-between">
+                <span class="text-sm font-bold text-slate-700">Động năng (Nhiệt)</span>
+                <span id="intensity-val" class="text-xs text-blue-600 font-black">50%</span>
+            </div>
+            <input type="range" id="slider-intensity" min="10" max="200" value="50" class="w-full h-2 bg-gray-300 rounded-lg appearance-none cursor-pointer accent-blue-600">
+        </div>
+
+        <div class="mt-auto p-4 bg-blue-50 rounded-xl border-2 border-blue-100 text-[11px] text-blue-900 leading-relaxed shadow-inner">
+            <strong class="text-blue-700 block mb-1">🔍 Quan sát Hưởng ứng:</strong>
+            - Kéo quả cầu ra xa: Lực hút yếu đi, electron tự do quay lại trạng thái hỗn loạn đều khắp thanh.<br>
+            - Đưa lại gần: Electron bị hút dồn mạnh về phía đầu trái.
+        </div>
+    </div>
+</div>
+
+<script>
+    const state = { showCharges: true, intensity: 0.5 };
+    const clamp = (val, min, max) => Math.max(min, Math.min(max, val));
+
+    function drawCharge(ctx, x, y, type) {
+        if (!state.showCharges) return;
+        ctx.save();
+        ctx.font = "bold 15px monospace";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillStyle = type === '+' ? "#ff0000" : "#00ffff"; 
+        ctx.fillText(type, x, y);
+        ctx.restore();
+    }
+
+    // Lớp Electron chuyển động Brown/Hỗn loạn
+    class Electron {
+        constructor(x, y, xMin, xMax, yMin, yMax) {
+            this.x = x;
+            this.y = y;
+            this.xMin = xMin; this.xMax = xMax;
+            this.yMin = yMin; this.yMax = yMax;
+            this.resetVelocity();
+        }
+
+        resetVelocity() {
+            const speed = (0.5 + Math.random()) * state.intensity * 4;
+            const angle = Math.random() * Math.PI * 2;
+            this.vx = Math.cos(angle) * speed;
+            this.vy = Math.sin(angle) * speed;
+        }
+
+        update(driftX = 0, driftY = 0) {
+            this.x += this.vx + driftX;
+            this.y += this.vy + driftY;
+
+            if (this.x < this.xMin || this.x > this.xMax) { this.vx *= -1; this.x = clamp(this.x, this.xMin, this.xMax); }
+            if (this.y < this.yMin || this.y > this.yMax) { this.vy *= -1; this.y = clamp(this.y, this.yMin, this.yMax); }
+
+            if (Math.random() < 0.02) this.resetVelocity();
+        }
+
+        draw(ctx) { drawCharge(ctx, this.x, this.y, '-'); }
+    }
+
+    // --- CỌ XÁT ---
+    const friction = {
+        canvas: document.getElementById('canvas-friction'), ctx: null,
+        rodX: 50, rodY: 100, rodW: 140, rodH: 26, clothX: 0, clothY: 0,
+        isDragging: false, rodCharge: 0,
+        setup() {
+            this.ctx = this.canvas.getContext('2d');
+            this.canvas.width = this.canvas.parentElement.clientWidth;
+            this.canvas.height = this.canvas.parentElement.clientHeight;
+            this.clothX = this.canvas.width * 0.7; this.clothY = this.canvas.height * 0.3;
+        },
+        draw() {
+            const ctx = this.ctx; ctx.clearRect(0,0,this.canvas.width,this.canvas.height);
+            ctx.fillStyle = "#5d4037"; ctx.beginPath(); ctx.roundRect(this.clothX, this.clothY, 80, 80, 8); ctx.fill();
+            ctx.fillStyle = "#1e293b"; ctx.beginPath(); ctx.roundRect(this.rodX, this.rodY, this.rodW, this.rodH, 4); ctx.fill();
+            for(let i=0; i<8; i++) {
+                drawCharge(ctx, this.rodX+15+i*16, this.rodY+13, '+');
+                drawCharge(ctx, this.clothX+15+(i%3)*25, this.clothY+15+Math.floor(i/3)*25, '+');
+                const jitter = (Math.random()-0.5) * state.intensity * 5;
+                if (i < 8 + this.rodCharge) drawCharge(ctx, this.rodX+18+i*16 + jitter, this.rodY+13 + jitter, '-');
+                if (i < 8 - this.rodCharge) drawCharge(ctx, this.clothX+20+(i%3)*25 + jitter, this.clothY+20+Math.floor(i/3)*25 + jitter, '-');
+            }
+        },
+        update() {
+            if (this.isDragging && this.rodX + this.rodW > this.clothX && this.rodX < this.clothX+80 &&
+                this.rodY + this.rodH > this.clothY && this.rodY < this.clothY+80) {
+                if (Math.random() < 0.1) this.rodCharge = Math.min(8, this.rodCharge + 0.1);
+            }
+        }
+    };
+
+    // --- TIẾP XÚC ---
+    const contact = {
+        canvas: document.getElementById('canvas-contact'), ctx: null,
+        rodX: 40, rodY: 0, rodW: 200, rodH: 50, sphereX: 0, sphereY: 0, originX: 0,
+        isDragging: false, sphereCharge: 0, electrons: [],
+        setup() {
+            this.ctx = this.canvas.getContext('2d');
+            this.canvas.width = this.canvas.parentElement.clientWidth;
+            this.canvas.height = this.canvas.parentElement.clientHeight;
+            this.originX = this.canvas.width * 0.7; this.sphereX = this.originX;
+            this.sphereY = this.canvas.height * 0.6; this.rodY = this.canvas.height * 0.45;
+            this.electrons = [];
+            for(let i=0; i<25; i++) {
+                this.electrons.push(new Electron(
+                    this.rodX + 10 + Math.random()*(this.rodW-20),
+                    this.rodY + 10 + Math.random()*(this.rodH-20),
+                    0, 2000, 0, 2000
+                ));
+            }
+        },
+        draw() {
+            const ctx = this.ctx; ctx.clearRect(0,0,this.canvas.width,this.canvas.height);
+            ctx.strokeStyle = "#475569"; ctx.beginPath(); ctx.moveTo(this.originX, 0); ctx.lineTo(this.sphereX, this.sphereY-25); ctx.stroke();
+            ctx.fillStyle = "#b45309"; ctx.beginPath(); ctx.arc(this.sphereX, this.sphereY, 25, 0, Math.PI*2); ctx.fill();
+            ctx.fillStyle = "#1e293b"; ctx.beginPath(); ctx.roundRect(this.rodX, this.rodY, this.rodW, this.rodH, 6); ctx.fill();
+            for(let i=0; i<16; i++) drawCharge(ctx, this.rodX + 20 + (i%8)*22, this.rodY + (i<8?15:35), '+');
+            this.electrons.forEach(e => {
+                e.xMin = this.rodX + 6; e.xMax = this.rodX + this.rodW - 6;
+                e.yMin = this.rodY + 6; e.yMax = this.rodY + this.rodH - 6;
+                e.update(); e.draw(ctx);
+            });
+            for(let i=0; i<Math.floor(this.sphereCharge); i++) {
+                const angle = (i / this.sphereCharge) * Math.PI * 2 + (Date.now()/500);
+                const r = 15;
+                const jitter = (Math.random()-0.5) * state.intensity * 5;
+                drawCharge(ctx, this.sphereX + Math.cos(angle)*r + jitter, this.sphereY + Math.sin(angle)*r + jitter, '-');
+            }
+        },
+        update() {
+            const d = Math.hypot(this.rodX + this.rodW - this.sphereX, this.rodY + this.rodH/2 - this.sphereY);
+            if (d < 35) {
+                if (this.sphereCharge < 15) this.sphereCharge += 0.08;
+                this.sphereX = Math.min(this.originX + 70, this.sphereX + 2);
+            } else if (this.sphereX > this.originX) {
+                this.sphereX -= 0.5;
+            }
+        }
+    };
+
+    // --- HƯỞNG ỨNG (HẾT HƯỞNG ỨNG KHI XA) ---
+    const induction = {
+        canvas: document.getElementById('canvas-induction'), ctx: null,
+        rodX: 100, barX: 0, barY: 0, barW: 240, barH: 60, isDragging: false,
+        sphereRadius: 25, 
+        electrons: [],
+        setup() {
+            this.ctx = this.canvas.getContext('2d');
+            this.canvas.width = this.canvas.parentElement.clientWidth;
+            this.canvas.height = this.canvas.parentElement.clientHeight;
+            this.barX = this.canvas.width * 0.45; this.barY = this.canvas.height * 0.4;
+            this.electrons = [];
+            for(let i=0; i<30; i++) {
+                this.electrons.push(new Electron(
+                    this.barX + 20 + Math.random()*(this.barW-40),
+                    this.barY + 10 + Math.random()*(this.barH-20),
+                    this.barX + 6, this.barX + this.barW - 6,
+                    this.barY + 6, this.barY + this.barH - 6
+                ));
+            }
+        },
+        draw() {
+            const ctx = this.ctx; ctx.clearRect(0,0,this.canvas.width,this.canvas.height);
+            
+            // GIỚI HẠN DI CHUYỂN: Chặn rodX không cho chạm vào barX
+            const minGap = 15; 
+            this.rodX = Math.min(this.rodX, this.barX - this.sphereRadius - minGap);
+
+            // Vẽ vật dẫn trung hòa
+            ctx.fillStyle = "#0f172a"; ctx.beginPath(); ctx.roundRect(this.barX, this.barY, this.barW, this.barH, 8); ctx.fill();
+            
+            // Vẽ quả cầu mang điện dương (+)
+            const grad = ctx.createRadialGradient(this.rodX, this.barY+30, 5, this.rodX, this.barY+30, this.sphereRadius + 10);
+            grad.addColorStop(0, "#f87171"); grad.addColorStop(1, "#991b1b");
+            ctx.fillStyle = grad; ctx.beginPath(); ctx.arc(this.rodX, this.barY+30, this.sphereRadius, 0, Math.PI*2); ctx.fill();
+            for(let i=0; i<4; i++) drawCharge(ctx, this.rodX-5+(i%2)*10, this.barY+22+Math.floor(i/2)*14, '+');
+            
+            // Tính toán lực hưởng ứng (Giảm cực nhanh theo khoảng cách)
+            const dist = Math.max(1, this.barX - (this.rodX + this.sphereRadius));
+            // Lực tỉ lệ nghịch với bình phương khoảng cách
+            let force = (8000 / (dist * dist)); 
+            if (dist > 180) force = 0; // Ngưỡng xa hẳn thì không còn tác dụng
+            force = clamp(force, 0, 18);
+
+            // Proton cố định
+            for(let i=0; i<18; i++) {
+                drawCharge(ctx, this.barX + 25 + (i % 9) * (this.barW - 50) / 8, this.barY + (i < 9 ? 18 : 42), '+');
+            }
+
+            // Electron chuyển động hỗn loạn
+            this.electrons.forEach((e) => {
+                // Lực hút dồn về trái chỉ xảy ra khi force > 0
+                const localDrift = force * (1.2 - (e.x - this.barX) / this.barW);
+                e.update(-localDrift, 0);
+                e.draw(ctx);
+            });
+        }
+    };
+
+    function init() {
+        friction.setup(); contact.setup(); induction.setup();
+        function animate() {
+            friction.update(); friction.draw();
+            contact.update(); contact.draw();
+            induction.draw();
+            requestAnimationFrame(animate);
+        }
+        animate();
+    }
+
+    const handleInput = (sim, e) => {
+        if (!sim.isDragging) return;
+        const rect = sim.canvas.getBoundingClientRect();
+        const clientX = e.clientX || (e.touches && e.touches[0].clientX);
+        const clientY = e.clientY || (e.touches && e.touches[0].clientY);
+        const x = clientX - rect.left; const y = clientY - rect.top;
+        if (sim === friction) { sim.rodX = x-70; sim.rodY = y-13; }
+        else if (sim === contact) { sim.rodX = x-100; sim.rodY = y-25; }
+        else if (sim === induction) { sim.rodX = x; }
+    };
+
+    [friction, contact, induction].forEach(sim => {
+        sim.canvas.addEventListener('mousedown', () => sim.isDragging = true);
+        sim.canvas.addEventListener('touchstart', (e) => { e.preventDefault(); sim.isDragging = true; });
+    });
+
+    window.addEventListener('mousemove', (e) => [friction, contact, induction].forEach(s => handleInput(s, e)));
+    window.addEventListener('touchmove', (e) => [friction, contact, induction].forEach(s => handleInput(s, e)));
+    window.addEventListener('mouseup', () => [friction, contact, induction].forEach(s => s.isDragging = false));
+    window.addEventListener('touchend', () => [friction, contact, induction].forEach(s => s.isDragging = false));
+
+    document.getElementById('btn-reset').onclick = () => {
+        friction.rodCharge = 0; contact.sphereCharge = 0;
+        friction.setup(); contact.setup(); induction.setup();
+    };
+    document.getElementById('toggle-charges').onchange = (e) => state.showCharges = e.target.checked;
+    document.getElementById('toggle-exp').onchange = (e) => {
+        document.querySelectorAll('.explanation').forEach(el => el.style.display = e.target.checked ? 'block' : 'none');
+    };
+    document.getElementById('slider-intensity').oninput = (e) => {
+        state.intensity = e.target.value / 100;
+        document.getElementById('intensity-val').innerText = e.target.value + '%';
+        [contact, induction].forEach(sim => sim.electrons.forEach(el => el.resetVelocity()));
+    };
+
+    window.onload = init;
+    window.onresize = () => { friction.setup(); contact.setup(); induction.setup(); };
+</script>
+</body>
+</html>
