@@ -4,7 +4,7 @@ import { Routes, Route, useNavigate, Link, useLocation, Navigate } from 'https:/
 import { 
   Book, X, Pencil, Plus, Globe, Maximize2, Loader2, LogOut, GraduationCap, 
   KeyRound, Trash2, AlertTriangle, CloudCheck, BrainCircuit, Trophy, RotateCcw,
-  ShieldCheck, Folder, ChevronLeft, ChevronRight, Home, Copy, Check, FileText
+  ShieldCheck, Folder, ChevronLeft, ChevronRight, Home, Copy, Check, FileText, Cloud
 } from 'https://esm.sh/lucide-react@^0.562.0';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { GoogleGenAI, Type } from "https://esm.sh/@google/genai";
@@ -272,8 +272,9 @@ const MainView: React.FC<{ isAdmin: boolean; data: AppData; updateData: (d: AppD
 
   // Helper for resource grouping
   const lessonResources = selectedNode?.lessonResources || [];
-  const pdfResources = lessonResources.filter(r => r.url.toLowerCase().endsWith('.pdf'));
-  const htmlResources = lessonResources.filter(r => !r.url.toLowerCase().endsWith('.pdf'));
+  const isDocument = (url: string) => url.toLowerCase().endsWith('.pdf') || url.toLowerCase().includes('drive.google.com');
+  const docResources = lessonResources.filter(r => isDocument(r.url));
+  const htmlResources = lessonResources.filter(r => !isDocument(r.url));
 
   return (
     <div className="flex h-screen bg-white overflow-hidden font-sans">
@@ -353,7 +354,7 @@ const MainView: React.FC<{ isAdmin: boolean; data: AppData; updateData: (d: AppD
                     {currentQuizIdx === quizQuestions.length - 1 ? 
                       <button 
                         onClick={handleQuizSubmit} 
-                        className={`px-10 py-4 rounded-xl font-bold uppercase text-[10px] shadow-xl transition-all active:scale-95 ${userAnswers[currentQuizIdx] !== null ? 'bg-indigo-600 text-white hover:bg-indigo-700' : 'bg-slate-300 text-white cursor-not-allowed'}`}
+                        className={`px-10 py-4 rounded-xl font-bold uppercase text-[10px] shadow-xl transition-all active:scale-95 bg-indigo-600 text-white hover:bg-indigo-700`}
                       >
                         Nộp bài
                       </button> :
@@ -433,19 +434,19 @@ const MainView: React.FC<{ isAdmin: boolean; data: AppData; updateData: (d: AppD
       {/* RESOURCES PANEL (Panel Phải - w-48) */}
       <aside className="w-48 border-l border-slate-100 bg-slate-50 flex flex-col shrink-0 overflow-hidden">
          <div className="flex-1 flex flex-col border-b overflow-hidden">
-            <div className="p-3 flex justify-between items-center border-b bg-white text-[9px] font-bold text-slate-400 uppercase tracking-widest shrink-0">
+            <div className="p-2 flex justify-between items-center border-b bg-white text-[9px] font-bold text-slate-400 uppercase tracking-widest shrink-0">
                Tài liệu riêng 
                {isAdmin && selectedId && <button onClick={()=> { setResourceModalData({isGlobal: false, title:'', url:''}); setShowResourceModal(true); }} className="text-indigo-600 hover:bg-indigo-50 p-1 rounded-md transition-colors"><Plus size={14}/></button>}
             </div>
-            <div className="flex-1 p-2 space-y-3 overflow-y-auto custom-scrollbar">
-               {/* PDF Group */}
-               {pdfResources.length > 0 && (
-                 <div className="space-y-1">
-                   <h4 className="px-2 py-1 text-[8px] font-black text-red-400 uppercase tracking-widest bg-red-50/50 rounded-md">Nhóm PDF</h4>
-                   {pdfResources.map(r => (
+            <div className="flex-1 p-2 space-y-2 overflow-y-auto custom-scrollbar">
+               {/* PDF & Google Drive Group */}
+               {docResources.length > 0 && (
+                 <div className="space-y-0.5">
+                   <h4 className="px-2 py-1 text-[8px] font-black text-red-400 uppercase tracking-widest bg-red-50/50 rounded-md">Tài liệu & Drive</h4>
+                   {docResources.map(r => (
                      <div key={r.id} className="group relative">
-                        <a href={r.url} target="_blank" className="flex items-center gap-2 p-1.5 bg-white border border-slate-100 rounded-lg font-medium text-[9px] text-slate-700 shadow-sm hover:shadow-md hover:border-red-200 transition-all">
-                           <FileText size={12} className="text-red-500 shrink-0"/>
+                        <a href={r.url} target="_blank" className="flex items-center gap-1.5 p-1 bg-white border border-slate-100 rounded-lg font-medium text-[9px] text-slate-700 shadow-sm hover:shadow-md hover:border-red-200 transition-all">
+                           {r.url.toLowerCase().includes('drive.google.com') ? <Cloud size={11} className="text-blue-500 shrink-0"/> : <FileText size={11} className="text-red-500 shrink-0"/>}
                            <span className="truncate">{r.title}</span>
                         </a>
                         {isAdmin && (
@@ -459,14 +460,14 @@ const MainView: React.FC<{ isAdmin: boolean; data: AppData; updateData: (d: AppD
                  </div>
                )}
 
-               {/* HTML Group */}
+               {/* HTML/Web Group */}
                {htmlResources.length > 0 && (
-                 <div className="space-y-1">
-                   <h4 className="px-2 py-1 text-[8px] font-black text-sky-400 uppercase tracking-widest bg-sky-50/50 rounded-md">Nhóm Web / HTML</h4>
+                 <div className="space-y-0.5">
+                   <h4 className="px-2 py-1 text-[8px] font-black text-sky-400 uppercase tracking-widest bg-sky-50/50 rounded-md">Liên kết Web</h4>
                    {htmlResources.map(r => (
                      <div key={r.id} className="group relative">
-                        <a href={r.url} target="_blank" className="flex items-center gap-2 p-1.5 bg-white border border-slate-100 rounded-lg font-medium text-[9px] text-slate-700 shadow-sm hover:shadow-md hover:border-sky-200 transition-all">
-                           <Globe size={12} className="text-sky-500 shrink-0"/>
+                        <a href={r.url} target="_blank" className="flex items-center gap-1.5 p-1 bg-white border border-slate-100 rounded-lg font-medium text-[9px] text-slate-700 shadow-sm hover:shadow-md hover:border-sky-200 transition-all">
+                           <Globe size={11} className="text-sky-500 shrink-0"/>
                            <span className="truncate">{r.title}</span>
                         </a>
                         {isAdmin && (
@@ -484,15 +485,15 @@ const MainView: React.FC<{ isAdmin: boolean; data: AppData; updateData: (d: AppD
             </div>
          </div>
          <div className="flex-1 flex flex-col overflow-hidden">
-            <div className="p-3 flex justify-between items-center border-b bg-white text-[9px] font-bold text-slate-400 uppercase tracking-widest shrink-0">
+            <div className="p-2 flex justify-between items-center border-b bg-white text-[9px] font-bold text-slate-400 uppercase tracking-widest shrink-0">
                Thư viện chung 
                {isAdmin && <button onClick={()=> { setResourceModalData({isGlobal: true, title:'', url:''}); setShowResourceModal(true); }} className="text-indigo-600 hover:bg-indigo-50 p-1 rounded-md transition-colors"><Plus size={14}/></button>}
             </div>
-            <div className="flex-1 p-2 space-y-1 overflow-y-auto custom-scrollbar bg-white/30">
+            <div className="flex-1 p-1 space-y-0.5 overflow-y-auto custom-scrollbar bg-white/30">
                {data.globalResources.map(r => (
                  <div key={r.id} className="group relative">
-                    <a href={r.url} target="_blank" className="flex items-center gap-2 p-1.5 bg-white border border-slate-100 rounded-lg font-medium text-[9px] text-slate-600 shadow-sm hover:shadow-md transition-all">
-                       {r.url.toLowerCase().endsWith('.pdf') ? <FileText size={12} className="text-red-400 shrink-0"/> : <Globe size={12} className="text-slate-400 shrink-0"/>}
+                    <a href={r.url} target="_blank" className="flex items-center gap-1.5 p-1 bg-white border border-slate-100 rounded-lg font-medium text-[9px] text-slate-600 shadow-sm hover:shadow-md transition-all">
+                       {isDocument(r.url) ? <FileText size={11} className="text-red-400 shrink-0"/> : <Globe size={11} className="text-slate-400 shrink-0"/>}
                        <span className="truncate">{r.title}</span>
                     </a>
                     {isAdmin && (
