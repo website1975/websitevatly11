@@ -7,6 +7,15 @@ export interface ResourceLink {
   url: string;
 }
 
+export interface ForumComment {
+  id: string;
+  nodeId: string;
+  author: string;
+  content: string;
+  createdAt: string;
+  isAdmin: boolean;
+}
+
 export interface BookNode {
   id: string;
   title: string;
