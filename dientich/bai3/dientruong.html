@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bài 16: Điện Trường và Cường Độ Điện Trường</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']]
+      }
+    };
+    </script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+        }
+        .math {
+            font-family: 'Times New Roman', Times, serif;
+            font-style: italic;
+            font-weight: bold;
+            color: #15803d; 
+        }
+        .section-card {
+            background: white;
+            border-radius: 1rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            border: 1px solid #e5e7eb;
+            margin-bottom: 2rem;
+            overflow: hidden;
+        }
+        .section-header {
+            background: linear-gradient(to right, #0d9488, #0f766e);
+            color: white;
+            padding: 1rem 1.5rem;
+            font-weight: bold;
+            font-size: 1.25rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        .content-body {
+            padding: 1.5rem;
+        }
+        .note-box {
+            background-color: #f0fdf4;
+            border-left: 4px solid #16a34a;
+            padding: 1rem;
+            margin: 1rem 0;
+        }
+        .formula-box {
+            background-color: #f0fdf4;
+            border: 2px dashed #22c55e;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin: 1rem 0;
+            text-align: center;
+        }
+        .exercise-box {
+            background-color: #fff7ed;
+            border: 1px solid #fdba74;
+            padding: 1.25rem;
+            border-radius: 0.75rem;
+            margin-bottom: 1.5rem;
+        }
+        .exercise-header {
+            background: linear-gradient(to right, #ea580c, #f97316);
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+
+    <div class="max-w-4xl mx-auto">
+        <!-- Header: Nền xanh lá, chữ trắng -->
+         <header class="bg-teal-600 text-white py-10 px-4 text-center shadow-lg mb-8">
+            <h1 class="text-2xl font-extrabold uppercase tracking-widest">Chương 3: Điện tích - Điện trường</h1>
+            <h1 class="text-3xl md:text-4xl font-extrabold text-white mb-2">BÀI 3: ĐIỆN TRƯỜNG VÀ CƯỜNG ĐỘ ĐIỆN TRƯỜNG</h1>
+        </div>
+
+        <!-- I. ĐIỆN TRƯỜNG -->
+        <div class="section-card">
+            <div class="section-header">I. ĐIỆN TRƯỜNG</div>
+            <div class="content-body">
+                <h3 class="font-bold text-green-800 text-lg flex items-center">
+                    <span class="bg-green-100 text-green-800 px-2 py-1 rounded mr-2 text-sm">1</span>
+                    Môi trường truyền tương tác điện
+                </h3>
+                <p class="mt-2 text-gray-700">Tương tác điện diễn ra ngay cả trong chân không. Môi trường bao quanh các điện tích và truyền tương tác giữa chúng gọi là <strong>điện trường</strong>.</p>
+
+                <h3 class="font-bold text-green-800 text-lg mt-6 flex items-center">
+                    <span class="bg-green-100 text-green-800 px-2 py-1 rounded mr-2 text-sm">2</span>
+                    Khái niệm Điện trường
+                </h3>
+                <div class="note-box">
+                    <p><strong>Định nghĩa:</strong> Điện trường là một dạng vật chất bao quanh điện tích và gắn liền với điện tích. Tính chất cơ bản của điện trường là tác dụng lực điện lên điện tích khác đặt trong nó.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- II. CƯỜNG ĐỘ ĐIỆN TRƯỜNG -->
+        <div class="section-card">
+            <div class="section-header">II. CƯỜNG ĐỘ ĐIỆN TRƯỜNG</div>
+            <div class="content-body">
+                <h3 class="font-bold text-green-800 text-lg">1. Khái niệm và 2. Định nghĩa</h3>
+                <p class="mt-2 text-gray-700">Cường độ điện trường tại một điểm là đại lượng đặc trưng cho tác dụng lực của điện trường tại điểm đó.</p>
+                <div class="formula-box">
+                    <p class="text-2xl math">$E = \frac{F}{|q|}$</p>
+                    <p class="text-sm text-gray-600 mt-2">Đơn vị: <strong>Vôn trên mét (V/m)</strong></p>
+                </div>
+
+                <h3 class="font-bold text-green-800 text-lg mt-6">3. Véc tơ cường độ điện trường $\vec{E}$</h3>
+                <div class="bg-green-50 p-4 rounded-lg border border-green-100 mt-2">
+                    <ul class="list-disc ml-6 space-y-1 text-gray-700">
+                        <li><strong>Điểm đặt:</strong> Tại điểm đang xét.</li>
+                        <li><strong>Phương:</strong> Trùng với giá của lực điện $\vec{F}$ tác dụng lên điện tích thử $q$.</li>
+                        <li><strong>Chiều:</strong> Cùng chiều với $\vec{F}$ khi $q > 0$; ngược chiều khi $q < 0$.</li>
+                    </ul>
+                </div>
+
+                <h3 class="font-bold text-green-800 text-lg mt-6">5. Cường độ điện trường của điện tích điểm $Q$</h3>
+                <div class="formula-box">
+                    <p class="text-2xl math">$E = k \frac{|Q|}{r^2}$</p>
+                    <p class="text-xs text-gray-400 mt-1">($k = 9.10^9 \text{ N.m}^2/\text{C}^2$)</p>
+                </div>
+
+                <h3 class="font-bold text-green-800 text-lg mt-6">6. Nguyên lý chồng chất điện trường</h3>
+                <p class="text-center py-4 text-xl math">$\vec{E} = \vec{E}_1 + \vec{E}_2 + \dots + \vec{E}_n$</p>
+            </div>
+        </div>
+
+        <!-- III. ĐƯỜNG SỨC ĐIỆN -->
+        <div class="section-card">
+            <div class="section-header">III. ĐƯỜNG SỨC ĐIỆN</div>
+            <div class="content-body">
+                <h3 class="font-bold text-green-800 text-lg">1. Hình ảnh và 2. Định nghĩa</h3>
+                <p class="mt-2 text-gray-700">Đường sức điện là đường mà tiếp tuyến tại mỗi điểm là giá của véc tơ cường độ điện trường tại điểm đó.</p>
+
+                <h3 class="font-bold text-green-800 text-lg mt-6">4. Đặc điểm đường sức điện</h3>
+                <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 mt-2">
+                    <ul class="list-decimal ml-6 space-y-2 text-gray-700 text-sm">
+                        <li>Qua mỗi điểm chỉ có <strong>duy nhất một</strong> đường sức điện.</li>
+                        <li>Hướng của đường sức: đi ra từ điện tích (+) và đi vào điện tích (-).</li>
+                        <li>Nơi điện trường mạnh vẽ dày, nơi điện trường yếu vẽ thưa.</li>
+                    </ul>
+                </div>
+
+                <h3 class="font-bold text-green-800 text-lg mt-6">5. Điện trường đều</h3>
+                <div class="note-box">
+                    <p>Có véc tơ cường độ điện trường tại mọi điểm như nhau. Đường sức là các đường thẳng song song cách đều nhau.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- IV. BÀI TẬP VẬN DỤNG -->
+        <div class="section-card">
+            <div class="section-header exercise-header uppercase">IV. Bài tập vận dụng</div>
+            <div class="content-body">
+                
+                <!-- Bài 1 -->
+                <div class="exercise-box">
+                    <h3 class="font-bold text-lg text-orange-800 underline italic">Bài 1: Áp dụng công thức $F = qE$</h3>
+                    <p class="mt-2 text-gray-800 text-sm">Một điện tích $q = -4.10^{-8} C$ đặt tại điểm có cường độ điện trường $E = 2.10^4 V/m$. Xác định độ lớn và chiều của lực điện tác dụng lên điện tích?</p>
+                    <div class="mt-3 p-4 bg-white rounded-lg border border-orange-200 text-sm shadow-sm">
+                        <p class="font-bold text-green-700 underline mb-1 italic">Hướng dẫn giải:</p>
+                        <p>- Độ lớn lực điện: $F = |q| \cdot E = |-4.10^{-8}| \cdot 2.10^4 = 8.10^{-4} N$.</p>
+                        <p>- Vì $q < 0$ nên lực điện $\vec{F}$ ngược chiều với véc tơ cường độ điện trường $\vec{E}$.</p>
+                    </div>
+                </div>
+
+                <!-- Bài 2 -->
+                <div class="exercise-box">
+                    <h3 class="font-bold text-lg text-orange-800 underline italic">Bài 2: Cường độ điện trường điện tích điểm</h3>
+                    <p class="mt-2 text-gray-800 text-sm">Tại điểm A trong chân không, đặt điện tích $Q = 4.10^{-10} C$. Tính cường độ điện trường do $Q$ gây ra tại điểm M cách A một khoảng $r = 2 cm$?</p>
+                    <div class="mt-3 p-4 bg-white rounded-lg border border-orange-200 text-sm shadow-sm">
+                        <p class="font-bold text-green-700 underline mb-1 italic">Hướng dẫn giải:</p>
+                        <p>- Đổi $r = 2 cm = 0,02 m$.</p>
+                        <p>- Áp dụng: $E = k \frac{|Q|}{r^2} = 9.10^9 \cdot \frac{4.10^{-10}}{0,02^2} = 9000 V/m$.</p>
+                    </div>
+                </div>
+
+                <!-- Bài 3: BÀI TẬP ĐƯỢC CẬP NHẬT DÀI HƠN -->
+                <div class="exercise-box">
+                    <h3 class="font-bold text-lg text-orange-800 underline italic">Bài 3: Nguyên lý chồng chất điện trường (Tổng hợp)</h3>
+                    <p class="mt-2 text-gray-800 text-sm font-medium">Tại hai điểm A và B cách nhau $10 cm$ trong chân không, đặt hai điện tích điểm lần lượt là $q_1 = 8.10^{-8} C$ và $q_2 = -8.10^{-8} C$. Hãy xác định véc tơ cường độ điện trường tổng hợp tại trung điểm M của đoạn thẳng AB?</p>
+                    <div class="mt-3 p-4 bg-white rounded-lg border border-orange-200 text-sm shadow-sm">
+                        <p class="font-bold text-green-700 underline mb-2 italic">Hướng dẫn giải chi tiết:</p>
+                        <p><strong>Bước 1: Tính khoảng cách từ các điện tích đến M:</strong></p>
+                        <p>Vì M là trung điểm AB nên $r_1 = r_2 = \frac{AB}{2} = \frac{10}{2} = 5 cm = 0,05 m$.</p>
+                        
+                        <p class="mt-2"><strong>Bước 2: Tính độ lớn cường độ điện trường do từng điện tích gây ra tại M:</strong></p>
+                        <p>- $E_1 = k \frac{|q_1|}{r_1^2} = 9.10^9 \cdot \frac{8.10^{-8}}{0,05^2} = 288.000 V/m$.</p>
+                        <p>- $E_2 = k \frac{|q_2|}{r_2^2} = 9.10^9 \cdot \frac{|-8.10^{-8}|}{0,05^2} = 288.000 V/m$.</p>
+
+                        <p class="mt-2"><strong>Bước 3: Xác định phương chiều véc tơ:</strong></p>
+                        <p>- Vì $q_1 > 0$, véc tơ $\vec{E}_1$ hướng ra xa $q_1$ (hướng từ A đến B).</p>
+                        <p>- Vì $q_2 < 0$, véc tơ $\vec{E}_2$ hướng về phía $q_2$ (cũng hướng từ A đến B).</p>
+                        <p>➜ Hai véc tơ $\vec{E}_1$ và $\vec{E}_2$ cùng phương, cùng chiều.</p>
+
+                        <p class="mt-2"><strong>Bước 4: Tính cường độ điện trường tổng hợp:</strong></p>
+                        <p>Theo nguyên lý chồng chất: $\vec{E}_M = \vec{E}_1 + \vec{E}_2$.</p>
+                        <p>Vì $\vec{E}_1 \uparrow \uparrow \vec{E}_2$ nên: $E_M = E_1 + E_2 = 288.000 + 288.000 = 576.000 V/m$.</p>
+                        <p>➜ <strong>Kết luận:</strong> Véc tơ $\vec{E}_M$ có độ lớn $5,76.10^5 V/m$ và có chiều từ A đến B.</p>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <footer class="text-center text-gray-400 text-xs pb-10 uppercase tracking-widest">
+            Hệ thống bài giảng Vật Lí 11 - Bài 16: Điện Trường
+        </footer>
+    </div>
+
+</body>
+</html>
