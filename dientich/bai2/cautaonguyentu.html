@@ -1,253 +1,353 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { Plus, Minus, Info, RefreshCw, Zap } from 'lucide-react';
-
-const App = () => {
-  // Trạng thái cấu tạo nguyên tử
-  const [protons, setProtons] = useState(3);
-  const [electrons, setElectrons] = useState(3);
-  const [neutrons, setNeutrons] = useState(3);
-  
-  // Trạng thái hiển thị
-  const [showLabels, setShowLabels] = useState(true);
-  const [showCharge, setShowCharge] = useState(true);
-
-  // Dữ liệu các nguyên tố cơ bản
-  const elements = [
-    { name: "Hydrogen", symbol: "H" },
-    { name: "Helium", symbol: "He" },
-    { name: "Lithium", symbol: "Li" },
-    { name: "Beryllium", symbol: "Be" },
-    { name: "Boron", symbol: "B" },
-    { name: "Carbon", symbol: "C" },
-    { name: "Nitrogen", symbol: "N" },
-    { name: "Oxygen", symbol: "O" },
-    { name: "Fluorine", symbol: "F" },
-    { name: "Neon", symbol: "Ne" },
-  ];
-
-  const netCharge = protons - electrons;
-  const currentElement = elements[protons - 1] || { name: "Unknown", symbol: "?" };
-
-  // Xác định loại trạng thái điện
-  const getStatus = () => {
-    if (netCharge === 0) return { text: "Vật Trung Hòa", color: "text-gray-600", bg: "bg-gray-100" };
-    if (netCharge > 0) return { text: "Ion Dương (Cation)", color: "text-red-600", bg: "bg-red-100" };
-    return { text: "Ion Âm (Anion)", color: "text-blue-600", bg: "bg-blue-100" };
-  };
-
-  const status = getStatus();
-
-  // Tạo tọa độ ngẫu nhiên cho hạt nhân
-  const nucleusParticles = useMemo(() => {
-    const particles = [];
-    const total = protons + neutrons;
-    for (let i = 0; i < total; i++) {
-      const angle = Math.random() * Math.PI * 2;
-      const dist = Math.random() * 25;
-      particles.push({
-        x: Math.cos(angle) * dist,
-        y: Math.sin(angle) * dist,
-        type: i < protons ? 'proton' : 'neutron'
-      });
-    }
-    return particles;
-  }, [protons, neutrons]);
-
-  return (
-    <div className="flex flex-col md:flex-row h-screen w-full bg-slate-50 font-sans text-slate-800">
-      
-      {/* Panel 1: Điều khiển */}
-      <div className="w-full md:w-80 bg-white shadow-xl p-6 flex flex-col gap-6 z-10">
-        <div>
-          <h1 className="text-2xl font-bold text-indigo-700 flex items-center gap-2">
-            <Zap className="fill-indigo-700" size={24} /> 
-            Cấu tạo Nguyên tử
-          </h1>
-          <p className="text-sm text-slate-500 mt-1">Học về điện và Ion</p>
-        </div>
-
-        <div className="space-y-6">
-          {/* Điều chỉnh Proton */}
-          <div className="space-y-2">
-            <div className="flex justify-between items-center">
-              <label className="font-semibold flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-red-500"></div>
-                Proton (p+)
-              </label>
-              <span className="bg-red-50 text-red-700 px-2 py-1 rounded font-bold">{protons}</span>
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mô phỏng Cấu tạo Nguyên tử & Ion</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        .electron-orbit {
+            transform-origin: center;
+            animation: rotate var(--duration) linear infinite;
+        }
+        input[type="range"] {
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans overflow-hidden">
+    <div id="app" class="flex flex-col md:flex-row h-screen w-full">
+        <!-- Panel 1: Điều khiển -->
+        <div class="w-full md:w-80 bg-white shadow-xl p-6 flex flex-col gap-6 z-10 overflow-y-auto">
+            <div>
+                <h1 class="text-2xl font-bold text-indigo-700 flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-zap"><path d="M4 14.5a1 1 0 0 1-1-1V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v8.5a1 1 0 0 1-1 1H4z"/><path d="M12 14.5V21l-4-4"/><path d="m16 17-4 4"/></svg>
+                    Cấu tạo Nguyên tử
+                </h1>
+                <p class="text-sm text-slate-500 mt-1">Học về điện và Ion</p>
             </div>
-            <div className="flex gap-2">
-              <button onClick={() => setProtons(Math.max(1, protons - 1))} className="flex-1 bg-slate-100 hover:bg-slate-200 p-2 rounded transition-colors"><Minus size={16} className="mx-auto"/></button>
-              <button onClick={() => setProtons(Math.min(10, protons + 1))} className="flex-1 bg-slate-100 hover:bg-slate-200 p-2 rounded transition-colors"><Plus size={16} className="mx-auto"/></button>
+
+            <div class="space-y-6">
+                <!-- Điều chỉnh Proton -->
+                <div class="space-y-2">
+                    <div class="flex justify-between items-center">
+                        <label class="font-semibold flex items-center gap-2">
+                            <div class="w-3 h-3 rounded-full bg-red-500"></div>
+                            Proton (p+)
+                        </label>
+                        <span id="proton-val" class="bg-red-50 text-red-700 px-2 py-1 rounded font-bold">3</span>
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick="updateProtons(-1)" class="flex-1 bg-slate-100 hover:bg-slate-200 p-2 rounded transition-colors text-xl font-bold">-</button>
+                        <button onclick="updateProtons(1)" class="flex-1 bg-slate-100 hover:bg-slate-200 p-2 rounded transition-colors text-xl font-bold">+</button>
+                    </div>
+                </div>
+
+                <!-- Điều chỉnh Electron -->
+                <div class="space-y-2">
+                    <div class="flex justify-between items-center">
+                        <label class="font-semibold flex items-center gap-2">
+                            <div class="w-3 h-3 rounded-full bg-blue-500"></div>
+                            Electron (e-)
+                        </label>
+                        <span id="electron-val" class="bg-blue-50 text-blue-700 px-2 py-1 rounded font-bold">3</span>
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick="updateElectrons(-1)" class="flex-1 bg-slate-100 hover:bg-slate-200 p-2 rounded transition-colors text-xl font-bold">-</button>
+                        <button onclick="updateElectrons(1)" class="flex-1 bg-slate-100 hover:bg-slate-200 p-2 rounded transition-colors text-xl font-bold">+</button>
+                    </div>
+                </div>
+
+                <!-- Điều chỉnh Neutron -->
+                <div class="space-y-2">
+                    <div class="flex justify-between items-center text-slate-400">
+                        <label class="text-sm flex items-center gap-2">
+                            <div class="w-3 h-3 rounded-full bg-gray-400"></div>
+                            Neutron (n0)
+                        </label>
+                        <span id="neutron-val" class="text-xs px-2 py-1 rounded">3</span>
+                    </div>
+                    <input type="range" id="neutron-slider" min="0" max="10" value="3" oninput="updateNeutrons(this.value)" class="w-full accent-gray-400">
+                </div>
             </div>
-          </div>
 
-          {/* Điều chỉnh Electron */}
-          <div className="space-y-2">
-            <div className="flex justify-between items-center">
-              <label className="font-semibold flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-blue-500"></div>
-                Electron (e-)
-              </label>
-              <span className="bg-blue-50 text-blue-700 px-2 py-1 rounded font-bold">{electrons}</span>
+            <div class="border-t pt-4 space-y-3">
+                <label class="flex items-center gap-2 cursor-pointer select-none">
+                    <input type="checkbox" id="check-labels" checked onchange="render()" class="w-4 h-4">
+                    <span class="text-sm font-medium">Hiện nhãn hạt</span>
+                </label>
+                <label class="flex items-center gap-2 cursor-pointer select-none">
+                    <input type="checkbox" id="check-charge" checked onchange="render()" class="w-4 h-4">
+                    <span class="text-sm font-medium">Hiện điện tích thuần</span>
+                </label>
             </div>
-            <div className="flex gap-2">
-              <button onClick={() => setElectrons(Math.max(0, electrons - 1))} className="flex-1 bg-slate-100 hover:bg-slate-200 p-2 rounded transition-colors"><Minus size={16} className="mx-auto"/></button>
-              <button onClick={() => setElectrons(Math.min(12, electrons + 1))} className="flex-1 bg-slate-100 hover:bg-slate-200 p-2 rounded transition-colors"><Plus size={16} className="mx-auto"/></button>
+
+            <!-- Bảng tóm tắt số liệu -->
+            <div id="summary-card" class="mt-auto p-4 rounded-xl bg-indigo-50 border border-indigo-100">
+                <h3 class="text-xs font-bold uppercase text-indigo-400 mb-2">Tóm tắt dữ liệu</h3>
+                <div class="grid grid-cols-2 gap-2 text-sm">
+                    <div class="text-slate-500">Nguyên tố:</div>
+                    <div id="element-name" class="font-bold text-indigo-700">Lithium (Li)</div>
+                    <div class="text-slate-500">Điện tích:</div>
+                    <div id="charge-formula" class="font-mono font-bold">Q = 3 - 3 = 0</div>
+                </div>
+                <div id="status-badge" class="mt-3 py-1 px-2 rounded-lg text-center text-xs font-bold bg-gray-100 text-gray-600">
+                    Vật Trung Hòa
+                </div>
             </div>
-          </div>
-
-          {/* Điều chỉnh Neutron */}
-          <div className="space-y-2">
-            <div className="flex justify-between items-center text-slate-400">
-              <label className="text-sm flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-gray-400"></div>
-                Neutron (n0)
-              </label>
-              <span className="text-xs px-2 py-1 rounded">{neutrons}</span>
-            </div>
-            <input 
-              type="range" min="0" max="10" value={neutrons} 
-              onChange={(e) => setNeutrons(parseInt(e.target.value))}
-              className="w-full accent-gray-400"
-            />
-          </div>
-        </div>
-
-        <div className="border-t pt-4 space-y-3">
-          <label className="flex items-center gap-2 cursor-pointer select-none">
-            <input type="checkbox" checked={showLabels} onChange={() => setShowLabels(!showLabels)} className="w-4 h-4" />
-            <span className="text-sm font-medium">Hiện nhãn hạt</span>
-          </label>
-          <label className="flex items-center gap-2 cursor-pointer select-none">
-            <input type="checkbox" checked={showCharge} onChange={() => setShowCharge(!showCharge)} className="w-4 h-4" />
-            <span className="text-sm font-medium">Hiện điện tích thuần</span>
-          </label>
-        </div>
-
-        {/* Bảng tóm tắt số liệu */}
-        <div className="mt-auto p-4 rounded-xl bg-indigo-50 border border-indigo-100">
-          <h3 className="text-xs font-bold uppercase text-indigo-400 mb-2">Tóm tắt dữ liệu</h3>
-          <div className="grid grid-cols-2 gap-2 text-sm">
-            <div className="text-slate-500">Nguyên tố:</div>
-            <div className="font-bold text-indigo-700">{currentElement.name} ({currentElement.symbol})</div>
-            <div className="text-slate-500">Điện tích:</div>
-            <div className="font-mono font-bold">Q = {protons} - {electrons} = <span className={netCharge === 0 ? "text-slate-600" : netCharge > 0 ? "text-red-600" : "text-blue-600"}>{netCharge > 0 ? '+' : ''}{netCharge}</span></div>
-          </div>
-          <div className={`mt-3 py-1 px-2 rounded-lg text-center text-xs font-bold ${status.bg} ${status.color}`}>
-            {status.text}
-          </div>
-        </div>
-        
-        <button 
-          onClick={() => {setProtons(3); setElectrons(3); setNeutrons(3);}}
-          className="flex items-center justify-center gap-2 text-xs text-slate-400 hover:text-indigo-600 transition-colors"
-        >
-          <RefreshCw size={12} /> Đặt lại mô phỏng
-        </button>
-      </div>
-
-      {/* Panel 2: Mô phỏng trực quan */}
-      <div className="flex-1 relative overflow-hidden flex items-center justify-center bg-white">
-        
-        {/* Background Grid */}
-        <div className="absolute inset-0 opacity-5" style={{ backgroundImage: 'radial-gradient(#4f46e5 1px, transparent 1px)', backgroundSize: '30px 30px' }}></div>
-
-        {/* Legend */}
-        <div className="absolute top-6 left-6 space-y-2 bg-white/80 backdrop-blur-sm p-3 rounded-lg border shadow-sm">
-           <div className="flex items-center gap-2 text-xs"><div className="w-3 h-3 rounded-full bg-red-500"></div> Proton (+1)</div>
-           <div className="flex items-center gap-2 text-xs"><div className="w-3 h-3 rounded-full bg-blue-500 shadow-[0_0_5px_rgba(59,130,246,0.5)]"></div> Electron (-1)</div>
-           <div className="flex items-center gap-2 text-xs"><div className="w-3 h-3 rounded-full bg-gray-400"></div> Neutron (0)</div>
-        </div>
-
-        {/* SVG Simulation Area */}
-        <svg viewBox="0 0 400 400" className="w-full max-w-[600px] h-auto drop-shadow-2xl">
-          {/* Orbit rings */}
-          {[120, 220, 320].map((size, idx) => (
-            <circle 
-              key={idx}
-              cx="200" cy="200" r={size/2} 
-              fill="none" 
-              stroke="#e2e8f0" 
-              strokeWidth="1.5"
-              strokeDasharray="4 4"
-            />
-          ))}
-
-          {/* Electrons with animation */}
-          {Array.from({ length: electrons }).map((_, i) => {
-            // Logic phân bổ electron vào lớp vỏ (2 - 8 - 18...)
-            const shellIndex = i < 2 ? 0 : 1;
-            const radius = shellIndex === 0 ? 60 : 110;
-            const electronsInShell = shellIndex === 0 ? Math.min(electrons, 2) : electrons - 2;
-            const indexInShell = shellIndex === 0 ? i : i - 2;
             
-            // Animation Rotation
-            const duration = shellIndex === 0 ? 10 : 20;
-            const startAngle = (360 / electronsInShell) * indexInShell;
-
-            return (
-              <g key={i}>
-                <animateTransform 
-                  attributeName="transform" type="rotate" from={`${startAngle} 200 200`} to={`${startAngle + 360} 200 200`} 
-                  dur={`${duration}s`} repeatCount="indefinite" 
-                />
-                <circle cx={200 + radius} cy="200" r="6" fill="#3b82f6" className="shadow-lg" />
-                {showLabels && (
-                  <text x={200 + radius} y="190" textAnchor="middle" fontSize="10" fill="#1e40af" fontWeight="bold">e-</text>
-                )}
-              </g>
-            );
-          })}
-
-          {/* Nucleus */}
-          <g transform="translate(200, 200)">
-             {nucleusParticles.map((p, i) => (
-               <g key={i} transform={`translate(${p.x}, ${p.y})`}>
-                  <circle 
-                    r="8" 
-                    fill={p.type === 'proton' ? '#ef4444' : '#94a3b8'} 
-                    stroke="white" 
-                    strokeWidth="0.5"
-                  />
-                  {showLabels && p.type === 'proton' && (
-                    <text y="3" textAnchor="middle" fontSize="8" fill="white" fontWeight="bold">+</text>
-                  )}
-               </g>
-             ))}
-          </g>
-
-          {/* Net Charge Display */}
-          {showCharge && (
-            <g transform="translate(320, 80)">
-              <circle r="35" fill={netCharge === 0 ? "#f8fafc" : netCharge > 0 ? "#fef2f2" : "#eff6ff"} stroke={netCharge === 0 ? "#cbd5e1" : netCharge > 0 ? "#fecaca" : "#bfdbfe"} strokeWidth="2" />
-              <text textAnchor="middle" y="-5" fontSize="10" fill="#64748b" fontWeight="bold">TỔNG ĐIỆN</text>
-              <text textAnchor="middle" y="15" fontSize="24" fontWeight="black" fill={netCharge === 0 ? "#475569" : netCharge > 0 ? "#dc2626" : "#2563eb"}>
-                {netCharge > 0 ? `+${netCharge}` : netCharge}
-              </text>
-            </g>
-          )}
-        </svg>
-
-        {/* Bottom Banner Info */}
-        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 w-[90%] md:w-[60%] bg-white/90 backdrop-blur border border-slate-200 p-4 rounded-2xl shadow-xl">
-           <div className="flex items-start gap-4">
-              <div className={`p-2 rounded-full ${status.bg} ${status.color}`}>
-                <Info size={20} />
-              </div>
-              <div>
-                <h4 className={`font-bold ${status.color}`}>{status.text}</h4>
-                <p className="text-xs text-slate-600 leading-relaxed">
-                  {netCharge === 0 && "Nguyên tử trung hòa vì số Proton (+) bằng số Electron (-). Tổng điện tích triệt tiêu nhau."}
-                  {netCharge > 0 && "Đây là Ion Dương vì nguyên tử đã mất bớt Electron. Lực hút hạt nhân mạnh hơn tổng điện tích âm."}
-                  {netCharge < 0 && "Đây là Ion Âm vì nguyên tử nhận thêm Electron. Tổng điện tích âm vượt quá điện tích dương của hạt nhân."}
-                </p>
-              </div>
-           </div>
+            <button onclick="resetSim()" class="flex items-center justify-center gap-2 text-xs text-slate-400 hover:text-indigo-600 transition-colors">
+                Đặt lại mô phỏng
+            </button>
         </div>
-      </div>
-    </div>
-  );
-};
 
-export default App;
+        <!-- Panel 2: Mô phỏng trực quan -->
+        <div class="flex-1 relative overflow-hidden flex items-center justify-center bg-white">
+            <!-- Background Grid -->
+            <div class="absolute inset-0 opacity-5" style="background-image: radial-gradient(#4f46e5 1px, transparent 1px); background-size: 30px 30px;"></div>
+
+            <!-- Legend -->
+            <div class="absolute top-6 left-6 space-y-2 bg-white/80 backdrop-blur-sm p-3 rounded-lg border shadow-sm hidden sm:block">
+               <div class="flex items-center gap-2 text-xs"><div class="w-3 h-3 rounded-full bg-red-500"></div> Proton (+1)</div>
+               <div class="flex items-center gap-2 text-xs"><div class="w-3 h-3 rounded-full bg-blue-500 shadow-[0_0_5px_rgba(59,130,246,0.5)]"></div> Electron (-1)</div>
+               <div class="flex items-center gap-2 text-xs"><div class="w-3 h-3 rounded-full bg-gray-400"></div> Neutron (0)</div>
+            </div>
+
+            <!-- SVG Container -->
+            <svg id="sim-svg" viewBox="0 0 400 400" class="w-full max-w-[600px] h-auto drop-shadow-2xl">
+                <!-- Orbits will be rendered here -->
+                <g id="orbits-layer"></g>
+                <!-- Electrons will be rendered here -->
+                <g id="electrons-layer"></g>
+                <!-- Nucleus will be rendered here -->
+                <g id="nucleus-layer"></g>
+                <!-- Charge badge will be rendered here -->
+                <g id="charge-layer"></g>
+            </svg>
+
+            <!-- Bottom Banner Info -->
+            <div class="absolute bottom-6 left-1/2 -translate-x-1/2 w-[90%] md:w-[60%] bg-white/90 backdrop-blur border border-slate-200 p-4 rounded-2xl shadow-xl">
+               <div class="flex items-start gap-4">
+                  <div id="info-icon-container" class="p-2 rounded-full bg-gray-100 text-gray-600">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                  </div>
+                  <div>
+                    <h4 id="info-title" class="font-bold text-gray-600">Vật Trung Hòa</h4>
+                    <p id="info-desc" class="text-xs text-slate-600 leading-relaxed">
+                        Nguyên tử trung hòa vì số Proton (+) bằng số Electron (-). Tổng điện tích triệt tiêu nhau.
+                    </p>
+                  </div>
+               </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // State
+        let protons = 3;
+        let electrons = 3;
+        let neutrons = 3;
+
+        const elements = [
+            { name: "Hydrogen", symbol: "H" }, { name: "Helium", symbol: "He" },
+            { name: "Lithium", symbol: "Li" }, { name: "Beryllium", symbol: "Be" },
+            { name: "Boron", symbol: "B" }, { name: "Carbon", symbol: "C" },
+            { name: "Nitrogen", symbol: "N" }, { name: "Oxygen", symbol: "O" },
+            { name: "Fluorine", symbol: "F" }, { name: "Neon", symbol: "Ne" }
+        ];
+
+        function updateProtons(val) {
+            protons = Math.max(1, Math.min(10, protons + val));
+            render();
+        }
+
+        function updateElectrons(val) {
+            electrons = Math.max(0, Math.min(12, electrons + val));
+            render();
+        }
+
+        function updateNeutrons(val) {
+            neutrons = parseInt(val);
+            render();
+        }
+
+        function resetSim() {
+            protons = 3;
+            electrons = 3;
+            neutrons = 3;
+            document.getElementById('neutron-slider').value = 3;
+            render();
+        }
+
+        function render() {
+            const netCharge = protons - electrons;
+            const currentEl = elements[protons - 1];
+            const showLabels = document.getElementById('check-labels').checked;
+            const showCharge = document.getElementById('check-charge').checked;
+
+            // Update UI Panel
+            document.getElementById('proton-val').innerText = protons;
+            document.getElementById('electron-val').innerText = electrons;
+            document.getElementById('neutron-val').innerText = neutrons;
+            document.getElementById('element-name').innerText = `${currentEl.name} (${currentEl.symbol})`;
+            document.getElementById('charge-formula').innerHTML = `Q = ${protons} - ${electrons} = <span class="${netCharge === 0 ? 'text-slate-600' : netCharge > 0 ? 'text-red-600' : 'text-blue-600'}">${netCharge > 0 ? '+' : ''}${netCharge}</span>`;
+
+            // Update Status and Info
+            const statusBadge = document.getElementById('status-badge');
+            const infoTitle = document.getElementById('info-title');
+            const infoDesc = document.getElementById('info-desc');
+            const iconContainer = document.getElementById('info-icon-container');
+
+            if (netCharge === 0) {
+                statusBadge.className = "mt-3 py-1 px-2 rounded-lg text-center text-xs font-bold bg-gray-100 text-gray-600";
+                statusBadge.innerText = "Vật Trung Hòa";
+                infoTitle.innerText = "Vật Trung Hòa";
+                infoTitle.className = "font-bold text-gray-600";
+                infoDesc.innerText = "Nguyên tử trung hòa vì số Proton (+) bằng số Electron (-). Tổng điện tích triệt tiêu nhau.";
+                iconContainer.className = "p-2 rounded-full bg-gray-100 text-gray-600";
+            } else if (netCharge > 0) {
+                statusBadge.className = "mt-3 py-1 px-2 rounded-lg text-center text-xs font-bold bg-red-100 text-red-600";
+                statusBadge.innerText = "Ion Dương (Cation)";
+                infoTitle.innerText = "Ion Dương (Cation)";
+                infoTitle.className = "font-bold text-red-600";
+                infoDesc.innerText = "Đây là Ion Dương vì nguyên tử đã mất bớt Electron. Lực hút hạt nhân mạnh hơn tổng điện tích âm.";
+                iconContainer.className = "p-2 rounded-full bg-red-100 text-red-600";
+            } else {
+                statusBadge.className = "mt-3 py-1 px-2 rounded-lg text-center text-xs font-bold bg-blue-100 text-blue-600";
+                statusBadge.innerText = "Ion Âm (Anion)";
+                infoTitle.innerText = "Ion Âm (Anion)";
+                infoTitle.className = "font-bold text-blue-600";
+                infoDesc.innerText = "Đây là Ion Âm vì nguyên tử nhận thêm Electron. Tổng điện tích âm vượt quá điện tích dương của hạt nhân.";
+                iconContainer.className = "p-2 rounded-full bg-blue-100 text-blue-600";
+            }
+
+            // Render SVG Orbits
+            const orbitsLayer = document.getElementById('orbits-layer');
+            orbitsLayer.innerHTML = '';
+            [120, 220, 320].forEach(size => {
+                const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+                circle.setAttribute("cx", "200");
+                circle.setAttribute("cy", "200");
+                circle.setAttribute("r", (size / 2).toString());
+                circle.setAttribute("fill", "none");
+                circle.setAttribute("stroke", "#e2e8f0");
+                circle.setAttribute("stroke-width", "1.5");
+                circle.setAttribute("stroke-dasharray", "4 4");
+                orbitsLayer.appendChild(circle);
+            });
+
+            // Render Nucleus
+            const nucleusLayer = document.getElementById('nucleus-layer');
+            nucleusLayer.innerHTML = '';
+            const totalParticles = protons + neutrons;
+            // Seeding simple stable random for nucleus
+            for (let i = 0; i < totalParticles; i++) {
+                const angle = (i * 137.5) * (Math.PI / 180); // Phyllotaxis for nice distribution
+                const dist = Math.sqrt(i) * 5;
+                const type = i < protons ? 'proton' : 'neutron';
+                
+                const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+                g.setAttribute("transform", `translate(${200 + Math.cos(angle) * dist}, ${200 + Math.sin(angle) * dist})`);
+                
+                const c = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+                c.setAttribute("r", "8");
+                c.setAttribute("fill", type === 'proton' ? '#ef4444' : '#94a3b8');
+                c.setAttribute("stroke", "white");
+                c.setAttribute("stroke-width", "0.5");
+                g.appendChild(c);
+
+                if (showLabels && type === 'proton') {
+                    const t = document.createElementNS("http://www.w3.org/2000/svg", "text");
+                    t.setAttribute("y", "3");
+                    t.setAttribute("text-anchor", "middle");
+                    t.setAttribute("font-size", "8");
+                    t.setAttribute("fill", "white");
+                    t.setAttribute("font-weight", "bold");
+                    t.textContent = "+";
+                    g.appendChild(t);
+                }
+                nucleusLayer.appendChild(g);
+            }
+
+            // Render Electrons
+            const electronsLayer = document.getElementById('electrons-layer');
+            electronsLayer.innerHTML = '';
+            for (let i = 0; i < electrons; i++) {
+                const shellIdx = i < 2 ? 0 : 1;
+                const radius = shellIdx === 0 ? 60 : 110;
+                const electronsInShell = shellIdx === 0 ? Math.min(electrons, 2) : electrons - 2;
+                const indexInShell = shellIdx === 0 ? i : i - 2;
+                const duration = shellIdx === 0 ? 8 : 15;
+                const startAngle = (360 / electronsInShell) * indexInShell;
+
+                const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+                g.classList.add('electron-orbit');
+                g.style.setProperty('--duration', duration + 's');
+                
+                const c = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+                const currentAngleRad = startAngle * (Math.PI / 180);
+                c.setAttribute("cx", (200 + radius * Math.cos(currentAngleRad)).toString());
+                c.setAttribute("cy", (200 + radius * Math.sin(currentAngleRad)).toString());
+                c.setAttribute("r", "6");
+                c.setAttribute("fill", "#3b82f6");
+                g.appendChild(c);
+
+                if (showLabels) {
+                    const t = document.createElementNS("http://www.w3.org/2000/svg", "text");
+                    t.setAttribute("x", (200 + radius * Math.cos(currentAngleRad)).toString());
+                    t.setAttribute("y", (200 + radius * Math.sin(currentAngleRad) - 10).toString());
+                    t.setAttribute("text-anchor", "middle");
+                    t.setAttribute("font-size", "10");
+                    t.setAttribute("fill", "#1e40af");
+                    t.setAttribute("font-weight", "bold");
+                    t.textContent = "e-";
+                    g.appendChild(t);
+                }
+                electronsLayer.appendChild(g);
+            }
+
+            // Render Charge Badge
+            const chargeLayer = document.getElementById('charge-layer');
+            chargeLayer.innerHTML = '';
+            if (showCharge) {
+                const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+                g.setAttribute("transform", "translate(320, 80)");
+                
+                const bg = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+                bg.setAttribute("r", "35");
+                bg.setAttribute("fill", netCharge === 0 ? "#f8fafc" : netCharge > 0 ? "#fef2f2" : "#eff6ff");
+                bg.setAttribute("stroke", netCharge === 0 ? "#cbd5e1" : netCharge > 0 ? "#fecaca" : "#bfdbfe");
+                bg.setAttribute("stroke-width", "2");
+                g.appendChild(bg);
+
+                const label = document.createElementNS("http://www.w3.org/2000/svg", "text");
+                label.setAttribute("text-anchor", "middle");
+                label.setAttribute("y", "-5");
+                label.setAttribute("font-size", "10");
+                label.setAttribute("fill", "#64748b");
+                label.setAttribute("font-weight", "bold");
+                label.textContent = "TỔNG ĐIỆN";
+                g.appendChild(label);
+
+                const val = document.createElementNS("http://www.w3.org/2000/svg", "text");
+                val.setAttribute("text-anchor", "middle");
+                val.setAttribute("y", "15");
+                val.setAttribute("font-size", "24");
+                val.setAttribute("font-weight", "900");
+                val.setAttribute("fill", netCharge === 0 ? "#475569" : netCharge > 0 ? "#dc2626" : "#2563eb");
+                val.textContent = netCharge > 0 ? `+${netCharge}` : netCharge;
+                g.appendChild(val);
+
+                chargeLayer.appendChild(g);
+            }
+        }
+
+        // Initial render
+        window.onload = render;
+    </script>
+</body>
+</html>
