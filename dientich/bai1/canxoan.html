@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Phòng Thí Nghiệm Coulomb - Đa tiện ích</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { background-color: #f1f5f9; font-family: 'Segoe UI', system-ui, sans-serif; overflow: hidden; touch-action: none; }
+        .slider { -webkit-appearance: none; width: 100%; height: 6px; border-radius: 3px; background: #e2e8f0; outline: none; }
+        .slider::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 20px; height: 20px; border-radius: 50%; background: #2563eb; cursor: pointer; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+        #experiment-canvas { 
+            background: radial-gradient(circle, #ffffff 0%, #f8fafc 100%); 
+            border-radius: 12px;
+            cursor: crosshair;
+        }
+        .panel-shadow { box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); }
+        .chart-container { height: 200px; width: 100%; }
+        .tab-active { border-bottom: 3px solid #2563eb; color: #2563eb; font-weight: 700; }
+        .hidden-tab { display: none !important; }
+        
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+    </style>
+</head>
+<body class="h-screen flex flex-col">
+    <!-- Header -->
+    <header class="bg-white border-b border-slate-200 py-3 px-6 flex justify-between items-center shadow-sm z-10">
+        <div class="flex items-center gap-3">
+            <span class="p-2 bg-blue-600 rounded-lg text-white shadow-md">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M2 12h20"/></svg>
+            </span>
+            <div>
+                <h1 class="text-lg font-extrabold text-slate-800 leading-none">Vật Lý 11: Định luật Coulomb</h1>
+                <p class="text-[11px] text-slate-500 font-medium uppercase tracking-tighter mt-1">Mô phỏng Cân xoắn của Charles-Augustin de Coulomb</p>
+            </div>
+        </div>
+        <nav class="flex gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200">
+            <button onclick="switchTab('sim')" id="btn-sim" class="px-5 py-2 text-sm rounded-lg transition-all font-bold text-blue-600 bg-white shadow-sm">Thí nghiệm & Đồ thị</button>
+            <button onclick="switchTab('info')" id="btn-info" class="px-5 py-2 text-sm rounded-lg transition-all font-medium text-slate-500 hover:bg-white/50">Lịch sử & Nhận xét</button>
+        </nav>
+    </header>
+
+    <!-- Main Content Split -->
+    <main class="flex-1 flex overflow-hidden">
+        
+        <!-- LEFT PANEL: CONTROLS (Luôn hiển thị) -->
+        <aside class="w-80 bg-white border-r border-slate-200 flex flex-col overflow-y-auto p-6 space-y-6 z-10">
+            <section>
+                <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-6">Tham số hệ thống</h3>
+                <div class="space-y-8">
+                    <div>
+                        <div class="flex justify-between mb-2">
+                            <label class="text-sm font-bold text-slate-700">Điện tích $q_1$ (Xanh)</label>
+                            <span id="q1-label" class="text-blue-600 font-mono font-bold">20 nC</span>
+                        </div>
+                        <input type="range" id="q1-input" min="-50" max="50" value="20" class="slider">
+                    </div>
+                    <div>
+                        <div class="flex justify-between mb-2">
+                            <label class="text-sm font-bold text-slate-700">Điện tích $q_2$ (Đỏ)</label>
+                            <span id="q2-label" class="text-red-600 font-mono font-bold">20 nC</span>
+                        </div>
+                        <input type="range" id="q2-input" min="-50" max="50" value="20" class="slider">
+                    </div>
+                </div>
+            </section>
+
+            <section class="pt-4 border-t border-slate-100">
+                <button id="add-point" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl transition-all shadow-lg active:transform active:scale-95 mb-4 flex items-center justify-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+                    GHI DỮ LIỆU
+                </button>
+                <button id="clear-data" class="w-full bg-white border border-red-200 text-red-500 hover:bg-red-50 font-semibold py-2 rounded-lg transition-colors text-xs uppercase tracking-wider">
+                    Xóa sạch dữ liệu
+                </button>
+            </section>
+
+            <section class="mt-auto space-y-4">
+                <div class="bg-blue-50 p-4 rounded-xl border border-blue-100">
+                    <h4 class="font-bold text-xs mb-2 text-blue-800 uppercase tracking-wider">Trạng thái cân bằng</h4>
+                    <p class="text-[11px] text-blue-700 leading-relaxed italic">
+                        Thanh xoắn sẽ dừng lại khi Moment lực điện bằng Moment lực đàn hồi của dây treo.
+                    </p>
+                </div>
+                <div class="text-[10px] text-slate-400 text-center">
+                    Bản quyền mô phỏng học tập &copy; 2024
+                </div>
+            </section>
+        </aside>
+
+        <!-- RIGHT PANEL CONTENT -->
+        <section class="flex-1 flex flex-col bg-slate-50 overflow-y-auto">
+            
+            <!-- TAB 1: SIMULATION -->
+            <div id="tab-sim" class="p-6 space-y-6">
+                <!-- Simulation Display -->
+                <div class="relative bg-white rounded-2xl border border-slate-200 panel-shadow overflow-hidden flex-none h-[400px]">
+                    <canvas id="experiment-canvas" class="w-full h-full"></canvas>
+                    
+                    <!-- Overlay HUD -->
+                    <div class="absolute top-6 left-6 flex gap-4 pointer-events-none select-none">
+                        <div class="bg-white/80 backdrop-blur-md px-5 py-3 rounded-xl border border-blue-100 shadow-sm">
+                            <p class="text-[10px] text-slate-500 uppercase font-black tracking-widest mb-1">Lực Điện (F)</p>
+                            <p class="text-3xl font-mono font-bold text-blue-600"><span id="f-val">0.00</span> <small class="text-xs font-normal text-slate-400">nN</small></p>
+                        </div>
+                        <div class="bg-white/80 backdrop-blur-md px-5 py-3 rounded-xl border border-emerald-100 shadow-sm">
+                            <p class="text-[10px] text-slate-500 uppercase font-black tracking-widest mb-1">Góc Xoắn (θ)</p>
+                            <p class="text-3xl font-mono font-bold text-emerald-600"><span id="angle-val">0.0</span>°</p>
+                        </div>
+                    </div>
+
+                    <div id="start-hint" class="absolute inset-0 flex items-center justify-center pointer-events-none">
+                        <div class="bg-slate-900/20 text-slate-800 px-8 py-4 rounded-full border border-slate-300 animate-bounce backdrop-blur-md font-bold shadow-xl">
+                            Kéo quả cầu đỏ để thực hiện thí nghiệm
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Analysis Display (Two Charts) -->
+                <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                    <div class="bg-white rounded-2xl border border-slate-200 panel-shadow p-5">
+                        <h3 class="text-sm font-bold text-slate-800 mb-4 flex items-center gap-2">
+                            <span class="w-2 h-2 rounded-full bg-blue-500"></span>
+                            Tỉ lệ nghịch với bình phương: $F$ theo $1/r^2$
+                        </h3>
+                        <div class="chart-container">
+                            <canvas id="chart-inverse-sq"></canvas>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-2xl border border-slate-200 panel-shadow p-5">
+                        <h3 class="text-sm font-bold text-slate-800 mb-4 flex items-center gap-2">
+                            <span class="w-2 h-2 rounded-full bg-purple-500"></span>
+                            Tương quan khoảng cách: $F$ theo $r^2$
+                        </h3>
+                        <div class="chart-container">
+                            <canvas id="chart-r-sq"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 2: HISTORY & ANALYSIS -->
+            <div id="tab-info" class="hidden-tab p-8 max-w-4xl mx-auto space-y-10 pb-20">
+                <article>
+                    <h2 class="text-2xl font-extrabold text-slate-900 border-b-4 border-blue-600 inline-block mb-6">Lịch sử & Tác giả</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-8 items-start">
+                        <div class="md:col-span-1 space-y-4">
+                            <div class="aspect-[3/4] bg-slate-200 rounded-xl overflow-hidden shadow-inner relative">
+                                <div class="absolute inset-0 flex items-center justify-center text-slate-400 text-xs text-center p-4 italic">
+                                    [Hình ảnh: Charles-Augustin de Coulomb]
+                                </div>
+                            </div>
+                            <p class="text-center text-xs font-bold text-slate-600">Charles-Augustin de Coulomb<br>(1736–1806)</p>
+                        </div>
+                        <div class="md:col-span-2 space-y-4 text-slate-600 leading-relaxed text-sm">
+                            <p><strong>Charles-Augustin de Coulomb</strong> là một nhà vật lý người Pháp. Năm 1785, ông đã công bố ba báo cáo về điện và từ trường, trong đó trình bày về định luật mang tên mình.</p>
+                            <p>Để đo những lực cực kỳ nhỏ (cỡ nano-Newton), ông đã phát minh ra <strong>Cân xoắn (Torsion Balance)</strong>. Thiết bị này hoạt động dựa trên nguyên lý: lực đẩy giữa hai quả cầu tích điện sẽ làm xoắn một sợi dây mảnh, và góc xoắn của dây tỉ lệ trực tiếp với lực điện tác động.</p>
+                            <p>Thí nghiệm này quan trọng vì nó chuyển phép đo lực (đại lượng khó đo trực tiếp khi rất nhỏ) sang phép đo góc (đại lượng dễ quan sát bằng mắt qua thước chia độ).</p>
+                        </div>
+                    </div>
+                </article>
+
+                <article class="bg-white p-8 rounded-2xl border border-slate-200 shadow-sm space-y-6">
+                    <h2 class="text-xl font-bold text-slate-900 flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                        Nhận xét rút ra từ mô phỏng
+                    </h2>
+                    <div class="space-y-4">
+                        <div class="flex gap-4 p-4 bg-slate-50 rounded-xl border-l-4 border-blue-500">
+                            <div class="font-bold text-blue-600 text-lg">01</div>
+                            <div>
+                                <h4 class="font-bold text-slate-800">Sự phụ thuộc vào khoảng cách</h4>
+                                <p class="text-sm text-slate-600 mt-1">Khi quan sát đồ thị $F$ theo $1/r^2$, ta thấy các điểm dữ liệu nằm trên một <strong>đường thẳng</strong>. Điều này chứng minh lực điện tỉ lệ nghịch với bình phương khoảng cách giữa hai tâm điện tích.</p>
+                            </div>
+                        </div>
+                        <div class="flex gap-4 p-4 bg-slate-50 rounded-xl border-l-4 border-red-500">
+                            <div class="font-bold text-red-600 text-lg">02</div>
+                            <div>
+                                <h4 class="font-bold text-slate-800">Ảnh hưởng của độ lớn điện tích</h4>
+                                <p class="text-sm text-slate-600 mt-1">Nếu ta giữ nguyên khoảng cách và tăng gấp đôi giá trị $q_1$ hoặc $q_2$, lực điện $F$ cũng tăng gấp đôi. Lực điện tỉ lệ thuận với tích độ lớn hai điện tích.</p>
+                            </div>
+                        </div>
+                        <div class="flex gap-4 p-4 bg-slate-50 rounded-xl border-l-4 border-emerald-500">
+                            <div class="font-bold text-emerald-600 text-lg">03</div>
+                            <div>
+                                <h4 class="font-bold text-slate-800">Tính chất đẩy và hút</h4>
+                                <p class="text-sm text-slate-600 mt-1">Mô phỏng cho thấy rõ: các điện tích <strong>cùng dấu</strong> thì đẩy nhau (thanh xoắn quay ra xa) và <strong>khác dấu</strong> thì hút nhau (thanh xoắn quay lại gần).</p>
+                            </div>
+                        </div>
+                    </div>
+                </article>
+
+                <div class="text-center text-slate-400 py-6">
+                    --- Kết thúc nội dung bài học ---
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <script>
+        const canvas = document.getElementById('experiment-canvas');
+        const ctx = canvas.getContext('2d');
+        const q1Input = document.getElementById('q1-input');
+        const q2Input = document.getElementById('q2-input');
+        const q1Label = document.getElementById('q1-label');
+        const q2Label = document.getElementById('q2-label');
+        const fValDisplay = document.getElementById('f-val');
+        const angleDisplay = document.getElementById('angle-val');
+        const startHint = document.getElementById('start-hint');
+
+        const COULOMB_K = 2800;      
+        const TORSION_K = 700;       
+        const ROD_LENGTH = 150;      
+        
+        let chartInvSq, chartRSq;
+        let currentAngle = 0;
+        let targetAngle = 0;
+        let q2Pos = { x: 0, y: 0 };
+        let isDragging = false;
+        let isActivated = false;
+
+        function switchTab(tab) {
+            const tabSim = document.getElementById('tab-sim');
+            const tabInfo = document.getElementById('tab-info');
+            const btnSim = document.getElementById('btn-sim');
+            const btnInfo = document.getElementById('btn-info');
+
+            if (tab === 'sim') {
+                tabSim.classList.remove('hidden-tab');
+                tabInfo.classList.add('hidden-tab');
+                btnSim.className = "px-5 py-2 text-sm rounded-lg transition-all font-bold text-blue-600 bg-white shadow-sm";
+                btnInfo.className = "px-5 py-2 text-sm rounded-lg transition-all font-medium text-slate-500 hover:bg-white/50";
+                setTimeout(resizeCanvas, 10);
+            } else {
+                tabSim.classList.add('hidden-tab');
+                tabInfo.classList.remove('hidden-tab');
+                btnInfo.className = "px-5 py-2 text-sm rounded-lg transition-all font-bold text-blue-600 bg-white shadow-sm";
+                btnSim.className = "px-5 py-2 text-sm rounded-lg transition-all font-medium text-slate-500 hover:bg-white/50";
+            }
+        }
+
+        function initCharts() {
+            const commonOptions = {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: { grid: { color: '#f1f5f9' }, title: { display: true, font: { size: 10, weight: 'bold' } } },
+                    y: { grid: { color: '#f1f5f9' }, title: { display: true, text: 'Lực F (nN)', font: { size: 10, weight: 'bold' } } }
+                },
+                plugins: { legend: { display: false } },
+                animation: { duration: 400 }
+            };
+
+            chartInvSq = new Chart(document.getElementById('chart-inverse-sq').getContext('2d'), {
+                type: 'scatter',
+                data: { datasets: [{ label: 'F vs 1/r²', data: [], backgroundColor: '#2563eb', borderColor: '#2563eb', showLine: true, tension: 0.2 }] },
+                options: { ...commonOptions, scales: { ...commonOptions.scales, x: { ...commonOptions.scales.x, title: { ...commonOptions.scales.x.title, text: 'Trục $1/r^2$' } } } }
+            });
+
+            chartRSq = new Chart(document.getElementById('chart-r-sq').getContext('2d'), {
+                type: 'scatter',
+                data: { datasets: [{ label: 'F vs r²', data: [], backgroundColor: '#a855f7', borderColor: '#a855f7', showLine: true, tension: 0.4 }] },
+                options: { ...commonOptions, scales: { ...commonOptions.scales, x: { ...commonOptions.scales.x, title: { ...commonOptions.scales.x.title, text: 'Trục $r^2$' } } } }
+            });
+        }
+
+        function getMousePos(e) {
+            const rect = canvas.getBoundingClientRect();
+            const clientX = e.clientX || (e.touches && e.touches[0].clientX);
+            const clientY = e.clientY || (e.touches && e.touches[0].clientY);
+            return {
+                x: (clientX - rect.left) * (canvas.width / rect.width),
+                y: (clientY - rect.top) * (canvas.height / rect.height)
+            };
+        }
+
+        const handleDown = (e) => {
+            const pos = getMousePos(e);
+            const dist = Math.sqrt((pos.x - q2Pos.x)**2 + (pos.y - q2Pos.y)**2);
+            if (dist < 50) {
+                isDragging = true;
+                if (!isActivated) {
+                    isActivated = true;
+                    startHint.style.opacity = '0';
+                    setTimeout(() => startHint.style.display = 'none', 500);
+                }
+                if(e.cancelable) e.preventDefault();
+            }
+        };
+
+        const handleMove = (e) => {
+            if (!isDragging) return;
+            const pos = getMousePos(e);
+            q2Pos.x = pos.x;
+            q2Pos.y = pos.y;
+            if(e.cancelable) e.preventDefault();
+        };
+
+        const handleUp = () => isDragging = false;
+
+        canvas.addEventListener('mousedown', handleDown);
+        window.addEventListener('mousemove', handleMove);
+        window.addEventListener('mouseup', handleUp);
+        canvas.addEventListener('touchstart', handleDown, { passive: false });
+        window.addEventListener('touchmove', handleMove, { passive: false });
+        window.addEventListener('touchend', handleUp);
+
+        function updateSimulation() {
+            const q1 = parseFloat(q1Input.value);
+            const q2 = parseFloat(q2Input.value);
+            q1Label.innerText = `${q1} nC`;
+            q2Label.innerText = `${q2} nC`;
+
+            const cx = canvas.width / 2;
+            const cy = canvas.height / 2;
+
+            let forceMagnitude = 0;
+            let effectiveDist = 0;
+
+            if (isActivated) {
+                const q1x = cx + Math.cos(currentAngle) * ROD_LENGTH;
+                const q1y = cy + Math.sin(currentAngle) * ROD_LENGTH;
+                const dx = q1x - q2Pos.x;
+                const dy = q1y - q2Pos.y;
+                const distSq = dx*dx + dy*dy;
+                const dist = Math.sqrt(distSq);
+                effectiveDist = Math.max(dist, 40); 
+                
+                forceMagnitude = (COULOMB_K * q1 * q2) / (effectiveDist * effectiveDist);
+                const forceAngle = Math.atan2(dy, dx);
+                const leverAngle = currentAngle + Math.PI/2;
+                const torque = forceMagnitude * Math.cos(forceAngle - leverAngle) * ROD_LENGTH;
+                targetAngle = torque / TORSION_K;
+            }
+
+            currentAngle += (targetAngle - currentAngle) * 0.12;
+            draw(q1, q2, effectiveDist, forceMagnitude);
+            requestAnimationFrame(updateSimulation);
+        }
+
+        function draw(q1, q2, dist, force) {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            const cx = canvas.width / 2;
+            const cy = canvas.height / 2;
+
+            // Grid trang trí mờ
+            ctx.strokeStyle = '#f1f5f9';
+            ctx.lineWidth = 1;
+            for(let i=0; i<canvas.width; i+=50) { ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, canvas.height); ctx.stroke(); }
+            for(let j=0; j<canvas.height; j+=50) { ctx.beginPath(); ctx.moveTo(0, j); ctx.lineTo(canvas.width, j); ctx.stroke(); }
+
+            // Vạch 0 độ tham chiếu
+            ctx.setLineDash([10, 5]); ctx.strokeStyle = '#cbd5e1'; ctx.lineWidth = 2;
+            ctx.beginPath(); ctx.moveTo(cx - ROD_LENGTH - 40, cy); ctx.lineTo(cx + ROD_LENGTH + 40, cy); ctx.stroke();
+            ctx.setLineDash([]);
+
+            // Q2 (Đỏ) - Quả cầu điều khiển
+            ctx.beginPath();
+            ctx.arc(q2Pos.x, q2Pos.y, 24, 0, Math.PI * 2);
+            const grad2 = ctx.createRadialGradient(q2Pos.x-5, q2Pos.y-5, 2, q2Pos.x, q2Pos.y, 24);
+            const color2 = q2 >= 0 ? '#ef4444' : '#3b82f6';
+            grad2.addColorStop(0, '#ffffff'); grad2.addColorStop(1, color2);
+            ctx.fillStyle = grad2;
+            if (isDragging) { ctx.shadowBlur = 20; ctx.shadowColor = color2; }
+            ctx.fill(); ctx.shadowBlur = 0;
+            ctx.fillStyle = 'white'; ctx.font = 'bold 18px monospace'; ctx.textAlign = 'center';
+            ctx.fillText(q2 >= 0 ? '+' : '-', q2Pos.x, q2Pos.y + 7);
+
+            // Thanh xoắn
+            ctx.save();
+            ctx.translate(cx, cy);
+            ctx.rotate(currentAngle);
+            ctx.beginPath(); ctx.arc(0, 0, 10, 0, Math.PI*2); ctx.fillStyle = '#1e293b'; ctx.fill();
+            ctx.strokeStyle = '#334155'; ctx.lineWidth = 8; ctx.lineCap = 'round';
+            ctx.beginPath(); ctx.moveTo(-ROD_LENGTH, 0); ctx.lineTo(ROD_LENGTH, 0); ctx.stroke();
+
+            // Q1 (Xanh) - Quả cầu trên thanh
+            ctx.beginPath();
+            ctx.arc(ROD_LENGTH, 0, 22, 0, Math.PI * 2);
+            const grad1 = ctx.createRadialGradient(ROD_LENGTH-5, -5, 2, ROD_LENGTH, 0, 22);
+            const color1 = q1 >= 0 ? '#3b82f6' : '#ef4444';
+            grad1.addColorStop(0, '#ffffff'); grad1.addColorStop(1, color1);
+            ctx.fillStyle = grad1; ctx.fill();
+            ctx.fillStyle = 'white'; ctx.fillText(q1 >= 0 ? '+' : '-', ROD_LENGTH, 7);
+            
+            // Đối trọng phía bên kia
+            ctx.beginPath(); ctx.arc(-ROD_LENGTH, 0, 12, 0, Math.PI * 2); ctx.fillStyle = '#64748b'; ctx.fill();
+            ctx.restore();
+
+            if (isActivated) {
+                fValDisplay.innerText = Math.abs(force * 10).toFixed(2);
+                angleDisplay.innerText = (currentAngle * 180 / Math.PI).toFixed(1);
+            }
+        }
+
+        document.getElementById('add-point').addEventListener('click', () => {
+            if (!isActivated) return;
+            const q1 = parseFloat(q1Input.value);
+            const q2 = parseFloat(q2Input.value);
+            const q1x = (canvas.width/2) + Math.cos(currentAngle) * ROD_LENGTH;
+            const q1y = (canvas.height/2) + Math.sin(currentAngle) * ROD_LENGTH;
+            const rawDist = Math.sqrt((q1x - q2Pos.x)**2 + (q1y - q2Pos.y)**2) / 10;
+            const force = (COULOMB_K * Math.abs(q1 * q2)) / (rawDist * rawDist * 100);
+            
+            const rSq = rawDist * rawDist;
+            const invRSq = 1 / rSq;
+
+            chartInvSq.data.datasets[0].data.push({ x: invRSq, y: force });
+            chartInvSq.data.datasets[0].data.sort((a, b) => a.x - b.x);
+            chartInvSq.update();
+
+            chartRSq.data.datasets[0].data.push({ x: rSq, y: force });
+            chartRSq.data.datasets[0].data.sort((a, b) => a.x - b.x);
+            chartRSq.update();
+        });
+
+        document.getElementById('clear-data').addEventListener('click', () => {
+            chartInvSq.data.datasets[0].data = [];
+            chartRSq.data.datasets[0].data = [];
+            chartInvSq.update();
+            chartRSq.update();
+        });
+
+        function resizeCanvas() {
+            const parent = canvas.parentElement;
+            if (parent) {
+                canvas.width = parent.clientWidth;
+                canvas.height = parent.clientHeight;
+                if(!isActivated) { q2Pos = { x: canvas.width - 80, y: canvas.height - 80 }; }
+            }
+        }
+
+        window.onload = () => {
+            resizeCanvas(); initCharts(); updateSimulation();
+        };
+
+        let resizeTimeout;
+        window.onresize = () => {
+            clearTimeout(resizeTimeout);
+            resizeTimeout = setTimeout(resizeCanvas, 200);
+        };
+    </script>
+</body>
+</html>
