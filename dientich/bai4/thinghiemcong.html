@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mô phỏng Công Lực Điện Trường</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+       <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']]
+      }
+    };
+    </script>
+    <style>
+        body {
+            background-color: #f0f2f5;
+            overflow-x: hidden;
+        }
+        canvas {
+            touch-action: none;
+        }
+        .active-tab {
+            background-color: #1f2937 !important;
+            color: white !important;
+        }
+        .active-view {
+            display: block !important;
+        }
+        .hidden-view {
+            display: none !important;
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+    <div class="max-w-6xl mx-auto bg-white rounded-xl shadow-2xl overflow-hidden flex flex-col md:flex-row min-h-[700px]">
+        
+        <!-- Left Panel: Controls & Analysis -->
+        <div class="w-full md:w-96 bg-gray-50 border-r border-gray-200 flex flex-col">
+            <!-- Tab Headers -->
+            <div class="flex border-b border-gray-200">
+                <button onclick="switchView('controls')" id="tab-controls" class="flex-1 py-4 text-sm font-bold uppercase tracking-wider active-tab">Điều khiển</button>
+                <button onclick="switchView('analysis')" id="tab-analysis" class="flex-1 py-4 text-sm font-bold uppercase tracking-wider bg-gray-200 text-gray-600 hover:bg-gray-300 transition-colors">Nhận xét</button>
+            </div>
+
+            <!-- Content Area -->
+            <div class="p-6 overflow-y-auto flex-1">
+                
+                <!-- VIEW 1: CONTROLS -->
+                <div id="view-controls" class="active-view space-y-6">
+                    <!-- Trajectory Selection -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Loại Quỹ Đạo</label>
+                        <div class="grid grid-cols-1 gap-2">
+                            <button onclick="setPathType('straight')" id="btn-straight" class="path-btn active-tab bg-white border border-gray-300 py-2 px-3 rounded-md text-sm hover:bg-gray-100 transition-colors text-left pl-4">1. Đường thẳng</button>
+                            <button onclick="setPathType('curved')" id="btn-curved" class="path-btn bg-white border border-gray-300 py-2 px-3 rounded-md text-sm hover:bg-gray-100 transition-colors text-left pl-4">2. Đường cong (Parabol)</button>
+                            <button onclick="setPathType('random')" id="btn-random" class="path-btn bg-white border border-gray-300 py-2 px-3 rounded-md text-sm hover:bg-gray-100 transition-colors text-left pl-4">3. Tùy ý (Zic-zac)</button>
+                        </div>
+                    </div>
+
+                    <!-- Charge q -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Điện tích $q$ ($\mu C$)</label>
+                        <input type="range" id="chargeInput" min="-10" max="10" step="1" value="5" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                        <div class="flex justify-between text-xs mt-1 text-gray-500">
+                            <span>-10</span>
+                            <span id="chargeVal" class="font-bold text-blue-600">5 μC</span>
+                            <span>10</span>
+                        </div>
+                    </div>
+
+                    <!-- Field Strength -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Điện trường $E$ ($V/m$)</label>
+                        <input type="range" id="fieldInput" min="100" max="2000" step="100" value="500" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                        <div class="flex justify-between text-xs mt-1 text-gray-500">
+                            <span>100</span>
+                            <span id="fieldVal" class="font-bold text-red-600">500 V/m</span>
+                            <span>2000</span>
+                        </div>
+                    </div>
+
+                    <!-- Instantaneous Values -->
+                    <div class="bg-blue-50 p-4 rounded-lg border border-blue-100">
+                        <h3 class="text-sm font-bold text-blue-800 mb-2 uppercase tracking-wider">Giá trị tức thời</h3>
+                        <div class="space-y-2 text-sm text-gray-700">
+                            <p>Vị trí hiện tại $x$: <span id="xCurrent_val" class="font-mono">0</span> m</p>
+                            <p class="font-bold border-t pt-2 mt-2">Độ dời tức thời $d$:</p>
+                            <p id="d_val" class="text-lg text-indigo-700 font-mono">0 m</p>
+                            <p class="font-bold border-t pt-2 mt-2">Công thực hiện $A$:</p>
+                            <p id="workVal" class="text-xl text-green-600 font-bold font-mono">0 J</p>
+                        </div>
+                    </div>
+
+                    <div class="space-y-2">
+                        <button id="startMoveBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg transition-colors font-medium disabled:opacity-50">
+                            Bắt đầu di chuyển
+                        </button>
+                        <button id="resetPointsBtn" class="w-full bg-gray-800 hover:bg-black text-white py-2 rounded-lg transition-colors font-medium">
+                            Chọn lại điểm A, B
+                        </button>
+                    </div>
+                </div>
+
+                <!-- VIEW 2: ANALYSIS (NHẬN XÉT) -->
+                <div id="view-analysis" class="hidden-view space-y-5 animate-in fade-in duration-300">
+                    <h3 class="text-lg font-bold text-gray-800 border-b pb-2">Tổng kết lý thuyết</h3>
+                    
+                    <section>
+                        <h4 class="font-bold text-blue-700 text-sm mb-1">1. Công thức tính công</h4>
+                        <div class="bg-white p-3 rounded border border-gray-200 text-sm italic">
+                            $A_{MN} = q \cdot E \cdot d$
+                        </div>
+                        <ul class="text-xs text-gray-600 mt-2 list-disc ml-4 space-y-1">
+                            <li>$q$: Điện tích ($C$).</li>
+                            <li>$E$: Cường độ điện trường ($V/m$).</li>
+                            <li>$d$: Hình chiếu của quỹ đạo lên phương của $\vec{E}$.</li>
+                        </ul>
+                    </section>
+
+                    <section>
+                        <h4 class="font-bold text-blue-700 text-sm mb-1">2. Tính chất đường đi</h4>
+                        <p class="text-sm text-gray-700 text-justify">
+                            Qua mô phỏng với các quỹ đạo <b>Thẳng, Cong, Tùy ý</b>, ta thấy giá trị công cuối cùng <b>không thay đổi</b> nếu điểm A và B cố định.
+                        </p>
+                        <p class="text-xs font-bold text-red-600 mt-1">
+                            ➔ Công lực điện không phụ thuộc hình dáng đường đi.
+                        </p>
+                    </section>
+
+                    <section>
+                        <h4 class="font-bold text-blue-700 text-sm mb-1">3. Dấu của công ($A$)</h4>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-[10px] border-collapse border border-gray-300">
+                                <thead>
+                                    <tr class="bg-gray-100">
+                                        <th class="border border-gray-300 p-1">Điều kiện</th>
+                                        <th class="border border-gray-300 p-1">q > 0</th>
+                                        <th class="border border-gray-300 p-1">q < 0</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td class="border border-gray-300 p-1 font-bold">Cùng chiều $\vec{E}$ ($d>0$)</td>
+                                        <td class="border border-gray-300 p-1 text-green-600">A > 0 (Phát động)</td>
+                                        <td class="border border-gray-300 p-1 text-red-600">A < 0 (Công cản)</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="border border-gray-300 p-1 font-bold">Ngược chiều $\vec{E}$ ($d<0$)</td>
+                                        <td class="border border-gray-300 p-1 text-red-600">A < 0 (Công cản)</td>
+                                        <td class="border border-gray-300 p-1 text-green-600">A > 0 (Phát động)</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </section>
+                </div>
+
+            </div>
+            
+            <!-- Instructions Footer -->
+            <div class="p-4 text-[10px] text-gray-500 bg-yellow-50 border-t border-yellow-100">
+                * Click vùng mô phỏng để chọn A, B. Quan sát sự thay đổi của $d$ trên trục hoành bên dưới.
+            </div>
+        </div>
+
+        <!-- Right Panel: Simulation -->
+        <div class="flex-1 relative flex flex-col">
+            <div class="p-4 bg-gray-100 border-b flex justify-between items-center">
+                <div class="flex flex-col">
+                    <span class="text-sm font-semibold text-gray-600 uppercase">Môi trường điện trường đều</span>
+                    <span id="statusText" class="text-xs text-blue-500 font-medium italic">Vui lòng click chọn điểm A</span>
+                </div>
+                <div class="flex gap-4">
+                    <div class="flex items-center gap-1"><span class="w-3 h-3 bg-red-500 rounded-full"></span> <span class="text-xs">Bản (+)</span></div>
+                    <div class="flex items-center gap-1"><span class="w-3 h-3 bg-blue-500 rounded-full"></span> <span class="text-xs">Bản (-)</span></div>
+                </div>
+            </div>
+            
+            <div id="canvasContainer" class="flex-1 relative bg-white cursor-crosshair overflow-hidden">
+                <canvas id="simCanvas"></canvas>
+                
+                <!-- Formulas overlay -->
+                <div class="absolute bottom-4 right-4 bg-white/80 backdrop-blur p-3 rounded border border-gray-200 shadow-sm pointer-events-none">
+                    <div class="text-xs font-bold text-gray-500 mb-1 uppercase tracking-tighter">Công thức</div>
+                    <p class="text-sm text-gray-800 font-bold">$A = q \cdot E \cdot d$</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('simCanvas');
+        const ctx = canvas.getContext('2d');
+        const container = document.getElementById('canvasContainer');
+
+        // State variables
+        let q = 5e-6; 
+        let fieldStrength = 500;
+        let posA = null;
+        let posB = null;
+        let currentPos = null;
+        let pathType = 'straight'; 
+        let isMoving = false;
+        let progress = 0; 
+        
+        // UI Elements
+        const chargeInput = document.getElementById('chargeInput');
+        const fieldInput = document.getElementById('fieldInput');
+        const chargeVal = document.getElementById('chargeVal');
+        const fieldVal = document.getElementById('fieldVal');
+        const workVal = document.getElementById('workVal');
+        const dVal = document.getElementById('d_val');
+        const xCurrentVal = document.getElementById('xCurrent_val');
+        const statusText = document.getElementById('statusText');
+        const startMoveBtn = document.getElementById('startMoveBtn');
+        const resetPointsBtn = document.getElementById('resetPointsBtn');
+
+        const PADDING = 60;
+        const SCALE_M = 0.001; 
+
+        function init() {
+            resize();
+            window.addEventListener('resize', resize);
+            canvas.addEventListener('mousedown', handleCanvasClick);
+            
+            chargeInput.addEventListener('input', (e) => {
+                q = parseFloat(e.target.value) * 1e-6;
+                chargeVal.innerText = e.target.value + ' μC';
+                updateCalculations();
+            });
+
+            fieldInput.addEventListener('input', (e) => {
+                fieldStrength = parseFloat(e.target.value);
+                fieldVal.innerText = e.target.value + ' V/m';
+                updateCalculations();
+            });
+
+            startMoveBtn.addEventListener('click', startSimulation);
+            resetPointsBtn.addEventListener('click', resetPoints);
+
+            updateCalculations();
+            animate();
+            checkButtons();
+        }
+
+        // --- View Logic ---
+        function switchView(view) {
+            const controls = document.getElementById('view-controls');
+            const analysis = document.getElementById('view-analysis');
+            const tabControls = document.getElementById('tab-controls');
+            const tabAnalysis = document.getElementById('tab-analysis');
+
+            if (view === 'controls') {
+                controls.className = 'active-view space-y-6';
+                analysis.className = 'hidden-view';
+                tabControls.className = 'flex-1 py-4 text-sm font-bold active-tab uppercase';
+                tabAnalysis.className = 'flex-1 py-4 text-sm font-bold bg-gray-200 text-gray-600 hover:bg-gray-300 uppercase transition-colors';
+            } else {
+                controls.className = 'hidden-view';
+                analysis.className = 'active-view space-y-5 animate-in fade-in duration-300';
+                tabControls.className = 'flex-1 py-4 text-sm font-bold bg-gray-200 text-gray-600 hover:bg-gray-300 uppercase transition-colors';
+                tabAnalysis.className = 'flex-1 py-4 text-sm font-bold active-tab uppercase';
+            }
+        }
+
+        function setPathType(type) {
+            if (isMoving) return;
+            pathType = type;
+            document.querySelectorAll('.path-btn').forEach(btn => {
+                btn.classList.remove('active-tab');
+                btn.classList.add('bg-white', 'text-gray-800');
+            });
+            const activeBtn = document.getElementById(`btn-${type}`);
+            activeBtn.classList.add('active-tab');
+            activeBtn.classList.remove('bg-white', 'text-gray-800');
+        }
+
+        function handleCanvasClick(e) {
+            if (isMoving) return;
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+
+            if (x < PADDING || x > canvas.width - PADDING) return;
+
+            if (!posA) {
+                posA = { x, y };
+                currentPos = { x, y };
+                statusText.innerText = "Đã chọn A, hãy click chọn B";
+            } else if (!posB) {
+                posB = { x, y };
+                statusText.innerText = "Sẵn sàng di chuyển từ A đến B";
+            } else {
+                posA = { x, y };
+                posB = null;
+                currentPos = { x, y };
+                statusText.innerText = "Đã chọn lại A, hãy chọn B";
+            }
+            checkButtons();
+            updateCalculations();
+        }
+
+        function startSimulation() {
+            if (!posA || !posB || isMoving) return;
+            isMoving = true;
+            progress = 0;
+            statusText.innerText = "Điện tích đang di chuyển...";
+            checkButtons();
+        }
+
+        function resetPoints() {
+            isMoving = false;
+            posA = null;
+            posB = null;
+            currentPos = null;
+            progress = 0;
+            statusText.innerText = "Vui lòng click chọn điểm A";
+            checkButtons();
+            updateCalculations();
+        }
+
+        function checkButtons() {
+            startMoveBtn.disabled = (!posA || !posB || isMoving);
+        }
+
+        function getPositionAt(t) {
+            if (!posA || !posB) return null;
+            const dx = posB.x - posA.x;
+            const dy = posB.y - posA.y;
+
+            if (pathType === 'straight') {
+                return { x: posA.x + dx * t, y: posA.y + dy * t };
+            } else if (pathType === 'curved') {
+                const midX = (posA.x + posB.x) / 2;
+                const midY = (posA.y + posB.y) / 2 - 120; 
+                const q1x = posA.x + (midX - posA.x) * t;
+                const q1y = posA.y + (midY - posA.y) * t;
+                const q2x = midX + (posB.x - midX) * t;
+                const q2y = midY + (posB.y - midY) * t;
+                return { x: q1x + (q2x - q1x) * t, y: q1y + (q2y - q1y) * t };
+            } else { // random
+                const freq = 2;
+                const amp = 60;
+                const offsetX = Math.sin(t * Math.PI * freq) * amp * (1 - Math.abs(0.5 - t) * 2);
+                return { x: posA.x + dx * t + offsetX, y: posA.y + dy * t };
+            }
+        }
+
+        function updateCalculations() {
+            if (!posA || !currentPos) {
+                xCurrentVal.innerText = "---";
+                dVal.innerText = "0 m";
+                workVal.innerText = "0 J";
+                return;
+            }
+            const d_pixels = currentPos.x - posA.x;
+            const d_meters = d_pixels * SCALE_M;
+            const work = q * fieldStrength * d_meters;
+            xCurrentVal.innerText = (currentPos.x * SCALE_M).toFixed(3);
+            dVal.innerText = d_meters.toFixed(3) + ' m';
+            if (Math.abs(work) < 1e-6 && work !== 0) {
+                workVal.innerText = work.toExponential(3) + ' J';
+            } else {
+                workVal.innerText = (work * 1000).toFixed(4) + ' mJ';
+            }
+        }
+
+        function drawPlates() {
+            // Left Plate (+)
+            ctx.fillStyle = '#fee2e2';
+            ctx.fillRect(0, 0, PADDING, canvas.height);
+            ctx.fillStyle = '#ef4444';
+            ctx.fillRect(PADDING - 5, 0, 5, canvas.height);
+            
+            // Right Plate (-)
+            ctx.fillStyle = '#dbeafe';
+            ctx.fillRect(canvas.width - PADDING, 0, PADDING, canvas.height);
+            ctx.fillStyle = '#3b82f6';
+            ctx.fillRect(canvas.width - PADDING, 0, 5, canvas.height);
+
+            ctx.font = 'bold 20px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillStyle = '#b91c1c';
+            for(let i=1; i<8; i++) ctx.fillText('+', PADDING/2, (canvas.height/8) * i);
+            ctx.fillStyle = '#1d4ed8';
+            for(let i=1; i<8; i++) ctx.fillText('-', canvas.width - PADDING/2, (canvas.height/8) * i);
+        }
+
+        function drawField() {
+            ctx.strokeStyle = 'rgba(239, 68, 68, 0.1)';
+            ctx.lineWidth = 1;
+            for (let y = 30; y < canvas.height; y += 40) {
+                ctx.beginPath();
+                ctx.moveTo(PADDING + 5, y);
+                ctx.lineTo(canvas.width - PADDING - 5, y);
+                ctx.stroke();
+                // Arrow
+                ctx.beginPath();
+                ctx.moveTo(canvas.width - PADDING - 15, y - 4);
+                ctx.lineTo(canvas.width - PADDING - 5, y);
+                ctx.lineTo(canvas.width - PADDING - 15, y + 4);
+                ctx.stroke();
+            }
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            drawPlates();
+            drawField();
+
+            if (posA && posB) {
+                ctx.beginPath();
+                ctx.setLineDash([4, 4]);
+                ctx.strokeStyle = 'rgba(16, 185, 129, 0.25)';
+                for (let t = 0; t <= 1; t += 0.01) {
+                    const p = getPositionAt(t);
+                    if (t === 0) ctx.moveTo(p.x, p.y);
+                    else ctx.lineTo(p.x, p.y);
+                }
+                ctx.stroke();
+                ctx.setLineDash([]);
+            }
+
+            if (posA) {
+                ctx.fillStyle = '#374151';
+                ctx.beginPath();
+                ctx.arc(posA.x, posA.y, 4, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.font = 'bold 11px Arial';
+                ctx.fillText('A', posA.x, posA.y - 10);
+                
+                // Projection A
+                ctx.setLineDash([2, 2]);
+                ctx.strokeStyle = '#9ca3af';
+                ctx.beginPath();
+                ctx.moveTo(posA.x, posA.y);
+                ctx.lineTo(posA.x, canvas.height - 40);
+                ctx.stroke();
+            }
+
+            if (posB) {
+                ctx.fillStyle = '#374151';
+                ctx.beginPath();
+                ctx.arc(posB.x, posB.y, 4, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillText('B', posB.x, posB.y - 10);
+            }
+
+            if (currentPos) {
+                const color = q > 0 ? '#ef4444' : (q < 0 ? '#3b82f6' : '#9ca3af');
+                ctx.shadowBlur = 8;
+                ctx.shadowColor = color;
+                ctx.fillStyle = color;
+                ctx.beginPath();
+                ctx.arc(currentPos.x, currentPos.y, 9, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.shadowBlur = 0;
+
+                ctx.fillStyle = 'white';
+                ctx.font = 'bold 10px Arial';
+                ctx.fillText(q > 0 ? '+' : (q < 0 ? '-' : '0'), currentPos.x, currentPos.y + 3.5);
+
+                // Current Projection
+                ctx.setLineDash([2, 2]);
+                ctx.strokeStyle = color;
+                ctx.beginPath();
+                ctx.moveTo(currentPos.x, currentPos.y);
+                ctx.lineTo(currentPos.x, canvas.height - 40);
+                ctx.stroke();
+                ctx.setLineDash([]);
+
+                // Axis 'd'
+                const axisY = canvas.height - 40;
+                ctx.lineWidth = 2.5;
+                ctx.strokeStyle = '#4f46e5';
+                ctx.beginPath();
+                ctx.moveTo(posA.x, axisY);
+                ctx.lineTo(currentPos.x, axisY);
+                ctx.stroke();
+                
+                if (Math.abs(currentPos.x - posA.x) > 5) {
+                    const dir = currentPos.x > posA.x ? 1 : -1;
+                    ctx.beginPath();
+                    ctx.moveTo(currentPos.x - 7 * dir, axisY - 4);
+                    ctx.lineTo(currentPos.x, axisY);
+                    ctx.lineTo(currentPos.x - 7 * dir, axisY + 4);
+                    ctx.stroke();
+                }
+                
+                ctx.fillStyle = '#4f46e5';
+                ctx.font = 'bold 12px Arial';
+                ctx.fillText(`d = ${((currentPos.x - posA.x) * SCALE_M).toFixed(3)}m`, (posA.x + currentPos.x)/2, axisY - 8);
+            }
+        }
+
+        function resize() {
+            canvas.width = container.clientWidth;
+            canvas.height = container.clientHeight;
+        }
+
+        function animate() {
+            if (isMoving) {
+                progress += 0.004; 
+                if (progress >= 1) {
+                    progress = 1;
+                    isMoving = false;
+                    statusText.innerText = "Đã hoàn thành di chuyển.";
+                    checkButtons();
+                }
+                currentPos = getPositionAt(progress);
+                updateCalculations();
+            }
+            draw();
+            requestAnimationFrame(animate);
+        }
+
+        init();
+    </script>
+</body>
+</html>
