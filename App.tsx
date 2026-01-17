@@ -166,7 +166,12 @@ const MainView: React.FC<{ isAdmin: boolean; data: AppData; updateData: (d: AppD
           <>
             <header className="px-8 pt-4 border-b bg-white/80 backdrop-blur-md shrink-0">
               <div className="flex justify-between items-center mb-4">
-                <div className="min-w-0"><h2 className="text-xl font-bold uppercase truncate text-slate-800">{selectedNode?.title}</h2><p className="text-[10px] font-medium text-indigo-500 uppercase mt-0.5 tracking-widest">Kết nối tri thức - Khám phá thế giới</p></div>
+                <div className="min-w-0">
+                  <h2 className="text-xl font-bold uppercase truncate text-slate-800">{selectedNode?.title}</h2>
+                  <p key={sloganIdx} className="text-[10px] font-bold text-indigo-500 uppercase mt-0.5 tracking-widest italic animate-in fade-in slide-in-from-left-2 duration-700">
+                    {SLOGANS[sloganIdx]}
+                  </p>
+                </div>
                 <div className="flex items-center gap-3">
                   {selectedNode?.type==='lesson' && <button onClick={()=>setIsQuizOpen(true)} className="flex items-center gap-2 px-6 py-3 bg-indigo-600 text-white rounded-2xl font-bold text-[10px] uppercase shadow-lg hover:bg-indigo-700 transition-all"><BrainCircuit size={18}/> Quiz AI</button>}
                   {selectedNode?.url && <a href={selectedNode.url} target="_blank" className="p-3 bg-slate-50 text-slate-400 rounded-xl hover:bg-slate-100"><Maximize2 size={18}/></a>}
