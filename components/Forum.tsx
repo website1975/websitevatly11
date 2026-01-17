@@ -118,8 +118,8 @@ const Forum: React.FC<ForumProps> = ({ nodeId, isAdmin }) => {
     return data.publicUrl;
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
     if (!name.trim() || (!content.trim() && !selectedFile)) return;
     setLoading(true);
 
@@ -140,7 +140,6 @@ const Forum: React.FC<ForumProps> = ({ nodeId, isAdmin }) => {
       createdAt: new Date().toISOString()
     };
 
-    // Khi insert, Realtime sẽ tự động đẩy tin nhắn mới vào state comments qua channel.on('INSERT')
     const { error } = await supabase.from('forum_comments').insert([newComment]);
     
     if (error) {
@@ -160,8 +159,16 @@ const Forum: React.FC<ForumProps> = ({ nodeId, isAdmin }) => {
   };
 
   const deleteComment = async (id: string) => {
-    // Realtime sẽ tự xóa khỏi UI khi nhận được event DELETE
     await supabase.from('forum_comments').delete().eq('id', id);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    // Nếu nhấn Enter + Ctrl hoặc Enter + Cmd (Mac) thì mới gửi
+    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+      e.preventDefault();
+      handleSubmit();
+    }
+    // Nếu chỉ nhấn Enter, trình duyệt sẽ tự thực hiện xuống dòng trong textarea
   };
 
   return (
@@ -191,7 +198,7 @@ const Forum: React.FC<ForumProps> = ({ nodeId, isAdmin }) => {
                   </div>
                 )}
                 
-                <div className="text-sm leading-relaxed break-words">{renderLatex(c.content)}</div>
+                <div className="text-sm leading-relaxed break-words whitespace-pre-wrap">{renderLatex(c.content)}</div>
               </div>
             </div>
           ))
@@ -225,22 +232,23 @@ const Forum: React.FC<ForumProps> = ({ nodeId, isAdmin }) => {
           )}
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-2">
+        <form onSubmit={handleSubmit} className="space-y-1">
           {!isAdmin && (
             <input value={name} onChange={e => setName(e.target.value)} placeholder="Tên của em..." className="w-full px-3 py-1.5 bg-slate-50 border border-slate-100 rounded-lg text-xs font-bold outline-none focus:border-indigo-300 transition-all" />
           )}
           <div className="flex gap-2 items-end">
-            <div className="flex-1">
+            <div className="flex-1 flex flex-col">
               <textarea 
                 value={content} 
                 onChange={e => setContent(e.target.value)} 
-                onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSubmit(e); } }}
-                placeholder="Hỏi bài hoặc thảo luận tại đây..." 
-                className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl text-xs outline-none focus:border-indigo-400 focus:bg-white transition-all min-h-[44px] max-h-[120px] resize-none" 
+                onKeyDown={handleKeyDown}
+                placeholder="Hỏi bài hoặc thảo luận tại đây... (Nhấn Enter để xuống dòng, Ctrl+Enter để gửi)" 
+                className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl text-xs outline-none focus:border-indigo-400 focus:bg-white transition-all min-h-[60px] max-h-[150px] resize-none" 
               />
+              <span className="text-[8px] text-slate-300 mt-1 ml-2 font-medium">Mẹo: Ctrl + Enter để gửi nhanh</span>
             </div>
             
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-col gap-2 mb-4">
               <input type="file" accept="image/*" ref={fileInputRef} onChange={handleFileChange} className="hidden" />
               <button type="button" onClick={() => fileInputRef.current?.click()} className="p-3 bg-slate-100 text-slate-500 rounded-xl hover:bg-slate-200 transition-all flex items-center justify-center">
                 <ImageIcon size={20} />
