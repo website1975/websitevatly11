@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mô phỏng Điện phổ</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-color: #0f172a;
+            color: white;
+            overflow: hidden;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        canvas {
+            cursor: crosshair;
+            background: radial-gradient(circle, #1e293b 0%, #0f172a 100%);
+        }
+        .control-panel {
+            background: rgba(30, 41, 59, 0.8);
+            backdrop-filter: blur(10px);
+            border-left: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .charge-btn {
+            transition: all 0.2s;
+        }
+        .charge-btn:hover {
+            transform: scale(1.05);
+        }
+        input[type="range"] {
+            accent-color: #3b82f6;
+        }
+    </style>
+</head>
+<body class="flex h-screen w-screen">
+
+    <!-- Panel Trái: Khu vực vẽ mô phỏng -->
+    <div class="flex-grow relative overflow-hidden bg-black">
+        <canvas id="simCanvas"></canvas>
+        <div class="absolute top-4 left-4 pointer-events-none">
+            <h1 class="text-2xl font-bold text-blue-400 drop-shadow-md">PHÒNG THÍ NGHIỆM ĐIỆN PHỔ</h1>
+            <p class="text-sm text-slate-400">Kéo điện tích để di chuyển | Chuột phải để xóa</p>
+        </div>
+    </div>
+
+    <!-- Panel Phải: Bảng điều khiển -->
+    <div class="w-80 control-panel p-6 flex flex-col gap-6">
+        <section>
+            <h2 class="text-lg font-semibold mb-4 border-b border-slate-700 pb-2 flex items-center gap-2">
+                <span>⚡</span> Cài đặt điện tích
+            </h2>
+            <div class="grid grid-cols-2 gap-4">
+                <button id="addPositive" class="charge-btn bg-red-600 hover:bg-red-500 py-3 rounded-lg font-bold shadow-lg shadow-red-900/20">
+                    + Dương
+                </button>
+                <button id="addNegative" class="charge-btn bg-blue-600 hover:bg-blue-500 py-3 rounded-lg font-bold shadow-lg shadow-blue-900/20">
+                    - Âm
+                </button>
+            </div>
+            <button id="clearAll" class="w-full mt-4 bg-slate-700 hover:bg-slate-600 py-2 rounded text-sm transition-colors">
+                Xóa tất cả
+            </button>
+        </section>
+
+        <section>
+            <h2 class="text-lg font-semibold mb-2 border-b border-slate-700 pb-2 flex items-center gap-2">
+                <span>✨</span> Mật độ bột mịn
+            </h2>
+            <input type="range" id="particleDensity" min="500" max="5000" value="2500" class="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer">
+            <div class="flex justify-between text-xs text-slate-400 mt-2">
+                <span>Thưa</span>
+                <span id="densityValue">2500 hạt</span>
+                <span>Dày đặc</span>
+            </div>
+        </section>
+
+        <section>
+            <h2 class="text-lg font-semibold mb-2 border-b border-slate-700 pb-2 flex items-center gap-2">
+                <span>📏</span> Độ dài hạt
+            </h2>
+            <input type="range" id="particleLength" min="2" max="15" value="6" class="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer">
+            <div class="flex justify-between text-xs text-slate-400 mt-2">
+                <span>Ngắn</span>
+                <span id="lengthValue">6px</span>
+                <span>Dài</span>
+            </div>
+        </section>
+
+        <section class="mt-auto">
+            <div class="bg-slate-800/50 p-4 rounded-xl border border-slate-700">
+                <h3 class="text-sm font-bold text-blue-300 mb-2 underline">Giải thích vật lý:</h3>
+                <p class="text-xs leading-relaxed text-slate-300 italic">
+                    Hệ thống tự động tập trung các hạt vào nơi có cường độ điện trường mạnh nhất để làm nổi bật hình dạng đường sức quanh vật mang điện.
+                </p>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        (function() {
+            const canvas = document.getElementById('simCanvas');
+            const ctx = canvas.getContext('2d');
+            const addPosBtn = document.getElementById('addPositive');
+            const addNegBtn = document.getElementById('addNegative');
+            const clearBtn = document.getElementById('clearAll');
+            const densitySlider = document.getElementById('particleDensity');
+            const densityLabel = document.getElementById('densityValue');
+            const lengthSlider = document.getElementById('particleLength');
+            const lengthLabel = document.getElementById('lengthValue');
+
+            let charges = [];
+            let particles = [];
+            let isDragging = false;
+            let dragTarget = null;
+
+            const K_CONST = 6000; 
+            
+            class Charge {
+                constructor(x, y, q) {
+                    this.x = x;
+                    this.y = y;
+                    this.q = q;
+                    this.radius = 16;
+                }
+
+                draw() {
+                    ctx.save();
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                    ctx.fillStyle = this.q > 0 ? '#ef4444' : '#3b82f6';
+                    ctx.shadowBlur = 20;
+                    ctx.shadowColor = this.q > 0 ? 'rgba(239, 68, 68, 0.6)' : 'rgba(59, 130, 246, 0.6)';
+                    ctx.fill();
+                    
+                    ctx.fillStyle = 'white';
+                    ctx.font = 'bold 20px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(this.q > 0 ? '+' : '-', this.x, this.y);
+                    ctx.restore();
+                }
+            }
+
+            class Particle {
+                constructor() {
+                    this.init();
+                }
+
+                init() {
+                    // Cải tiến: Phân bổ hạt ưu tiên khu vực gần điện tích
+                    if (charges.length > 0 && Math.random() > 0.3) {
+                        const target = charges[Math.floor(Math.random() * charges.length)];
+                        const angle = Math.random() * Math.PI * 2;
+                        const dist = 30 + Math.random() * 300; // Tập trung trong bán kính 300px
+                        this.x = target.x + Math.cos(angle) * dist;
+                        this.y = target.y + Math.sin(angle) * dist;
+                    } else {
+                        this.x = Math.random() * canvas.width;
+                        this.y = Math.random() * canvas.height;
+                    }
+                    this.angle = 0;
+                    this.opacity = Math.random() * 0.4 + 0.2;
+                }
+
+                update() {
+                    if (charges.length === 0) return;
+
+                    let Ex = 0;
+                    let Ey = 0;
+
+                    charges.forEach(c => {
+                        const dx = this.x - c.x;
+                        const dy = this.y - c.y;
+                        const r2 = dx * dx + dy * dy;
+                        const r = Math.sqrt(r2);
+                        if (r < 10) return;
+
+                        const E = (K_CONST * c.q) / r2;
+                        Ex += E * (dx / r);
+                        Ey += E * (dy / r);
+                    });
+
+                    this.angle = Math.atan2(Ey, Ex);
+                }
+
+                draw() {
+                    const len = parseInt(lengthSlider.value);
+                    ctx.save();
+                    ctx.translate(this.x, this.y);
+                    ctx.rotate(this.angle);
+                    
+                    ctx.beginPath();
+                    ctx.moveTo(-len/2, 0);
+                    ctx.lineTo(len/2, 0);
+                    ctx.strokeStyle = `rgba(200, 220, 255, ${this.opacity})`;
+                    ctx.lineWidth = 1.2;
+                    ctx.stroke();
+                    
+                    ctx.restore();
+                }
+            }
+
+            function createParticles() {
+                const count = parseInt(densitySlider.value);
+                densityLabel.innerText = `${count} hạt`;
+                lengthLabel.innerText = `${lengthSlider.value}px`;
+                particles = [];
+                for (let i = 0; i < count; i++) {
+                    particles.push(new Particle());
+                }
+            }
+
+            function resize() {
+                if (!canvas.parentElement) return;
+                canvas.width = canvas.parentElement.clientWidth;
+                canvas.height = canvas.parentElement.clientHeight;
+                createParticles();
+            }
+
+            function animate() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                
+                // Vẽ lưới nền mờ
+                ctx.beginPath();
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.02)';
+                for(let i=0; i<canvas.width; i+=40) {
+                    ctx.moveTo(i, 0); ctx.lineTo(i, canvas.height);
+                }
+                for(let i=0; i<canvas.height; i+=40) {
+                    ctx.moveTo(0, i); ctx.lineTo(canvas.width, i);
+                }
+                ctx.stroke();
+
+                particles.forEach(p => {
+                    p.update();
+                    p.draw();
+                });
+                charges.forEach(c => c.draw());
+                requestAnimationFrame(animate);
+            }
+
+            function init() {
+                resize();
+                charges.push(new Charge(canvas.width/2 - 120, canvas.height/2, 1));
+                charges.push(new Charge(canvas.width/2 + 120, canvas.height/2, -1));
+                animate();
+            }
+
+            window.addEventListener('resize', resize);
+
+            canvas.addEventListener('mousedown', e => {
+                const rect = canvas.getBoundingClientRect();
+                const mx = e.clientX - rect.left;
+                const my = e.clientY - rect.top;
+                charges.forEach(c => {
+                    const dist = Math.hypot(c.x - mx, c.y - my);
+                    if (dist < c.radius * 2) {
+                        dragTarget = c;
+                        isDragging = true;
+                    }
+                });
+            });
+
+            window.addEventListener('mousemove', e => {
+                const rect = canvas.getBoundingClientRect();
+                const mx = e.clientX - rect.left;
+                const my = e.clientY - rect.top;
+
+                if (isDragging && dragTarget) {
+                    dragTarget.x = mx;
+                    dragTarget.y = my;
+                }
+            });
+
+            window.addEventListener('mouseup', () => {
+                isDragging = false;
+                dragTarget = null;
+            });
+
+            canvas.addEventListener('contextmenu', e => {
+                e.preventDefault();
+                const rect = canvas.getBoundingClientRect();
+                const mx = e.clientX - rect.left;
+                const my = e.clientY - rect.top;
+                charges = charges.filter(c => Math.hypot(c.x - mx, c.y - my) > c.radius * 2);
+            });
+
+            addPosBtn.onclick = () => {
+                charges.push(new Charge(canvas.width/2, canvas.height/2, 1));
+                createParticles(); // Tái tạo để phân bổ lại hạt
+            };
+            addNegBtn.onclick = () => {
+                charges.push(new Charge(canvas.width/2, canvas.height/2, -1));
+                createParticles();
+            };
+            clearBtn.onclick = () => {
+                charges = [];
+                createParticles();
+            };
+            densitySlider.oninput = createParticles;
+            lengthSlider.oninput = () => {
+                lengthLabel.innerText = `${lengthSlider.value}px`;
+            };
+
+            init();
+        })();
+    </script>
+</body>
+</html>
