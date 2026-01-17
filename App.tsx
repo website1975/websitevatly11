@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useCallback } from 'https://esm.sh/react@^19.2.3';
 import { Routes, Route, useNavigate, Navigate } from 'https://esm.sh/react-router-dom@^6.22.3';
-import { Book, Pencil, Plus, Maximize2, Loader2, LogOut, KeyRound, Trash2, AlertTriangle, CloudCheck, BrainCircuit, Users, Copy, Check, ShieldCheck, GraduationCap, MessageSquare, FileText } from 'https://esm.sh/lucide-react@^0.562.0';
+import { Book, Pencil, Plus, Maximize2, Loader2, LogOut, KeyRound, Trash2, AlertTriangle, CloudCheck, BrainCircuit, Users, Copy, Check, ShieldCheck, GraduationCap, MessageSquare, FileText, Sparkles } from 'https://esm.sh/lucide-react@^0.562.0';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { BookNode, NodeType, AppData, ResourceLink } from './types';
 import { INITIAL_DATA } from './constants';
@@ -109,9 +109,18 @@ const MainView: React.FC<{ isAdmin: boolean; data: AppData; updateData: (d: AppD
   const [activeTab, setActiveTab] = useState<'content' | 'forum'>('content');
   const [isQuizOpen, setIsQuizOpen] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [sloganIdx, setSloganIdx] = useState(0);
   const navigate = useNavigate();
 
   const selectedNode = data.nodes.find(n => n.id === selectedId);
+
+  // Slogan rotation logic (50 seconds)
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setSloganIdx(prev => (prev + 1) % SLOGANS.length);
+    }, 50000);
+    return () => clearInterval(timer);
+  }, []);
 
   // Modals Local State
   const [showNodeModal, setShowNodeModal] = useState(false);
@@ -184,9 +193,21 @@ const MainView: React.FC<{ isAdmin: boolean; data: AppData; updateData: (d: AppD
           </>
         ) : (
           <div className="flex-1 flex flex-col items-center justify-center text-slate-200 p-10 text-center animate-in fade-in duration-1000">
-             <Book size={80} className="mb-4 opacity-20"/>
-             <h2 className="text-xl font-bold uppercase tracking-tighter">Vui lòng chọn một đề mục</h2>
-             <p className="text-[10px] font-bold uppercase tracking-[0.2em] mt-2 text-slate-300">"Học vật lý để thấu hiểu quy luật tự nhiên"</p>
+             <div className="relative mb-6">
+                <Book size={100} className="opacity-10 text-indigo-500"/>
+                <Sparkles size={32} className="absolute -top-4 -right-4 text-amber-400 opacity-50 animate-pulse"/>
+             </div>
+             <h2 className="text-2xl font-black uppercase tracking-tighter text-slate-400">Chọn một bài học để bắt đầu</h2>
+             <div className="mt-8 max-w-lg p-6 bg-white/50 backdrop-blur-sm rounded-3xl border border-slate-100 shadow-sm animate-in slide-in-from-bottom-4 duration-700">
+                <p key={sloganIdx} className="text-xs font-bold uppercase tracking-wider text-indigo-500/80 leading-relaxed italic animate-in fade-in slide-in-from-right-4 duration-1000">
+                  {SLOGANS[sloganIdx]}
+                </p>
+                <div className="mt-4 flex justify-center gap-1">
+                   {SLOGANS.map((_, i) => (
+                     <div key={i} className={`h-1 rounded-full transition-all duration-500 ${i === sloganIdx ? 'w-8 bg-indigo-500' : 'w-2 bg-slate-200'}`} />
+                   ))}
+                </div>
+             </div>
           </div>
         )}
       </main>
