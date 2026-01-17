@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bài 17: Công của lực điện</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']]
+      }
+    };
+    </script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+        }
+        .math {
+            font-family: 'Times New Roman', Times, serif;
+            font-style: italic;
+            font-weight: bold;
+            color: #1d4ed8;
+        }
+        .section-card {
+            background: white;
+            border-radius: 1rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            border: 1px solid #e5e7eb;
+            margin-bottom: 2rem;
+            overflow: hidden;
+        }
+        .section-header {
+            background: linear-gradient(to right, #0d9488, #0f766e);
+            color: white;
+            padding: 1rem 1.5rem;
+            font-weight: bold;
+            font-size: 1.25rem;
+            text-transform: uppercase;
+        }
+        .exercise-box {
+            background-color: #fff7ed;
+            border: 1px solid #ffedd5;
+            padding: 1.5rem;
+            border-radius: 0.75rem;
+            margin-bottom: 1.5rem;
+        }
+        .formula-display {
+            background: #f0fdfa;
+            border: 1px solid #ccfbf1;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            text-align: center;
+            margin: 1rem 0;
+        }
+        .explain-box {
+            background: #f8fafc;
+            border-left: 4px solid #0d9488;
+            padding: 1rem;
+            margin-top: 1rem;
+        }
+        .highlight-text {
+            color: #0d9488;
+            font-weight: 600;
+        }
+        .image-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            margin: 1.5rem 0;
+            padding: 1rem;
+            background: #f9fafb;
+            border-radius: 0.75rem;
+            border: 1px solid #f3f4f6;
+        }
+        .image-caption {
+            font-size: 0.875rem;
+            color: #6b7280;
+            margin-top: 0.5rem;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+
+    <!-- Header -->
+    <header class="bg-teal-600 text-white py-10 px-4 text-center shadow-lg mb-8">
+        <h1 class="text-3xl font-extrabold uppercase tracking-widest">Chương 3: Điện tích - Điện trường</h1>
+        <p class="mt-2 text-xl opacity-90">Bài 17: Công của lực điện</p>
+    </header>
+
+    <div class="max-w-4xl mx-auto px-4 pb-12">
+        
+        <!-- Phần I -->
+        <div class="section-card">
+            <div class="section-header">I. Công của lực điện</div>
+            <div class="p-6">
+                <h3 class="text-lg font-bold text-teal-700 mb-2">1. Đặc điểm của lực điện tác dụng lên điện tích trong điện trường đều</h3>
+                <p class="mb-4">Khi đặt một điện tích $q$ tại một điểm $M$ trong điện trường đều $\vec{E}$, nó chịu tác dụng của lực điện:</p>
+                
+                <div class="formula-display">
+                    <span class="text-2xl math">$\vec{F} = q\vec{E}$</span>
+                </div>
+
+                <div class="image-container">
+                    <!-- Thay 'link_hinh_4_1' bằng link của bạn -->
+                    <img src="hinh1.png" alt="Hình 4.1: Lực điện tác dụng lên điện tích q" onerror="this.src='https://placehold.co/600x200?text=Hình+4.1:+Lực+điện+tác+dụng+lên+điện+tích+q'" class="max-w-full h-auto rounded-lg shadow-sm">
+                    <p class="image-caption">Hình 4.1: Lực điện tác dụng lên điện tích q trong điện trường đều</p>
+                </div>
+
+                <div class="explain-box mt-4">
+                    <ul class="list-disc pl-6 space-y-1">
+                        <li>Nếu $q > 0$: $\vec{F}$ cùng chiều với $\vec{E}$.</li>
+                        <li>Nếu $q < 0$: $\vec{F}$ ngược chiều với $\vec{E}$.</li>
+                        <li>Độ lớn: <span class="math">$F = |q|E$</span>.</li>
+                    </ul>
+                </div>
+
+                <h3 class="text-lg font-bold text-teal-700 mt-6 mb-2">2. Công của lực điện trong điện trường đều</h3>
+                <p class="mb-4">Điện tích $q$ di chuyển từ $M$ đến $N$ theo đường thẳng, hợp với đường sức góc $\alpha$:</p>
+                
+                <div class="image-container">
+                    <!-- Thay 'link_hinh_4_2' bằng link của bạn -->
+                    <img src="hinh2.png" alt="Hình 4.2: Di chuyển của điện tích q" onerror="this.src='https://placehold.co/600x200?text=Hình+4.2:+Công+của+lực+điện+khi+di+chuyển+từ+M+đến+N'" class="max-w-full h-auto rounded-lg shadow-sm">
+                    <p class="image-caption">Hình 4.2: Công của lực điện khi điện tích di chuyển từ M đến N</p>
+                </div>
+
+                <div class="formula-display">
+                    <span class="text-2xl math">$A_{MN} = qEd$</span>
+                </div>
+
+                <div class="p-4 bg-yellow-50 rounded-lg text-sm italic border border-yellow-100">
+                    <p>Trong đó <span class="font-bold">$d = \overline{MH} = MN \cdot \cos\alpha$</span> là độ dài đại số của hình chiếu của đường đi trên một đường sức điện.</p>
+                </div>
+
+                <h3 class="text-lg font-bold text-teal-700 mt-6 mb-2">3. Công của lực điện trong điện trường bất kì</h3>
+                <p class="italic mb-4 text-gray-700">Công của lực điện trong sự di chuyển của một điện tích $q$ từ điểm $M$ đến điểm $N$ trong một điện trường bất kì:</p>
+                <ul class="list-disc pl-6 space-y-2">
+                    <li><span class="highlight-text">Tính chất:</span> Không phụ thuộc hình dạng đường đi, chỉ phụ thuộc vị trí điểm đầu $M$ và điểm cuối $N$.</li>
+                    <li><span class="highlight-text">Kết luận:</span> Trường tĩnh điện là một <span class="font-bold text-teal-800">trường thế</span>.</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Phần II -->
+        <div class="section-card">
+            <div class="section-header">II. Thế năng của một điện tích trong điện trường</div>
+            <div class="p-6">
+                <h3 class="text-lg font-bold text-teal-700 mb-2">1. Khái niệm</h3>
+                <p class="mb-4">Thế năng đặc trưng cho <span class="font-semibold italic">khả năng sinh công</span> của điện trường khi đặt điện tích tại đó.</p>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="p-4 bg-teal-50 border border-teal-100 rounded-lg">
+                        <p class="font-bold text-teal-800 underline">Trong điện trường đều:</p>
+                        <p class="py-2 text-center text-xl math">$W_M = qEd$</p>
+                        <p class="text-xs text-gray-600 mt-1">(Mốc tại bản âm)</p>
+                    </div>
+                    <div class="p-4 bg-gray-100 border border-gray-200 rounded-lg">
+                        <p class="font-bold text-gray-800 underline">Trong điện trường bất kì:</p>
+                        <p class="py-2 text-center text-xl math">$W_M = A_{M\infty}$</p>
+                        <p class="text-xs text-gray-600 mt-1">(Mốc tại vô cực)</p>
+                    </div>
+                </div>
+
+                <h3 class="text-lg font-bold text-teal-700 mt-6 mb-2">2. Sự phụ thuộc của thế năng vào điện tích q</h3>
+                <div class="explain-box">
+                    <p class="py-2 text-center text-xl math">$W_M = V_M \cdot q$</p>
+                    <p class="text-sm italic text-gray-600">($V_M$ là hệ số tỉ lệ chỉ phụ thuộc vào vị trí điểm M)</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Phần III -->
+        <div class="section-card">
+            <div class="section-header">III. Công của lực điện và độ giảm thế năng</div>
+            <div class="p-6">
+                <div class="bg-teal-50 p-6 rounded-xl border-2 border-dashed border-teal-300 text-center">
+                    <p class="text-lg italic text-gray-800 mb-4">
+                        "Công của lực điện bằng độ giảm thế năng của điện tích."
+                    </p>
+                    <div class="formula-display bg-white inline-block px-8">
+                        <span class="text-2xl math">$A_{MN} = W_M - W_N$</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Phần IV -->
+        <div class="section-card">
+            <div class="section-header">IV. Câu hỏi lý thuyết (C1-C3)</div>
+            <div class="p-6">
+                <div class="exercise-box">
+                    <h3 class="font-bold text-lg text-orange-800">Câu hỏi C1</h3>
+                    <p class="mt-2 text-gray-700 font-semibold italic">Chứng minh công lực điện không phụ thuộc đường đi.</p>
+                    <div class="mt-3 p-3 bg-white rounded border border-orange-200 text-sm">
+                        <p>Ta chia đường cong thành các đoạn nhỏ $\Delta s$. Hình chiếu mỗi đoạn lên phương đường sức là $\Delta d$. Tổng công $A = \sum qE \Delta d = qE \sum \Delta d = qEd$. Vì tổng hình chiếu luôn không đổi với mọi đường đi giữa M và N nên công không phụ thuộc hình dạng đường đi.</p>
+                    </div>
+                </div>
+
+                <div class="exercise-box">
+                    <h3 class="font-bold text-lg text-orange-800">Câu hỏi C2</h3>
+                    <p class="mt-2 text-gray-700 font-semibold italic">Công lực điện trên đường cong kín?</p>
+                    <div class="mt-3 p-3 bg-white rounded border border-orange-200 text-sm">
+                        <p>Công bằng <strong>0</strong>. Do điểm đầu và cuối trùng nhau nên hình chiếu tổng cộng $d = 0$.</p>
+                    </div>
+                </div>
+
+                <div class="exercise-box">
+                    <h3 class="font-bold text-lg text-orange-800">Câu hỏi C3</h3>
+                    <p class="mt-2 text-gray-700 font-semibold italic">Công thức thế năng tại M (mốc tại bản âm).</p>
+                    <div class="mt-3 p-3 bg-white rounded border border-orange-200 text-sm">
+                        <p><span class="math">$W_M = qEd$</span> ($d$ là khoảng cách từ M đến bản âm).</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Phần V -->
+        <div class="section-card">
+            <div class="section-header">V. Bài tập vận dụng</div>
+            <div class="p-6">
+                <div class="exercise-box">
+                    <h3 class="font-bold text-lg text-blue-800">Bài 1: Công dịch chuyển Electron</h3>
+                    <p class="mt-2 text-gray-700">Electron di chuyển 1 cm dọc theo đường sức ($E = 1000 V/m$).</p>
+                    <div class="mt-3 p-3 bg-white rounded border border-blue-200 text-sm">
+                        <p class="math">$A = qEd = (-1,6.10^{-19}) \cdot 1000 \cdot 0,01 = -1,6.10^{-18} J$.</p>
+                    </div>
+                </div>
+
+                <div class="exercise-box">
+                    <h3 class="font-bold text-lg text-blue-800">Bài 2: Tính cường độ điện trường</h3>
+                    <p class="mt-2 text-gray-700">Điện tích $q = 2 \mu C$ di chuyển 5 cm song song đường sức, công $A = 10^{-4} J$.</p>
+                    <div class="mt-3 p-3 bg-white rounded border border-blue-200 text-sm">
+                        <p class="math">$E = \frac{A}{qd} = \frac{10^{-4}}{2.10^{-6} \cdot 0,05} = 1000 V/m$.</p>
+                    </div>
+                </div>
+
+                <div class="exercise-box">
+                    <h3 class="font-bold text-lg text-blue-800">Bài 3: Biến thiên động năng</h3>
+                    <p class="mt-2 text-gray-700">Điện tích $q = 10^{-8} C$ di chuyển từ nghỉ tại M đến N ($MN=10cm, \alpha=60^\circ, E=2000V/m$). Tính $v_N$ biết $m = 10^{-10} kg$.</p>
+                    <div class="mt-3 p-3 bg-white rounded border border-blue-200 text-sm">
+                        <p>- Công $A = qE \cdot MN \cdot \cos 60^\circ = 10^{-6} J$.</p>
+                        <p>- Vận tốc: $v_N = \sqrt{\frac{2A}{m}} = \sqrt{\frac{2 \cdot 10^{-6}}{10^{-10}}} \approx 141,4 m/s$.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <footer class="bg-gray-800 text-white text-center py-6">
+        <p class="text-sm opacity-75">&copy; 2024 - Tài liệu học tập Vật lí 11</p>
+    </footer>
+
+</body>
+</html>
