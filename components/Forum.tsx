@@ -1,6 +1,6 @@
 
-import React, { useState, useEffect, useRef } from 'https://esm.sh/react@^19.2.3';
-import { MessageSquare, Send, Trash2, Info, Image as ImageIcon, X, Loader2 } from 'https://esm.sh/lucide-react@^0.562.0';
+import React, { useState, useEffect, useRef, useCallback } from 'https://esm.sh/react@^19.2.3';
+import { MessageSquare, Send, Trash2, Info, Image as ImageIcon, X, Loader2, Wifi, WifiOff, RefreshCw, ChevronDown } from 'https://esm.sh/lucide-react@^0.562.0';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { ForumComment } from '../types';
 import { renderLatex } from '../utils';
@@ -33,63 +33,95 @@ const Forum: React.FC<ForumProps> = ({ nodeId, isAdmin }) => {
   const [uploading, setUploading] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [isConnected, setIsConnected] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [showScrollBtn, setShowScrollBtn] = useState(false);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // Hàm cuộn xuống cuối
-  const scrollToBottom = () => {
+  const scrollToBottom = useCallback((behavior: ScrollBehavior = 'smooth') => {
     if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+      scrollRef.current.scrollTo({
+        top: scrollRef.current.scrollHeight,
+        behavior
+      });
+    }
+  }, []);
+
+  const handleScroll = () => {
+    if (scrollRef.current) {
+      const { scrollTop, scrollHeight, clientHeight } = scrollRef.current;
+      const isAtBottom = scrollHeight - scrollTop - clientHeight < 100;
+      setShowScrollBtn(!isAtBottom);
     }
   };
 
-  const fetchComments = async () => {
-    const { data } = await supabase
+  const fetchComments = async (silent = false) => {
+    if (!silent) setIsRefreshing(true);
+    const { data, error } = await supabase
       .from('forum_comments')
       .select('*')
       .eq('nodeId', nodeId)
       .order('createdAt', { ascending: true });
+    
     if (data) {
       setComments(data);
-      setTimeout(scrollToBottom, 100);
+      // Chỉ tự động cuộn nếu là lần đầu tải hoặc đang ở gần cuối
+      if (!silent) {
+        setTimeout(() => scrollToBottom('auto'), 50);
+      }
     }
+    setIsRefreshing(false);
   };
 
   useEffect(() => {
+    // 1. Lấy dữ liệu ban đầu
     fetchComments();
 
-    // THIẾT LẬP REALTIME SUBSCRIPTION
+    // 2. Lắng nghe Realtime
     const channel = supabase
-      .channel(`forum-realtime-${nodeId}`)
+      .channel(`public:forum_comments:${nodeId}`)
       .on(
         'postgres_changes',
-        {
-          event: '*', // Lắng nghe mọi thay đổi (INSERT, UPDATE, DELETE)
-          schema: 'public',
+        { 
+          event: '*', 
+          schema: 'public', 
           table: 'forum_comments',
-          filter: `nodeId=eq.${nodeId}` // Chỉ lấy thay đổi của bài học hiện tại
+          filter: `nodeId=eq.${nodeId}` 
         },
         (payload) => {
           if (payload.eventType === 'INSERT') {
             const newComment = payload.new as ForumComment;
             setComments(prev => {
-              // Tránh trùng lặp nếu chính mình vừa gửi và fetch lại
-              if (prev.some(c => c.id === newComment.id)) return prev;
+              if (prev.find(c => c.id === newComment.id)) return prev;
               return [...prev, newComment];
             });
-            setTimeout(scrollToBottom, 100);
+            
+            // Nếu người dùng đang ở gần cuối trang thì tự cuộn xuống
+            if (scrollRef.current) {
+              const { scrollTop, scrollHeight, clientHeight } = scrollRef.current;
+              if (scrollHeight - scrollTop - clientHeight < 200) {
+                setTimeout(() => scrollToBottom('smooth'), 100);
+              }
+            }
           } else if (payload.eventType === 'DELETE') {
             setComments(prev => prev.filter(c => c.id !== payload.old.id));
           }
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        setIsConnected(status === 'SUBSCRIBED');
+      });
+
+    // 3. Dự phòng: Quét mỗi 10s nếu Realtime có vấn đề
+    const fallback = setInterval(() => fetchComments(true), 10000);
 
     return () => {
       supabase.removeChannel(channel);
+      clearInterval(fallback);
     };
-  }, [nodeId]);
+  }, [nodeId, scrollToBottom]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -143,12 +175,13 @@ const Forum: React.FC<ForumProps> = ({ nodeId, isAdmin }) => {
     const { error } = await supabase.from('forum_comments').insert([newComment]);
     
     if (error) {
-      alert("Không thể gửi tin nhắn. Thử lại sau.");
+      alert("Lỗi gửi tin: " + error.message);
     } else {
       setContent('');
       setSelectedFile(null);
       setPreviewUrl(null);
       if (!isAdmin) setName('');
+      scrollToBottom('smooth');
     }
     
     setLoading(false);
@@ -163,37 +196,50 @@ const Forum: React.FC<ForumProps> = ({ nodeId, isAdmin }) => {
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    // Nếu nhấn Enter + Ctrl hoặc Enter + Cmd (Mac) thì mới gửi
     if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
       e.preventDefault();
       handleSubmit();
     }
-    // Nếu chỉ nhấn Enter, trình duyệt sẽ tự thực hiện xuống dòng trong textarea
   };
 
   return (
-    <div className="flex flex-col h-full bg-slate-50">
+    <div className="flex flex-col h-full bg-slate-50 relative">
+      {/* Header Status */}
+      <div className="bg-white/80 backdrop-blur-sm px-4 py-1.5 border-b flex justify-between items-center shrink-0 z-10">
+        <div className="flex items-center gap-2">
+          {isConnected ? (
+            <span className="flex items-center gap-1 text-[8px] font-black text-green-500 uppercase tracking-tighter"><Wifi size={10}/> Kết nối trực tiếp</span>
+          ) : (
+            <span className="flex items-center gap-1 text-[8px] font-black text-amber-500 uppercase tracking-tighter animate-pulse"><WifiOff size={10}/> Đang thử kết nối...</span>
+          )}
+        </div>
+        <button onClick={() => fetchComments()} className="p-1 text-slate-300 hover:text-indigo-500 transition-colors">
+          <RefreshCw size={12} className={isRefreshing ? 'animate-spin' : ''}/>
+        </button>
+      </div>
+
       <div 
         ref={scrollRef}
+        onScroll={handleScroll}
         className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar scroll-smooth"
       >
-        {comments.length === 0 ? (
-          <div className="h-full flex flex-col items-center justify-center text-slate-300 space-y-2">
-            <MessageSquare size={48} className="opacity-20" />
-            <p className="text-[10px] font-bold uppercase tracking-widest">Chưa có thảo luận nào</p>
+        {comments.length === 0 && !isRefreshing ? (
+          <div className="h-full flex flex-col items-center justify-center text-slate-300 space-y-2 opacity-50">
+            <MessageSquare size={48} />
+            <p className="text-[10px] font-bold uppercase tracking-widest">Bắt đầu thảo luận...</p>
           </div>
         ) : (
-          comments.map(c => (
-            <div key={c.id} className={`flex flex-col animate-in fade-in slide-in-from-bottom-2 duration-300 ${c.isAdmin ? 'items-end' : 'items-start'}`}>
+          comments.map((c, idx) => (
+            <div key={c.id || idx} className={`flex flex-col animate-in fade-in slide-in-from-bottom-2 duration-300 ${c.isAdmin ? 'items-end' : 'items-start'}`}>
               <div className={`max-w-[85%] rounded-2xl p-3 shadow-sm ${c.isAdmin ? 'bg-indigo-600 text-white rounded-tr-none' : 'bg-white text-slate-800 rounded-tl-none border border-slate-100'}`}>
                 <div className="flex items-center gap-2 mb-1">
                   <span className={`text-[8px] font-black uppercase tracking-tighter ${c.isAdmin ? 'text-indigo-200' : 'text-indigo-500'}`}>{c.author}</span>
                   <span className={`text-[7px] opacity-50 ${c.isAdmin ? 'text-white' : 'text-slate-400'}`}>{new Date(c.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
-                  {isAdmin && <button onClick={() => deleteComment(c.id)} className="ml-auto hover:text-red-300 transition-colors"><Trash2 size={10}/></button>}
+                  {isAdmin && <button onClick={() => deleteComment(c.id)} className="ml-auto hover:text-red-300 transition-colors opacity-50 hover:opacity-100"><Trash2 size={10}/></button>}
                 </div>
                 
                 {c.imageUrl && (
-                  <div className="mb-2 rounded-lg overflow-hidden border border-slate-100 bg-slate-50">
+                  <div className="mb-2 rounded-lg overflow-hidden border border-slate-100 bg-slate-50/10">
                     <img src={c.imageUrl} alt="Attachment" className="max-w-full max-h-60 object-contain cursor-zoom-in" onClick={() => window.open(c.imageUrl, '_blank')} />
                   </div>
                 )}
@@ -205,17 +251,22 @@ const Forum: React.FC<ForumProps> = ({ nodeId, isAdmin }) => {
         )}
       </div>
 
-      <div className="p-4 bg-white border-t space-y-3 shadow-[0_-10px_20px_rgba(0,0,0,0.02)]">
-        {/* Math Toolbar */}
-        <div className="flex gap-1 overflow-x-auto pb-2 no-scrollbar">
+      {/* Nút cuộn xuống nhanh */}
+      {showScrollBtn && (
+        <button onClick={() => scrollToBottom()} className="absolute bottom-32 right-6 p-2 bg-white shadow-xl border border-slate-100 rounded-full text-indigo-600 animate-bounce z-20 hover:scale-110 transition-transform">
+          <ChevronDown size={20} />
+        </button>
+      )}
+
+      <div className="p-4 bg-white border-t space-y-3 shadow-[0_-10px_20px_rgba(0,0,0,0.02)] z-10">
+        <div className="flex gap-1 overflow-x-auto pb-1 no-scrollbar">
           {MATH_TEMPLATES.map(t => (
-            <button key={t.label} onClick={() => insertTemplate(t.value)} className="shrink-0 px-2 py-1 bg-slate-100 hover:bg-indigo-50 hover:text-indigo-600 rounded-md text-[9px] font-bold uppercase transition-colors">
+            <button key={t.label} onClick={() => insertTemplate(t.value)} className="shrink-0 px-2 py-1 bg-slate-50 hover:bg-indigo-50 hover:text-indigo-600 border border-slate-100 rounded-md text-[9px] font-bold uppercase transition-all">
               {t.label}
             </button>
           ))}
         </div>
 
-        {/* Previews */}
         <div className="space-y-2">
           {previewUrl && (
             <div className="relative inline-block animate-in zoom-in duration-200">
@@ -226,7 +277,7 @@ const Forum: React.FC<ForumProps> = ({ nodeId, isAdmin }) => {
           )}
 
           {content.includes('$') && (
-            <div className="px-3 py-2 bg-amber-50 rounded-lg border border-amber-100 text-[10px] text-amber-700 flex items-center gap-2 animate-in slide-in-from-left-2">
+            <div className="px-3 py-1.5 bg-indigo-50/50 rounded-lg border border-indigo-100 text-[9px] text-indigo-700 flex items-center gap-2 animate-in slide-in-from-left-2">
               <Info size={12}/> <span className="font-medium">Xem trước: {renderLatex(content)}</span>
             </div>
           )}
@@ -234,7 +285,7 @@ const Forum: React.FC<ForumProps> = ({ nodeId, isAdmin }) => {
 
         <form onSubmit={handleSubmit} className="space-y-1">
           {!isAdmin && (
-            <input value={name} onChange={e => setName(e.target.value)} placeholder="Tên của em..." className="w-full px-3 py-1.5 bg-slate-50 border border-slate-100 rounded-lg text-xs font-bold outline-none focus:border-indigo-300 transition-all" />
+            <input value={name} onChange={e => setName(e.target.value)} placeholder="Tên của em..." className="w-full px-3 py-1.5 bg-slate-50 border border-slate-100 rounded-lg text-xs font-bold outline-none focus:border-indigo-300 transition-all mb-1" />
           )}
           <div className="flex gap-2 items-end">
             <div className="flex-1 flex flex-col">
@@ -242,24 +293,29 @@ const Forum: React.FC<ForumProps> = ({ nodeId, isAdmin }) => {
                 value={content} 
                 onChange={e => setContent(e.target.value)} 
                 onKeyDown={handleKeyDown}
-                placeholder="Hỏi bài hoặc thảo luận tại đây... (Nhấn Enter để xuống dòng, Ctrl+Enter để gửi)" 
-                className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl text-xs outline-none focus:border-indigo-400 focus:bg-white transition-all min-h-[60px] max-h-[150px] resize-none" 
+                placeholder="Hỏi bài tại đây... (Nhấn Enter để xuống dòng)" 
+                className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl text-xs outline-none focus:border-indigo-400 focus:bg-white transition-all min-h-[50px] max-h-[150px] resize-none" 
               />
-              <span className="text-[8px] text-slate-300 mt-1 ml-2 font-medium">Mẹo: Ctrl + Enter để gửi nhanh</span>
+              <span className="text-[8px] text-slate-300 mt-1 ml-2 font-medium italic">Enter để xuống dòng • Ctrl + Enter để gửi</span>
             </div>
             
-            <div className="flex flex-col gap-2 mb-4">
+            <div className="flex flex-col gap-2 pb-1">
               <input type="file" accept="image/*" ref={fileInputRef} onChange={handleFileChange} className="hidden" />
-              <button type="button" onClick={() => fileInputRef.current?.click()} className="p-3 bg-slate-100 text-slate-500 rounded-xl hover:bg-slate-200 transition-all flex items-center justify-center">
-                <ImageIcon size={20} />
+              <button type="button" onClick={() => fileInputRef.current?.click()} className="p-3 bg-slate-100 text-slate-400 rounded-xl hover:bg-slate-200 transition-all flex items-center justify-center">
+                <ImageIcon size={18} />
               </button>
-              <button type="submit" disabled={loading || uploading || (!content.trim() && !selectedFile)} className="p-3 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 hover:scale-105 active:scale-95 transition-all flex items-center justify-center shadow-lg shadow-indigo-100 disabled:bg-slate-300 disabled:scale-100 disabled:shadow-none">
-                {loading ? <Loader2 size={20} className="animate-spin" /> : <Send size={20} />}
+              <button type="submit" disabled={loading || uploading || (!content.trim() && !selectedFile)} className="p-3 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 hover:scale-105 active:scale-95 transition-all flex items-center justify-center shadow-lg shadow-indigo-100 disabled:bg-slate-200 disabled:scale-100 disabled:shadow-none">
+                {loading ? <Loader2 size={18} className="animate-spin" /> : <Send size={18} />}
               </button>
             </div>
           </div>
         </form>
       </div>
+      
+      <style>{`
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+      `}</style>
     </div>
   );
 };
