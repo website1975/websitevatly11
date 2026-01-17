@@ -12,6 +12,7 @@ export interface ForumComment {
   nodeId: string;
   author: string;
   content: string;
+  imageUrl?: string;
   createdAt: string;
   isAdmin: boolean;
 }
