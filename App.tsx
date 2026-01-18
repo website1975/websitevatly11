@@ -165,6 +165,7 @@ const MainView: React.FC<{ isAdmin: boolean; data: AppData; updateData: (d: AppD
     <div className={`flex h-screen overflow-hidden font-sans transition-colors duration-300 ${darkMode ? 'dark bg-slate-950 text-slate-100' : 'bg-white text-slate-900'}`}>
       {isQuizOpen && selectedNode && <QuizModal lessonTitle={selectedNode.title} onClose={()=>setIsQuizOpen(false)} />}
       
+      {/* PANEL 1: SIDEBAR */}
       <aside className={`w-64 border-r flex flex-col shrink-0 ${darkMode ? 'border-slate-800 bg-slate-900' : isAdmin ? 'bg-amber-50/5' : 'bg-indigo-50/5'}`}>
         <header className={`p-4 text-white ${isAdmin ? 'bg-amber-500' : 'bg-indigo-600'} flex justify-between items-center shrink-0`}>
           <div className="flex items-center gap-2"><Book size={16}/><h1 className="font-bold text-sm uppercase truncate">Vật Lý 11</h1></div>
@@ -193,12 +194,13 @@ const MainView: React.FC<{ isAdmin: boolean; data: AppData; updateData: (d: AppD
             {darkMode ? 'Light Mode' : 'Dark Mode'}
           </button>
           <div className="flex justify-between text-[7px] text-slate-400 font-bold uppercase px-1">
-             <span>{visitorCount} lượt truy cập</span>
+             <span>{visitorCount} lượt</span>
              <button onClick={()=>{if(isAdmin)sessionStorage.removeItem('teacher_auth'); navigate('/');}} className="hover:text-red-500">Thoát</button>
           </div>
         </footer>
       </aside>
 
+      {/* PANEL 2: MAIN CONTENT */}
       <main className="flex-1 flex flex-col overflow-hidden relative">
         {selectedId ? (
           <>
@@ -206,7 +208,7 @@ const MainView: React.FC<{ isAdmin: boolean; data: AppData; updateData: (d: AppD
               <div className="flex justify-between items-center mb-2">
                 <div className="min-w-0">
                   <h2 className={`text-lg font-bold uppercase truncate transition-colors ${darkMode ? 'text-white' : 'text-slate-800'}`}>{selectedNode?.title}</h2>
-                  <p key={sloganIdx} className="text-[7px] font-light text-slate-400 opacity-10 uppercase mt-0.5 tracking-tight italic animate-in fade-in duration-1000">
+                  <p key={sloganIdx} className="text-[7px] font-light text-slate-400 opacity-5 uppercase mt-0.5 tracking-tighter italic animate-in fade-in duration-1000">
                     {SLOGANS[sloganIdx]}
                   </p>
                 </div>
@@ -226,8 +228,8 @@ const MainView: React.FC<{ isAdmin: boolean; data: AppData; updateData: (d: AppD
             <div className={`flex-1 relative overflow-hidden ${darkMode ? 'bg-slate-900' : 'bg-slate-100'}`}>
               {activeTab === 'content' ? (
                 <>
-                  {iframeLoading && <div className="absolute inset-0 flex flex-col items-center justify-center z-10 bg-white dark:bg-slate-950"><Loader2 className="animate-spin text-indigo-500 mb-2" size={20}/><p className="text-[7px] uppercase font-bold text-slate-400">Đang tải...</p></div>}
-                  {selectedNode?.url ? <iframe src={selectedNode.url} className={`w-full h-full border-none transition-opacity duration-300 ${iframeLoading ? 'opacity-0' : 'opacity-100'}`} onLoad={()=>setIframeLoading(false)}/> : <div className="h-full flex items-center justify-center italic text-slate-400 text-xs">Nội dung đang soạn...</div>}
+                  {iframeLoading && <div className="absolute inset-0 flex flex-col items-center justify-center z-10 bg-white dark:bg-slate-950"><Loader2 className="animate-spin text-indigo-500 mb-2" size={20}/><p className="text-[7px] uppercase font-bold text-slate-400">Đang tải học liệu...</p></div>}
+                  {selectedNode?.url ? <iframe src={selectedNode.url} className={`w-full h-full border-none transition-opacity duration-300 ${iframeLoading ? 'opacity-0' : 'opacity-100'}`} onLoad={()=>setIframeLoading(false)}/> : <div className="h-full flex items-center justify-center italic text-slate-400 text-xs font-light">Nội dung đang được soạn thảo...</div>}
                 </>
               ) : (
                 <Forum nodeId={selectedId} isAdmin={isAdmin} />
@@ -235,43 +237,19 @@ const MainView: React.FC<{ isAdmin: boolean; data: AppData; updateData: (d: AppD
             </div>
           </>
         ) : (
-          <div className="flex-1 flex flex-col items-center justify-center text-center">
-             <Book size={64} className={`opacity-5 ${darkMode ? 'text-indigo-300' : 'text-indigo-600'}`}/>
-             <h2 className="text-xl font-black uppercase tracking-tighter mt-4 opacity-20">Vật Lý 11</h2>
+          <div className="flex-1 flex flex-col items-center justify-center text-center p-8">
+             <Book size={64} className={`opacity-5 mb-4 ${darkMode ? 'text-indigo-300' : 'text-indigo-600'}`}/>
+             <h2 className="text-xl font-black uppercase tracking-tighter opacity-10">VẬT LÝ 11 - KNTT</h2>
+             <p className="text-[9px] font-bold text-slate-300 uppercase tracking-widest mt-2">Chọn bài học từ danh mục bên trái để bắt đầu</p>
           </div>
         )}
       </main>
 
+      {/* PANEL 3: RESOURCES */}
       <ResourcesPanel isAdmin={isAdmin} selectedId={selectedId} lessonResources={selectedNode?.lessonResources||[]} globalResources={data.globalResources}
         onAdd={(isG)=>{setResourceModalData({isGlobal:isG, title:'', url:''}); setShowResourceModal(true);}}
         onEdit={(r,isG)=>{setResourceModalData({...r, isGlobal:isG}); setShowResourceModal(true);}}
         onDelete={(id,t,isG)=>setShowDeleteConfirm({type:'resource', id, title:t, isGlobal:isG})}/>
-
-      {showNodeModal && (
-        <div className="fixed inset-0 z-[300] bg-slate-900/60 flex items-center justify-center p-4">
-          <form onSubmit={(e)=>{e.preventDefault(); if(!nodeModalData.title)return; let nodes=[...data.nodes]; if(nodeModalData.id) nodes=nodes.map(n=>n.id===nodeModalData.id?{...n,title:nodeModalData.title,url:nodeModalData.url}:n); else nodes.push({id:`n-${Date.now()}`, ...nodeModalData, lessonResources:[]}); updateData({...data, nodes}); setShowNodeModal(false);}}
-            className={`${darkMode ? 'bg-slate-900 border border-slate-800' : 'bg-white'} p-6 shadow-xl w-full max-w-sm space-y-3 border-t-2 border-indigo-600`}>
-            <input autoFocus value={nodeModalData.title} onChange={e=>setNodeModalData({...nodeModalData, title:e.target.value})} className="w-full p-2 text-sm outline-none bg-slate-50 border border-slate-100" placeholder="Tên bài..."/>
-            <input value={nodeModalData.url} onChange={e=>setNodeModalData({...nodeModalData, url:e.target.value})} className="w-full p-2 text-[10px] outline-none bg-slate-50 border border-slate-100" placeholder="URL..."/>
-            <div className="flex gap-2">
-                <button type="button" onClick={()=>setShowNodeModal(false)} className="flex-1 text-[9px] font-bold uppercase text-slate-400">Hủy</button>
-                <button type="submit" className="flex-1 py-2 bg-indigo-600 text-white font-bold uppercase text-[9px]">Lưu</button>
-            </div>
-          </form>
-        </div>
-      )}
-
-      {showDeleteConfirm && (
-        <div className="fixed inset-0 z-[400] bg-slate-950/80 flex items-center justify-center p-4">
-          <div className="bg-white p-6 shadow-xl text-center w-full max-w-xs space-y-4 border-t-2 border-red-500">
-            <p className="font-bold text-[10px] text-slate-500 uppercase">Xóa: "{showDeleteConfirm.title}"?</p>
-            <div className="flex gap-2">
-                <button onClick={()=>setShowDeleteConfirm(null)} className="flex-1 text-[9px] font-bold uppercase">Hủy</button>
-                <button onClick={()=>{ if(showDeleteConfirm.type==='node') {updateData({...data, nodes:data.nodes.filter(n=>n.id!==showDeleteConfirm.id)}); setSelectedId(null);} else { if(showDeleteConfirm.isGlobal) updateData({...data, globalResources:data.globalResources.filter(r=>r.id!==showDeleteConfirm.id)}); else if(selectedId) updateData({...data, nodes:data.nodes.map(n=>n.id===selectedId?{...n,lessonResources:n.lessonResources.filter(r=>r.id!==showDeleteConfirm.id)}:n)}); } setShowDeleteConfirm(null); }} className="flex-1 py-2 bg-red-500 text-white font-bold uppercase text-[9px]">Xóa</button>
-            </div>
-          </div>
-        </div>
-      )}
 
       <style>{`
         .custom-scrollbar::-webkit-scrollbar { width: 2px; }
