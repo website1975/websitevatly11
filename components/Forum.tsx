@@ -134,8 +134,8 @@ const Forum: React.FC<ForumProps> = ({ nodeId, isAdmin }) => {
   };
 
   return (
-    <div className="flex flex-col h-full bg-slate-50 dark:bg-slate-950 relative transition-all">
-      <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm px-4 py-1.5 border-b dark:border-slate-800 flex justify-between items-center shrink-0 z-10">
+    <div className="flex flex-col h-full bg-slate-50 relative transition-all">
+      <div className="bg-white/80 backdrop-blur-sm px-4 py-1.5 border-b flex justify-between items-center shrink-0 z-10">
         <div className="flex items-center gap-2">
           {isConnected ? (
             <span className="flex items-center gap-1 text-[8px] font-black text-green-500 uppercase tracking-tighter"><Wifi size={10}/> Trực tuyến</span>
@@ -151,9 +151,9 @@ const Forum: React.FC<ForumProps> = ({ nodeId, isAdmin }) => {
       <div ref={scrollRef} onScroll={handleScroll} className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar scroll-smooth">
         {comments.map((c, idx) => (
           <div key={c.id || idx} className={`flex flex-col animate-in fade-in duration-300 ${c.isAdmin ? 'items-end' : 'items-start'}`}>
-            <div className={`max-w-[85%] rounded-2xl p-3 shadow-sm ${c.isAdmin ? 'bg-indigo-600 text-white' : 'bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-100 dark:border-slate-700'}`}>
+            <div className={`max-w-[85%] rounded-2xl p-3 shadow-sm ${c.isAdmin ? 'bg-indigo-600 text-white' : 'bg-white text-slate-800 border border-slate-100'}`}>
               <div className="flex items-center gap-2 mb-1">
-                <span className={`text-[8px] font-black uppercase tracking-tighter ${c.isAdmin ? 'text-indigo-200' : 'text-indigo-500 dark:text-indigo-400'}`}>{c.author}</span>
+                <span className={`text-[8px] font-black uppercase tracking-tighter ${c.isAdmin ? 'text-indigo-200' : 'text-indigo-500'}`}>{c.author}</span>
                 <span className={`text-[7px] opacity-50 ${c.isAdmin ? 'text-white' : 'text-slate-400'}`}>{new Date(c.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
                 {isAdmin && <button onClick={() => supabase.from('forum_comments').delete().eq('id', c.id)} className="ml-auto opacity-50 hover:opacity-100 text-red-300"><Trash2 size={10}/></button>}
               </div>
@@ -164,25 +164,25 @@ const Forum: React.FC<ForumProps> = ({ nodeId, isAdmin }) => {
         ))}
       </div>
 
-      {showScrollBtn && <button onClick={() => scrollToBottom()} className="absolute bottom-32 right-6 p-2 bg-white dark:bg-slate-800 shadow-xl border border-slate-100 dark:border-slate-700 rounded-full text-indigo-600 animate-bounce z-20"><ChevronDown size={20} /></button>}
+      {showScrollBtn && <button onClick={() => scrollToBottom()} className="absolute bottom-32 right-6 p-2 bg-white shadow-xl border border-slate-100 rounded-full text-indigo-600 animate-bounce z-20"><ChevronDown size={20} /></button>}
 
-      <div className="p-4 bg-white dark:bg-slate-900 border-t dark:border-slate-800 space-y-3 shadow-inner transition-all">
+      <div className="p-4 bg-white border-t space-y-3 shadow-inner transition-all">
         <div className="flex gap-1 overflow-x-auto pb-1 no-scrollbar">
           {MATH_TEMPLATES.map(t => (
-            <button key={t.label} onClick={() => setContent(prev => prev + ' ' + t.value)} className="shrink-0 px-2 py-1 bg-slate-50 dark:bg-slate-800 hover:bg-indigo-50 dark:hover:bg-indigo-900 border border-slate-100 dark:border-slate-700 rounded-md text-[9px] font-bold uppercase transition-all dark:text-slate-400">
+            <button key={t.label} onClick={() => setContent(prev => prev + ' ' + t.value)} className="shrink-0 px-2 py-1 bg-slate-50 hover:bg-indigo-50 border border-slate-100 rounded-md text-[9px] font-bold uppercase transition-all">
               {t.label}
             </button>
           ))}
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-1">
-          {!isAdmin && <input value={name} onChange={e => setName(e.target.value)} placeholder="Tên em..." className="w-full px-3 py-1.5 bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-lg text-xs font-bold outline-none dark:text-white" />}
+          {!isAdmin && <input value={name} onChange={e => setName(e.target.value)} placeholder="Tên em..." className="w-full px-3 py-1.5 bg-slate-50 border border-slate-100 rounded-lg text-xs font-bold outline-none" />}
           <div className="flex gap-2 items-end">
-            <textarea value={content} onChange={e => setContent(e.target.value)} placeholder="Hỏi bài..." className="flex-1 px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-2xl text-xs outline-none focus:border-indigo-400 focus:bg-white dark:focus:bg-slate-800 transition-all min-h-[50px] dark:text-white resize-none" />
+            <textarea value={content} onChange={e => setContent(e.target.value)} placeholder="Hỏi bài..." className="flex-1 px-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl text-xs outline-none focus:border-indigo-400 focus:bg-white transition-all min-h-[50px] resize-none" />
             <div className="flex flex-col gap-2">
-              <button type="button" onClick={() => fileInputRef.current?.click()} className="p-3 bg-slate-100 dark:bg-slate-800 text-slate-400 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700"><ImageIcon size={18} /></button>
+              <button type="button" onClick={() => fileInputRef.current?.click()} className="p-3 bg-slate-100 text-slate-400 rounded-xl hover:bg-slate-200"><ImageIcon size={18} /></button>
               <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" />
-              <button type="submit" disabled={loading} className="p-3 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 shadow-lg shadow-indigo-100 dark:shadow-none"><Send size={18} /></button>
+              <button type="submit" disabled={loading} className="p-3 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 shadow-lg shadow-indigo-100"><Send size={18} /></button>
             </div>
           </div>
         </form>
