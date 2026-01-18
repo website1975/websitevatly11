@@ -28,15 +28,15 @@ const App: React.FC = () => {
       const { data: cloud } = await supabase.from('app_settings').select('data').eq('id', 1).single();
       if (cloud?.data) setData(cloud.data);
       
-      // 2. Fetch Visitor Stats (Fix: Prevent count reset)
-      const { data: stats } = await supabase.from('app_settings').select('data').eq('id', 99).single();
+      // 2. Fetch Visitor Stats (Cải thiện logic để không bị reset về 0)
+      const { data: stats, error: statsError } = await supabase.from('app_settings').select('data').eq('id', 99).single();
       
-      if (stats?.data) {
-        let currentCount = stats.data.visitorCount || 0;
+      if (!statsError && stats?.data && typeof stats.data.visitorCount === 'number') {
+        let currentCount = stats.data.visitorCount;
         
         if (!sessionStorage.getItem('v_visited')) {
-          // Chỉ tăng nếu đây là phiên mới và đã lấy được số cũ hợp lệ
           const newCount = currentCount + 1;
+          // Cập nhật lên cloud
           await supabase.from('app_settings').upsert({ id: 99, data: { visitorCount: newCount } });
           sessionStorage.setItem('v_visited', 'true');
           setVisitorCount(newCount);
@@ -223,7 +223,7 @@ const MainView: React.FC<{ isAdmin: boolean; data: AppData; updateData: (d: AppD
               {isAdmin && <button onClick={()=>{navigator.clipboard.writeText(window.location.origin+'/student'); setCopied(true); setTimeout(()=>setCopied(false),2000);}} className="flex-1 py-2 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 font-bold uppercase text-[9px] rounded-none flex items-center justify-center gap-2 border border-indigo-100 dark:border-indigo-800">{copied?<Check size={10}/>:<Copy size={10}/>} Link</button>}
           </div>
           <div className={`flex justify-between px-3 py-2 rounded-none border text-[8px] font-bold uppercase transition-colors ${darkMode ? 'bg-slate-800/50 border-slate-700 text-slate-500' : 'bg-slate-50 border-slate-100 text-slate-400'}`}>
-             <div className="flex items-center gap-1.5">{isSyncing?<Loader2 size={10} className="animate-spin text-indigo-500"/>:<CloudCheck size={10} className="text-green-500"/>} {isAdmin?'Teacher':'Student'}</div>
+             <div className="flex items-center gap-1.5">{isSyncing?<Loader2 size={10} className="animate-spin text-indigo-500"/>:<CloudCheck size={10} className="text-green-500"/>} {isAdmin?'Giáo Viên':'Học Sinh'}</div>
              <div className="flex items-center gap-1.5"><Users size={10} className="text-indigo-400"/> {visitorCount}</div>
           </div>
           <button onClick={()=>{if(isAdmin)sessionStorage.removeItem('teacher_auth'); navigate('/');}} className="w-full py-2 bg-transparent border border-transparent text-slate-400 hover:text-red-500 font-medium uppercase text-[9px] rounded-none transition-colors">Đăng xuất</button>
@@ -300,15 +300,15 @@ const MainView: React.FC<{ isAdmin: boolean; data: AppData; updateData: (d: AppD
             className={`${darkMode ? 'bg-slate-900 border border-slate-800' : 'bg-white'} p-10 rounded-none shadow-2xl w-full max-w-md space-y-5 animate-in slide-in-from-bottom-10 border-t-4 border-indigo-600`}>
             <div className="flex items-center gap-3 border-b pb-5">
                 <div className="p-3 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 rounded-none"><Book size={20}/></div>
-                <h3 className="font-bold uppercase text-sm tracking-tight">Cài đặt bài học</h3>
+                <h3 className="font-bold uppercase text-sm tracking-tight">Cài đặt mục</h3>
             </div>
             <div className="space-y-1.5">
-                <label className="text-[10px] font-black text-slate-400 uppercase ml-2 tracking-widest">Tiêu đề bài học</label>
-                <input autoFocus value={nodeModalData.title} onChange={e=>setNodeModalData({...nodeModalData, title:e.target.value})} className={`w-full p-4 rounded-none text-sm focus:ring-1 focus:ring-indigo-400 outline-none transition-all ${darkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-slate-50 border-slate-100'}`} placeholder="VD: Chương 1: Động lực học..."/>
+                <label className="text-[10px] font-black text-slate-400 uppercase ml-2 tracking-widest">Tiêu đề</label>
+                <input autoFocus value={nodeModalData.title} onChange={e=>setNodeModalData({...nodeModalData, title:e.target.value})} className={`w-full p-4 rounded-none text-sm focus:ring-1 focus:ring-indigo-400 outline-none transition-all ${darkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-slate-50 border-slate-100'}`} placeholder="Tên mục..."/>
             </div>
             <div className="space-y-1.5">
-                <label className="text-[10px] font-black text-slate-400 uppercase ml-2 tracking-widest">Liên kết tài liệu</label>
-                <input value={nodeModalData.url} onChange={e=>setNodeModalData({...nodeModalData, url:e.target.value})} className={`w-full p-4 rounded-none text-[11px] focus:ring-1 focus:ring-indigo-400 outline-none transition-all ${darkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-slate-50 border-slate-100'}`} placeholder="Link tài liệu..."/>
+                <label className="text-[10px] font-black text-slate-400 uppercase ml-2 tracking-widest">Đường dẫn tài liệu</label>
+                <input value={nodeModalData.url} onChange={e=>setNodeModalData({...nodeModalData, url:e.target.value})} className={`w-full p-4 rounded-none text-[11px] focus:ring-1 focus:ring-indigo-400 outline-none transition-all ${darkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-slate-50 border-slate-100'}`} placeholder="Link URL..."/>
             </div>
             <div className="flex gap-4 pt-4">
                 <button type="button" onClick={()=>setShowNodeModal(false)} className="flex-1 text-[11px] font-bold uppercase text-slate-400">Hủy</button>
@@ -327,7 +327,7 @@ const MainView: React.FC<{ isAdmin: boolean; data: AppData; updateData: (d: AppD
                 <h3 className="font-bold uppercase text-sm tracking-tight">Thêm tài liệu</h3>
             </div>
             <input autoFocus value={resourceModalData.title} onChange={e=>setResourceModalData({...resourceModalData, title:e.target.value})} className={`w-full p-4 rounded-none text-sm ${darkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-slate-50 border-slate-100'}`} placeholder="Tên tài liệu..."/>
-            <input value={resourceModalData.url} onChange={e=>setResourceModalData({...resourceModalData, url:e.target.value})} className={`w-full p-4 rounded-none text-[11px] ${darkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-slate-50 border-slate-100'}`} placeholder="Link..."/>
+            <input value={resourceModalData.url} onChange={e=>setResourceModalData({...resourceModalData, url:e.target.value})} className={`w-full p-4 rounded-none text-[11px] ${darkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-slate-50 border-slate-100'}`} placeholder="Link URL..."/>
             <div className="flex gap-4 pt-4">
                 <button type="button" onClick={()=>setShowResourceModal(false)} className="flex-1 text-[11px] font-bold uppercase text-slate-400">Hủy</button>
                 <button type="submit" className="flex-1 py-4 bg-indigo-600 text-white rounded-none font-bold uppercase text-[11px]">Cập nhật</button>
