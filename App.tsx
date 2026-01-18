@@ -160,21 +160,21 @@ const MainView: React.FC<{ isAdmin: boolean; data: AppData; updateData: (d: AppD
     <div className="flex h-screen overflow-hidden font-sans bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors duration-300">
       {isQuizOpen && selectedNode && <QuizModal lessonTitle={selectedNode.title} onClose={()=>setIsQuizOpen(false)} />}
       
-      {/* PANEL 1: SIDEBAR */}
-      <aside className="w-[250px] border-r border-slate-100 dark:border-slate-800 flex flex-col shrink-0 bg-[#fbfcfd] dark:bg-slate-900 transition-colors">
+      {/* PANEL 1: SIDEBAR - UPDATED FOR FULL DARK MODE */}
+      <aside className="w-[250px] border-r border-slate-100 dark:border-slate-800 flex flex-col shrink-0 bg-[#fbfcfd] dark:bg-slate-900 transition-all">
         <header className={`px-5 py-4 text-white ${isAdmin ? 'bg-amber-600' : 'bg-indigo-600'} flex justify-between items-center shrink-0`}>
           <div className="flex items-center gap-2"><Book size={18}/><h1 className="font-bold text-[10px] uppercase tracking-[0.2em]">Cấu trúc bài học</h1></div>
           {isAdmin && <button onClick={()=>{setNodeModalData({parentId:null, type:'folder', title:'', url:''}); setShowNodeModal(true);}} className="p-1.5 hover:bg-white/20 rounded-lg transition-colors"><Plus size={16}/></button>}
         </header>
 
-        <div className="p-4 shrink-0">
+        <div className="p-4 shrink-0 bg-[#fbfcfd] dark:bg-slate-900">
           <div className="flex items-center bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 shadow-sm focus-within:border-indigo-400 transition-all">
             <Search size={14} className="text-slate-400"/>
             <input value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} placeholder="Tìm kiếm chương/bài..." className="bg-transparent border-none outline-none text-[11px] font-medium w-full ml-2 dark:text-white"/>
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-3 custom-scrollbar">
+        <div className="flex-1 overflow-y-auto p-3 custom-scrollbar bg-[#fbfcfd] dark:bg-slate-900">
           {filteredRootNodes.map(node=>(
             <TreeItem key={node.id} node={node} allNodes={data.nodes} selectedId={selectedId} isAdmin={isAdmin} level={0}
               onSelect={(id)=>{setSelectedId(id); if(data.nodes.find(n=>n.id===id)?.url) setIframeLoading(true);}}
@@ -184,7 +184,7 @@ const MainView: React.FC<{ isAdmin: boolean; data: AppData; updateData: (d: AppD
           ))}
         </div>
 
-        <footer className="p-4 border-t dark:border-slate-800 bg-white dark:bg-slate-900 shrink-0 flex items-center justify-between">
+        <footer className="p-4 border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 shrink-0 flex items-center justify-between">
              <div className="flex items-center gap-3">
                <button onClick={()=>setIsDarkMode(!isDarkMode)} className="p-2 bg-slate-50 dark:bg-slate-800 text-slate-400 dark:text-amber-400 rounded-xl hover:scale-110 transition-all border border-slate-100 dark:border-slate-700">
                   {isDarkMode ? <Sun size={14}/> : <Moon size={14}/>}
@@ -197,17 +197,16 @@ const MainView: React.FC<{ isAdmin: boolean; data: AppData; updateData: (d: AppD
         </footer>
       </aside>
 
-      {/* PANEL 2: MAIN CONTENT */}
-      <main className="flex-1 flex flex-col overflow-hidden relative bg-white dark:bg-slate-950">
+      {/* PANEL 2: MAIN CONTENT - UPDATED FOR FULL DARK MODE */}
+      <main className="flex-1 flex flex-col overflow-hidden relative bg-white dark:bg-slate-950 transition-all">
         {selectedId ? (
           <>
-            <header className="px-10 pt-8 pb-2 border-b dark:border-slate-900 shrink-0 bg-white dark:bg-slate-950">
+            <header className="px-10 pt-8 pb-2 border-b border-slate-100 dark:border-slate-900 shrink-0 bg-white dark:bg-slate-950">
               <div className="flex justify-between items-start mb-6">
                 <div className="min-w-0 flex-1 mr-6">
                   <h2 className="text-3xl font-black text-slate-900 dark:text-white uppercase tracking-tighter truncate leading-none mb-2">{selectedNode?.title}</h2>
-                  {/* SLOGAN: RECOVERED AND OPTIMIZED */}
                   <div className="h-4 overflow-hidden">
-                    <p key={sloganIdx} className="text-[10px] font-medium text-slate-400 dark:text-slate-500 uppercase tracking-[0.15em] opacity-60 italic animate-in slide-in-from-left-4 duration-1000">
+                    <p key={sloganIdx} className="text-[10px] font-medium text-slate-400 dark:text-slate-500 uppercase tracking-[0.15em] opacity-80 italic animate-in slide-in-from-left-4 duration-1000">
                       {SLOGANS[sloganIdx]}
                     </p>
                   </div>
@@ -224,8 +223,8 @@ const MainView: React.FC<{ isAdmin: boolean; data: AppData; updateData: (d: AppD
               
               {selectedNode?.type === 'lesson' && (
                 <div className="flex gap-10">
-                  <button onClick={()=>setActiveTab('content')} className={`pb-4 text-[10px] font-bold uppercase tracking-[0.2em] border-b-2 transition-all ${activeTab==='content' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-300 dark:text-slate-600 hover:text-slate-500'}`}>Học liệu số</button>
-                  <button onClick={()=>setActiveTab('forum')} className={`pb-4 text-[10px] font-bold uppercase tracking-[0.2em] border-b-2 transition-all ${activeTab==='forum' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-300 dark:text-slate-600 hover:text-slate-500'}`}>Thảo luận lớp</button>
+                  <button onClick={()=>setActiveTab('content')} className={`pb-4 text-[10px] font-bold uppercase tracking-[0.2em] border-b-2 transition-all ${activeTab==='content' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-300 dark:text-slate-700 hover:text-slate-500'}`}>Học liệu số</button>
+                  <button onClick={()=>setActiveTab('forum')} className={`pb-4 text-[10px] font-bold uppercase tracking-[0.2em] border-b-2 transition-all ${activeTab==='forum' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-300 dark:text-slate-700 hover:text-slate-500'}`}>Thảo luận lớp</button>
                 </div>
               )}
             </header>
@@ -233,8 +232,8 @@ const MainView: React.FC<{ isAdmin: boolean; data: AppData; updateData: (d: AppD
             <div className="flex-1 relative overflow-hidden bg-[#fcfdfe] dark:bg-slate-950">
               {activeTab === 'content' ? (
                 <>
-                  {iframeLoading && <div className="absolute inset-0 flex flex-col items-center justify-center z-10 bg-white/90 dark:bg-slate-950/90 backdrop-blur-sm"><Loader2 className="animate-spin text-indigo-500 mb-4" size={40}/><p className="text-[10px] uppercase font-bold text-slate-300 tracking-[0.4em]">Đồng bộ nội dung số...</p></div>}
-                  {selectedNode?.url ? <iframe src={selectedNode.url} title={selectedNode.title} className={`w-full h-full border-none transition-opacity duration-500 ${iframeLoading ? 'opacity-0' : 'opacity-100'}`} onLoad={()=>setIframeLoading(false)}/> : <div className="h-full flex items-center justify-center italic text-slate-200 dark:text-slate-800 text-xl font-light tracking-[0.2em]">Nội dung đang được cập nhật...</div>}
+                  {iframeLoading && <div className="absolute inset-0 flex flex-col items-center justify-center z-10 bg-white/90 dark:bg-slate-950/90 backdrop-blur-sm"><Loader2 className="animate-spin text-indigo-500 mb-4" size={40}/><p className="text-[10px] uppercase font-bold text-slate-300 dark:text-slate-600 tracking-[0.4em]">Đang đồng bộ...</p></div>}
+                  {selectedNode?.url ? <iframe src={selectedNode.url} title={selectedNode.title} className={`w-full h-full border-none transition-opacity duration-500 ${iframeLoading ? 'opacity-0' : 'opacity-100'}`} onLoad={()=>setIframeLoading(false)}/> : <div className="h-full flex items-center justify-center italic text-slate-200 dark:text-slate-900 text-xl font-light tracking-[0.2em]">Nội dung đang được biên soạn...</div>}
                 </>
               ) : (
                 <Forum nodeId={selectedId} isAdmin={isAdmin} />
@@ -247,12 +246,12 @@ const MainView: React.FC<{ isAdmin: boolean; data: AppData; updateData: (d: AppD
                 <Book size={64} className="text-indigo-600 opacity-10"/>
              </div>
              <h2 className="text-3xl font-black uppercase tracking-tighter text-slate-900 dark:text-white opacity-5">VẬT LÝ 11 - KNTT</h2>
-             <p className="text-[10px] font-bold text-slate-200 dark:text-slate-800 uppercase tracking-[0.5em] mt-6">Chọn chủ đề để học tập</p>
+             <p className="text-[10px] font-bold text-slate-200 dark:text-slate-800 uppercase tracking-[0.5em] mt-6">Chọn bài học bên trái</p>
           </div>
         )}
       </main>
 
-      {/* PANEL 3: RESOURCES */}
+      {/* PANEL 3: RESOURCES - UPDATED FOR FULL DARK MODE */}
       <ResourcesPanel isAdmin={isAdmin} selectedId={selectedId} lessonResources={selectedNode?.lessonResources||[]} globalResources={data.globalResources}
         onAdd={(isG)=>{}}
         onEdit={(r,isG)=>{}}
@@ -264,16 +263,16 @@ const MainView: React.FC<{ isAdmin: boolean; data: AppData; updateData: (d: AppD
             className="bg-white dark:bg-slate-900 p-10 rounded-[40px] shadow-2xl w-full max-w-md space-y-5 border border-slate-100 dark:border-slate-800 animate-in zoom-in-95">
             <h3 className="font-black text-center text-indigo-600 uppercase text-[11px] tracking-[0.3em] mb-4">Cài đặt cấu trúc</h3>
             <div className="space-y-1">
-              <label className="text-[9px] font-bold text-slate-400 uppercase ml-2 tracking-widest">Tiêu đề</label>
-              <input autoFocus value={nodeModalData.title} onChange={e=>setNodeModalData({...nodeModalData, title:e.target.value})} className="w-full px-5 py-4 text-sm font-medium outline-none bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-2xl focus:border-indigo-400 dark:text-white transition-all" placeholder="Tên bài học..."/>
+              <label className="text-[9px] font-bold text-slate-400 uppercase ml-2 tracking-widest">Tiêu đề bài học</label>
+              <input autoFocus value={nodeModalData.title} onChange={e=>setNodeModalData({...nodeModalData, title:e.target.value})} className="w-full px-5 py-4 text-sm font-medium outline-none bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-2xl focus:border-indigo-400 dark:text-white transition-all" placeholder="Tên bài..."/>
             </div>
             <div className="space-y-1">
-              <label className="text-[9px] font-bold text-slate-400 uppercase ml-2 tracking-widest">URL Tài liệu (Iframe)</label>
+              <label className="text-[9px] font-bold text-slate-400 uppercase ml-2 tracking-widest">Đường dẫn tài liệu</label>
               <input value={nodeModalData.url} onChange={e=>setNodeModalData({...nodeModalData, url:e.target.value})} className="w-full px-5 py-4 text-[11px] outline-none bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-2xl focus:border-indigo-400 dark:text-white transition-all" placeholder="https://..."/>
             </div>
             <div className="flex gap-4 pt-4">
                 <button type="button" onClick={()=>setShowNodeModal(false)} className="flex-1 py-4 text-[10px] font-bold uppercase text-slate-300 tracking-widest">Hủy</button>
-                <button type="submit" className="flex-1 py-4 bg-indigo-600 text-white rounded-2xl font-bold uppercase text-[10px] shadow-xl shadow-indigo-100 tracking-widest">Lưu</button>
+                <button type="submit" className="flex-1 py-4 bg-indigo-600 text-white rounded-2xl font-bold uppercase text-[10px] shadow-xl shadow-indigo-100 tracking-widest">Lưu bài học</button>
             </div>
           </form>
         </div>
