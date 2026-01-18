@@ -3,7 +3,7 @@ import React, { useState, useEffect, useCallback, useMemo } from 'https://esm.sh
 import { Routes, Route, useNavigate, Navigate } from 'https://esm.sh/react-router-dom@^6.22.3';
 import { Book, Plus, Maximize2, Loader2, BrainCircuit, GraduationCap, ShieldCheck, Search, LogOut } from 'https://esm.sh/lucide-react@^0.562.0';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { AppData } from './types';
+import { AppData, ResourceLink, BookNode } from './types';
 import { INITIAL_DATA } from './constants';
 import TreeItem from './components/TreeItem';
 import QuizModal from './components/QuizModal';
@@ -130,7 +130,7 @@ const MainView: React.FC<{ isAdmin: boolean; data: AppData; updateData: (d: AppD
     const roots = data.nodes.filter(n => n.parentId === null);
     if (!searchTerm) return roots;
     const lowerSearch = searchTerm.toLowerCase();
-    return data.nodes.filter(n => n.parentId === null || n.title.toLowerCase().includes(lowerSearch));
+    return data.nodes.filter(n => (n.parentId === null || n.title.toLowerCase().includes(lowerSearch)));
   }, [data.nodes, searchTerm]);
 
   useEffect(() => {
@@ -141,7 +141,51 @@ const MainView: React.FC<{ isAdmin: boolean; data: AppData; updateData: (d: AppD
   const [showNodeModal, setShowNodeModal] = useState(false);
   const [nodeModalData, setNodeModalData] = useState<any>({parentId: null, type: 'lesson', title: '', url: ''});
 
+  const [showResModal, setShowResModal] = useState(false);
+  const [resModalData, setResModalData] = useState<{id?: string, title: string, url: string, isGlobal: boolean}>({title: '', url: '', isGlobal: false});
+
   useEffect(() => { setActiveTab('content'); }, [selectedId]);
+
+  const handleDeleteNode = (id: string) => {
+    if(!window.confirm("Xóa thư mục/bài học này?")) return;
+    const newData = {...data, nodes: data.nodes.filter(n => n.id !== id && n.parentId !== id)};
+    updateData(newData);
+    if(selectedId === id) setSelectedId(null);
+  };
+
+  const handleSaveResource = (e: React.FormEvent) => {
+    e.preventDefault();
+    if(!resModalData.title || !resModalData.url) return;
+    const newData = {...data};
+    const resId = resModalData.id || `res-${Date.now()}`;
+    const newRes = { id: resId, title: resModalData.title, url: resModalData.url };
+
+    if(resModalData.isGlobal) {
+      if(resModalData.id) newData.globalResources = newData.globalResources.map(r => r.id === resId ? newRes : r);
+      else newData.globalResources.push(newRes);
+    } else {
+      if(!selectedId) return;
+      newData.nodes = newData.nodes.map(n => {
+        if(n.id === selectedId) {
+          let updatedRes = [...n.lessonResources];
+          if(resModalData.id) updatedRes = updatedRes.map(r => r.id === resId ? newRes : r);
+          else updatedRes.push(newRes);
+          return {...n, lessonResources: updatedRes};
+        }
+        return n;
+      });
+    }
+    updateData(newData);
+    setShowResModal(false);
+  };
+
+  const handleDeleteResource = (id: string, title: string, isGlobal: boolean) => {
+    if(!window.confirm(`Xóa học liệu: ${title}?`)) return;
+    const newData = {...data};
+    if(isGlobal) newData.globalResources = newData.globalResources.filter(r => r.id !== id);
+    else newData.nodes = newData.nodes.map(n => n.id === selectedId ? {...n, lessonResources: n.lessonResources.filter(r => r.id !== id)} : n);
+    updateData(newData);
+  };
 
   return (
     <div className="flex h-screen overflow-hidden font-sans bg-white text-slate-900 transition-colors duration-300">
@@ -167,7 +211,7 @@ const MainView: React.FC<{ isAdmin: boolean; data: AppData; updateData: (d: AppD
               onSelect={(id)=>{setSelectedId(id); if(data.nodes.find(n=>n.id===id)?.url) setIframeLoading(true);}}
               onAdd={(p,t)=>{setNodeModalData({parentId:p, type:t, title:'', url:''}); setShowNodeModal(true);}}
               onEdit={(n)=>{setNodeModalData({...n}); setShowNodeModal(true);}}
-              onDelete={(id)=>{}}/>
+              onDelete={handleDeleteNode}/>
           ))}
         </div>
 
@@ -233,10 +277,11 @@ const MainView: React.FC<{ isAdmin: boolean; data: AppData; updateData: (d: AppD
 
       {/* PANEL 3: RESOURCES */}
       <ResourcesPanel isAdmin={isAdmin} selectedId={selectedId} lessonResources={selectedNode?.lessonResources||[]} globalResources={data.globalResources}
-        onAdd={(isG)=>{}}
-        onEdit={(r,isG)=>{}}
-        onDelete={(id,t,isG)=>{}}/>
+        onAdd={(isG)=> {setResModalData({title:'', url:'', isGlobal: isG}); setShowResModal(true);}}
+        onEdit={(r,isG)=> {setResModalData({...r, isGlobal: isG}); setShowResModal(true);}}
+        onDelete={handleDeleteResource}/>
 
+      {/* MODAL CẤU TRÚC */}
       {showNodeModal && (
         <div className="fixed inset-0 z-[300] bg-slate-900/40 flex items-center justify-center p-4 backdrop-blur-md animate-in fade-in duration-300">
           <form onSubmit={(e)=>{e.preventDefault(); if(!nodeModalData.title)return; let nodes=[...data.nodes]; if(nodeModalData.id) nodes=nodes.map(n=>n.id===nodeModalData.id?{...n,title:nodeModalData.title,url:nodeModalData.url}:n); else nodes.push({id:`n-${Date.now()}`, ...nodeModalData, lessonResources:[]}); updateData({...data, nodes}); setShowNodeModal(false);}}
@@ -247,12 +292,34 @@ const MainView: React.FC<{ isAdmin: boolean; data: AppData; updateData: (d: AppD
               <input autoFocus value={nodeModalData.title} onChange={e=>setNodeModalData({...nodeModalData, title:e.target.value})} className="w-full px-4 py-3 text-sm font-medium outline-none bg-slate-50 border border-slate-100 rounded-xl focus:border-indigo-400 transition-all" placeholder="Tên bài..."/>
             </div>
             <div className="space-y-1">
-              <label className="text-[9px] font-bold text-slate-400 uppercase ml-1 tracking-widest">Link tài liệu</label>
+              <label className="text-[9px] font-bold text-slate-400 uppercase ml-1 tracking-widest">Link tài liệu (Iframe)</label>
               <input value={nodeModalData.url} onChange={e=>setNodeModalData({...nodeModalData, url:e.target.value})} className="w-full px-4 py-3 text-[11px] outline-none bg-slate-50 border border-slate-100 rounded-xl focus:border-indigo-400 transition-all" placeholder="https://..."/>
             </div>
             <div className="flex gap-4 pt-2">
                 <button type="button" onClick={()=>setShowNodeModal(false)} className="flex-1 py-3 text-[10px] font-bold uppercase text-slate-300 tracking-widest">Hủy</button>
                 <button type="submit" className="flex-1 py-3 bg-indigo-600 text-white rounded-xl font-bold uppercase text-[10px] shadow-lg shadow-indigo-100 tracking-widest">Lưu bài học</button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {/* MODAL HỌC LIỆU */}
+      {showResModal && (
+        <div className="fixed inset-0 z-[300] bg-slate-900/40 flex items-center justify-center p-4 backdrop-blur-md animate-in fade-in duration-300">
+          <form onSubmit={handleSaveResource}
+            className="bg-white p-8 rounded-[32px] shadow-2xl w-full max-w-md space-y-4 border border-slate-100 animate-in zoom-in-95">
+            <h3 className="font-black text-center text-indigo-600 uppercase text-[11px] tracking-widest mb-2">Quản lý Học liệu</h3>
+            <div className="space-y-1">
+              <label className="text-[9px] font-bold text-slate-400 uppercase ml-1 tracking-widest">Tiêu đề tài liệu</label>
+              <input autoFocus value={resModalData.title} onChange={e=>setResModalData({...resModalData, title:e.target.value})} className="w-full px-4 py-3 text-sm font-medium outline-none bg-slate-50 border border-slate-100 rounded-xl focus:border-indigo-400 transition-all" placeholder="Ví dụ: Video thí nghiệm..."/>
+            </div>
+            <div className="space-y-1">
+              <label className="text-[9px] font-bold text-slate-400 uppercase ml-1 tracking-widest">Đường dẫn (URL)</label>
+              <input value={resModalData.url} onChange={e=>setResModalData({...resModalData, url:e.target.value})} className="w-full px-4 py-3 text-[11px] outline-none bg-slate-50 border border-slate-100 rounded-xl focus:border-indigo-400 transition-all" placeholder="https://drive.google.com/..."/>
+            </div>
+            <div className="flex gap-4 pt-2">
+                <button type="button" onClick={()=>setShowResModal(false)} className="flex-1 py-3 text-[10px] font-bold uppercase text-slate-300 tracking-widest">Hủy</button>
+                <button type="submit" className="flex-1 py-3 bg-indigo-600 text-white rounded-xl font-bold uppercase text-[10px] shadow-lg shadow-indigo-100 tracking-widest">Lưu tài liệu</button>
             </div>
           </form>
         </div>
