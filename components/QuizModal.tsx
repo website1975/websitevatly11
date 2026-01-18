@@ -27,12 +27,12 @@ const QuizModal: React.FC<QuizModalProps> = ({ lessonTitle, onClose }) => {
       const response = await ai.models.generateContent({
         model: "gemini-3-flash-preview",
         contents: `Tạo đúng 5 câu hỏi trắc nghiệm Vật Lý chất lượng cao cho bài: "${lessonTitle}". 
-        YÊU CẦU ĐỘ KHÓ BẮT BUỘC: 
+        YÊU CẦU ĐỘ KHÓ: 
         - 1 câu Nhận biết (dễ).
         - 1 câu Thông hiểu (trung bình).
-        - 2 câu Vận dụng (mức độ Khá, yêu cầu tính toán logic).
-        - 1 câu Vận dụng cao (mức độ Khó, yêu cầu tư duy sâu).
-        Tất cả công thức/ký hiệu phải nằm trong dấu $. Xuất JSON chuẩn.`,
+        - 2 câu Vận dụng (mức độ Khá).
+        - 1 câu Vận dụng cao (mức độ Khó).
+        Ký hiệu toán học nằm trong dấu $. Xuất JSON.`,
         config: {
           responseMimeType: "application/json",
           responseSchema: {
@@ -53,7 +53,7 @@ const QuizModal: React.FC<QuizModalProps> = ({ lessonTitle, onClose }) => {
       const qData = JSON.parse(response.text || "[]");
       setQuestions(qData);
       setUserAnswers(new Array(qData.length).fill(null));
-    } catch (e) { alert("AI đang bận thiết kế đề bài. Vui lòng đợi một chút."); onClose(); }
+    } catch (e) { alert("Lỗi AI. Vui lòng thử lại."); onClose(); }
     finally { setLoading(false); }
   };
 
@@ -63,92 +63,77 @@ const QuizModal: React.FC<QuizModalProps> = ({ lessonTitle, onClose }) => {
 
   const handleFinish = () => {
     if (userAnswers.includes(null)) {
-        alert("Em cần chọn đầy đủ đáp án cho tất cả các câu hỏi!");
+        alert("Em hãy hoàn thành tất cả các câu hỏi!");
         return;
     }
-    const score = calculateScore();
-    if (score === questions.length) {
-        confetti({
-            particleCount: 150,
-            spread: 70,
-            origin: { y: 0.6 },
-            colors: ['#4f46e5', '#38bdf8', '#f59e0b']
-        });
+    if (calculateScore() === questions.length) {
+        confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
     }
     setShowResults(true);
   };
 
   return (
-    <div className="fixed inset-0 z-[500] flex items-center justify-center p-0 md:p-6 bg-slate-900/95 backdrop-blur-sm animate-in fade-in duration-300">
-      <div className="bg-white dark:bg-slate-900 rounded-none shadow-2xl w-full max-w-7xl overflow-hidden flex flex-col h-full md:h-auto md:max-h-[85vh] animate-in zoom-in duration-300 border border-slate-200 dark:border-slate-800">
+    <div className="fixed inset-0 z-[500] flex items-center justify-center p-4 bg-slate-900/90 backdrop-blur-sm animate-in fade-in duration-300">
+      {/* Form thu hẹp max-w-4xl để gọn gàng */}
+      <div className="bg-white dark:bg-slate-900 rounded-none shadow-2xl w-full max-w-4xl overflow-hidden flex flex-col max-h-[90vh] border border-slate-200 dark:border-slate-800">
         
-        <header className="px-8 py-4 bg-slate-900 text-white flex justify-between items-center shrink-0 border-b border-white/10">
+        <header className="px-6 py-3 bg-slate-900 text-white flex justify-between items-center shrink-0 border-b border-white/10">
           <div className="flex items-center gap-3">
-              <div className="p-1.5 bg-indigo-600 rounded-none"><BrainCircuit size={18} /></div>
-              <div>
-                  <h3 className="text-sm font-black uppercase tracking-tight">Kiểm tra kiến thức AI</h3>
-                  <p className="text-[7px] font-medium uppercase text-slate-400 tracking-[0.2em]">{lessonTitle}</p>
-              </div>
+              <BrainCircuit size={18} className="text-indigo-400" />
+              <h3 className="text-xs font-bold uppercase tracking-widest">Kiểm tra AI: {lessonTitle}</h3>
           </div>
-          <button onClick={onClose} className="p-2 hover:bg-white/10 transition-all"><X size={20}/></button>
+          <button onClick={onClose} className="p-1 hover:bg-white/10 transition-all"><X size={18}/></button>
         </header>
 
-        <div className="flex-1 overflow-hidden bg-white dark:bg-slate-950">
+        <div className="flex-1 overflow-y-auto custom-scrollbar bg-white dark:bg-slate-950 p-6">
           {loading ? (
-            <div className="flex flex-col items-center justify-center h-[400px] text-center">
-              <Loader2 className="animate-spin text-indigo-500 mb-6" size={32}/>
-              <p className="font-medium text-[8px] uppercase text-slate-400 tracking-[0.4em] animate-pulse">AI đang thiết kế đề thi chất lượng cao (1 Dễ - 1 TB - 2 Khá - 1 Khó)...</p>
+            <div className="flex flex-col items-center justify-center h-64 text-center">
+              <Loader2 className="animate-spin text-indigo-500 mb-4" size={24}/>
+              <p className="text-[9px] uppercase font-bold text-slate-400 tracking-widest">Đang thiết kế đề thi...</p>
             </div>
           ) : (
-            <div className="h-full flex flex-col">
+            <div className="space-y-6">
               {!showResults ? (
-                <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.1fr] h-full divide-y lg:divide-y-0 lg:divide-x divide-slate-100 dark:divide-slate-800">
-                  {/* Cột trái: Câu hỏi */}
-                  <div className="p-10 lg:p-14 bg-slate-50/30 dark:bg-slate-900/20 flex flex-col justify-center space-y-6">
-                    <div className="flex items-center gap-3">
-                      <span className="px-3 py-1 bg-indigo-600 text-white rounded-none text-[9px] font-black uppercase tracking-widest shadow-sm">CÂU {currentIdx + 1} / {questions.length}</span>
-                      <div className="text-[8px] font-medium uppercase text-slate-400 tracking-widest italic border-l pl-3 border-slate-200">
-                        {currentIdx < 2 ? "Mức độ: Cơ bản" : (currentIdx === 4 ? "Mức độ: Vận dụng cao (Khó)" : "Mức độ: Vận dụng (Khá)")}
-                      </div>
-                    </div>
-                    <div className="text-2xl font-medium text-slate-800 dark:text-slate-100 leading-tight">
-                      {renderLatex(questions[currentIdx]?.question)}
-                    </div>
+                <div className="space-y-6 animate-in slide-in-from-bottom-2 duration-500">
+                  <div className="flex items-center gap-3 mb-2">
+                    <span className="px-2 py-0.5 bg-indigo-600 text-white rounded-none text-[9px] font-black uppercase">CÂU {currentIdx + 1} / {questions.length}</span>
+                    <span className="text-[8px] font-medium uppercase text-slate-400 tracking-widest italic border-l pl-3">
+                      Mức độ: {currentIdx < 1 ? "Dễ" : (currentIdx < 2 ? "TB" : (currentIdx < 4 ? "Khá" : "Khó"))}
+                    </span>
+                  </div>
+                  
+                  {/* Chữ cỡ 16px (Word size 12pt approx) và mảnh hơn */}
+                  <div className="text-base font-normal text-slate-800 dark:text-slate-100 leading-normal mb-8">
+                    {renderLatex(questions[currentIdx]?.question)}
                   </div>
 
-                  {/* Cột phải: Đáp án */}
-                  <div className="p-10 lg:p-14 flex flex-col justify-center space-y-3 bg-white dark:bg-slate-900 overflow-y-auto no-scrollbar">
-                    <p className="text-[8px] font-black uppercase text-slate-400 tracking-[0.2em] mb-4">Chọn một đáp án đúng:</p>
-                    <div className="grid grid-cols-1 gap-3">
-                      {questions[currentIdx]?.options.map((opt, i) => (
-                        <button key={i} onClick={() => { const n = [...userAnswers]; n[currentIdx] = i; setUserAnswers(n); }} 
-                          className={`group p-4 rounded-none border-2 text-left transition-all flex items-center gap-5 ${userAnswers[currentIdx] === i ? 'bg-indigo-600 border-indigo-600 text-white shadow-md' : 'bg-white dark:bg-slate-800 border-slate-100 dark:border-slate-800 hover:border-indigo-400 text-slate-700 dark:text-slate-300'}`}>
-                          <span className={`w-8 h-8 rounded-none flex items-center justify-center font-black text-xs shrink-0 transition-colors ${userAnswers[currentIdx] === i ? 'bg-white/20' : 'bg-slate-100 dark:bg-slate-700 text-indigo-500'}`}>{String.fromCharCode(65 + i)}</span>
-                          <span className="text-lg font-medium leading-snug">{renderLatex(opt)}</span>
-                        </button>
-                      ))}
-                    </div>
+                  {/* Các đáp án nén sát nhau hơn (gap-2) */}
+                  <div className="space-y-2 max-w-2xl">
+                    {questions[currentIdx]?.options.map((opt, i) => (
+                      <button key={i} onClick={() => { const n = [...userAnswers]; n[currentIdx] = i; setUserAnswers(n); }} 
+                        className={`w-full group px-4 py-3 rounded-none border text-left transition-all flex items-center gap-4 ${userAnswers[currentIdx] === i ? 'bg-indigo-600 border-indigo-600 text-white' : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-800 hover:border-indigo-400 text-slate-700 dark:text-slate-300'}`}>
+                        <span className={`w-8 h-8 rounded-none flex items-center justify-center font-bold text-xs shrink-0 ${userAnswers[currentIdx] === i ? 'bg-white/20' : 'bg-slate-100 dark:bg-slate-700 text-indigo-500'}`}>{String.fromCharCode(65 + i)}</span>
+                        <span className="text-sm font-normal leading-tight">{renderLatex(opt)}</span>
+                      </button>
+                    ))}
                   </div>
                 </div>
               ) : (
-                <div className="flex-1 overflow-y-auto p-10 lg:p-14 space-y-10 animate-in zoom-in duration-500 bg-slate-50 dark:bg-slate-950/20 custom-scrollbar">
-                  <div className="flex flex-col items-center text-center space-y-3">
-                      <div className="p-3 bg-amber-500 text-white rounded-none shadow-xl"><Trophy size={32} /></div>
-                      <div>
-                          <h2 className="text-3xl font-black text-slate-800 dark:text-white tracking-tighter uppercase">KẾT QUẢ: {calculateScore()}/{questions.length}</h2>
-                          <p className="text-[9px] font-medium uppercase text-indigo-500 tracking-[0.3em]">AI đã hoàn tất việc đối chiếu đáp án</p>
-                      </div>
+                <div className="space-y-6 animate-in zoom-in-95 duration-500">
+                  <div className="text-center mb-10">
+                      <div className="inline-block p-3 bg-amber-500 text-white rounded-none mb-4"><Trophy size={32} /></div>
+                      <h2 className="text-2xl font-black text-slate-800 dark:text-white uppercase tracking-tighter">ĐIỂM SỐ: {calculateScore()}/{questions.length}</h2>
                   </div>
                   
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="grid grid-cols-1 gap-4">
                     {questions.map((q, i) => (
-                      <div key={i} className={`p-8 rounded-none border-t-8 transition-all bg-white dark:bg-slate-900 shadow-sm ${userAnswers[i] === q.correctIndex ? 'border-green-500' : 'border-red-500'}`}>
-                        <div className="flex items-start gap-4 mb-4">
-                           {userAnswers[i] === q.correctIndex ? <CheckCircle2 size={24} className="text-green-500 mt-1 shrink-0"/> : <XCircle size={24} className="text-red-500 mt-1 shrink-0"/>}
-                           <p className="text-lg font-medium text-slate-800 dark:text-slate-200 leading-tight">{renderLatex(q.question)}</p>
+                      <div key={i} className={`p-5 rounded-none border-l-4 bg-slate-50 dark:bg-slate-900/50 ${userAnswers[i] === q.correctIndex ? 'border-green-500' : 'border-red-500'}`}>
+                        <div className="flex items-start gap-3 mb-2">
+                           {userAnswers[i] === q.correctIndex ? <CheckCircle2 size={16} className="text-green-500 mt-0.5 shrink-0"/> : <XCircle size={16} className="text-red-500 mt-0.5 shrink-0"/>}
+                           <p className="text-sm font-normal text-slate-800 dark:text-slate-200">{renderLatex(q.question)}</p>
                         </div>
-                        <div className="ml-10 p-4 bg-slate-50 dark:bg-black/20 rounded-none text-[11px] text-slate-600 dark:text-slate-400 italic border-l-2 border-indigo-200">
-                            <span className="font-black text-indigo-500 uppercase not-italic mr-3">Giải thích:</span> {renderLatex(q.explanation)}
+                        <div className="ml-7 p-3 bg-white dark:bg-black/20 text-[11px] text-slate-500 italic border-l-2 border-slate-200">
+                            <span className="font-bold text-indigo-500 uppercase not-italic mr-2">Giải thích:</span> {renderLatex(q.explanation)}
                         </div>
                       </div>
                     ))}
@@ -159,34 +144,28 @@ const QuizModal: React.FC<QuizModalProps> = ({ lessonTitle, onClose }) => {
           )}
         </div>
 
-        <footer className="px-8 py-5 border-t bg-white dark:bg-slate-900 flex justify-between items-center shrink-0">
+        <footer className="px-6 py-4 border-t bg-slate-50 dark:bg-slate-900 flex justify-between items-center shrink-0">
           {!showResults && !loading && (
             <>
-              <button disabled={currentIdx===0} onClick={()=>setCurrentIdx(p=>p-1)} className={`font-black text-[10px] uppercase transition-all flex items-center gap-2 ${currentIdx===0 ? 'text-slate-200 cursor-not-allowed' : 'text-slate-400 hover:text-indigo-600'}`}>
-                <ChevronLeft size={16}/> Lùi lại
+              <button disabled={currentIdx===0} onClick={()=>setCurrentIdx(p=>p-1)} className={`font-bold text-[10px] uppercase transition-all flex items-center gap-1 ${currentIdx===0 ? 'text-slate-200' : 'text-slate-400 hover:text-indigo-600'}`}>
+                <ChevronLeft size={14}/> Quay lại
               </button>
               
-              <div className="flex-1 h-1 bg-slate-100 dark:bg-slate-800 mx-10 max-w-sm relative overflow-hidden">
+              <div className="flex-1 h-1 bg-slate-200 dark:bg-slate-800 mx-8 max-w-xs relative overflow-hidden">
                  <div className="absolute top-0 left-0 h-full bg-indigo-600 transition-all duration-300" style={{width: `${((currentIdx + 1) / questions.length) * 100}%`}}></div>
               </div>
 
-              <div className="flex gap-4">
+              <div className="flex gap-3">
                   {currentIdx === questions.length - 1 ? 
-                    <button onClick={handleFinish} className="px-10 py-3 bg-indigo-600 text-white rounded-none font-black uppercase text-[10px] shadow-lg hover:bg-indigo-700 transition-all active:scale-95">Nộp bài</button> :
-                    <button onClick={()=>setCurrentIdx(p=>p+1)} className="px-10 py-3 bg-slate-900 dark:bg-indigo-500 text-white rounded-none font-black text-[10px] uppercase hover:bg-black transition-all flex items-center gap-2 active:scale-95">Tiếp theo <ChevronRight size={16}/></button>
+                    <button onClick={handleFinish} className="px-8 py-2 bg-indigo-600 text-white rounded-none font-bold uppercase text-[10px] hover:bg-indigo-700 transition-all">Nộp bài</button> :
+                    <button onClick={()=>setCurrentIdx(p=>p+1)} className="px-8 py-2 bg-slate-800 text-white rounded-none font-bold text-[10px] uppercase hover:bg-black transition-all flex items-center gap-1">Tiếp tục <ChevronRight size={14}/></button>
                   }
               </div>
             </>
           )}
-          {showResults && <button onClick={onClose} className="w-full py-4 bg-slate-900 dark:bg-indigo-600 text-white rounded-none font-black uppercase text-[10px] hover:bg-black transition-all tracking-widest active:scale-95">Hoàn tất kiểm tra</button>}
+          {showResults && <button onClick={onClose} className="w-full py-3 bg-slate-900 text-white rounded-none font-bold uppercase text-[10px] hover:bg-black tracking-widest">Đóng</button>}
         </footer>
       </div>
-      <style>{`
-        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 0px; }
-        .katex { font-size: 1.1em; }
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-      `}</style>
     </div>
   );
 };
