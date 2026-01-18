@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mô phỏng Vật lý: Công và Thế năng Điện</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { background-color: #f8fafc; overflow: hidden; height: 100vh; display: flex; flex-direction: column; }
+        canvas { border: 2px solid #1e293b; border-radius: 12px; background-color: white; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); cursor: crosshair; }
+        .sidebar { width: 320px; flex-shrink: 0; background: white; border-right: 1px solid #e2e8f0; overflow-y: auto; padding: 1.5rem; }
+        .main-content { flex-grow: 1; padding: 1.5rem; display: flex; flex-direction: column; align-items: center; justify-content: center; background-color: #f1f5f9; }
+        .btn-active { outline: 3px solid #3b82f6; outline-offset: 2px; font-weight: bold; }
+        input[type="range"] { accent-color: #3b82f6; }
+    </style>
+</head>
+<body>
+    <div class="flex flex-1 overflow-hidden">
+        <!-- Bên trái: Bảng điều khiển -->
+        <aside class="sidebar space-y-6">
+            <div>
+                <h1 class="text-xl font-bold text-slate-800 mb-1">Vật lý 11</h1>
+                <p class="text-sm text-slate-500 mb-4">Công & Thế năng Điện</p>
+                <hr>
+            </div>
+
+            <section>
+                <h2 class="font-bold text-sm text-slate-700 uppercase tracking-wider mb-3">1. Chọn Mô hình</h2>
+                <div class="grid grid-cols-1 gap-2">
+                    <button id="btn-gravity" class="text-left py-2 px-3 bg-orange-100 text-orange-700 rounded-lg hover:bg-orange-200 transition text-sm">
+                        <b>A.</b> Dốc Trọng Trường
+                    </button>
+                    <button id="btn-electric" class="text-left py-2 px-3 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition text-sm btn-active">
+                        <b>B.</b> Bản Tụ Điện (Trường đều)
+                    </button>
+                    <button id="btn-point" class="text-left py-2 px-3 bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 transition text-sm">
+                        <b>C.</b> Điện tích điểm (Lưới chun)
+                    </button>
+                </div>
+            </section>
+
+            <section class="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                <h2 class="font-bold text-sm text-slate-700 uppercase tracking-wider mb-4">2. Điều khiển hạt</h2>
+                <div class="flex gap-2 mb-4">
+                    <button id="btn-play" class="flex-1 py-3 bg-green-600 text-white rounded-lg font-bold hover:bg-green-700 shadow-md transition active:scale-95">THẢ HẠT</button>
+                    <button id="btn-reset" class="py-3 px-4 bg-slate-200 text-slate-700 rounded-lg font-bold hover:bg-slate-300 transition">R</button>
+                </div>
+                
+                <div class="space-y-4">
+                    <div>
+                        <div class="flex justify-between mb-1">
+                            <label class="text-xs font-bold text-slate-500">CƯỜNG ĐỘ (E)</label>
+                            <span id="e-label" class="text-xs font-mono text-blue-600">80 V/m</span>
+                        </div>
+                        <input type="range" id="e-slider" min="10" max="150" value="80" class="w-full">
+                    </div>
+                    
+                    <div>
+                        <label class="text-xs font-bold text-slate-500 block mb-1">LOẠI ĐIỆN TÍCH (q)</label>
+                        <select id="q-select" class="w-full p-2 bg-white border border-slate-300 rounded-lg text-sm">
+                            <option value="1">Dương (+q) - Lăn xuống dốc</option>
+                            <option value="-1">Âm (-q) - Bay ngược dốc</option>
+                        </select>
+                    </div>
+                </div>
+            </section>
+
+            <section class="bg-blue-900 text-white p-4 rounded-xl shadow-inner">
+                <h2 class="font-bold text-xs uppercase tracking-widest text-blue-300 mb-3">3. Thông số vật lý</h2>
+                <div class="space-y-3 font-mono">
+                    <div class="flex justify-between border-b border-blue-800 pb-1">
+                        <span class="text-blue-300 text-xs">Vận tốc (v):</span>
+                        <span class="text-sm"><span id="val-v">0</span> m/s</span>
+                    </div>
+                    <div class="flex justify-between border-b border-blue-800 pb-1">
+                        <span class="text-blue-300 text-xs">Công (A):</span>
+                        <span id="val-a" class="text-sm font-bold text-yellow-400">0</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-blue-300 text-xs">Hình chiếu (d):</span>
+                        <span class="text-sm text-blue-100"><span id="val-d">0</span> m</span>
+                    </div>
+                </div>
+            </section>
+
+            <div class="text-[10px] text-slate-400 italic">
+                Lưu ý: Công A = qEd. Nếu d ngược chiều E, công sẽ âm.
+            </div>
+        </aside>
+
+        <!-- Bên phải: Khu vực mô phỏng -->
+        <main class="main-content">
+            <div class="relative w-full max-w-[840px]">
+                <canvas id="simCanvas" width="800" height="500" class="w-full h-auto"></canvas>
+                
+                <div id="overlay-msg" class="absolute top-4 left-4 bg-white/80 backdrop-blur px-3 py-1 rounded-full text-xs font-bold text-slate-600 border border-slate-200">
+                    Chế độ: <span id="mode-text">Bản Tụ Điện</span>
+                </div>
+            </div>
+            
+            <div class="mt-6 max-w-[800px] text-center">
+                <p id="instruction-text" class="text-sm text-slate-600 leading-relaxed">
+                    Hạt dương (+) đặt gần bản cực dương có <b>thế năng lớn</b>. Nhấn thả hạt để xem điện trường sinh công chuyển hóa thế năng thành động năng.
+                </p>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('simCanvas');
+        const ctx = canvas.getContext('2d');
+        const statsV = document.getElementById('val-v');
+        const statsA = document.getElementById('val-a');
+        const statsD = document.getElementById('val-d');
+        const eLabel = document.getElementById('e-label');
+        const modeText = document.getElementById('mode-text');
+        const instructionText = document.getElementById('instruction-text');
+        
+        let mode = 'electric'; 
+        let isPlaying = false;
+        let qValue = 1;
+        let fieldIntensity = 80; 
+        
+        let startPos = { x: 100, y: 250 };
+        let currentPos = { x: 100, y: 250 };
+        let velocity = { x: 0, y: 0 };
+        let path = [];
+
+        const instructions = {
+            gravity: "Mô phỏng sự tương quan: Điện thế cao tương ứng với độ cao của dốc. Vật nặng tự lăn từ đỉnh xuống chân dốc.",
+            electric: "Trong điện trường đều, lực điện F = qE không đổi. Công chỉ phụ thuộc vào hình chiếu d của quãng đường.",
+            point: "Lưới chun: Lực tương tác thay đổi theo khoảng cách (Định luật Coulomb). Thế năng tập trung quanh điện tích nguồn."
+        };
+
+        const buttons = ['btn-gravity', 'btn-electric', 'btn-point'];
+        buttons.forEach(id => {
+            document.getElementById(id).onclick = (e) => {
+                buttons.forEach(b => document.getElementById(b).classList.remove('btn-active'));
+                const btn = document.getElementById(id);
+                btn.classList.add('btn-active');
+                mode = id.replace('btn-', '');
+                modeText.innerText = btn.innerText.split('.')[1].trim();
+                instructionText.innerHTML = instructions[mode];
+                resetSim();
+            };
+        });
+
+        document.getElementById('e-slider').oninput = (e) => { 
+            fieldIntensity = parseInt(e.target.value); 
+            eLabel.innerText = fieldIntensity + " V/m";
+        };
+        
+        document.getElementById('q-select').onchange = (e) => { 
+            qValue = parseInt(e.target.value); 
+            resetSim(); 
+        };
+
+        document.getElementById('btn-reset').onclick = resetSim;
+        document.getElementById('btn-play').onclick = () => { 
+            isPlaying = !isPlaying; 
+            document.getElementById('btn-play').innerText = isPlaying ? "DỪNG LẠI" : "THẢ HẠT";
+        };
+
+        function resetSim() {
+            isPlaying = false;
+            document.getElementById('btn-play').innerText = "THẢ HẠT";
+            velocity = { x: 0, y: 0 };
+            
+            if (mode === 'point') {
+                currentPos = { x: 250, y: 250 };
+            } else if (qValue === -1 && mode === 'electric') {
+                currentPos = { x: 700, y: 250 };
+            } else {
+                currentPos = { x: 100, y: 250 };
+            }
+            
+            startPos = { ...currentPos };
+            path = [{...currentPos}];
+            updateStats();
+            draw();
+        }
+
+        function updateStats() {
+            let d = 0;
+            if (mode === 'electric' || mode === 'gravity') {
+                d = (currentPos.x - startPos.x) / 100;
+                const A = qValue * fieldIntensity * d;
+                statsA.innerText = A.toFixed(2) + " J";
+                statsD.innerText = d.toFixed(2);
+                statsV.innerText = Math.abs(velocity.x).toFixed(2);
+            } else {
+                const r1 = Math.sqrt((startPos.x-400)**2 + (startPos.y-250)**2);
+                const r2 = Math.sqrt((currentPos.x-400)**2 + (currentPos.y-250)**2);
+                const A = qValue * fieldIntensity * 500 * (1/r1 - 1/r2);
+                statsA.innerText = A.toFixed(2) + " J";
+                statsD.innerText = "biến thiên";
+                statsV.innerText = Math.sqrt(velocity.x**2 + velocity.y**2).toFixed(2);
+            }
+        }
+
+        function drawArrow(fromx, fromy, tox, toy, color = '#e2e8f0') {
+            const headlen = 8;
+            const angle = Math.atan2(toy - fromy, tox - fromx);
+            ctx.strokeStyle = color;
+            ctx.fillStyle = color;
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(fromx, fromy);
+            ctx.lineTo(tox, toy);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(tox, toy);
+            ctx.lineTo(tox - headlen * Math.cos(angle - Math.PI / 6), toy - headlen * Math.sin(angle - Math.PI / 6));
+            ctx.lineTo(tox - headlen * Math.cos(angle + Math.PI / 6), toy - headlen * Math.sin(angle + Math.PI / 6));
+            ctx.closePath();
+            ctx.fill();
+        }
+
+        function drawBackground() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            if (mode === 'gravity') {
+                ctx.fillStyle = '#f8fafc';
+                ctx.beginPath();
+                ctx.moveTo(50, 450);
+                ctx.lineTo(750, 450);
+                ctx.lineTo(50, 100);
+                ctx.closePath();
+                ctx.fill();
+                ctx.strokeStyle = '#cbd5e1';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                
+                ctx.fillStyle = '#94a3b8';
+                ctx.font = 'bold 12px Arial';
+                ctx.fillText('ĐIỆN THẾ CAO (V+)', 50, 85);
+                ctx.fillText('ĐIỆN THẾ THẤP (V-)', 600, 470);
+            } else if (mode === 'electric') {
+                ctx.fillStyle = '#fee2e2'; ctx.fillRect(0, 0, 40, 500); 
+                ctx.fillStyle = '#dbeafe'; ctx.fillRect(760, 0, 40, 500); 
+                ctx.fillStyle = '#ef4444'; ctx.font = 'bold 24px Arial';
+                ctx.fillText('+', 12, 255); 
+                ctx.fillStyle = '#3b82f6'; ctx.fillText('-', 775, 255);
+                for(let i=40; i<500; i+=60) drawArrow(50, i, 750, i);
+            } else if (mode === 'point') {
+                ctx.beginPath(); ctx.arc(400, 250, 35, 0, Math.PI*2);
+                ctx.fillStyle = '#f59e0b'; ctx.fill();
+                ctx.shadowBlur = 15; ctx.shadowColor = '#f59e0b';
+                ctx.stroke(); ctx.shadowBlur = 0;
+                ctx.fillStyle = 'white'; ctx.font = 'bold 20px Arial';
+                ctx.fillText('Q+', 385, 258);
+                for(let a=0; a<Math.PI*2; a+=Math.PI/6) {
+                    let x1 = 400 + Math.cos(a)*45; let y1 = 250 + Math.sin(a)*45;
+                    let x2 = 400 + Math.cos(a)*180; let y2 = 250 + Math.sin(a)*180;
+                    drawArrow(x1, y1, x2, y2, '#f1f5f9');
+                }
+            }
+        }
+
+        function update() {
+            if (!isPlaying) return;
+
+            const accelScale = 0.005;
+            if (mode === 'electric' || mode === 'gravity') {
+                let acceleration = qValue * fieldIntensity * accelScale;
+                velocity.x += acceleration;
+                currentPos.x += velocity.x;
+
+                if (currentPos.x > 745) { currentPos.x = 745; velocity.x = 0; isPlaying = false; }
+                if (currentPos.x < 55) { currentPos.x = 55; velocity.x = 0; isPlaying = false; }
+            } else if (mode === 'point') {
+                let dx = currentPos.x - 400;
+                let dy = currentPos.y - 250;
+                let r2 = dx*dx + dy*dy;
+                let r = Math.sqrt(r2);
+                if (r < 50) { isPlaying = false; currentPos.x = 400 + (dx/r)*51; currentPos.y = 250 + (dy/r)*51; return; }
+                if (r > 400) { isPlaying = false; return; }
+                
+                let force = (qValue * fieldIntensity * 800) / r2;
+                velocity.x += (force * dx / r) * accelScale;
+                velocity.y += (force * dy / r) * accelScale;
+                currentPos.x += velocity.x;
+                currentPos.y += velocity.y;
+            }
+            
+            path.push({...currentPos});
+            updateStats();
+        }
+
+        function draw() {
+            drawBackground();
+
+            // Vẽ vết quỹ đạo
+            if (path.length > 1) {
+                ctx.beginPath();
+                ctx.setLineDash([4, 4]);
+                ctx.strokeStyle = '#94a3b8';
+                ctx.lineWidth = 1;
+                ctx.moveTo(path[0].x, path[0].y);
+                for(let p of path) ctx.lineTo(p.x, p.y);
+                ctx.stroke();
+                ctx.setLineDash([]);
+            }
+
+            // Vẽ hình chiếu d (Trường đều)
+            if (mode !== 'point' && isPlaying || path.length > 1) {
+                ctx.strokeStyle = '#22c55e';
+                ctx.setLineDash([2, 2]);
+                ctx.beginPath();
+                ctx.moveTo(startPos.x, startPos.y + 50);
+                ctx.lineTo(currentPos.x, startPos.y + 50);
+                ctx.stroke();
+                ctx.setLineDash([]);
+                ctx.fillStyle = '#15803d';
+                ctx.font = 'bold 12px monospace';
+                ctx.fillText('d=' + ((currentPos.x - startPos.x)/100).toFixed(2), (startPos.x + currentPos.x)/2 - 20, startPos.y + 65);
+            }
+
+            // Vẽ hạt
+            ctx.beginPath();
+            ctx.arc(currentPos.x, currentPos.y, 16, 0, Math.PI*2);
+            ctx.fillStyle = qValue > 0 ? '#ef4444' : '#3b82f6';
+            ctx.fill();
+            ctx.strokeStyle = 'white';
+            ctx.lineWidth = 3;
+            ctx.stroke();
+            
+            // Dấu điện tích
+            ctx.fillStyle = 'white';
+            ctx.font = 'bold 18px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText(qValue > 0 ? '+' : '-', currentPos.x, currentPos.y + 7);
+            ctx.textAlign = 'start';
+        }
+
+        function animate() {
+            update();
+            draw();
+            requestAnimationFrame(animate);
+        }
+
+        window.onload = () => {
+            resetSim();
+            animate();
+        };
+    </script>
+</body>
+</html>
