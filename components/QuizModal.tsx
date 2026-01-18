@@ -1,372 +1,193 @@
 
-import React, { useState, useEffect, useCallback, useMemo } from 'https://esm.sh/react@^19.2.3';
-import { Routes, Route, useNavigate, Navigate } from 'https://esm.sh/react-router-dom@^6.22.3';
-import { Book, Pencil, Plus, Maximize2, Loader2, LogOut, KeyRound, Trash2, AlertTriangle, CloudCheck, BrainCircuit, Users, Copy, Check, ShieldCheck, GraduationCap, MessageSquare, FileText, Sparkles, Sun, Moon, Search } from 'https://esm.sh/lucide-react@^0.562.0';
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { BookNode, NodeType, AppData, ResourceLink } from './types';
-import { INITIAL_DATA } from './constants';
-import TreeItem from './components/TreeItem';
-import QuizModal from './components/QuizModal';
-import ResourcesPanel from './components/ResourcesPanel';
-import Forum from './components/Forum';
-import { getSafeEnv, SLOGANS } from './utils';
+import React, { useState } from 'https://esm.sh/react@^19.2.3';
+import { X, BrainCircuit, Loader2, Trophy, ChevronLeft, ChevronRight, CheckCircle2, XCircle } from 'https://esm.sh/lucide-react@^0.562.0';
+import { GoogleGenAI, Type } from "https://esm.sh/@google/genai";
+import confetti from 'https://esm.sh/canvas-confetti';
+import { QuizQuestion } from '../types';
+import { renderLatex, getSafeEnv } from '../utils';
 
-const SUPABASE_URL = 'https://ktottoplusantmadclpg.supabase.co';
-const SUPABASE_ANON_KEY = 'sb_publishable_Fa4z8bEgByw3pGTJdvBqmQ_D_KeDGdl';
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-const TEACHER_PWD = getSafeEnv('TEACHER_PASSWORD') || '1234';
+interface QuizModalProps {
+  lessonTitle: string;
+  onClose: () => void;
+}
 
-const App: React.FC = () => {
-  const [data, setData] = useState<AppData>(INITIAL_DATA);
-  const [visitorCount, setVisitorCount] = useState<number>(0);
-  const [isSyncing, setIsSyncing] = useState(false);
+const QuizModal: React.FC<QuizModalProps> = ({ lessonTitle, onClose }) => {
+  const [questions, setQuestions] = useState<QuizQuestion[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [userAnswers, setUserAnswers] = useState<(number | null)[]>([]);
+  const [showResults, setShowResults] = useState(false);
+  const [currentIdx, setCurrentIdx] = useState(0);
 
-  const fetchCloudData = useCallback(async () => {
-    setIsSyncing(true);
+  const generateQuiz = async () => {
+    setLoading(true);
+    const apiKey = getSafeEnv('API_KEY');
+    if (!apiKey) { alert("Lỗi hệ thống: Không tìm thấy API_KEY."); onClose(); return; }
     try {
-      // 1. Fetch App Content
-      const { data: cloud } = await supabase.from('app_settings').select('data').eq('id', 1).single();
-      if (cloud?.data) setData(cloud.data);
-      
-      // 2. Fetch Visitor Stats (Fix: Prevent count reset)
-      const { data: stats } = await supabase.from('app_settings').select('data').eq('id', 99).single();
-      
-      if (stats?.data) {
-        let currentCount = stats.data.visitorCount || 0;
-        
-        if (!sessionStorage.getItem('v_visited')) {
-          // Chỉ tăng nếu đây là phiên mới và đã lấy được số cũ hợp lệ
-          const newCount = currentCount + 1;
-          await supabase.from('app_settings').upsert({ id: 99, data: { visitorCount: newCount } });
-          sessionStorage.setItem('v_visited', 'true');
-          setVisitorCount(newCount);
-        } else {
-          setVisitorCount(currentCount);
+      const ai = new GoogleGenAI({ apiKey });
+      const response = await ai.models.generateContent({
+        model: "gemini-3-flash-preview",
+        contents: `Tạo đúng 5 câu hỏi trắc nghiệm Vật Lý chất lượng cao cho bài: "${lessonTitle}". 
+        YÊU CẦU ĐỘ KHÓ BẮT BUỘC: 
+        - 1 câu Nhận biết (dễ).
+        - 1 câu Thông hiểu (trung bình).
+        - 2 câu Vận dụng (mức độ Khá, yêu cầu tính toán logic).
+        - 1 câu Vận dụng cao (mức độ Khó, yêu cầu tư duy sâu).
+        Tất cả công thức/ký hiệu phải nằm trong dấu $. Xuất JSON chuẩn.`,
+        config: {
+          responseMimeType: "application/json",
+          responseSchema: {
+            type: Type.ARRAY,
+            items: {
+              type: Type.OBJECT,
+              properties: {
+                question: { type: Type.STRING },
+                options: { type: Type.ARRAY, items: { type: Type.STRING } },
+                correctIndex: { type: Type.INTEGER },
+                explanation: { type: Type.STRING }
+              },
+              required: ["question", "options", "correctIndex", "explanation"]
+            }
+          }
         }
-      }
-    } catch (err) {
-      console.error("Sync error:", err);
-    } finally {
-      setIsSyncing(false);
+      });
+      const qData = JSON.parse(response.text || "[]");
+      setQuestions(qData);
+      setUserAnswers(new Array(qData.length).fill(null));
+    } catch (e) { alert("AI đang bận thiết kế đề bài. Vui lòng đợi một chút."); onClose(); }
+    finally { setLoading(false); }
+  };
+
+  React.useEffect(() => { generateQuiz(); }, []);
+
+  const calculateScore = () => questions.filter((q, i) => userAnswers[i] === q.correctIndex).length;
+
+  const handleFinish = () => {
+    if (userAnswers.includes(null)) {
+        alert("Em cần chọn đầy đủ đáp án cho tất cả các câu hỏi!");
+        return;
     }
-  }, []);
-
-  useEffect(() => { fetchCloudData(); }, [fetchCloudData]);
-
-  const updateData = async (newData: AppData) => {
-    setData(newData);
-    setIsSyncing(true);
-    try { await supabase.from('app_settings').upsert({ id: 1, data: newData }); }
-    finally { setIsSyncing(false); }
+    const score = calculateScore();
+    if (score === questions.length) {
+        confetti({
+            particleCount: 150,
+            spread: 70,
+            origin: { y: 0.6 },
+            colors: ['#4f46e5', '#38bdf8', '#f59e0b']
+        });
+    }
+    setShowResults(true);
   };
 
   return (
-    <Routes>
-      <Route path="/" element={<LandingPage visitorCount={visitorCount} />} />
-      <Route path="/teacher" element={<ProtectedRoute><MainView isAdmin={true} data={data} updateData={updateData} isSyncing={isSyncing} visitorCount={visitorCount}/></ProtectedRoute>} />
-      <Route path="/student" element={<MainView isAdmin={false} data={data} updateData={updateData} isSyncing={isSyncing} visitorCount={visitorCount}/>} />
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
-  );
-};
-
-const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  if (sessionStorage.getItem('teacher_auth') !== 'true') return <Navigate to="/" replace />;
-  return <>{children}</>;
-};
-
-const LandingPage: React.FC<{ visitorCount: number }> = ({ visitorCount }) => {
-  const [showPass, setShowPass] = useState(false);
-  const [pin, setPin] = useState('');
-  const [error, setError] = useState(false);
-  const navigate = useNavigate();
-
-  return (
-    <div className="h-screen w-full flex flex-col items-center justify-center bg-slate-50 overflow-hidden relative text-center px-4">
-      <div className="absolute inset-0 overflow-hidden pointer-events-none opacity-20">
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] border-[1px] border-indigo-200 rounded-full animate-[spin_15s_linear_infinite]"></div>
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] border-[1px] border-indigo-300 rounded-full animate-[spin_20s_linear_infinite] rotate-45"></div>
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] border-[1px] border-indigo-400 rounded-full animate-[spin_25s_linear_infinite] -rotate-45"></div>
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-4 h-4 bg-indigo-600 rounded-full shadow-[0_0_20px_rgba(79,70,229,0.5)]"></div>
-      </div>
-
-      <div className="relative z-10 flex flex-col items-center">
-        <div className="mb-6 p-4 bg-white rounded-none shadow-xl border border-slate-100 animate-bounce">
-            <Book size={48} className="text-indigo-600"/>
-        </div>
-        <h1 className="text-6xl font-black text-slate-900 uppercase mb-2 tracking-tighter">VẬT LÝ 11</h1>
-        <p className="text-[10px] font-black tracking-[0.4em] text-indigo-500 uppercase mb-12 ml-2">Kết nối tri thức • Khám phá thế giới</p>
+    <div className="fixed inset-0 z-[500] flex items-center justify-center p-0 md:p-4 bg-slate-900/95 backdrop-blur-sm animate-in fade-in duration-300">
+      <div className="bg-white dark:bg-slate-900 rounded-none shadow-2xl w-full max-w-7xl overflow-hidden flex flex-col h-full md:h-auto md:max-h-[90vh] animate-in zoom-in duration-300 border-x border-slate-200 dark:border-slate-800">
         
-        <div className="max-w-2xl w-full grid grid-cols-1 md:grid-cols-2 gap-6">
-          <button onClick={() => navigate('/student')} className="bg-white/80 backdrop-blur-md p-10 rounded-none shadow-2xl border border-white flex flex-col items-center space-y-4 hover:-translate-y-1 hover:bg-white transition-all group">
-            <div className="w-20 h-20 bg-sky-50 text-sky-600 rounded-none flex items-center justify-center group-hover:scale-105 transition-transform"><GraduationCap size={40}/></div>
-            <h2 className="text-2xl font-bold uppercase tracking-tight">Học sinh</h2>
-            <div className="px-8 py-3 bg-sky-600 text-white rounded-none font-bold uppercase text-[10px] shadow-lg shadow-sky-100">Bắt đầu học</div>
-          </button>
-          {!showPass ? (
-            <button onClick={()=>setShowPass(true)} className="bg-white/80 backdrop-blur-md p-10 rounded-none shadow-2xl border border-white flex flex-col items-center space-y-4 hover:-translate-y-1 hover:bg-white transition-all group">
-              <div className="w-20 h-20 bg-amber-50 text-amber-600 rounded-none flex items-center justify-center group-hover:scale-105 transition-transform"><ShieldCheck size={40}/></div>
-              <h2 className="text-2xl font-bold uppercase tracking-tight">Giáo viên</h2>
-              <div className="px-8 py-3 bg-amber-500 text-white rounded-none font-bold uppercase text-[10px] shadow-lg shadow-amber-100">Quản lý lớp</div>
-            </button>
-          ) : (
-            <form onSubmit={(e)=>{e.preventDefault(); if(pin===TEACHER_PWD) {sessionStorage.setItem('teacher_auth','true'); navigate('/teacher');} else setError(true);}} 
-              className="bg-white p-8 rounded-none shadow-2xl border-t-4 border-amber-500 flex flex-col items-center space-y-4 animate-in zoom-in duration-300">
-              <div className="text-center">
-                  <h3 className="font-bold text-amber-600 uppercase text-xs">Xác thực quyền hạn</h3>
-                  <p className="text-[9px] text-slate-400 font-medium">Nhập mã PIN truy cập hệ thống quản trị</p>
+        <header className="px-8 py-5 bg-slate-900 text-white flex justify-between items-center shrink-0 border-b border-white/10">
+          <div className="flex items-center gap-4">
+              <div className="p-2 bg-indigo-600 rounded-none"><BrainCircuit size={22} /></div>
+              <div>
+                  <h3 className="text-base font-black uppercase tracking-tight">Trắc nghiệm AI</h3>
+                  <p className="text-[8px] font-medium uppercase text-slate-400 tracking-[0.2em]">{lessonTitle}</p>
               </div>
-              <input type="password" autoFocus value={pin} onChange={(e)=>{setPin(e.target.value); setError(false);}} className={`w-full px-4 py-4 border-2 rounded-none text-center font-bold text-lg tracking-widest ${error?'border-red-500 animate-shake':'border-slate-100 focus:border-amber-400 outline-none'}`} placeholder="****"/>
-              <div className="flex gap-3 w-full pt-2">
-                <button type="button" onClick={()=>setShowPass(false)} className="flex-1 font-bold text-slate-400 uppercase text-[10px] py-3 hover:bg-slate-50">Hủy</button>
-                <button type="submit" className="flex-1 px-4 py-3 bg-amber-500 text-white rounded-none font-bold uppercase text-[10px] shadow-lg shadow-amber-100">Xác nhận</button>
-              </div>
-            </form>
-          )}
-        </div>
-      </div>
-
-      <div className="mt-auto pb-12 flex flex-col items-center gap-3 relative z-10">
-        <div className="flex items-center gap-2 px-5 py-2 bg-white/60 backdrop-blur-md border border-slate-200 shadow-sm">
-          <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-          <Users size={14} className="text-indigo-500"/> 
-          <span className="text-[11px] font-bold text-slate-600 uppercase tracking-wider">{visitorCount.toLocaleString()} lượt truy cập</span>
-        </div>
-        <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest opacity-60">Hệ thống học liệu Vật Lý 11 • 2024</p>
-      </div>
-    </div>
-  );
-};
-
-const MainView: React.FC<{ isAdmin: boolean; data: AppData; updateData: (d: AppData) => void; isSyncing: boolean; visitorCount: number }> = ({ isAdmin, data, updateData, isSyncing, visitorCount }) => {
-  const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [iframeLoading, setIframeLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState<'content' | 'forum'>('content');
-  const [isQuizOpen, setIsQuizOpen] = useState(false);
-  const [copied, setCopied] = useState(false);
-  const [sloganIdx, setSloganIdx] = useState(0);
-  const [darkMode, setDarkMode] = useState(localStorage.getItem('theme') === 'dark');
-  const [searchTerm, setSearchTerm] = useState('');
-  const navigate = useNavigate();
-
-  const selectedNode = data.nodes.find(n => n.id === selectedId);
-
-  const toggleTheme = () => {
-    const newTheme = !darkMode;
-    setDarkMode(newTheme);
-    localStorage.setItem('theme', newTheme ? 'dark' : 'light');
-  };
-
-  const filteredRootNodes = useMemo(() => {
-    const roots = data.nodes.filter(n => n.parentId === null);
-    if (!searchTerm) return roots;
-    const lowerSearch = searchTerm.toLowerCase();
-    return data.nodes.filter(n => 
-      n.parentId === null || 
-      n.title.toLowerCase().includes(lowerSearch) ||
-      data.nodes.find(parent => parent.id === n.parentId)?.title.toLowerCase().includes(lowerSearch)
-    ).filter(n => n.parentId === null || n.title.toLowerCase().includes(lowerSearch));
-  }, [data.nodes, searchTerm]);
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setSloganIdx(prev => (prev + 1) % SLOGANS.length);
-    }, 50000);
-    return () => clearInterval(timer);
-  }, []);
-
-  const [showNodeModal, setShowNodeModal] = useState(false);
-  const [nodeModalData, setNodeModalData] = useState<any>({parentId: null, type: 'lesson', title: '', url: ''});
-  const [showResourceModal, setShowResourceModal] = useState(false);
-  const [resourceModalData, setResourceModalData] = useState<any>({isGlobal: false, title: '', url: ''});
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState<any>(null);
-
-  useEffect(() => { setActiveTab('content'); }, [selectedId]);
-
-  return (
-    <div className={`flex h-screen overflow-hidden font-sans transition-colors duration-300 ${darkMode ? 'dark bg-slate-950 text-slate-100' : 'bg-white text-slate-900'}`}>
-      {isQuizOpen && selectedNode && <QuizModal lessonTitle={selectedNode.title} onClose={()=>setIsQuizOpen(false)} />}
-      
-      <aside className={`w-64 border-r flex flex-col shrink-0 transition-colors ${darkMode ? 'border-slate-800 bg-slate-900' : isAdmin ? 'bg-amber-50/20' : 'bg-indigo-50/10'}`}>
-        <header className={`p-4 text-white ${isAdmin ? 'bg-amber-500' : 'bg-indigo-600'} flex justify-between items-center shrink-0 shadow-lg relative z-10`}>
-          <div className="flex items-center gap-2 min-w-0"><Book size={20}/><h1 className="font-bold text-lg uppercase truncate">Vật Lý 11</h1></div>
-          {isAdmin && <button onClick={()=>{setNodeModalData({parentId:null, type:'folder', title:'', url:''}); setShowNodeModal(true);}} className="p-1.5 bg-white/20 rounded-none hover:bg-white/30"><Plus size={16}/></button>}
+          </div>
+          <button onClick={onClose} className="w-10 h-10 flex items-center justify-center hover:bg-white/10 transition-all"><X/></button>
         </header>
 
-        <div className="p-3">
-          <div className={`relative flex items-center group ${darkMode ? 'bg-slate-800' : 'bg-slate-100'} rounded-none px-3 py-2 transition-all`}>
-            <Search size={14} className="text-slate-400 group-focus-within:text-indigo-500"/>
-            <input 
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Tìm kiếm nội dung..." 
-              className="bg-transparent border-none outline-none text-[10px] font-medium w-full ml-2 placeholder:text-slate-400"
-            />
-          </div>
-        </div>
+        <div className="flex-1 overflow-hidden bg-white dark:bg-slate-950">
+          {loading ? (
+            <div className="flex flex-col items-center justify-center h-[500px] text-center">
+              <Loader2 className="animate-spin text-indigo-500 mb-6" size={40}/>
+              <p className="font-medium text-[9px] uppercase text-slate-400 tracking-[0.4em] animate-pulse">AI đang thiết kế đề thi chất lượng cao (1 Dễ - 1 TB - 2 Khá - 1 Khó)...</p>
+            </div>
+          ) : (
+            <div className="h-full">
+              {!showResults ? (
+                <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.1fr] h-full divide-y lg:divide-y-0 lg:divide-x divide-slate-100 dark:divide-slate-800">
+                  {/* Cột trái: Câu hỏi - Chữ to rõ, không đậm */}
+                  <div className="p-12 lg:p-20 bg-slate-50/50 dark:bg-slate-900/30 flex flex-col justify-center space-y-10">
+                    <div className="flex items-center gap-4">
+                      <span className="px-4 py-1.5 bg-indigo-600 text-white rounded-none text-[10px] font-black uppercase tracking-widest shadow-sm">CÂU {currentIdx + 1} / {questions.length}</span>
+                      <div className="text-[9px] font-medium uppercase text-slate-400 tracking-widest italic border-l pl-4 border-slate-200">
+                        {currentIdx < 2 ? "Mức độ: Cơ bản" : (currentIdx === 4 ? "Mức độ: Vận dụng cao (Khó)" : "Mức độ: Vận dụng (Khá)")}
+                      </div>
+                    </div>
+                    <div className="text-4xl font-medium text-slate-800 dark:text-slate-100 leading-tight tracking-tight">
+                      {renderLatex(questions[currentIdx]?.question)}
+                    </div>
+                  </div>
 
-        <div className="flex-1 overflow-y-auto p-3 custom-scrollbar">
-          {filteredRootNodes.map(node=>(
-            <TreeItem key={node.id} node={node} allNodes={data.nodes} selectedId={selectedId} isAdmin={isAdmin} level={0}
-              onSelect={(id)=>{setSelectedId(id); if(data.nodes.find(n=>n.id===id)?.url) setIframeLoading(true);}}
-              onAdd={(p,t)=>{setNodeModalData({parentId:p, type:t, title:'', url:''}); setShowNodeModal(true);}}
-              onEdit={(n)=>{setNodeModalData({...n}); setShowNodeModal(true);}}
-              onDelete={(id)=>setShowDeleteConfirm({type:'node', id, title:data.nodes.find(n=>n.id===id)?.title||''})}/>
-          ))}
-        </div>
-
-        <footer className={`p-3 border-t flex flex-col gap-2 shrink-0 transition-colors ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white'}`}>
-          <div className="flex gap-2">
-              <button onClick={toggleTheme} className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-none text-[9px] font-bold uppercase transition-all ${darkMode ? 'bg-slate-800 text-amber-400' : 'bg-slate-100 text-slate-500'}`}>
-                {darkMode ? <><Sun size={12}/> Light</> : <><Moon size={12}/> Dark</>}
-              </button>
-              {isAdmin && <button onClick={()=>{navigator.clipboard.writeText(window.location.origin+'/student'); setCopied(true); setTimeout(()=>setCopied(false),2000);}} className="flex-1 py-2 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 font-bold uppercase text-[9px] rounded-none flex items-center justify-center gap-2 border border-indigo-100 dark:border-indigo-800">{copied?<Check size={10}/>:<Copy size={10}/>} Link</button>}
-          </div>
-          <div className={`flex justify-between px-3 py-2 rounded-none border text-[8px] font-bold uppercase transition-colors ${darkMode ? 'bg-slate-800/50 border-slate-700 text-slate-500' : 'bg-slate-50 border-slate-100 text-slate-400'}`}>
-             <div className="flex items-center gap-1.5">{isSyncing?<Loader2 size={10} className="animate-spin text-indigo-500"/>:<CloudCheck size={10} className="text-green-500"/>} {isAdmin?'Teacher':'Student'}</div>
-             <div className="flex items-center gap-1.5"><Users size={10} className="text-indigo-400"/> {visitorCount}</div>
-          </div>
-          <button onClick={()=>{if(isAdmin)sessionStorage.removeItem('teacher_auth'); navigate('/');}} className="w-full py-2 bg-transparent border border-transparent text-slate-400 hover:text-red-500 font-medium uppercase text-[9px] rounded-none transition-colors">Đăng xuất</button>
-        </footer>
-      </aside>
-
-      <main className="flex-1 flex flex-col overflow-hidden relative">
-        {selectedId ? (
-          <>
-            <header className={`px-8 pt-6 border-b shrink-0 transition-colors ${darkMode ? 'bg-slate-950/80 border-slate-800' : 'bg-white/80'} backdrop-blur-md`}>
-              <div className="flex justify-between items-center mb-5">
-                <div className="min-w-0">
-                  <h2 className={`text-2xl font-black uppercase truncate tracking-tight transition-colors ${darkMode ? 'text-white' : 'text-slate-800'}`}>{selectedNode?.title}</h2>
-                  <p key={sloganIdx} className="text-[9px] font-normal text-indigo-500/40 uppercase mt-0.5 tracking-[0.1em] italic animate-in fade-in slide-in-from-left-2 duration-1000">
-                    {SLOGANS[sloganIdx]}
-                  </p>
+                  {/* Cột phải: Đáp án - Tăng kích thước chữ, giãn cách đều */}
+                  <div className="p-12 lg:p-20 flex flex-col justify-center space-y-4 bg-white dark:bg-slate-900 overflow-y-auto custom-scrollbar">
+                    <p className="text-[10px] font-black uppercase text-slate-400 tracking-[0.2em] mb-6">Chọn đáp án đúng nhất:</p>
+                    <div className="space-y-4">
+                      {questions[currentIdx]?.options.map((opt, i) => (
+                        <button key={i} onClick={() => { const n = [...userAnswers]; n[currentIdx] = i; setUserAnswers(n); }} 
+                          className={`group p-6 rounded-none border-2 text-left transition-all flex items-center gap-6 ${userAnswers[currentIdx] === i ? 'bg-indigo-600 border-indigo-600 text-white shadow-xl' : 'bg-white dark:bg-slate-800 border-slate-100 dark:border-slate-800 hover:border-indigo-400 text-slate-700 dark:text-slate-300'}`}>
+                          <span className={`w-12 h-12 rounded-none flex items-center justify-center font-black text-sm shrink-0 transition-colors ${userAnswers[currentIdx] === i ? 'bg-white/20' : 'bg-slate-100 dark:bg-slate-700 text-indigo-500'}`}>{String.fromCharCode(65 + i)}</span>
+                          <span className="text-xl font-medium leading-tight">{renderLatex(opt)}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                 </div>
-                <div className="flex items-center gap-3">
-                  {selectedNode?.type==='lesson' && <button onClick={()=>setIsQuizOpen(true)} className="flex items-center gap-2 px-7 py-3.5 bg-indigo-600 text-white rounded-none font-bold text-[11px] uppercase shadow-xl hover:bg-indigo-700 hover:scale-[1.01] active:scale-95 transition-all"><BrainCircuit size={18}/> Quiz AI</button>}
-                  {selectedNode?.url && <a href={selectedNode.url} target="_blank" className={`p-3.5 rounded-none transition-all ${darkMode ? 'bg-slate-800 text-slate-400 hover:bg-slate-700' : 'bg-slate-50 text-slate-400 hover:bg-slate-100'}`}><Maximize2 size={18}/></a>}
-                </div>
-              </div>
-              {selectedNode?.type === 'lesson' && (
-                <div className="flex gap-10">
-                  <button onClick={()=>setActiveTab('content')} className={`pb-4 text-[11px] font-black uppercase tracking-widest border-b-4 transition-all ${activeTab==='content' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-400'}`}>Học tập</button>
-                  <button onClick={()=>setActiveTab('forum')} className={`pb-4 text-[11px] font-black uppercase tracking-widest border-b-4 transition-all flex items-center gap-2 ${activeTab==='forum' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-400'}`}>Thảo luận <MessageSquare size={14}/> </button>
-                </div>
-              )}
-            </header>
-            
-            <div className={`flex-1 relative overflow-hidden transition-colors ${darkMode ? 'bg-slate-900' : 'bg-slate-100'}`}>
-              {activeTab === 'content' ? (
-                <>
-                  {iframeLoading && <div className={`absolute inset-0 flex flex-col items-center justify-center z-10 transition-colors ${darkMode ? 'bg-slate-950' : 'bg-white'}`}><Loader2 className="animate-spin text-indigo-500 mb-3" size={40}/><p className="text-[10px] uppercase font-bold text-slate-500 tracking-[0.3em]">Hệ thống đang tải dữ liệu...</p></div>}
-                  {selectedNode?.url ? <iframe src={selectedNode.url} className={`w-full h-full border-none transition-opacity duration-500 ${iframeLoading ? 'opacity-0' : 'opacity-100'}`} onLoad={()=>setIframeLoading(false)}/> : <div className="h-full flex flex-col items-center justify-center italic text-slate-400 space-y-4"><FileText size={48} className="opacity-20"/><p className="text-sm font-medium">Nội dung bài giảng đang được hoàn thiện...</p></div>}
-                </>
               ) : (
-                <Forum nodeId={selectedId} isAdmin={isAdmin} />
+                <div className="h-full overflow-y-auto p-12 lg:p-16 space-y-12 animate-in zoom-in duration-500 bg-slate-50 dark:bg-slate-950/20 custom-scrollbar">
+                  <div className="flex flex-col items-center text-center space-y-4">
+                      <div className="p-4 bg-amber-500 text-white rounded-none shadow-xl"><Trophy size={48} /></div>
+                      <div className="space-y-1">
+                          <h2 className="text-4xl font-black text-slate-800 dark:text-white tracking-tighter uppercase">Kết quả bài làm: {calculateScore()}/{questions.length}</h2>
+                          <p className="text-[10px] font-medium uppercase text-indigo-500 tracking-[0.3em]">Hệ thống AI đã hoàn tất việc chấm điểm tự động</p>
+                      </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    {questions.map((q, i) => (
+                      <div key={i} className={`p-10 rounded-none border-t-8 transition-all bg-white dark:bg-slate-900 shadow-sm ${userAnswers[i] === q.correctIndex ? 'border-green-500' : 'border-red-500'}`}>
+                        <div className="flex items-start gap-6 mb-5">
+                           {userAnswers[i] === q.correctIndex ? <CheckCircle2 size={28} className="text-green-500 mt-1 shrink-0"/> : <XCircle size={28} className="text-red-500 mt-1 shrink-0"/>}
+                           <p className="text-xl font-medium text-slate-800 dark:text-slate-200 leading-tight">{renderLatex(q.question)}</p>
+                        </div>
+                        <div className="ml-12 p-6 bg-slate-50 dark:bg-black/20 rounded-none text-sm text-slate-600 dark:text-slate-400 italic border-l-4 border-indigo-200">
+                            <span className="font-black text-indigo-500 uppercase not-italic mr-4">Giải thích:</span> {renderLatex(q.explanation)}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               )}
             </div>
-          </>
-        ) : (
-          <div className="flex-1 flex flex-col items-center justify-center p-10 text-center animate-in fade-in duration-1000">
-             <div className="relative mb-8 group">
-                <div className="absolute inset-0 bg-indigo-500/10 rounded-full blur-3xl group-hover:bg-indigo-500/20 transition-all duration-700"></div>
-                <Book size={120} className={`relative z-10 opacity-10 transition-colors ${darkMode ? 'text-indigo-300' : 'text-indigo-600'}`}/>
-                <Sparkles size={40} className="absolute -top-6 -right-6 text-amber-400 opacity-50 animate-pulse"/>
-             </div>
-             <h2 className={`text-3xl font-black uppercase tracking-tighter mb-4 ${darkMode ? 'text-slate-300' : 'text-slate-400'}`}>Khám phá kiến thức</h2>
-             <p className="text-xs text-slate-500 mb-10 max-w-sm uppercase font-bold tracking-widest opacity-60">Chọn một bài học từ danh sách bên trái để bắt đầu</p>
-             
-             <div className={`max-w-md w-full p-8 rounded-none border shadow-2xl animate-in slide-in-from-bottom-8 duration-1000 transition-colors ${darkMode ? 'bg-slate-900/50 border-slate-800' : 'bg-white/50 border-slate-100'}`}>
-                <p key={sloganIdx} className="text-[9px] font-normal uppercase tracking-wide text-indigo-500/40 leading-relaxed italic animate-in fade-in slide-in-from-right-4 duration-1000">
-                  {SLOGANS[sloganIdx]}
-                </p>
-                <div className="mt-6 flex justify-center gap-1">
-                   {SLOGANS.map((_, i) => (
-                     <div key={i} className={`h-1 transition-all duration-500 ${i === sloganIdx ? 'w-8 bg-indigo-500' : 'w-2 bg-slate-300/40'}`} />
-                   ))}
-                </div>
-             </div>
-          </div>
-        )}
-      </main>
-
-      <ResourcesPanel isAdmin={isAdmin} selectedId={selectedId} lessonResources={selectedNode?.lessonResources||[]} globalResources={data.globalResources}
-        onAdd={(isG)=>{setResourceModalData({isGlobal:isG, title:'', url:''}); setShowResourceModal(true);}}
-        onEdit={(r,isG)=>{setResourceModalData({...r, isGlobal:isG}); setShowResourceModal(true);}}
-        onDelete={(id,t,isG)=>setShowDeleteConfirm({type:'resource', id, title:t, isGlobal:isG})}/>
-
-      {showNodeModal && (
-        <div className="fixed inset-0 z-[300] bg-slate-900/60 flex items-center justify-center p-6 backdrop-blur-md animate-in fade-in">
-          <form onSubmit={(e)=>{e.preventDefault(); if(!nodeModalData.title)return; let nodes=[...data.nodes]; if(nodeModalData.id) nodes=nodes.map(n=>n.id===nodeModalData.id?{...n,title:nodeModalData.title,url:nodeModalData.url}:n); else nodes.push({id:`n-${Date.now()}`, ...nodeModalData, lessonResources:[]}); updateData({...data, nodes}); setShowNodeModal(false);}}
-            className={`${darkMode ? 'bg-slate-900 border border-slate-800' : 'bg-white'} p-10 rounded-none shadow-2xl w-full max-w-md space-y-5 animate-in slide-in-from-bottom-10 border-t-4 border-indigo-600`}>
-            <div className="flex items-center gap-3 border-b pb-5">
-                <div className="p-3 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 rounded-none"><Book size={20}/></div>
-                <h3 className="font-bold uppercase text-sm tracking-tight">Cài đặt bài học</h3>
-            </div>
-            <div className="space-y-1.5">
-                <label className="text-[10px] font-black text-slate-400 uppercase ml-2 tracking-widest">Tiêu đề bài học</label>
-                <input autoFocus value={nodeModalData.title} onChange={e=>setNodeModalData({...nodeModalData, title:e.target.value})} className={`w-full p-4 rounded-none text-sm focus:ring-1 focus:ring-indigo-400 outline-none transition-all ${darkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-slate-50 border-slate-100'}`} placeholder="VD: Chương 1: Động lực học..."/>
-            </div>
-            <div className="space-y-1.5">
-                <label className="text-[10px] font-black text-slate-400 uppercase ml-2 tracking-widest">Liên kết tài liệu</label>
-                <input value={nodeModalData.url} onChange={e=>setNodeModalData({...nodeModalData, url:e.target.value})} className={`w-full p-4 rounded-none text-[11px] focus:ring-1 focus:ring-indigo-400 outline-none transition-all ${darkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-slate-50 border-slate-100'}`} placeholder="Link tài liệu..."/>
-            </div>
-            <div className="flex gap-4 pt-4">
-                <button type="button" onClick={()=>setShowNodeModal(false)} className="flex-1 text-[11px] font-bold uppercase text-slate-400">Hủy</button>
-                <button type="submit" className="flex-1 py-4 bg-indigo-600 text-white rounded-none font-bold uppercase text-[11px]">Lưu</button>
-            </div>
-          </form>
+          )}
         </div>
-      )}
 
-      {showResourceModal && (
-        <div className="fixed inset-0 z-[300] bg-slate-900/60 flex items-center justify-center p-6 backdrop-blur-md animate-in fade-in">
-          <form onSubmit={(e)=>{e.preventDefault(); if(!resourceModalData.title)return; if(resourceModalData.id){ if(resourceModalData.isGlobal) updateData({...data, globalResources: data.globalResources.map(r=>r.id===resourceModalData.id?{id:r.id,title:resourceModalData.title,url:resourceModalData.url}:r)}); else if(selectedId) updateData({...data, nodes:data.nodes.map(n=>n.id===selectedId?{...n,lessonResources:n.lessonResources.map(r=>r.id===resourceModalData.id?{id:r.id,title:resourceModalData.title,url:resourceModalData.url}:r)}:n)}); } else { const r={id:`r-${Date.now()}`, title:resourceModalData.title, url:resourceModalData.url}; if(resourceModalData.isGlobal) updateData({...data, globalResources:[...data.globalResources, r]}); else if(selectedId) updateData({...data, nodes:data.nodes.map(n=>n.id===selectedId?{...n,lessonResources:[...n.lessonResources,r]}:n)}); } setShowResourceModal(false);}}
-            className={`${darkMode ? 'bg-slate-900 border border-slate-800' : 'bg-white'} p-10 rounded-none shadow-2xl w-full max-w-md space-y-5 animate-in slide-in-from-bottom-10 border-t-4 border-sky-600`}>
-            <div className="flex items-center gap-3 border-b pb-5">
-                <div className="p-3 bg-sky-50 dark:bg-sky-900/30 text-sky-600 rounded-none"><FileText size={20}/></div>
-                <h3 className="font-bold uppercase text-sm tracking-tight">Thêm tài liệu</h3>
-            </div>
-            <input autoFocus value={resourceModalData.title} onChange={e=>setResourceModalData({...resourceModalData, title:e.target.value})} className={`w-full p-4 rounded-none text-sm ${darkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-slate-50 border-slate-100'}`} placeholder="Tên tài liệu..."/>
-            <input value={resourceModalData.url} onChange={e=>setResourceModalData({...resourceModalData, url:e.target.value})} className={`w-full p-4 rounded-none text-[11px] ${darkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-slate-50 border-slate-100'}`} placeholder="Link..."/>
-            <div className="flex gap-4 pt-4">
-                <button type="button" onClick={()=>setShowResourceModal(false)} className="flex-1 text-[11px] font-bold uppercase text-slate-400">Hủy</button>
-                <button type="submit" className="flex-1 py-4 bg-indigo-600 text-white rounded-none font-bold uppercase text-[11px]">Cập nhật</button>
-            </div>
-          </form>
-        </div>
-      )}
+        <footer className="px-10 py-6 border-t bg-white dark:bg-slate-900 flex justify-between items-center shrink-0">
+          {!showResults && !loading && (
+            <>
+              <button disabled={currentIdx===0} onClick={()=>setCurrentIdx(p=>p-1)} className={`font-black text-[11px] uppercase transition-all flex items-center gap-2 ${currentIdx===0 ? 'text-slate-300 cursor-not-allowed' : 'text-slate-500 hover:text-indigo-600'}`}>
+                <ChevronLeft size={18}/> Quay lại
+              </button>
+              
+              <div className="flex-1 h-1.5 bg-slate-100 dark:bg-slate-800 mx-10 max-w-md relative overflow-hidden">
+                 <div className="absolute top-0 left-0 h-full bg-indigo-600 transition-all duration-300 shadow-[0_0_10px_rgba(79,70,229,0.4)]" style={{width: `${((currentIdx + 1) / questions.length) * 100}%`}}></div>
+              </div>
 
-      {showDeleteConfirm && (
-        <div className="fixed inset-0 z-[400] bg-slate-950/80 flex items-center justify-center p-6 backdrop-blur-md animate-in zoom-in">
-          <div className={`${darkMode ? 'bg-slate-900' : 'bg-white'} p-12 rounded-none shadow-2xl text-center w-full max-w-sm space-y-8 border-t-4 border-red-500`}>
-            <div className="w-20 h-20 bg-red-50 dark:bg-red-900/30 text-red-500 rounded-full flex items-center justify-center mx-auto shadow-inner"><AlertTriangle size={40}/></div>
-            <div className="space-y-2">
-                <h4 className="text-lg font-black uppercase text-slate-800 dark:text-white">Xóa mục này?</h4>
-                <p className="font-medium text-[11px] text-slate-500 leading-relaxed">Bạn có chắc muốn xóa <span className="text-red-500 font-bold">"{showDeleteConfirm.title}"</span>?</p>
-            </div>
-            <div className="flex gap-4">
-                <button onClick={()=>setShowDeleteConfirm(null)} className="flex-1 text-[11px] font-bold uppercase text-slate-400">Hủy</button>
-                <button onClick={()=>{ if(showDeleteConfirm.type==='node') {updateData({...data, nodes:data.nodes.filter(n=>n.id!==showDeleteConfirm.id)}); setSelectedId(null);} else { if(showDeleteConfirm.isGlobal) updateData({...data, globalResources:data.globalResources.filter(r=>r.id!==showDeleteConfirm.id)}); else if(selectedId) updateData({...data, nodes:data.nodes.map(n=>n.id===selectedId?{...n,lessonResources:n.lessonResources.filter(r=>r.id!==showDeleteConfirm.id)}:n)}); } setShowDeleteConfirm(null); }} className="flex-1 py-4 bg-red-500 text-white rounded-none font-bold uppercase text-[11px]">Xóa</button>
-            </div>
-          </div>
-        </div>
-      )}
-
+              <div className="flex gap-4">
+                  {currentIdx === questions.length - 1 ? 
+                    <button onClick={handleFinish} className="px-14 py-4 bg-indigo-600 text-white rounded-none font-black uppercase text-[12px] shadow-lg hover:bg-indigo-700 transition-all active:scale-95">Nộp bài ngay</button> :
+                    <button onClick={()=>setCurrentIdx(p=>p+1)} className="px-14 py-4 bg-slate-900 dark:bg-indigo-500 text-white rounded-none font-black text-[12px] uppercase hover:bg-black transition-all flex items-center gap-2 active:scale-95">Câu kế tiếp <ChevronRight size={18}/></button>
+                  }
+              </div>
+            </>
+          )}
+          {showResults && <button onClick={onClose} className="w-full py-6 bg-slate-900 dark:bg-indigo-600 text-white rounded-none font-black uppercase text-[12px] hover:bg-black transition-all tracking-widest active:scale-95">Hoàn thành & quay lại bài học</button>}
+        </footer>
+      </div>
       <style>{`
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
-        .dark .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; }
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        iframe { border-radius: 0px; background: white; }
-        .dark iframe { filter: brightness(0.9); }
-        .katex { font-size: 1.1em; }
-        @keyframes spin { from { transform: translate(-50%, -50%) rotate(0deg); } to { transform: translate(-50%, -50%) rotate(360deg); } }
-        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
-        .animate-shake { animation: shake 0.2s ease-in-out infinite; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 0px; }
+        .katex { font-size: 1.15em; }
       `}</style>
     </div>
   );
 };
 
-export default App;
+export default QuizModal;
