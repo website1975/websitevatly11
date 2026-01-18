@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>So sánh Công nghệ Lọc bụi Công nghiệp</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-color: #0f172a;
+            color: #e2e8f0;
+            font-family: 'system-ui', -apple-system, sans-serif;
+            margin: 0;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+        canvas {
+            background: #1e293b;
+            flex-grow: 1;
+        }
+        .controls {
+            background: #111827;
+            padding: 1rem;
+            border-top: 1px solid #374151;
+        }
+        .stat-group {
+            display: flex;
+            gap: 1rem;
+            position: absolute;
+            top: 1rem;
+            width: 100%;
+            justify-content: space-around;
+            pointer-events: none;
+        }
+        .stat-card {
+            background: rgba(31, 41, 55, 0.9);
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            border: 1px solid #374151;
+            min-width: 160px;
+            pointer-events: auto;
+        }
+        input[type="range"] {
+            accent-color: #3b82f6;
+        }
+    </style>
+</head>
+<body>
+
+<div class="flex-grow flex flex-col relative">
+    <div class="stat-group">
+        <div class="flex flex-col gap-2">
+            <h2 class="text-blue-400 font-bold text-center text-sm uppercase">Máy 1: Lọc Tĩnh Điện (Nhiễm điện tại chỗ)</h2>
+            <div class="stat-card">
+                <p class="text-[9px] font-bold text-gray-400 uppercase">Hiệu suất 1</p>
+                <p id="eff1" class="text-2xl font-mono font-bold text-blue-400">0%</p>
+            </div>
+        </div>
+
+        <div class="flex flex-col gap-2">
+            <h2 class="text-purple-400 font-bold text-center text-sm uppercase">Máy 2: Ion Hóa (Nhiễm điện từ xa)</h2>
+            <div class="stat-card">
+                <p class="text-[9px] font-bold text-gray-400 uppercase">Hiệu suất 2</p>
+                <p id="eff2" class="text-2xl font-mono font-bold text-purple-400">0%</p>
+            </div>
+        </div>
+    </div>
+    
+    <canvas id="simCanvas"></canvas>
+</div>
+
+<div class="controls flex flex-wrap items-center justify-center gap-6">
+    <div class="flex flex-col items-center">
+        <button id="togglePower" class="px-6 py-2 rounded-lg font-bold bg-red-600 hover:bg-red-500 text-white transition-all shadow-lg active:scale-95">
+            NGẮT ĐIỆN TỔNG
+        </button>
+    </div>
+    
+    <div class="flex flex-col w-40">
+        <div class="flex justify-between mb-1">
+            <span class="text-[10px] font-bold text-gray-500 uppercase">Điện áp</span>
+            <span id="pVal" class="text-xs font-bold text-blue-400">50</span>
+        </div>
+        <input type="range" id="powerSlider" min="10" max="100" value="50">
+    </div>
+
+    <div class="flex flex-col w-40">
+        <div class="flex justify-between mb-1">
+            <span class="text-[10px] font-bold text-gray-400 uppercase">Mật độ bụi</span>
+            <span id="sVal" class="text-xs font-bold text-gray-400">20</span>
+        </div>
+        <input type="range" id="smokeSlider" min="5" max="50" value="20">
+    </div>
+
+    <button id="resetBtn" class="px-4 py-2 bg-gray-800 hover:bg-gray-700 rounded-lg text-xs font-bold uppercase">Reset</button>
+</div>
+
+<script>
+    const canvas = document.getElementById('simCanvas');
+    const ctx = canvas.getContext('2d');
+    
+    const toggleBtn = document.getElementById('togglePower');
+    const powerSlider = document.getElementById('powerSlider');
+    const smokeSlider = document.getElementById('smokeSlider');
+    const resetBtn = document.getElementById('resetBtn');
+
+    let isPowerOn = false;
+    let particles1 = [];
+    let particles2 = [];
+    let cap1 = 0, esc1 = 0;
+    let cap2 = 0, esc2 = 0;
+
+    let chimney1 = { x: 0, y: 100, w: 0, h: 0 };
+    let chimney2 = { x: 0, y: 100, w: 0, h: 0 };
+
+    function initLayout() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight - 100;
+        const gap = 80;
+        const w = Math.min(canvas.width * 0.35, 280);
+        chimney1.w = w; chimney1.h = canvas.height - 150; chimney1.x = canvas.width/2 - w - gap/2;
+        chimney2.w = w; chimney2.h = canvas.height - 150; chimney2.x = canvas.width/2 + gap/2;
+    }
+
+    window.addEventListener('resize', initLayout);
+    initLayout();
+
+    class Particle {
+        constructor(chimneyObj, type) {
+            this.c = chimneyObj;
+            this.type = type; 
+            this.reset();
+        }
+
+        reset() {
+            this.x = this.c.x + Math.random() * this.c.w;
+            this.y = canvas.height + Math.random() * 50;
+            this.vx = (Math.random() - 0.5) * 0.5;
+            this.vy = -(Math.random() * 1.5 + 1.2);
+            this.size = Math.random() * 2 + 1;
+            this.alpha = Math.random() * 0.5 + 0.5;
+            this.isCharged = false; // Trạng thái nhiễm điện
+        }
+
+        update() {
+            const power = parseInt(powerSlider.value);
+            
+            if (isPowerOn) {
+                if (this.type === 1) {
+                    // MÁY 1: ESP
+                    const chargingZoneY = this.c.y + this.c.h * 0.6; // Vùng nhiễm điện nằm dưới tấm cực
+                    const collectionZoneY = this.c.y + this.c.h * 0.45; // Vùng tấm cực hút bụi
+
+                    // 1. Kiểm tra nhiễm điện (Hạt bụi trắng -> Hạt bụi xanh)
+                    if (!this.isCharged && Math.abs(this.y - chargingZoneY) < 20) {
+                        if (Math.random() * 100 < 80) this.isCharged = true; 
+                    }
+
+                    // 2. Chỉ hạt đã nhiễm điện mới bị lực hút
+                    if (this.isCharged) {
+                        const distToPlate = Math.abs(this.y - collectionZoneY);
+                        if (distToPlate < 100) {
+                            const centerX = this.c.x + this.c.w/2;
+                            this.vx = this.vx * 0.85 + (centerX - this.x) * 0.02 * (power/50);
+                            
+                            if (distToPlate < 15) {
+                                if (Math.random() * 100 < power) { cap1++; this.reset(); return; }
+                            }
+                        }
+                    }
+                } else {
+                    // MÁY 2: IONIZER
+                    const ionizerY = this.c.y + this.c.h * 0.7;
+                    if (!this.isCharged && this.y < ionizerY) this.isCharged = true;
+
+                    if (this.isCharged) {
+                        const direction = this.x > (this.c.x + this.c.w/2) ? 1 : -1;
+                        this.vx += direction * 0.06 * (power/50);
+                        if (this.x <= this.c.x + 5 || this.x >= this.c.x + this.c.w - 5) {
+                            if (Math.random() * 100 < power) { cap2++; this.reset(); return; }
+                        }
+                    }
+                }
+            } else {
+                this.isCharged = false;
+                this.vx *= 0.99;
+            }
+
+            this.x += this.vx;
+            this.y += this.vy;
+
+            if (this.x < this.c.x) { this.x = this.c.x; this.vx *= -0.3; }
+            if (this.x > this.c.x + this.c.w) { this.x = this.c.x + this.c.w; this.vx *= -0.3; }
+
+            if (this.y < this.c.y) {
+                if (this.type === 1) esc1++; else esc2++;
+                this.reset();
+            }
+        }
+
+        draw() {
+            let color = `rgba(200, 210, 230, ${this.alpha})`; // Mặc định: Trắng (Chưa điện)
+            if (this.isCharged) {
+                color = this.type === 1 
+                    ? `rgba(96, 165, 250, ${this.alpha})` // Xanh dương (Máy 1 nhiễm điện)
+                    : `rgba(168, 85, 247, ${this.alpha})`; // Tím (Máy 2 nhiễm điện)
+            }
+            ctx.fillStyle = color;
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+            ctx.fill();
+        }
+    }
+
+    function sync() {
+        const count = parseInt(smokeSlider.value) * 10;
+        while (particles1.length < count) particles1.push(new Particle(chimney1, 1));
+        while (particles2.length < count) particles2.push(new Particle(chimney2, 2));
+        if (particles1.length > count) { particles1.splice(0, particles1.length - count); particles2.splice(0, particles2.length - count); }
+    }
+
+    toggleBtn.onclick = () => {
+        isPowerOn = !isPowerOn;
+        toggleBtn.textContent = isPowerOn ? "ĐANG CÓ ĐIỆN" : "NGẮT ĐIỆN TỔNG";
+        toggleBtn.className = isPowerOn 
+            ? "px-6 py-2 rounded-lg font-bold bg-green-600 hover:bg-green-500 text-white transition-all shadow-lg active:scale-95"
+            : "px-6 py-2 rounded-lg font-bold bg-red-600 hover:bg-red-500 text-white transition-all shadow-lg active:scale-95";
+    };
+
+    resetBtn.onclick = () => { cap1=0; esc1=0; cap2=0; esc2=0; particles1.forEach(p=>p.reset()); particles2.forEach(p=>p.reset()); };
+
+    function drawSystem() {
+        [chimney1, chimney2].forEach((c, i) => {
+            ctx.strokeStyle = "#475569"; ctx.lineWidth = 6; ctx.strokeRect(c.x, c.y, c.w, c.h);
+            ctx.fillStyle = "#94a3b8"; ctx.font = "bold 11px Arial"; ctx.textAlign = "center";
+            ctx.fillText(i === 0 ? "MÁY 1: LỌC TĨNH ĐIỆN" : "MÁY 2: ION HÓA BỤI", c.x + c.w/2, c.y - 25);
+
+            if (i === 0) {
+                // Máy 1: Vùng nhiễm điện & Tấm cực
+                const chargingY = c.y + c.h * 0.6;
+                const plateY = c.y + c.h * 0.45;
+
+                // 1. Tấm cực hút bụi
+                for(let j=0; j<5; j++) {
+                    ctx.strokeStyle = isPowerOn ? "#60a5fa" : "#334155";
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.moveTo(c.x + 25, plateY - 12 + j*6);
+                    ctx.lineTo(c.x + c.w - 25, plateY - 12 + j*6);
+                    ctx.stroke();
+                }
+
+                // 2. Dây nhiễm điện (Corona wires)
+                if (isPowerOn) {
+                    ctx.strokeStyle = "rgba(96, 165, 250, 0.4)";
+                    ctx.setLineDash([2, 2]);
+                    ctx.beginPath();
+                    ctx.moveTo(c.x + 10, chargingY);
+                    ctx.lineTo(c.x + c.w - 10, chargingY);
+                    ctx.stroke();
+                    ctx.setLineDash([]);
+                    ctx.fillStyle = "#60a5fa";
+                    ctx.font = "8px Arial";
+                    ctx.fillText("VÙNG NHIỄM ĐIỆN", c.x + c.w/2, chargingY + 12);
+                }
+            } else {
+                // Máy 2: Kim phun ion
+                const ionY = c.y + c.h * 0.7;
+                ctx.strokeStyle = isPowerOn ? "#a855f7" : "#334155";
+                ctx.beginPath(); ctx.arc(c.x + c.w/2, ionY, 5, 0, Math.PI*2); ctx.stroke();
+                if (isPowerOn) {
+                    ctx.fillStyle = "rgba(168, 85, 247, 0.2)";
+                    ctx.beginPath(); ctx.arc(c.x + c.w/2, ionY, 35, 0, Math.PI*2); ctx.fill();
+                }
+            }
+        });
+    }
+
+    function loop() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        sync();
+        drawSystem();
+        particles1.forEach(p => { p.update(); p.draw(); });
+        particles2.forEach(p => { p.update(); p.draw(); });
+        document.getElementById('eff1').innerText = (cap1+esc1 === 0 ? 0 : Math.round(cap1/(cap1+esc1)*100)) + "%";
+        document.getElementById('eff2').innerText = (cap2+esc2 === 0 ? 0 : Math.round(cap2/(cap2+esc2)*100)) + "%";
+        document.getElementById('pVal').innerText = powerSlider.value;
+        document.getElementById('sVal').innerText = smokeSlider.value;
+        requestAnimationFrame(loop);
+    }
+    loop();
+</script>
+</body>
+</html>

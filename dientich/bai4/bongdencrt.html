@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mô phỏng Vật lý: So sánh Quét Raster & Vector</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        canvas {
+            background: #020617;
+            border-radius: 8px;
+            box-shadow: inset 0 0 30px rgba(0,0,0,1);
+            width: 100%;
+            height: 100%;
+        }
+        .panel-container {
+            height: calc(50vh - 70px);
+            min-height: 350px;
+        }
+        .control-section {
+            background: rgba(15, 23, 42, 0.8);
+            border: 1px solid rgba(51, 65, 85, 0.5);
+        }
+        input[type="range"] {
+            accent-color: #10b981;
+        }
+        .crt-overlay {
+            pointer-events: none;
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%);
+            background-size: 100% 4px;
+            z-index: 10;
+            border-radius: 8px;
+        }
+        .hidden { display: none; }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen overflow-hidden font-sans">
+    <div class="flex h-screen">
+        <div class="w-3/4 p-4 flex flex-col gap-4 overflow-y-auto">
+            <!-- Panel Trên: CRT -->
+            <div class="panel-container flex flex-col">
+                <div class="flex justify-between items-center mb-2 px-2">
+                    <div class="flex items-center gap-2">
+                        <div class="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></div>
+                        <h2 class="text-blue-400 font-bold uppercase tracking-widest text-xs">Hệ thống ống phóng CRT: So sánh cơ chế lái tia</h2>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-4 flex-grow">
+                    <div class="relative flex flex-col border border-slate-800 rounded-xl p-2 bg-slate-900/50">
+                        <span class="text-[9px] text-slate-500 uppercase mb-1 font-bold">Góc nhìn bên (Quỹ đạo tia điện tử)</span>
+                        <canvas id="crtSideCanvas"></canvas>
+                    </div>
+                    <div class="relative flex flex-col border border-slate-800 rounded-xl p-2 bg-slate-900/50">
+                        <span class="text-[9px] text-slate-500 uppercase mb-1 font-bold">Mặt trước màn hình (Kết quả quét)</span>
+                        <div class="relative flex-grow">
+                            <div class="crt-overlay"></div>
+                            <canvas id="crtFrontCanvas"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Panel Dưới: Thông tin kỹ thuật -->
+            <div class="panel-container relative flex flex-col border-t border-slate-800 pt-4 bg-slate-900/20 p-4 rounded-xl">
+                <h2 class="text-xs font-bold text-slate-400 uppercase mb-4">Trạng thái hệ thống lái tia</h2>
+                <div class="grid grid-cols-3 gap-6">
+                    <div class="bg-black/40 p-3 rounded-lg border border-slate-800">
+                        <p class="text-[10px] text-slate-500 uppercase">Điện áp lái trục X (Ux)</p>
+                        <p id="statUx" class="text-xl font-mono text-blue-400">0.00 V</p>
+                    </div>
+                    <div class="bg-black/40 p-3 rounded-lg border border-slate-800">
+                        <p class="text-[10px] text-slate-500 uppercase">Điện áp lái trục Y (Uy)</p>
+                        <p id="statUy" class="text-xl font-mono text-emerald-400">0.00 V</p>
+                    </div>
+                    <div class="bg-black/40 p-3 rounded-lg border border-slate-800">
+                        <p class="text-[10px] text-slate-500 uppercase">Trạng thái chùm tia</p>
+                        <p id="statBeam" class="text-xl font-mono text-yellow-500">ĐANG PHÁT</p>
+                    </div>
+                </div>
+                <div class="mt-6 p-4 bg-blue-900/10 border border-blue-500/20 rounded-lg">
+                    <p id="modeDesc" class="text-xs text-blue-200 leading-relaxed"></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- BÊN PHẢI: ĐIỀU KHIỂN CHI TIẾT -->
+        <div class="w-1/4 bg-slate-900 border-l border-slate-800 p-6 flex flex-col gap-6 overflow-y-auto shadow-2xl">
+            <h1 class="text-lg font-black text-center text-white border-b border-slate-700 pb-4 uppercase">Điều khiển lái tia</h1>
+            
+            <!-- CHỌN CHẾ ĐỘ CHÍNH -->
+            <div class="space-y-2">
+                <label class="text-[10px] text-slate-500 uppercase font-bold">Chế độ quét</label>
+                <select id="mainMode" class="w-full bg-slate-800 text-sm p-2 rounded border border-slate-700 focus:ring-2 focus:ring-blue-500">
+                    <option value="raster">Quét Raster (Tivi/Màn hình)</option>
+                    <option value="vector">Quét Vector (Máy hiện sóng/Vẽ)</option>
+                </select>
+            </div>
+
+            <!-- ĐIỀU KHIỂN RASTER -->
+            <div id="ctrlRaster" class="control-section p-4 rounded-xl space-y-4">
+                <h3 class="text-blue-400 font-bold text-[10px] uppercase">Thông số Raster (TV)</h3>
+                <div>
+                    <label class="block text-[10px] text-slate-500 mb-1">Độ phân giải (Số dòng): <span id="valLines" class="text-blue-300">10</span></label>
+                    <input type="range" id="inputLines" min="5" max="30" value="10" class="w-full">
+                </div>
+                <div>
+                    <label class="block text-[10px] text-slate-500 mb-1">Tốc độ quét ngang: <span id="valScanSpeed" class="text-blue-300">0.03</span></label>
+                    <input type="range" id="inputScanSpeed" min="0.01" max="0.1" step="0.01" value="0.03" class="w-full">
+                </div>
+            </div>
+
+            <!-- ĐIỀU KHIỂN VECTOR -->
+            <div id="ctrlVector" class="control-section p-4 rounded-xl space-y-4 hidden">
+                <h3 class="text-emerald-400 font-bold text-[10px] uppercase">Thông số Vector (Vẽ chữ)</h3>
+                <div class="space-y-2">
+                    <label class="text-[11px] text-slate-400">Hình dạng vẽ:</label>
+                    <select id="vectorShape" class="w-full bg-slate-800 text-xs p-2 rounded border border-slate-700">
+                        <option value="A">Chữ A (Các nét thẳng)</option>
+                        <option value="O">Hình tròn (Sóng Sin/Cos)</option>
+                        <option value="S">Hình Sin (Máy hiện sóng)</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-[10px] text-slate-500 mb-1">Tốc độ vẽ nét: <span id="valVectorSpeed" class="text-emerald-300">0.03</span></label>
+                    <input type="range" id="inputVectorSpeed" min="0.01" max="0.1" step="0.01" value="0.03" class="w-full">
+                </div>
+            </div>
+
+            <button id="clearCRT" class="w-full py-3 text-xs bg-slate-800 border border-slate-700 text-slate-300 rounded hover:bg-red-900/20 hover:text-red-400 transition uppercase font-bold">Xóa lưu ảnh màn hình</button>
+
+            <div class="mt-auto p-3 bg-black/40 rounded-lg border border-slate-800">
+                <p class="text-[9px] text-slate-500 leading-tight">
+                    * Trong thực tế TV, điện áp lái X là sóng răng cưa tần số cao (15.625Hz), còn lái Y là sóng răng cưa tần số thấp (50Hz).
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        window.onload = function() {
+            const sideCanvas = document.getElementById('crtSideCanvas');
+            const frontCanvas = document.getElementById('crtFrontCanvas');
+            const sCtx = sideCanvas.getContext('2d');
+            const fCtx = frontCanvas.getContext('2d');
+
+            let particles = { side: [], frontPath: [] };
+            let scanX = -1, scanY = -0.8;
+            let vectorStep = 0;
+
+            function resize() {
+                sideCanvas.width = sideCanvas.clientWidth;
+                sideCanvas.height = sideCanvas.clientHeight;
+                frontCanvas.width = frontCanvas.clientWidth;
+                frontCanvas.height = frontCanvas.clientHeight;
+            }
+            window.addEventListener('resize', resize);
+            resize();
+
+            class Electron {
+                constructor() { this.reset(); this.x = sideCanvas.width * (Math.random() * -0.2); }
+                reset() {
+                    this.x = sideCanvas.width * 0.05;
+                    this.y = sideCanvas.height / 2;
+                    this.vx = 8; this.vy = 0;
+                }
+                update(ay) {
+                    if (this.x > sideCanvas.width * 0.3 && this.x < sideCanvas.width * 0.6) {
+                        this.vy += ay;
+                    }
+                    this.x += this.vx;
+                    this.y += this.vy;
+                    return this.x > sideCanvas.width * 0.9;
+                }
+            }
+
+            for(let i=0; i<15; i++) particles.side.push(new Electron());
+
+            function updateUI(mode) {
+                const isRaster = mode === 'raster';
+                document.getElementById('ctrlRaster').classList.toggle('hidden', !isRaster);
+                document.getElementById('ctrlVector').classList.toggle('hidden', isRaster);
+                document.getElementById('modeDesc').innerText = isRaster 
+                    ? "Cơ chế Raster: Tia điện tử quét tuần tự từng dòng. Độ sáng của tia (Z-axis) sẽ thay đổi để tạo hình. Ở đây chúng ta đang mô phỏng việc quét mành trắng."
+                    : "Cơ chế Vector: Tia điện tử được điều khiển trực tiếp đến các tọa độ X, Y để vẽ hình. Không cần quét các vùng trống, giúp hình ảnh sắc nét tuyệt đối.";
+            }
+
+            document.getElementById('mainMode').onchange = (e) => {
+                updateUI(e.target.value);
+                particles.frontPath = [];
+                scanX = -1; scanY = -0.8; vectorStep = 0;
+            };
+            updateUI('raster');
+
+            function draw() {
+                const mode = document.getElementById('mainMode').value;
+                let uX = 0, uY = 0, currentAY = 0;
+
+                if (mode === 'raster') {
+                    const speed = parseFloat(document.getElementById('inputScanSpeed').value);
+                    const lineStep = 1.6 / (parseInt(document.getElementById('inputLines').value) - 1);
+                    
+                    scanX += speed;
+                    if (scanX > 1) {
+                        scanX = -1;
+                        scanY += lineStep;
+                        if (scanY > 0.8) scanY = -0.8;
+                    }
+                    uX = scanX;
+                    uY = scanY;
+                } else {
+                    const vSpeed = parseFloat(document.getElementById('inputVectorSpeed').value);
+                    const shape = document.getElementById('vectorShape').value;
+                    vectorStep += vSpeed;
+                    
+                    if (shape === 'A') {
+                        if (vectorStep > 3) vectorStep = 0;
+                        if (vectorStep < 1) { uX = -0.4 + vectorStep * 0.4; uY = 0.6 - vectorStep * 1.2; }
+                        else if (vectorStep < 2) { let s = vectorStep - 1; uX = 0 + s * 0.4; uY = -0.6 + s * 1.2; }
+                        else { let s = vectorStep - 2; uX = 0.2 - s * 0.4; uY = 0; }
+                    } else if (shape === 'O') {
+                        uX = Math.cos(vectorStep) * 0.5;
+                        uY = Math.sin(vectorStep) * 0.5;
+                    } else if (shape === 'S') {
+                        uX = (vectorStep % 2) - 1;
+                        uY = Math.sin(vectorStep * 5) * 0.5;
+                    }
+                }
+
+                currentAY = uY * 0.15;
+                const targetX = frontCanvas.width/2 + uX * (frontCanvas.width*0.4);
+                const targetY = frontCanvas.height/2 + uY * (frontCanvas.height*0.4);
+
+                // Cập nhật stats
+                document.getElementById('statUx').innerText = (uX * 100).toFixed(2) + " V";
+                document.getElementById('statUy').innerText = (uY * 100).toFixed(2) + " V";
+
+                // Vẽ Side View
+                sCtx.fillStyle = '#020617'; sCtx.fillRect(0,0,sideCanvas.width, sideCanvas.height);
+                sCtx.fillStyle = '#1e293b';
+                sCtx.fillRect(sideCanvas.width*0.3, sideCanvas.height/2-40, sideCanvas.width*0.3, 4);
+                sCtx.fillRect(sideCanvas.width*0.3, sideCanvas.height/2+36, sideCanvas.width*0.3, 4);
+
+                particles.side.forEach(p => {
+                    if(p.update(currentAY)) {
+                        particles.frontPath.push({x: targetX, y: targetY, l: 1.0});
+                        p.reset();
+                    }
+                    sCtx.beginPath(); sCtx.arc(p.x, p.y, 2, 0, Math.PI*2);
+                    sCtx.fillStyle = '#60a5fa'; sCtx.fill();
+                });
+
+                // Vẽ Front View
+                fCtx.fillStyle = 'rgba(2, 6, 23, 0.15)'; fCtx.fillRect(0,0,frontCanvas.width, frontCanvas.height);
+                if(particles.frontPath.length > 1000) particles.frontPath.shift();
+                particles.frontPath.forEach(p => {
+                    fCtx.fillStyle = `rgba(74, 222, 128, ${p.l})`;
+                    fCtx.beginPath(); fCtx.arc(p.x, p.y, 2.5, 0, Math.PI*2); fCtx.fill();
+                    p.l -= (mode === 'vector' ? 0.006 : 0.003);
+                });
+                
+                fCtx.fillStyle = '#fff'; fCtx.beginPath(); fCtx.arc(targetX, targetY, 4, 0, Math.PI*2); fCtx.fill();
+
+                // Cập nhật giá trị hiển thị trên slider
+                if (mode === 'raster') {
+                    document.getElementById('valLines').innerText = document.getElementById('inputLines').value;
+                    document.getElementById('valScanSpeed').innerText = document.getElementById('inputScanSpeed').value;
+                } else {
+                    document.getElementById('valVectorSpeed').innerText = document.getElementById('inputVectorSpeed').value;
+                }
+
+                requestAnimationFrame(draw);
+            }
+
+            document.getElementById('clearCRT').onclick = () => particles.frontPath = [];
+            draw();
+        };
+    </script>
+</body>
+</html>
