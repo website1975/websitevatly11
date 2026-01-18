@@ -24,17 +24,18 @@ const App: React.FC = () => {
   const fetchCloudData = useCallback(async () => {
     setIsSyncing(true);
     try {
-      // Fetch App Content
+      // 1. Fetch App Content
       const { data: cloud } = await supabase.from('app_settings').select('data').eq('id', 1).single();
       if (cloud?.data) setData(cloud.data);
       
-      // Fetch Visitor Stats
-      const { data: stats, error: statsError } = await supabase.from('app_settings').select('data').eq('id', 99).single();
-      let currentCount = stats?.data?.visitorCount;
+      // 2. Fetch Visitor Stats (Fix: Prevent count reset)
+      const { data: stats } = await supabase.from('app_settings').select('data').eq('id', 99).single();
       
-      // Nếu không lấy được count (error hoặc null), không ghi đè về 0 ngay lập tức
-      if (currentCount !== undefined && currentCount !== null) {
+      if (stats?.data) {
+        let currentCount = stats.data.visitorCount || 0;
+        
         if (!sessionStorage.getItem('v_visited')) {
+          // Chỉ tăng nếu đây là phiên mới và đã lấy được số cũ hợp lệ
           const newCount = currentCount + 1;
           await supabase.from('app_settings').upsert({ id: 99, data: { visitorCount: newCount } });
           sessionStorage.setItem('v_visited', 'true');
@@ -100,24 +101,24 @@ const LandingPage: React.FC<{ visitorCount: number }> = ({ visitorCount }) => {
           <button onClick={() => navigate('/student')} className="bg-white/80 backdrop-blur-md p-10 rounded-none shadow-2xl border border-white flex flex-col items-center space-y-4 hover:-translate-y-1 hover:bg-white transition-all group">
             <div className="w-20 h-20 bg-sky-50 text-sky-600 rounded-none flex items-center justify-center group-hover:scale-105 transition-transform"><GraduationCap size={40}/></div>
             <h2 className="text-2xl font-bold uppercase tracking-tight">Học sinh</h2>
-            <div className="px-8 py-3 bg-sky-600 text-white rounded-none font-bold uppercase text-[10px] shadow-lg shadow-sky-100">Vào học ngay</div>
+            <div className="px-8 py-3 bg-sky-600 text-white rounded-none font-bold uppercase text-[10px] shadow-lg shadow-sky-100">Bắt đầu học</div>
           </button>
           {!showPass ? (
             <button onClick={()=>setShowPass(true)} className="bg-white/80 backdrop-blur-md p-10 rounded-none shadow-2xl border border-white flex flex-col items-center space-y-4 hover:-translate-y-1 hover:bg-white transition-all group">
               <div className="w-20 h-20 bg-amber-50 text-amber-600 rounded-none flex items-center justify-center group-hover:scale-105 transition-transform"><ShieldCheck size={40}/></div>
               <h2 className="text-2xl font-bold uppercase tracking-tight">Giáo viên</h2>
-              <div className="px-8 py-3 bg-amber-500 text-white rounded-none font-bold uppercase text-[10px] shadow-lg shadow-amber-100">Quản trị</div>
+              <div className="px-8 py-3 bg-amber-500 text-white rounded-none font-bold uppercase text-[10px] shadow-lg shadow-amber-100">Quản lý lớp</div>
             </button>
           ) : (
             <form onSubmit={(e)=>{e.preventDefault(); if(pin===TEACHER_PWD) {sessionStorage.setItem('teacher_auth','true'); navigate('/teacher');} else setError(true);}} 
               className="bg-white p-8 rounded-none shadow-2xl border-t-4 border-amber-500 flex flex-col items-center space-y-4 animate-in zoom-in duration-300">
               <div className="text-center">
-                  <h3 className="font-bold text-amber-600 uppercase text-xs">Mã xác thực</h3>
-                  <p className="text-[9px] text-slate-400 font-medium">Nhập PIN để truy cập hệ thống</p>
+                  <h3 className="font-bold text-amber-600 uppercase text-xs">Xác thực quyền hạn</h3>
+                  <p className="text-[9px] text-slate-400 font-medium">Nhập mã PIN truy cập hệ thống quản trị</p>
               </div>
               <input type="password" autoFocus value={pin} onChange={(e)=>{setPin(e.target.value); setError(false);}} className={`w-full px-4 py-4 border-2 rounded-none text-center font-bold text-lg tracking-widest ${error?'border-red-500 animate-shake':'border-slate-100 focus:border-amber-400 outline-none'}`} placeholder="****"/>
               <div className="flex gap-3 w-full pt-2">
-                <button type="button" onClick={()=>setShowPass(false)} className="flex-1 font-bold text-slate-400 uppercase text-[10px] py-3 hover:bg-slate-50">Quay lại</button>
+                <button type="button" onClick={()=>setShowPass(false)} className="flex-1 font-bold text-slate-400 uppercase text-[10px] py-3 hover:bg-slate-50">Hủy</button>
                 <button type="submit" className="flex-1 px-4 py-3 bg-amber-500 text-white rounded-none font-bold uppercase text-[10px] shadow-lg shadow-amber-100">Xác nhận</button>
               </div>
             </form>
@@ -198,7 +199,7 @@ const MainView: React.FC<{ isAdmin: boolean; data: AppData; updateData: (d: AppD
             <input 
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Tìm nhanh..." 
+              placeholder="Tìm kiếm nội dung..." 
               className="bg-transparent border-none outline-none text-[10px] font-medium w-full ml-2 placeholder:text-slate-400"
             />
           </div>
@@ -222,10 +223,10 @@ const MainView: React.FC<{ isAdmin: boolean; data: AppData; updateData: (d: AppD
               {isAdmin && <button onClick={()=>{navigator.clipboard.writeText(window.location.origin+'/student'); setCopied(true); setTimeout(()=>setCopied(false),2000);}} className="flex-1 py-2 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 font-bold uppercase text-[9px] rounded-none flex items-center justify-center gap-2 border border-indigo-100 dark:border-indigo-800">{copied?<Check size={10}/>:<Copy size={10}/>} Link</button>}
           </div>
           <div className={`flex justify-between px-3 py-2 rounded-none border text-[8px] font-bold uppercase transition-colors ${darkMode ? 'bg-slate-800/50 border-slate-700 text-slate-500' : 'bg-slate-50 border-slate-100 text-slate-400'}`}>
-             <div className="flex items-center gap-1.5">{isSyncing?<Loader2 size={10} className="animate-spin text-indigo-500"/>:<CloudCheck size={10} className="text-green-500"/>} {isAdmin?'G.Viên':'H.Sinh'}</div>
+             <div className="flex items-center gap-1.5">{isSyncing?<Loader2 size={10} className="animate-spin text-indigo-500"/>:<CloudCheck size={10} className="text-green-500"/>} {isAdmin?'Teacher':'Student'}</div>
              <div className="flex items-center gap-1.5"><Users size={10} className="text-indigo-400"/> {visitorCount}</div>
           </div>
-          <button onClick={()=>{if(isAdmin)sessionStorage.removeItem('teacher_auth'); navigate('/');}} className="w-full py-2 bg-transparent border border-transparent text-slate-400 hover:text-red-500 font-medium uppercase text-[9px] rounded-none transition-colors">Thoát</button>
+          <button onClick={()=>{if(isAdmin)sessionStorage.removeItem('teacher_auth'); navigate('/');}} className="w-full py-2 bg-transparent border border-transparent text-slate-400 hover:text-red-500 font-medium uppercase text-[9px] rounded-none transition-colors">Đăng xuất</button>
         </footer>
       </aside>
 
@@ -236,7 +237,7 @@ const MainView: React.FC<{ isAdmin: boolean; data: AppData; updateData: (d: AppD
               <div className="flex justify-between items-center mb-5">
                 <div className="min-w-0">
                   <h2 className={`text-2xl font-black uppercase truncate tracking-tight transition-colors ${darkMode ? 'text-white' : 'text-slate-800'}`}>{selectedNode?.title}</h2>
-                  <p key={sloganIdx} className="text-[8px] font-normal text-indigo-500/50 uppercase mt-0.5 tracking-[0.1em] italic animate-in fade-in slide-in-from-left-2 duration-1000">
+                  <p key={sloganIdx} className="text-[9px] font-normal text-indigo-500/40 uppercase mt-0.5 tracking-[0.1em] italic animate-in fade-in slide-in-from-left-2 duration-1000">
                     {SLOGANS[sloganIdx]}
                   </p>
                 </div>
@@ -256,8 +257,8 @@ const MainView: React.FC<{ isAdmin: boolean; data: AppData; updateData: (d: AppD
             <div className={`flex-1 relative overflow-hidden transition-colors ${darkMode ? 'bg-slate-900' : 'bg-slate-100'}`}>
               {activeTab === 'content' ? (
                 <>
-                  {iframeLoading && <div className={`absolute inset-0 flex flex-col items-center justify-center z-10 transition-colors ${darkMode ? 'bg-slate-950' : 'bg-white'}`}><Loader2 className="animate-spin text-indigo-500 mb-3" size={40}/><p className="text-[10px] uppercase font-bold text-slate-500 tracking-[0.3em]">Đang tải dữ liệu...</p></div>}
-                  {selectedNode?.url ? <iframe src={selectedNode.url} className={`w-full h-full border-none transition-opacity duration-500 ${iframeLoading ? 'opacity-0' : 'opacity-100'}`} onLoad={()=>setIframeLoading(false)}/> : <div className="h-full flex flex-col items-center justify-center italic text-slate-400 space-y-4"><FileText size={48} className="opacity-20"/><p className="text-sm font-medium">Nội dung đang được chuẩn bị...</p></div>}
+                  {iframeLoading && <div className={`absolute inset-0 flex flex-col items-center justify-center z-10 transition-colors ${darkMode ? 'bg-slate-950' : 'bg-white'}`}><Loader2 className="animate-spin text-indigo-500 mb-3" size={40}/><p className="text-[10px] uppercase font-bold text-slate-500 tracking-[0.3em]">Hệ thống đang tải dữ liệu...</p></div>}
+                  {selectedNode?.url ? <iframe src={selectedNode.url} className={`w-full h-full border-none transition-opacity duration-500 ${iframeLoading ? 'opacity-0' : 'opacity-100'}`} onLoad={()=>setIframeLoading(false)}/> : <div className="h-full flex flex-col items-center justify-center italic text-slate-400 space-y-4"><FileText size={48} className="opacity-20"/><p className="text-sm font-medium">Nội dung bài giảng đang được hoàn thiện...</p></div>}
                 </>
               ) : (
                 <Forum nodeId={selectedId} isAdmin={isAdmin} />
@@ -272,10 +273,10 @@ const MainView: React.FC<{ isAdmin: boolean; data: AppData; updateData: (d: AppD
                 <Sparkles size={40} className="absolute -top-6 -right-6 text-amber-400 opacity-50 animate-pulse"/>
              </div>
              <h2 className={`text-3xl font-black uppercase tracking-tighter mb-4 ${darkMode ? 'text-slate-300' : 'text-slate-400'}`}>Khám phá kiến thức</h2>
-             <p className="text-xs text-slate-500 mb-10 max-w-sm uppercase font-bold tracking-widest opacity-60">Chọn một bài học từ danh sách bên trái</p>
+             <p className="text-xs text-slate-500 mb-10 max-w-sm uppercase font-bold tracking-widest opacity-60">Chọn một bài học từ danh sách bên trái để bắt đầu</p>
              
              <div className={`max-w-md w-full p-8 rounded-none border shadow-2xl animate-in slide-in-from-bottom-8 duration-1000 transition-colors ${darkMode ? 'bg-slate-900/50 border-slate-800' : 'bg-white/50 border-slate-100'}`}>
-                <p key={sloganIdx} className="text-[8px] font-normal uppercase tracking-wide text-indigo-500/50 leading-relaxed italic animate-in fade-in slide-in-from-right-4 duration-1000">
+                <p key={sloganIdx} className="text-[9px] font-normal uppercase tracking-wide text-indigo-500/40 leading-relaxed italic animate-in fade-in slide-in-from-right-4 duration-1000">
                   {SLOGANS[sloganIdx]}
                 </p>
                 <div className="mt-6 flex justify-center gap-1">
@@ -302,16 +303,16 @@ const MainView: React.FC<{ isAdmin: boolean; data: AppData; updateData: (d: AppD
                 <h3 className="font-bold uppercase text-sm tracking-tight">Cài đặt bài học</h3>
             </div>
             <div className="space-y-1.5">
-                <label className="text-[10px] font-black text-slate-400 uppercase ml-2 tracking-widest">Tên bài học</label>
-                <input autoFocus value={nodeModalData.title} onChange={e=>setNodeModalData({...nodeModalData, title:e.target.value})} className={`w-full p-4 rounded-none text-sm focus:ring-1 focus:ring-indigo-400 outline-none transition-all ${darkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-slate-50 border-slate-100'}`} placeholder="Tên bài học..."/>
+                <label className="text-[10px] font-black text-slate-400 uppercase ml-2 tracking-widest">Tiêu đề bài học</label>
+                <input autoFocus value={nodeModalData.title} onChange={e=>setNodeModalData({...nodeModalData, title:e.target.value})} className={`w-full p-4 rounded-none text-sm focus:ring-1 focus:ring-indigo-400 outline-none transition-all ${darkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-slate-50 border-slate-100'}`} placeholder="VD: Chương 1: Động lực học..."/>
             </div>
             <div className="space-y-1.5">
-                <label className="text-[10px] font-black text-slate-400 uppercase ml-2 tracking-widest">Đường dẫn nội dung</label>
-                <input value={nodeModalData.url} onChange={e=>setNodeModalData({...nodeModalData, url:e.target.value})} className={`w-full p-4 rounded-none text-[11px] focus:ring-1 focus:ring-indigo-400 outline-none transition-all ${darkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-slate-50 border-slate-100'}`} placeholder="https://..."/>
+                <label className="text-[10px] font-black text-slate-400 uppercase ml-2 tracking-widest">Liên kết tài liệu</label>
+                <input value={nodeModalData.url} onChange={e=>setNodeModalData({...nodeModalData, url:e.target.value})} className={`w-full p-4 rounded-none text-[11px] focus:ring-1 focus:ring-indigo-400 outline-none transition-all ${darkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-slate-50 border-slate-100'}`} placeholder="Link tài liệu..."/>
             </div>
             <div className="flex gap-4 pt-4">
                 <button type="button" onClick={()=>setShowNodeModal(false)} className="flex-1 text-[11px] font-bold uppercase text-slate-400">Hủy</button>
-                <button type="submit" className="flex-1 py-4 bg-indigo-600 text-white rounded-none font-bold uppercase text-[11px]">Lưu thay đổi</button>
+                <button type="submit" className="flex-1 py-4 bg-indigo-600 text-white rounded-none font-bold uppercase text-[11px]">Lưu</button>
             </div>
           </form>
         </div>
@@ -323,10 +324,10 @@ const MainView: React.FC<{ isAdmin: boolean; data: AppData; updateData: (d: AppD
             className={`${darkMode ? 'bg-slate-900 border border-slate-800' : 'bg-white'} p-10 rounded-none shadow-2xl w-full max-w-md space-y-5 animate-in slide-in-from-bottom-10 border-t-4 border-sky-600`}>
             <div className="flex items-center gap-3 border-b pb-5">
                 <div className="p-3 bg-sky-50 dark:bg-sky-900/30 text-sky-600 rounded-none"><FileText size={20}/></div>
-                <h3 className="font-bold uppercase text-sm tracking-tight">Tài liệu đính kèm</h3>
+                <h3 className="font-bold uppercase text-sm tracking-tight">Thêm tài liệu</h3>
             </div>
             <input autoFocus value={resourceModalData.title} onChange={e=>setResourceModalData({...resourceModalData, title:e.target.value})} className={`w-full p-4 rounded-none text-sm ${darkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-slate-50 border-slate-100'}`} placeholder="Tên tài liệu..."/>
-            <input value={resourceModalData.url} onChange={e=>setResourceModalData({...resourceModalData, url:e.target.value})} className={`w-full p-4 rounded-none text-[11px] ${darkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-slate-50 border-slate-100'}`} placeholder="Đường dẫn..."/>
+            <input value={resourceModalData.url} onChange={e=>setResourceModalData({...resourceModalData, url:e.target.value})} className={`w-full p-4 rounded-none text-[11px] ${darkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-slate-50 border-slate-100'}`} placeholder="Link..."/>
             <div className="flex gap-4 pt-4">
                 <button type="button" onClick={()=>setShowResourceModal(false)} className="flex-1 text-[11px] font-bold uppercase text-slate-400">Hủy</button>
                 <button type="submit" className="flex-1 py-4 bg-indigo-600 text-white rounded-none font-bold uppercase text-[11px]">Cập nhật</button>
@@ -340,12 +341,12 @@ const MainView: React.FC<{ isAdmin: boolean; data: AppData; updateData: (d: AppD
           <div className={`${darkMode ? 'bg-slate-900' : 'bg-white'} p-12 rounded-none shadow-2xl text-center w-full max-w-sm space-y-8 border-t-4 border-red-500`}>
             <div className="w-20 h-20 bg-red-50 dark:bg-red-900/30 text-red-500 rounded-full flex items-center justify-center mx-auto shadow-inner"><AlertTriangle size={40}/></div>
             <div className="space-y-2">
-                <h4 className="text-lg font-black uppercase text-slate-800 dark:text-white">Xác nhận xóa</h4>
+                <h4 className="text-lg font-black uppercase text-slate-800 dark:text-white">Xóa mục này?</h4>
                 <p className="font-medium text-[11px] text-slate-500 leading-relaxed">Bạn có chắc muốn xóa <span className="text-red-500 font-bold">"{showDeleteConfirm.title}"</span>?</p>
             </div>
             <div className="flex gap-4">
                 <button onClick={()=>setShowDeleteConfirm(null)} className="flex-1 text-[11px] font-bold uppercase text-slate-400">Hủy</button>
-                <button onClick={()=>{ if(showDeleteConfirm.type==='node') {updateData({...data, nodes:data.nodes.filter(n=>n.id!==showDeleteConfirm.id)}); setSelectedId(null);} else { if(showDeleteConfirm.isGlobal) updateData({...data, globalResources:data.globalResources.filter(r=>r.id!==showDeleteConfirm.id)}); else if(selectedId) updateData({...data, nodes:data.nodes.map(n=>n.id===selectedId?{...n,lessonResources:n.lessonResources.filter(r=>r.id!==showDeleteConfirm.id)}:n)}); } setShowDeleteConfirm(null); }} className="flex-1 py-4 bg-red-500 text-white rounded-none font-bold uppercase text-[11px]">Xóa vĩnh viễn</button>
+                <button onClick={()=>{ if(showDeleteConfirm.type==='node') {updateData({...data, nodes:data.nodes.filter(n=>n.id!==showDeleteConfirm.id)}); setSelectedId(null);} else { if(showDeleteConfirm.isGlobal) updateData({...data, globalResources:data.globalResources.filter(r=>r.id!==showDeleteConfirm.id)}); else if(selectedId) updateData({...data, nodes:data.nodes.map(n=>n.id===selectedId?{...n,lessonResources:n.lessonResources.filter(r=>r.id!==showDeleteConfirm.id)}:n)}); } setShowDeleteConfirm(null); }} className="flex-1 py-4 bg-red-500 text-white rounded-none font-bold uppercase text-[11px]">Xóa</button>
             </div>
           </div>
         </div>
