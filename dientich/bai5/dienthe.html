@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bài 18: Điện thế - Hiệu điện thế</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']]
+      }
+    };
+    </script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+        }
+        .math {
+            font-family: 'Times New Roman', Times, serif;
+            font-style: italic;
+            font-weight: bold;
+            color: #1d4ed8;
+        }
+        .section-card {
+            background: white;
+            border-radius: 1rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            border: 1px solid #e5e7eb;
+            margin-bottom: 2rem;
+            overflow: hidden;
+        }
+        .section-header {
+          background: linear-gradient(to right, #0d9488, #0f766e);
+            color: white;
+            padding: 1rem 1.5rem;
+            font-weight: bold;
+            font-size: 1.25rem;
+            text-transform: uppercase;
+        }
+        .subsection-title {
+            color: #1e40af;
+            font-weight: 700;
+            border-left: 4px solid #3b82f6;
+            padding-left: 0.75rem;
+            margin-top: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        .exercise-box {
+            background-color: #f0f9ff;
+            border: 1px solid #e0f2fe;
+            padding: 1.25rem;
+            border-radius: 0.75rem;
+            margin-bottom: 1rem;
+        }
+        .advanced-exercise {
+            background-color: #f5f3ff;
+            border: 1px solid #ddd6fe;
+            padding: 1.25rem;
+            border-radius: 0.75rem;
+            margin-bottom: 1rem;
+            border-left: 4px solid #7c3aed;
+        }
+        .question-box {
+            background-color: #fff7ed;
+            border: 1px solid #ffedd5;
+            padding: 1.25rem;
+            border-radius: 0.75rem;
+            margin-top: 1rem;
+            margin-bottom: 1rem;
+            border-left: 4px solid #f97316;
+        }
+        .formula-display {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            padding: 1.25rem;
+            border-radius: 0.5rem;
+            text-align: center;
+            margin: 1.5rem 0;
+            font-size: 1.25rem;
+        }
+        .highlight {
+            color: #2563eb;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+    <!-- Header -->
+	<header class="bg-teal-600 text-white py-10 px-4 text-center shadow-lg mb-8">
+        <h1 class="text-3xl font-extrabold uppercase tracking-widest">Chương 3: Điện tích - Điện trường</h1>
+        <p class="mt-3 text-2xl font-light">Bài 18: Điện thế. Hiệu điện thế</p>
+    </header>
+
+        <div class="max-w-4xl mx-auto px-4 pb-12">
+        
+        <!-- I. ĐIỆN THẾ -->
+        <div class="section-card">
+            <div class="section-header">I. Điện thế</div>
+            <div class="p-6">
+                
+                <h3 class="subsection-title">1. Khái niệm điện thế</h3>
+                <p>Trong công thức tính thế năng của điện tích $q$ tại điểm $M$: $W_M = A_{M\infty} = V_M \cdot q$.</p>
+                <p class="mt-2">Hệ số $V_M$ không phụ thuộc vào $q$, chỉ phụ thuộc vào điện trường tại $M$. Nó đặc trưng cho điện trường về phương diện <span class="highlight">tạo ra thế năng</span> của điện tích $q$.</p>
+
+                <h3 class="subsection-title">2. Định nghĩa</h3>
+                <div class="bg-blue-50 p-4 rounded-lg italic border-l-4 border-blue-400 mb-4">
+                    Điện thế tại một điểm $M$ trong điện trường là đại lượng đặc trưng riêng cho điện trường về phương diện tạo ra thế năng khi đặt tại đó một điện tích $q$.
+                </div>
+                <div class="formula-display">
+                    <span class="math">$V_M = \frac{W_M}{q} = \frac{A_{M\infty}}{q}$</span>
+                </div>
+                <p>Nó được xác định bằng thương số của công của lực điện tác dụng lên $q$ khi $q$ di chuyển từ $M$ ra vô cực và độ lớn của $q$.</p>
+
+                <h3 class="subsection-title">3. Đơn vị điện thế</h3>
+                <p>Đơn vị của điện thế là <span class="highlight">vôn (V)</span>.</p>
+                <p class="text-sm mt-1 italic font-semibold">Trong công thức trên: nếu $A = 1J, q = 1C$ thì $V = 1V$.</p>
+
+                <h3 class="subsection-title">4. Đặc điểm của điện thế</h3>
+                <ul class="list-disc pl-6 space-y-2">
+                    <li>Điện thế là đại lượng <span class="highlight">đại số</span>.</li>
+                    <li>Thường chọn điện thế của đất hoặc của một điểm ở vô cực làm mốc ($V = 0$).</li>
+                </ul>
+
+                <!-- Câu hỏi C1 -->
+                <div class="question-box">
+                    <p class="font-bold text-orange-800 uppercase text-xs mb-1">Câu hỏi C1</p>
+                    <p class="italic">Chứng minh rằng, điện thế tại mọi điểm trong điện trường của một điện tích điểm âm ($Q < 0$) đều có giá trị âm.</p>
+                    <div class="mt-3 text-sm bg-white p-3 rounded">
+                        <strong>Giải đáp:</strong> Khi di chuyển $q > 0$ từ $M$ ra $\infty$ trong trường của $Q < 0$, lực điện luôn hướng về $Q$ (ngược chiều dịch chuyển) nên $A_{M\infty} < 0$. Vì $V_M = A_{M\infty}/q$ nên $V_M < 0$.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- II. HIỆU ĐIỆN THẾ -->
+        <div class="section-card">
+            <div class="section-header">II. Hiệu điện thế</div>
+            <div class="p-6">
+                
+                <h3 class="subsection-title">1. Định nghĩa</h3>
+                <p>Hiệu điện thế giữa hai điểm $M, N$ là hiệu số giữa điện thế $V_M$ và $V_N$.</p>
+                <div class="formula-display">
+                    <span class="math">$U_{MN} = V_M - V_N = \frac{A_{MN}}{q}$</span>
+                </div>
+                <p class="italic font-medium text-blue-700">Định nghĩa SGK: Hiệu điện thế giữa hai điểm $M, N$ đặc trưng cho khả năng sinh công của điện trường trong sự di chuyển của điện tích $q$ từ $M$ đến $N$.</p>
+
+                <!-- Câu hỏi C2 -->
+                <div class="question-box">
+                    <p class="font-bold text-orange-800 uppercase text-xs mb-1">Câu hỏi C2</p>
+                    <p class="italic">Khi thay đổi mốc tính điện thế thì hiệu điện thế giữa hai điểm $M, N$ có thay đổi không?</p>
+                    <div class="mt-3 text-sm bg-white p-3 rounded">
+                        <strong>Giải đáp:</strong> Không thay đổi. Vì hiệu điện thế là phép trừ giữa hai điện thế, lượng thay đổi do chọn mốc sẽ bị triệt tiêu khi thực hiện phép tính hiệu.
+                    </div>
+                </div>
+
+                <h3 class="subsection-title">2. Đo hiệu điện thế</h3>
+                <ul class="list-disc pl-6 space-y-2">
+                    <li>Người ta đo hiệu điện thế tĩnh điện bằng <span class="highlight">tĩnh điện kế</span>.</li>
+                    <li>Hiệu điện thế còn được gọi là <span class="highlight">điện áp</span>.</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- III. HỆ THỨC LIÊN HỆ -->
+        <div class="section-card">
+            <div class="section-header">III. Hệ thức giữa hiệu điện thế và cường độ điện trường</div>
+            <div class="p-6">
+                <p>Xét hai điểm $M, N$ nằm trên một đường sức của điện trường đều $E$. Công của lực điện làm dịch chuyển $q$ từ $M$ đến $N$ là $A_{MN} = qEd$.</p>
+                <p>Mặt khác: $A_{MN} = qU_{MN}$.</p>
+                <div class="formula-display bg-indigo-50 border-indigo-200">
+                    <span class="math text-2xl">$U = E \cdot d$</span>
+                    <span class="mx-6 text-gray-400">|</span>
+                    <span class="math text-2xl">$E = \frac{U}{d}$</span>
+                </div>
+                <p class="mt-2 text-sm text-gray-600 italic">Với $d$ là khoảng cách giữa hai hình chiếu của $M, N$ trên đường sức.</p>
+
+                <!-- Câu hỏi C3 -->
+                <div class="question-box">
+                    <p class="font-bold text-orange-800 uppercase text-xs mb-1">Câu hỏi C3 (Tư duy học tập)</p>
+                    <p class="italic">Tại sao nói điện thế giảm dần theo chiều đường sức điện?</p>
+                    <div class="mt-3 text-sm bg-white p-3 rounded">
+                        <strong>Giải đáp:</strong> Từ công thức $V_M - V_N = E \cdot d$. Nếu đi theo chiều đường sức thì $d > 0$. Vì $E > 0$ nên $V_M - V_N > 0 \Rightarrow V_M > V_N$. Vậy điện thế tại điểm đến luôn thấp hơn điểm đi.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- IV. BÀI TẬP VẬN DỤNG -->
+        <div class="section-card">
+            <div class="section-header bg-slate-700">IV. Bài tập vận dụng</div>
+            <div class="p-6 space-y-4">
+                <div class="exercise-box">
+                    <p class="font-bold">Bài 1: (Cơ bản)</p>
+                    <p>Giữa hai bản kim loại phẳng cách nhau $4 \, cm$ có một hiệu điện thế $200 \, V$. Tính cường độ điện trường giữa hai bản.</p>
+                    <p class="text-sm mt-2 text-blue-700 font-bold">Giải: $E = U/d = 200/0,04 = 5000 \, (V/m)$.</p>
+                </div>
+
+                <div class="exercise-box">
+                    <p class="font-bold">Bài 2: (Cơ bản)</p>
+                    <p>Công của lực điện dịch chuyển $q = 2 \cdot 10^{-8} \, C$ từ $M$ đến vô cực là $4 \cdot 10^{-6} \, J$. Tính điện thế tại $M$.</p>
+                    <p class="text-sm mt-2 text-blue-700 font-bold">Giải: $V_M = A_{M\infty}/q = 4.10^{-6} / 2.10^{-8} = 200 \, (V)$.</p>
+                </div>
+
+                <div class="exercise-box">
+                    <p class="font-bold">Bài 3: (Cơ bản)</p>
+                    <p>Một điện tích $q = -2 \mu C$ di chuyển từ điểm có điện thế $V_M = 10V$ đến điểm có điện thế $V_N = 40V$. Tính công của lực điện.</p>
+                    <p class="text-sm mt-2 text-blue-700 font-bold">Giải: $A_{MN} = q(V_M - V_N) = -2.10^{-6}(10 - 40) = 6.10^{-5} \, (J)$.</p>
+                </div>
+
+                <div class="advanced-exercise">
+                    <p class="font-bold text-purple-900">Bài 4: (Vận dụng cao - Động năng)</p>
+                    <p>Một electron ($q = -1,6.10^{-19} C, m = 9,1.10^{-31} kg$) bay từ điểm $M$ có điện thế $V_M = 500 V$ đến điểm $N$ có điện thế $V_N = 100 V$. Biết vận tốc tại $M$ là $v_M = 10^6 m/s$. Tính vận tốc electron tại $N$.</p>
+                    <div class="mt-3 text-sm bg-white p-3 rounded border border-purple-200">
+                        <p><strong>Giải:</strong> Áp dụng định lí biến thiên động năng:</p>
+                        <p>$\frac{1}{2}mv_N^2 - \frac{1}{2}mv_M^2 = A_{MN} = q(V_M - V_N)$</p>
+                        <p>$\Rightarrow v_N = \sqrt{v_M^2 + \frac{2q(V_M - V_N)}{m}}$</p>
+                        <p>Thay số: $v_N = \sqrt{(10^6)^2 + \frac{2 \cdot (-1,6 \cdot 10^{-19}) \cdot (500 - 100)}{9,1 \cdot 10^{-31}}} \approx 1,2 \cdot 10^7 \, (m/s)$.</p>
+                    </div>
+                </div>
+
+                <div class="advanced-exercise">
+                    <p class="font-bold text-purple-900">Bài 5: (Vận dụng cao - Chuyển động)</p>
+                    <p>Một hạt bụi mang điện $q = 10^{-8} C$ nằm cân bằng giữa hai bản tụ điện nằm ngang, cách nhau $d = 2 cm$. Hiệu điện thế giữa hai bản là $U = 200 V$. Tính khối lượng hạt bụi. Lấy $g = 10 m/s^2$.</p>
+                    <div class="mt-3 text-sm bg-white p-3 rounded border border-purple-200">
+                        <p><strong>Giải:</strong> Hạt bụi cân bằng khi lực điện cân bằng với trọng lực: $F_d = P \Rightarrow |q|E = mg$.</p>
+                        <p>Mặt khác $E = U/d \Rightarrow |q| \frac{U}{d} = mg$.</p>
+                        <p>$\Rightarrow m = \frac{|q|U}{dg} = \frac{10^{-8} \cdot 200}{0,02 \cdot 10} = 10^{-5} \, (kg) = 10 \, (mg)$.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <footer class="bg-gray-800 text-white text-center py-8">
+        <p class="text-sm opacity-70">Tài liệu được thiết kế bám sát SGK Vật lí 11</p>
+        <p class="text-xs mt-2 italic">Lưu ý: Luôn đổi đơn vị khoảng cách sang mét (m) trước khi tính toán.</p>
+    </footer>
+
+</body>
+</html>
