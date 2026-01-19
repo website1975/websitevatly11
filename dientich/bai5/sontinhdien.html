@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mô phỏng 3D Sơn tĩnh điện - Tích lũy màng sơn</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        body { margin: 0; overflow: hidden; background-color: #0f172a; font-family: 'Segoe UI', sans-serif; }
+        canvas { display: block; }
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.9);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            color: white;
+        }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .tab-btn.active { border-bottom: 2px solid #10b981; color: #10b981; }
+    </style>
+</head>
+<body>
+
+    <div class="absolute top-0 left-0 w-full z-50 flex justify-center p-4 pointer-events-none">
+        <div class="glass-panel pointer-events-auto flex space-x-2 p-1">
+            <button onclick="showTab('sim')" id="btn-sim" class="tab-btn active px-6 py-2 text-sm font-bold transition">Mô phỏng 3D</button>
+            <button onclick="showTab('theory')" id="btn-theory" class="tab-btn px-6 py-2 text-sm font-bold transition">Nguyên lý & Nhận xét</button>
+        </div>
+    </div>
+
+    <div id="tab-sim" class="tab-content active">
+        <div id="ui-layer" class="absolute top-0 left-0 w-full h-full pointer-events-none p-4 pt-20 flex flex-col justify-between">
+            <div class="flex justify-between items-start">
+                <div class="glass-panel pointer-events-auto w-80 p-5">
+                    <h1 class="text-xl font-bold mb-1 text-green-400 text-center uppercase tracking-wider">Phun tích lũy màng</h1>
+                    
+                    <div class="space-y-4 mt-4">
+                        <div>
+                            <label class="block text-xs mb-1 flex justify-between">
+                                <span>Điện áp tĩnh điện:</span>
+                                <span id="vLabel" class="text-yellow-400 font-bold">180kV</span>
+                            </label>
+                            <input type="range" id="voltage" min="0" max="250" value="180" class="w-full accent-yellow-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs mb-1 flex justify-between">
+                                <span>Cường độ phun (Hạt/giây):</span>
+                                <span id="sLabel" class="text-blue-400 font-bold">Cao</span>
+                            </label>
+                            <input type="range" id="brushSize" min="20" max="100" value="50" class="w-full accent-blue-500">
+                        </div>
+                        <div class="bg-slate-800/50 p-3 rounded-lg border border-white/5">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-xs">Tự động điều phối hạt</span>
+                                <input type="checkbox" id="autoScan" class="pointer-events-auto" checked>
+                            </div>
+                            <p id="modeHint" class="text-[10px] text-gray-400 italic text-center">Đang phân bổ 1000 hạt/đợt để tạo màng mịn</p>
+                        </div>
+                        <button id="resetBtn" class="w-full bg-red-600 hover:bg-red-700 py-2 rounded text-sm font-bold transition">Tẩy màng sơn cũ</button>
+                    </div>
+                </div>
+
+                <div class="glass-panel p-4 text-right">
+                    <div class="text-xs uppercase tracking-widest text-gray-400">Số hạt đã bám</div>
+                    <div id="particleCountDisplay" class="text-2xl font-mono text-green-400">0</div>
+                    <div id="coverageDisplay" class="text-[11px] text-blue-400 mt-1 font-bold">Độ phủ: 0%</div>
+                </div>
+            </div>
+            
+            <div class="flex justify-center mb-8">
+                <div id="manualHint" class="glass-panel px-6 py-2 text-xs text-gray-300 hidden">
+                    <span class="text-yellow-500 font-bold">SƠN TAY:</span> Di chuột để phân bổ hạt sơn đều bề mặt
+                </div>
+            </div>
+        </div>
+        <div id="canvas-container"></div>
+    </div>
+
+    <div id="tab-theory" class="tab-content absolute inset-0 bg-slate-900 overflow-y-auto pt-24 px-4 pb-12">
+        <div class="max-w-4xl mx-auto space-y-8 text-gray-300">
+            <section class="glass-panel p-8">
+                <h2 class="text-2xl font-bold text-green-400 mb-4">Cơ chế phun đều 1000 hạt</h2>
+                <div class="space-y-4">
+                    <p>Để tạo ra một lớp màng liên tục thay vì các hạt rời rạc, mô phỏng sử dụng quy trình sau:</p>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="border border-white/10 p-4 rounded bg-white/5">
+                            <h3 class="text-white font-bold mb-2">Đợt 1: Tạo lớp mầm (Nucleation)</h3>
+                            <p class="text-sm">1000 hạt đầu tiên được phân bổ ngẫu nhiên dựa trên phân phối Gaussian xung quanh tâm súng. Các hạt này đóng vai trò là các "điểm bám" đầu tiên trên bề mặt kim loại sạch.</p>
+                        </div>
+                        <div class="border border-white/10 p-4 rounded bg-white/5">
+                            <h3 class="text-white font-bold mb-2">Đợt 2: Lấp đầy (Coalescence)</h3>
+                            <p class="text-sm">1000 hạt tiếp theo được bắn ra, lực đẩy tĩnh điện giữa các hạt cùng dấu giúp chúng tìm đến các khoảng trống giữa các hạt cũ, tạo ra sự liên kết màng mượt mà.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <script>
+        function showTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById('tab-' + tabName).classList.add('active');
+            document.getElementById('btn-' + tabName).classList.add('active');
+            if(tabName === 'sim') window.dispatchEvent(new Event('resize'));
+        }
+
+        let scene, camera, renderer, particles = [];
+        let gun, target, paintCanvas, paintCtx, paintTexture;
+        let voltage = 180, sprayIntensity = 50, autoScan = true;
+        let scanAngle = 0, totalParticlesInBase = 0;
+        let mouseX = 0, mouseY = 0;
+
+        const vInput = document.getElementById('voltage'), bInput = document.getElementById('brushSize');
+        const vLabel = document.getElementById('vLabel'), bLabel = document.getElementById('sLabel');
+        const autoScanInput = document.getElementById('autoScan'), resetBtn = document.getElementById('resetBtn');
+        const particleCountDisplay = document.getElementById('particleCountDisplay'), coverageDisplay = document.getElementById('coverageDisplay');
+
+        vInput.oninput = () => { voltage = vInput.value; vLabel.innerText = voltage + 'kV'; };
+        bInput.oninput = () => { sprayIntensity = bInput.value; bLabel.innerText = sprayIntensity > 75 ? "Rất cao" : (sprayIntensity > 40 ? "Cao" : "Trung bình"); };
+        autoScanInput.onchange = (e) => { 
+            autoScan = e.target.checked; 
+            document.getElementById('manualHint').classList.toggle('hidden', autoScan);
+        };
+
+        resetBtn.onclick = () => {
+            paintCtx.fillStyle = '#1e293b';
+            paintCtx.fillRect(0, 0, 1024, 1024);
+            paintTexture.needsUpdate = true;
+            totalParticlesInBase = 0;
+            particleCountDisplay.innerText = "0";
+            coverageDisplay.innerText = "Độ phủ: 0%";
+        };
+
+        function init() {
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.set(16, 12, 18);
+            camera.lookAt(0, 0, 0);
+
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            document.getElementById('canvas-container').appendChild(renderer.domElement);
+
+            paintCanvas = document.createElement('canvas');
+            paintCanvas.width = 1024; paintCanvas.height = 1024;
+            paintCtx = paintCanvas.getContext('2d');
+            paintCtx.fillStyle = '#1e293b';
+            paintCtx.fillRect(0, 0, 1024, 1024);
+            paintTexture = new THREE.CanvasTexture(paintCanvas);
+
+            const geometry = new THREE.BoxGeometry(8, 12, 1);
+            const material = new THREE.MeshPhongMaterial({ map: paintTexture, shininess: 40 });
+            target = new THREE.Mesh(geometry, material);
+            scene.add(target);
+
+            scene.add(new THREE.AmbientLight(0xffffff, 0.7));
+            const light = new THREE.DirectionalLight(0xffffff, 0.5);
+            light.position.set(10, 20, 15);
+            scene.add(light);
+
+            const gunGeo = new THREE.CylinderGeometry(0.3, 0.5, 3, 16);
+            gunGeo.rotateZ(Math.PI / 2);
+            gun = new THREE.Mesh(gunGeo, new THREE.MeshPhongMaterial({ color: 0x475569 }));
+            scene.add(gun);
+
+            window.addEventListener('mousemove', (e) => {
+                if(!autoScan) {
+                    mouseX = (e.clientX / window.innerWidth) * 2 - 1;
+                    mouseY = -(e.clientY / window.innerHeight) * 2 + 1;
+                    gun.position.set(-15, mouseY * 12, mouseX * 10);
+                }
+            });
+
+            animate();
+        }
+
+        class PaintParticle {
+            constructor() {
+                const geo = new THREE.SphereGeometry(0.1, 4, 4);
+                const mat = new THREE.MeshBasicMaterial({ color: 0x4ade80, transparent: true, opacity: 0.3 });
+                this.mesh = new THREE.Mesh(geo, mat);
+                
+                // Phân bố ngẫu nhiên trong hình nón phun từ súng
+                const jitter = 1.2;
+                this.mesh.position.set(
+                    gun.position.x,
+                    gun.position.y + (Math.random() - 0.5) * jitter,
+                    gun.position.z + (Math.random() - 0.5) * jitter
+                );
+
+                const spread = 0.45;
+                this.velocity = new THREE.Vector3(1.7, (Math.random()-0.5)*spread, (Math.random()-0.5)*spread);
+                scene.add(this.mesh);
+            }
+
+            update() {
+                const toTarget = new THREE.Vector3(0, 0, 0).sub(this.mesh.position);
+                const distanceSq = toTarget.lengthSq();
+                const forceMag = (voltage * 0.15) / Math.max(distanceSq, 2);
+                this.velocity.add(toTarget.normalize().multiplyScalar(forceMag));
+                this.mesh.position.add(this.velocity);
+
+                if (this.mesh.position.x >= -0.3 && this.mesh.position.x <= 0.6 && 
+                    Math.abs(this.mesh.position.y) < 6.2 && Math.abs(this.mesh.position.z) < 4.2) {
+                    this.paint(this.mesh.position.z, this.mesh.position.y);
+                    return true;
+                }
+                return (this.mesh.position.x > 25);
+            }
+
+            paint(z, y) {
+                const canvasX = ((z + 4) / 8) * 1024;
+                const canvasY = (1 - (y + 6) / 12) * 1024;
+                
+                // Tăng kích thước vết vẽ và giảm alpha cực thấp để khi chồng 1000 hạt sẽ tạo màng mịn
+                const radius = sprayIntensity * 0.8;
+                const grad = paintCtx.createRadialGradient(canvasX, canvasY, 0, canvasX, canvasY, radius);
+                
+                // Màu sơn hòa quyện (Blend)
+                grad.addColorStop(0, 'rgba(16, 185, 129, 0.08)'); // Rất mờ
+                grad.addColorStop(1, 'rgba(16, 185, 129, 0)');
+                
+                paintCtx.globalCompositeOperation = 'source-over'; 
+                paintCtx.fillStyle = grad;
+                paintCtx.beginPath();
+                paintCtx.arc(canvasX, canvasY, radius, 0, Math.PI * 2);
+                paintCtx.fill();
+                
+                paintTexture.needsUpdate = true;
+                totalParticlesInBase++;
+                
+                if(totalParticlesInBase % 10 === 0) {
+                    particleCountDisplay.innerText = totalParticlesInBase.toLocaleString();
+                    const cov = Math.min(100, (totalParticlesInBase / 5000) * 100);
+                    coverageDisplay.innerText = "Độ phủ: " + cov.toFixed(1) + "%";
+                }
+            }
+        }
+
+        function animate() {
+            if(document.getElementById('tab-sim').classList.contains('active')) {
+                if (autoScan) {
+                    scanAngle += 0.03;
+                    gun.position.set(-15, Math.sin(scanAngle) * 7, Math.cos(scanAngle * 0.45) * 5);
+                }
+                
+                // Mỗi frame bắn ra 10-15 hạt để nhanh chóng đạt mốc 1000 hạt
+                let particlesPerFrame = autoScan ? 12 : 8;
+                for(let i=0; i < particlesPerFrame; i++) {
+                    particles.push(new PaintParticle());
+                }
+
+                for (let i = particles.length - 1; i >= 0; i--) {
+                    if (particles[i].update()) {
+                        scene.remove(particles[i].mesh);
+                        particles.splice(i, 1);
+                    }
+                }
+                renderer.render(scene, camera);
+            }
+            requestAnimationFrame(animate);
+        }
+
+        window.onload = init;
+        window.onresize = () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        };
+    </script>
+</body>
+</html>
