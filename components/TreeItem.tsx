@@ -39,30 +39,30 @@ const TreeItem: React.FC<TreeItemProps> = ({
             ? 'bg-indigo-600 text-white shadow-sm' 
             : 'hover:bg-slate-100 text-slate-600'
         }`}
-        style={{ marginLeft: `${level * 0.75}rem` }}
+        style={{ marginLeft: `${level * 0.5}rem` }}
         onClick={() => onSelect(node.id)}
       >
         <div className="flex items-center flex-1 min-w-0">
-          <div className="w-5 flex items-center justify-center shrink-0">
+          <div className="w-4 flex items-center justify-center shrink-0">
             {node.type === 'folder' ? (
               <button 
                 onClick={(e) => { e.stopPropagation(); setIsOpen(!isOpen); }}
                 className={`p-0.5 rounded transition-colors ${isSelected ? 'text-white/70 hover:text-white' : 'text-slate-400 hover:bg-slate-200'}`}
               >
-                {isOpen ? <ChevronDown size={12} strokeWidth={3} /> : <ChevronRight size={12} strokeWidth={3} />}
+                {isOpen ? <ChevronDown size={10} strokeWidth={3} /> : <ChevronRight size={10} strokeWidth={3} />}
               </button>
             ) : null}
           </div>
           
-          <div className="w-5 flex items-center justify-center shrink-0 mr-1.5">
+          <div className="w-4 flex items-center justify-center shrink-0 mr-1">
             {node.type === 'folder' ? (
-              <Folder size={14} className={`${isSelected ? 'text-white' : 'text-amber-500'}`} />
+              <Folder size={12} className={`${isSelected ? 'text-white' : 'text-amber-500'}`} />
             ) : (
-              <Globe size={14} className={`${isSelected ? 'text-white' : 'text-sky-500'}`} />
+              <Globe size={12} className={`${isSelected ? 'text-white' : 'text-sky-500'}`} />
             )}
           </div>
           
-          <span className={`truncate text-[11px] tracking-tight leading-tight ${isSelected ? 'font-medium' : 'font-normal'}`}>
+          <span className={`truncate text-[10.5px] tracking-tight leading-tight ${isSelected ? 'font-bold' : 'font-medium'}`}>
             {node.title}
           </span>
         </div>
@@ -73,6 +73,7 @@ const TreeItem: React.FC<TreeItemProps> = ({
               <button 
                 onClick={(e) => { e.stopPropagation(); onAdd(node.id, 'lesson'); }}
                 className={`p-1 rounded ${isSelected ? 'hover:bg-white/20 text-white' : 'hover:bg-indigo-100 text-indigo-500'}`}
+                title="Thêm mục con"
               >
                 <Plus size={10} />
               </button>
@@ -94,7 +95,7 @@ const TreeItem: React.FC<TreeItemProps> = ({
       </div>
 
       {node.type === 'folder' && isOpen && children.length > 0 && (
-        <div className="mt-0.5 ml-[9px] border-l border-slate-100 pl-1">
+        <div className="mt-0.5 border-l border-slate-100 ml-[10px]">
           {children.map(child => (
             <TreeItem 
               key={child.id}
@@ -106,7 +107,7 @@ const TreeItem: React.FC<TreeItemProps> = ({
               onAdd={onAdd}
               onEdit={onEdit}
               onDelete={onDelete}
-              level={0}
+              level={level + 1}
             />
           ))}
         </div>
