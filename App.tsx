@@ -1,9 +1,9 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from 'https://esm.sh/react@^19.2.3';
 import { Routes, Route, useNavigate, Navigate } from 'https://esm.sh/react-router-dom@^6.22.3';
-import { Book, Plus, Maximize2, Loader2, BrainCircuit, GraduationCap, ShieldCheck, Search, LogOut } from 'https://esm.sh/lucide-react@^0.562.0';
+import { Book, Plus, Maximize2, Loader2, BrainCircuit, GraduationCap, ShieldCheck, Search, LogOut, Folder, Globe } from 'https://esm.sh/lucide-react@^0.562.0';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { AppData, ResourceLink, BookNode } from './types';
+import { AppData, ResourceLink, BookNode, NodeType } from './types';
 import { INITIAL_DATA } from './constants';
 import TreeItem from './components/TreeItem';
 import QuizModal from './components/QuizModal';
@@ -127,11 +127,8 @@ const MainView: React.FC<{ isAdmin: boolean; data: AppData; updateData: (d: AppD
   const selectedNode = data.nodes.find(n => n.id === selectedId);
 
   const filteredRootNodes = useMemo(() => {
-    const roots = data.nodes.filter(n => n.parentId === null);
-    if (!searchTerm) return roots;
-    const lowerSearch = searchTerm.toLowerCase();
-    return data.nodes.filter(n => (n.parentId === null || n.title.toLowerCase().includes(lowerSearch)));
-  }, [data.nodes, searchTerm]);
+    return data.nodes.filter(n => n.parentId === null);
+  }, [data.nodes]);
 
   useEffect(() => {
     const timer = setInterval(() => setSloganIdx(prev => (prev + 1) % SLOGANS.length), 30000);
@@ -147,10 +144,18 @@ const MainView: React.FC<{ isAdmin: boolean; data: AppData; updateData: (d: AppD
   useEffect(() => { setActiveTab('content'); }, [selectedId]);
 
   const handleDeleteNode = (id: string) => {
-    if(!window.confirm("Xóa thư mục/bài học này?")) return;
-    const newData = {...data, nodes: data.nodes.filter(n => n.id !== id && n.parentId !== id)};
+    if(!window.confirm("Xóa thư mục/bài học này? Hệ thống sẽ xóa cả các mục con bên trong.")) return;
+    
+    // Xóa đệ quy: lấy tất cả ID của node hiện tại và con cháu của nó
+    const getChildIds = (parentId: string): string[] => {
+      const children = data.nodes.filter(n => n.parentId === parentId);
+      return [parentId, ...children.flatMap(c => getChildIds(c.id))];
+    };
+    
+    const idsToDelete = getChildIds(id);
+    const newData = {...data, nodes: data.nodes.filter(n => !idsToDelete.includes(n.id))};
     updateData(newData);
-    if(selectedId === id) setSelectedId(null);
+    if(selectedId && idsToDelete.includes(selectedId)) setSelectedId(null);
   };
 
   const handleSaveResource = (e: React.FormEvent) => {
@@ -192,16 +197,16 @@ const MainView: React.FC<{ isAdmin: boolean; data: AppData; updateData: (d: AppD
       {isQuizOpen && selectedNode && <QuizModal lessonTitle={selectedNode.title} onClose={()=>setIsQuizOpen(false)} />}
       
       {/* PANEL 1: SIDEBAR */}
-      <aside className="w-[250px] border-r border-slate-100 flex flex-col shrink-0 bg-[#fbfcfd] transition-all">
+      <aside className="w-[230px] border-r border-slate-100 flex flex-col shrink-0 bg-[#fbfcfd] transition-all">
         <header className={`px-5 py-4 text-white ${isAdmin ? 'bg-amber-600' : 'bg-indigo-600'} flex justify-between items-center shrink-0`}>
-          <div className="flex items-center gap-2"><Book size={18}/><h1 className="font-bold text-[10px] uppercase tracking-[0.2em]">Hệ thống bài</h1></div>
-          {isAdmin && <button onClick={()=>{setNodeModalData({parentId:null, type:'folder', title:'', url:''}); setShowNodeModal(true);}} className="p-1.5 hover:bg-white/20 rounded-lg transition-colors"><Plus size={16}/></button>}
+          <div className="flex items-center gap-2"><Book size={16}/><h1 className="font-bold text-[9px] uppercase tracking-[0.2em]">Cấu trúc sách</h1></div>
+          {isAdmin && <button onClick={()=>{setNodeModalData({parentId:null, type:'folder', title:'', url:''}); setShowNodeModal(true);}} className="p-1.5 hover:bg-white/20 rounded-lg transition-colors"><Plus size={14}/></button>}
         </header>
 
         <div className="p-3 shrink-0 bg-[#fbfcfd]">
           <div className="flex items-center bg-white border border-slate-200 rounded-xl px-3 py-1.5 shadow-sm focus-within:border-indigo-400 transition-all">
-            <Search size={14} className="text-slate-400"/>
-            <input value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} placeholder="Tìm kiếm..." className="bg-transparent border-none outline-none text-[11px] font-medium w-full ml-2"/>
+            <Search size={12} className="text-slate-400"/>
+            <input value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} placeholder="Tìm kiếm..." className="bg-transparent border-none outline-none text-[10px] font-medium w-full ml-2"/>
           </div>
         </div>
 
@@ -216,9 +221,9 @@ const MainView: React.FC<{ isAdmin: boolean; data: AppData; updateData: (d: AppD
         </div>
 
         <footer className="p-3 border-t border-slate-100 bg-white shrink-0 flex items-center justify-between">
-             <span className="text-[9px] font-bold text-slate-300 uppercase tracking-widest">{visitorCount} View</span>
-             <button onClick={()=>{if(isAdmin)sessionStorage.removeItem('teacher_auth'); navigate('/');}} className="flex items-center gap-1 text-[9px] font-black text-red-400 uppercase tracking-widest hover:text-red-600 transition-colors">
-               <LogOut size={10}/> Thoát
+             <span className="text-[8px] font-bold text-slate-300 uppercase tracking-widest">{visitorCount} View</span>
+             <button onClick={()=>{if(isAdmin)sessionStorage.removeItem('teacher_auth'); navigate('/');}} className="flex items-center gap-1 text-[8px] font-black text-red-400 uppercase tracking-widest hover:text-red-600 transition-colors">
+               <LogOut size={9}/> Thoát
              </button>
         </footer>
       </aside>
@@ -281,23 +286,36 @@ const MainView: React.FC<{ isAdmin: boolean; data: AppData; updateData: (d: AppD
         onEdit={(r,isG)=> {setResModalData({...r, isGlobal: isG}); setShowResModal(true);}}
         onDelete={handleDeleteResource}/>
 
-      {/* MODAL CẤU TRÚC */}
+      {/* MODAL CẤU TRÚC (SỬA ĐỂ CHỌN LOẠI) */}
       {showNodeModal && (
         <div className="fixed inset-0 z-[300] bg-slate-900/40 flex items-center justify-center p-4 backdrop-blur-md animate-in fade-in duration-300">
-          <form onSubmit={(e)=>{e.preventDefault(); if(!nodeModalData.title)return; let nodes=[...data.nodes]; if(nodeModalData.id) nodes=nodes.map(n=>n.id===nodeModalData.id?{...n,title:nodeModalData.title,url:nodeModalData.url}:n); else nodes.push({id:`n-${Date.now()}`, ...nodeModalData, lessonResources:[]}); updateData({...data, nodes}); setShowNodeModal(false);}}
+          <form onSubmit={(e)=>{e.preventDefault(); if(!nodeModalData.title)return; let nodes=[...data.nodes]; if(nodeModalData.id) nodes=nodes.map(n=>n.id===nodeModalData.id?{...n,title:nodeModalData.title,url:nodeModalData.url,type:nodeModalData.type}:n); else nodes.push({id:`n-${Date.now()}`, ...nodeModalData, lessonResources:[]}); updateData({...data, nodes}); setShowNodeModal(false);}}
             className="bg-white p-8 rounded-[32px] shadow-2xl w-full max-w-md space-y-4 border border-slate-100 animate-in zoom-in-95">
             <h3 className="font-black text-center text-indigo-600 uppercase text-[11px] tracking-widest mb-2">Cấu trúc bài học</h3>
+            
+            {/* CHỌN LOẠI NODE */}
+            <div className="flex gap-2 p-1 bg-slate-100 rounded-xl mb-4">
+              <button type="button" onClick={()=>setNodeModalData({...nodeModalData, type:'folder'})} className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-[10px] font-black uppercase transition-all ${nodeModalData.type==='folder' ? 'bg-white shadow-sm text-amber-600' : 'text-slate-400'}`}>
+                <Folder size={14}/> Thư mục
+              </button>
+              <button type="button" onClick={()=>setNodeModalData({...nodeModalData, type:'lesson'})} className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-[10px] font-black uppercase transition-all ${nodeModalData.type==='lesson' ? 'bg-white shadow-sm text-sky-600' : 'text-slate-400'}`}>
+                <Globe size={14}/> Bài học
+              </button>
+            </div>
+
             <div className="space-y-1">
               <label className="text-[9px] font-bold text-slate-400 uppercase ml-1 tracking-widest">Tiêu đề</label>
-              <input autoFocus value={nodeModalData.title} onChange={e=>setNodeModalData({...nodeModalData, title:e.target.value})} className="w-full px-4 py-3 text-sm font-medium outline-none bg-slate-50 border border-slate-100 rounded-xl focus:border-indigo-400 transition-all" placeholder="Tên bài..."/>
+              <input autoFocus value={nodeModalData.title} onChange={e=>setNodeModalData({...nodeModalData, title:e.target.value})} className="w-full px-4 py-3 text-sm font-medium outline-none bg-slate-50 border border-slate-100 rounded-xl focus:border-indigo-400 transition-all" placeholder={nodeModalData.type==='folder'?'Tên thư mục...':'Tên bài học...'}/>
             </div>
-            <div className="space-y-1">
-              <label className="text-[9px] font-bold text-slate-400 uppercase ml-1 tracking-widest">Link tài liệu (Iframe)</label>
-              <input value={nodeModalData.url} onChange={e=>setNodeModalData({...nodeModalData, url:e.target.value})} className="w-full px-4 py-3 text-[11px] outline-none bg-slate-50 border border-slate-100 rounded-xl focus:border-indigo-400 transition-all" placeholder="https://..."/>
-            </div>
+            {nodeModalData.type === 'lesson' && (
+              <div className="space-y-1">
+                <label className="text-[9px] font-bold text-slate-400 uppercase ml-1 tracking-widest">Link tài liệu (Iframe)</label>
+                <input value={nodeModalData.url} onChange={e=>setNodeModalData({...nodeModalData, url:e.target.value})} className="w-full px-4 py-3 text-[11px] outline-none bg-slate-50 border border-slate-100 rounded-xl focus:border-indigo-400 transition-all" placeholder="https://..."/>
+              </div>
+            )}
             <div className="flex gap-4 pt-2">
                 <button type="button" onClick={()=>setShowNodeModal(false)} className="flex-1 py-3 text-[10px] font-bold uppercase text-slate-300 tracking-widest">Hủy</button>
-                <button type="submit" className="flex-1 py-3 bg-indigo-600 text-white rounded-xl font-bold uppercase text-[10px] shadow-lg shadow-indigo-100 tracking-widest">Lưu bài học</button>
+                <button type="submit" className="flex-1 py-3 bg-indigo-600 text-white rounded-xl font-bold uppercase text-[10px] shadow-lg shadow-indigo-100 tracking-widest">Lưu lại</button>
             </div>
           </form>
         </div>
