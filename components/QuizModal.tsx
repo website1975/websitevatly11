@@ -95,8 +95,16 @@ const QuizModal: React.FC<QuizModalProps> = ({ nodeId, lessonTitle, isAdmin, onC
       const ai = new GoogleGenAI({ apiKey });
       const response = await ai.models.generateContent({
         model: 'gemini-3-flash-preview',
-        contents: `Tạo 5 câu trắc nghiệm Vật lý 11 cho bài: "${lessonTitle}". 
-        Yêu cầu: Công thức dùng ký hiệu $...$. Trả về JSON array chuẩn.`,
+        contents: `Tạo chính xác 5 câu hỏi trắc nghiệm Vật lý 11 cho bài: "${lessonTitle}".
+        Yêu cầu phân bổ độ khó nghiêm ngặt như sau:
+        - 2 câu mức độ Nhận biết/Thông hiểu (Biết, hiểu).
+        - 2 câu mức độ Vận dụng (khá).
+        - 1 câu mức độ Vận dụng cao (khó).
+
+        Quy định định dạng:
+        1. Công thức Vật lý/Toán học phải nằm trong cặp ký hiệu $...$. Ví dụ: $F = qE$, $\\lambda = \\frac{v}{f}$.
+        2. Nội dung bám sát kiến thức bài học.
+        3. Trả về kết quả dưới dạng mảng JSON (JSON array).`,
         config: {
           responseMimeType: "application/json",
           responseSchema: {
