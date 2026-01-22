@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from 'https://esm.sh/react@^19.2.3';
 import { Routes, Route, useNavigate, Navigate } from 'https://esm.sh/react-router-dom@^6.22.3';
-import { Book, Plus, Maximize2, Loader2, BrainCircuit, GraduationCap, ShieldCheck, Search, LogOut, Folder, Globe } from 'https://esm.sh/lucide-react@^0.562.0';
+import { Book, Plus, Maximize2, Loader2, BrainCircuit, GraduationCap, ShieldCheck, Search, LogOut, Folder, Globe, Zap } from 'https://esm.sh/lucide-react@^0.562.0';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { AppData, ResourceLink, BookNode, NodeType } from './types';
 import { INITIAL_DATA } from './constants';
@@ -145,13 +145,10 @@ const MainView: React.FC<{ isAdmin: boolean; data: AppData; updateData: (d: AppD
 
   const handleDeleteNode = (id: string) => {
     if(!window.confirm("Xóa thư mục/bài học này? Hệ thống sẽ xóa cả các mục con bên trong.")) return;
-    
-    // Xóa đệ quy: lấy tất cả ID của node hiện tại và con cháu của nó
     const getChildIds = (parentId: string): string[] => {
       const children = data.nodes.filter(n => n.parentId === parentId);
       return [parentId, ...children.flatMap(c => getChildIds(c.id))];
     };
-    
     const idsToDelete = getChildIds(id);
     const newData = {...data, nodes: data.nodes.filter(n => !idsToDelete.includes(n.id))};
     updateData(newData);
@@ -194,7 +191,14 @@ const MainView: React.FC<{ isAdmin: boolean; data: AppData; updateData: (d: AppD
 
   return (
     <div className="flex h-screen overflow-hidden font-sans bg-white text-slate-900 transition-colors duration-300">
-      {isQuizOpen && selectedNode && <QuizModal lessonTitle={selectedNode.title} onClose={()=>setIsQuizOpen(false)} />}
+      {isQuizOpen && selectedNode && (
+        <QuizModal 
+          nodeId={selectedId!}
+          lessonTitle={selectedNode.title} 
+          isAdmin={isAdmin}
+          onClose={() => setIsQuizOpen(false)} 
+        />
+      )}
       
       {/* PANEL 1: SIDEBAR */}
       <aside className="w-[230px] border-r border-slate-100 flex flex-col shrink-0 bg-[#fbfcfd] transition-all">
@@ -242,9 +246,17 @@ const MainView: React.FC<{ isAdmin: boolean; data: AppData; updateData: (d: AppD
                 </div>
                 <div className="flex items-center gap-2">
                   {selectedNode?.type==='lesson' && (
-                    <button onClick={()=>setIsQuizOpen(true)} className="group flex items-center gap-2 px-5 py-2 bg-indigo-600 text-white font-bold text-[10px] uppercase shadow-lg shadow-indigo-100 rounded-full hover:bg-indigo-700 hover:scale-105 transition-all">
-                      <BrainCircuit size={14}/> Quiz AI
-                    </button>
+                    <div className="flex gap-2">
+                      {isAdmin ? (
+                        <button onClick={()=>setIsQuizOpen(true)} className="group flex items-center gap-2 px-5 py-2 bg-indigo-600 text-white font-bold text-[10px] uppercase shadow-lg shadow-indigo-100 rounded-full hover:bg-indigo-700 hover:scale-105 transition-all">
+                          <Zap size={14} className="fill-current text-amber-300"/> Soạn Quiz AI
+                        </button>
+                      ) : (
+                        <button onClick={()=>setIsQuizOpen(true)} className="group flex items-center gap-2 px-5 py-2 bg-emerald-600 text-white font-bold text-[10px] uppercase shadow-lg shadow-emerald-100 rounded-full hover:bg-emerald-700 hover:scale-105 transition-all">
+                          <BrainCircuit size={14}/> Rèn luyện
+                        </button>
+                      )}
+                    </div>
                   )}
                   {selectedNode?.url && <button onClick={()=>window.open(selectedNode.url, '_blank')} className="p-2 bg-slate-50 text-slate-400 hover:text-indigo-600 rounded-full hover:bg-indigo-50 transition-colors"><Maximize2 size={16}/></button>}
                 </div>
@@ -286,14 +298,12 @@ const MainView: React.FC<{ isAdmin: boolean; data: AppData; updateData: (d: AppD
         onEdit={(r,isG)=> {setResModalData({...r, isGlobal: isG}); setShowResModal(true);}}
         onDelete={handleDeleteResource}/>
 
-      {/* MODAL CẤU TRÚC (SỬA ĐỂ CHỌN LOẠI) */}
+      {/* MODALS remain same ... */}
       {showNodeModal && (
         <div className="fixed inset-0 z-[300] bg-slate-900/40 flex items-center justify-center p-4 backdrop-blur-md animate-in fade-in duration-300">
           <form onSubmit={(e)=>{e.preventDefault(); if(!nodeModalData.title)return; let nodes=[...data.nodes]; if(nodeModalData.id) nodes=nodes.map(n=>n.id===nodeModalData.id?{...n,title:nodeModalData.title,url:nodeModalData.url,type:nodeModalData.type}:n); else nodes.push({id:`n-${Date.now()}`, ...nodeModalData, lessonResources:[]}); updateData({...data, nodes}); setShowNodeModal(false);}}
             className="bg-white p-8 rounded-[32px] shadow-2xl w-full max-w-md space-y-4 border border-slate-100 animate-in zoom-in-95">
             <h3 className="font-black text-center text-indigo-600 uppercase text-[11px] tracking-widest mb-2">Cấu trúc bài học</h3>
-            
-            {/* CHỌN LOẠI NODE */}
             <div className="flex gap-2 p-1 bg-slate-100 rounded-xl mb-4">
               <button type="button" onClick={()=>setNodeModalData({...nodeModalData, type:'folder'})} className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-[10px] font-black uppercase transition-all ${nodeModalData.type==='folder' ? 'bg-white shadow-sm text-amber-600' : 'text-slate-400'}`}>
                 <Folder size={14}/> Thư mục
@@ -302,7 +312,6 @@ const MainView: React.FC<{ isAdmin: boolean; data: AppData; updateData: (d: AppD
                 <Globe size={14}/> Bài học
               </button>
             </div>
-
             <div className="space-y-1">
               <label className="text-[9px] font-bold text-slate-400 uppercase ml-1 tracking-widest">Tiêu đề</label>
               <input autoFocus value={nodeModalData.title} onChange={e=>setNodeModalData({...nodeModalData, title:e.target.value})} className="w-full px-4 py-3 text-sm font-medium outline-none bg-slate-50 border border-slate-100 rounded-xl focus:border-indigo-400 transition-all" placeholder={nodeModalData.type==='folder'?'Tên thư mục...':'Tên bài học...'}/>
@@ -321,7 +330,6 @@ const MainView: React.FC<{ isAdmin: boolean; data: AppData; updateData: (d: AppD
         </div>
       )}
 
-      {/* MODAL HỌC LIỆU */}
       {showResModal && (
         <div className="fixed inset-0 z-[300] bg-slate-900/40 flex items-center justify-center p-4 backdrop-blur-md animate-in fade-in duration-300">
           <form onSubmit={handleSaveResource}
