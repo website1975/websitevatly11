@@ -14,14 +14,33 @@ export const getSafeEnv = (key: string): string | undefined => {
 
 export const renderLatex = (text: string) => {
   if (!text) return null;
+  
+  // Xử lý các ký tự thoát đặc biệt nếu cần thiết trước khi split
+  // Đảm bảo dấu gạch chéo ngược được bảo toàn
+  const safeText = text.replace(/\\/g, '\\\\').replace(/\\\\\\\\/g, '\\\\');
+
+  // Split dựa trên $...$ (inline math)
+  // Lưu ý: Chúng ta không dùng safeText ở đây vì split regex sẽ tự xử lý, 
+  // nhưng cần cẩn thận với cách JS xử lý backslash trong string
   const parts = text.split(/(\$[^\$]+\$)/g);
+
   return parts.map((part, i) => {
     if (part.startsWith('$') && part.endsWith('$')) {
       const math = part.slice(1, -1);
       try {
-        const html = katex.renderToString(math, { throwOnError: false });
-        return React.createElement('span', { key: i, dangerouslySetInnerHTML: { __html: html } });
-      } catch (e) { return React.createElement('span', { key: i }, part); }
+        const html = katex.renderToString(math, { 
+          throwOnError: false,
+          displayMode: false,
+          strict: false
+        });
+        return React.createElement('span', { 
+          key: i, 
+          className: 'inline-block align-middle',
+          dangerouslySetInnerHTML: { __html: html } 
+        });
+      } catch (e) { 
+        return React.createElement('span', { key: i }, part); 
+      }
     }
     return React.createElement('span', { key: i }, part);
   });
@@ -34,8 +53,6 @@ export const SLOGANS = [
   "\"Cuộc sống giống như lái một chiếc xe đạp. Để giữ thăng bằng, bạn phải liên tục tiến về phía trước.\" — Albert Einstein",
   "\"Khoa học không chỉ là một môn học, nó là một cách suy nghĩ.\" — Carl Sagan",
   "\"Mọi sự phức tạp đều bắt nguồn từ những quy luật đơn giản.\" — Richard Feynman",
-  "\"Khoa học là ánh sáng soi đường cho trí tuệ.\" — VẬT LÝ 11",
-  "\"Học tập thông minh — Khám phá đỉnh cao khoa học.\"",
-  "\"Vật lý không chỉ là công thức, đó là cách ta hiểu về vũ trụ.\"",
-  "\"Vật lý lớp 11 - Kết nối tri thức - Khám phá thế giới.\""
+  "\"Trên đời này không có gì đáng sợ, chỉ có những thứ chưa được hiểu rõ.\" — Marie Curie",
+  "\"Những gì chúng ta biết chỉ là một giọt nước, những gì chúng ta chưa biết là cả một đại dương.\" — Isaac Newton"
 ];
