@@ -22,6 +22,7 @@ export interface BookNode {
   title: string;
   type: NodeType;
   url: string;
+  imageUrl?: string; // Trường mới: Ảnh minh họa bài học
   parentId: string | null;
   lessonResources: ResourceLink[];
 }
