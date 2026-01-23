@@ -1,6 +1,6 @@
 
-import React, { useState } from 'https://esm.sh/react@^19.2.3';
-import { ChevronRight, ChevronDown, Folder, Globe, Plus, Pencil, Trash2 } from 'https://esm.sh/lucide-react@^0.562.0';
+import React, { useState, useMemo } from 'https://esm.sh/react@^19.2.3';
+import { ChevronRight, ChevronDown, Folder, Globe, Plus, Pencil, Trash2, ArrowUp, ArrowDown } from 'https://esm.sh/lucide-react@^0.562.0';
 import { BookNode, NodeType } from '../types';
 
 interface TreeItemProps {
@@ -12,6 +12,7 @@ interface TreeItemProps {
   onAdd: (parentId: string, type: NodeType) => void;
   onEdit: (node: BookNode) => void;
   onDelete: (id: string) => void;
+  onReorder: (id: string, direction: 'up' | 'down') => void; // New prop
   level: number;
 }
 
@@ -24,11 +25,18 @@ const TreeItem: React.FC<TreeItemProps> = ({
   onAdd, 
   onEdit, 
   onDelete,
+  onReorder,
   level 
 }) => {
   const [isOpen, setIsOpen] = useState(true);
   
-  const children = allNodes.filter(n => n.parentId === node.id);
+  // Sắp xếp các mục con dựa trên thuộc tính order
+  const children = useMemo(() => {
+    return allNodes
+      .filter(n => n.parentId === node.id)
+      .sort((a, b) => a.order - b.order);
+  }, [allNodes, node.id]);
+
   const isSelected = selectedId === node.id;
 
   return (
@@ -69,6 +77,22 @@ const TreeItem: React.FC<TreeItemProps> = ({
 
         {isAdmin && (
           <div className="flex items-center space-x-0.5 ml-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+            {/* Reorder buttons */}
+            <button 
+              onClick={(e) => { e.stopPropagation(); onReorder(node.id, 'up'); }}
+              className={`p-1 rounded ${isSelected ? 'hover:bg-white/20 text-white' : 'hover:bg-slate-200 text-slate-400'}`}
+              title="Di chuyển lên"
+            >
+              <ArrowUp size={10} />
+            </button>
+            <button 
+              onClick={(e) => { e.stopPropagation(); onReorder(node.id, 'down'); }}
+              className={`p-1 rounded ${isSelected ? 'hover:bg-white/20 text-white' : 'hover:bg-slate-200 text-slate-400'}`}
+              title="Di chuyển xuống"
+            >
+              <ArrowDown size={10} />
+            </button>
+
             {node.type === 'folder' && (
               <button 
                 onClick={(e) => { e.stopPropagation(); onAdd(node.id, 'lesson'); }}
@@ -107,6 +131,7 @@ const TreeItem: React.FC<TreeItemProps> = ({
               onAdd={onAdd}
               onEdit={onEdit}
               onDelete={onDelete}
+              onReorder={onReorder}
               level={level + 1}
             />
           ))}
