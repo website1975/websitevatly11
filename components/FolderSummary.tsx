@@ -44,30 +44,30 @@ const FolderSummary: React.FC<FolderSummaryProps> = ({ folder, children, onSelec
       </div>
 
       {/* Main Scrollable Area */}
-      <div className="relative z-10 flex-1 overflow-y-auto custom-scrollbar p-6 md:p-10">
-        <div className="max-w-4xl w-full mx-auto space-y-4">
+      <div className="relative z-10 flex-1 overflow-y-auto custom-scrollbar p-4 md:p-6 lg:p-8">
+        <div className="max-w-4xl w-full mx-auto">
           
-          {/* Header Chương - Thu gọn margin và text size */}
-          <div className="mb-2">
-            <h2 className="text-[8px] font-black text-indigo-500 uppercase tracking-[0.4em] mb-0.5">CHƯƠNG HIỆN TẠI</h2>
-            <h1 className="text-xl font-black text-slate-900 uppercase tracking-tighter leading-tight">{folder.title}</h1>
+          {/* Header Chương - Ép sát lên trên */}
+          <div className="mb-3">
+            <h2 className="text-[7px] font-black text-indigo-500 uppercase tracking-[0.4em] mb-0.5 opacity-70">CHƯƠNG HIỆN TẠI</h2>
+            <h1 className="text-lg font-black text-slate-900 uppercase tracking-tighter leading-tight">{folder.title}</h1>
           </div>
 
-          {/* Thông tin bài học - Thu gọn spacing */}
-          <div className="animate-in fade-in slide-in-from-top-2 duration-500">
+          {/* Thông tin bài học */}
+          <div className="mb-4 animate-in fade-in slide-in-from-top-1 duration-500">
              <div className="mb-1">
-                <span className="text-[8px] font-black text-slate-300 uppercase tracking-widest">BÀI {currentIndex + 1} / {children.length}</span>
-                <h3 className="text-lg font-black text-slate-800 tracking-tight leading-none">{currentLesson.title}</h3>
+                <span className="text-[7px] font-black text-slate-300 uppercase tracking-widest">BÀI {currentIndex + 1} / {children.length}</span>
+                <h3 className="text-base font-black text-slate-800 tracking-tight leading-none">{currentLesson.title}</h3>
              </div>
-             <p className="text-slate-400 text-[10px] font-medium leading-relaxed max-w-2xl">
-               Khám phá các kiến thức trọng tâm của bài này một cách trực quan. Nhấn "Bắt đầu" để truy cập học liệu và bài tập AI.
+             <p className="text-slate-400 text-[9px] font-medium leading-tight max-w-2xl">
+               Khám phá các kiến thức trọng tâm của bài này một cách trực quan. Nhấn "Bắt đầu" để truy cập học liệu.
              </p>
           </div>
 
           {/* Carousel Area */}
-          <div className="flex flex-col gap-4 w-full">
+          <div className="flex flex-col gap-3 w-full">
             {/* Image Container */}
-            <div className="relative w-full aspect-video group rounded-[32px] overflow-hidden shadow-2xl shadow-indigo-100/50 border-4 border-white transition-all duration-700 hover:shadow-indigo-200/60">
+            <div className="relative w-full aspect-video group rounded-[28px] overflow-hidden shadow-2xl shadow-indigo-100/50 border-[3px] border-white transition-all duration-700 hover:shadow-indigo-200/60">
                {currentLesson.imageUrl ? (
                  <img 
                    src={currentLesson.imageUrl} 
@@ -77,43 +77,42 @@ const FolderSummary: React.FC<FolderSummaryProps> = ({ folder, children, onSelec
                  />
                ) : (
                  <div className="w-full h-full bg-gradient-to-br from-indigo-500 via-purple-500 to-sky-500 flex items-center justify-center text-white/20">
-                   <Play size={100} strokeWidth={1} />
+                   <Play size={80} strokeWidth={1} />
                  </div>
                )}
                
                {/* Controls Overlay */}
-               <div className="absolute inset-0 flex items-center justify-between px-4 opacity-0 group-hover:opacity-100 transition-all duration-500 bg-black/5">
-                  <button onClick={(e) => { e.stopPropagation(); handlePrev(); }} className="w-10 h-10 bg-white/95 backdrop-blur-md rounded-full flex items-center justify-center text-slate-900 shadow-2xl hover:scale-110 active:scale-95 transition-all">
-                    <ChevronLeft size={20} />
+               <div className="absolute inset-0 flex items-center justify-between px-3 opacity-0 group-hover:opacity-100 transition-all duration-500 bg-black/5">
+                  <button onClick={(e) => { e.stopPropagation(); handlePrev(); }} className="w-8 h-8 bg-white/95 backdrop-blur-md rounded-full flex items-center justify-center text-slate-900 shadow-2xl hover:scale-110 active:scale-95 transition-all">
+                    <ChevronLeft size={16} />
                   </button>
-                  <button onClick={(e) => { e.stopPropagation(); handleNext(); }} className="w-10 h-10 bg-white/95 backdrop-blur-md rounded-full flex items-center justify-center text-slate-900 shadow-2xl hover:scale-110 active:scale-95 transition-all">
-                    <ChevronRight size={20} />
+                  <button onClick={(e) => { e.stopPropagation(); handleNext(); }} className="w-8 h-8 bg-white/95 backdrop-blur-md rounded-full flex items-center justify-center text-slate-900 shadow-2xl hover:scale-110 active:scale-95 transition-all">
+                    <ChevronRight size={16} />
                   </button>
                </div>
 
-               {/* Nút vào học - Cố định vị trí trong ảnh */}
+               {/* Nút vào học */}
                <button 
                 onClick={() => onSelectLesson(currentLesson.id)}
-                className="absolute bottom-6 right-6 bg-indigo-600 text-white px-6 py-3 rounded-2xl font-black text-[9px] uppercase tracking-[0.2em] shadow-2xl shadow-indigo-900/20 flex items-center gap-2 hover:bg-indigo-700 hover:translate-y-[-2px] active:translate-y-0 transition-all z-20"
+                className="absolute bottom-4 right-4 bg-indigo-600 text-white px-5 py-2.5 rounded-xl font-black text-[8.5px] uppercase tracking-[0.15em] shadow-2xl shadow-indigo-900/20 flex items-center gap-2 hover:bg-indigo-700 hover:translate-y-[-2px] active:translate-y-0 transition-all z-20"
                >
-                 VÀO HỌC <Play size={10} fill="currentColor" />
+                 BẮT ĐẦU <Play size={8} fill="currentColor" />
                </button>
             </div>
 
             {/* Pagination Dots */}
-            <div className="flex gap-2 justify-center md:justify-start">
+            <div className="flex gap-1.5 justify-center md:justify-start px-2">
               {children.map((_, idx) => (
                 <button 
                   key={idx} 
                   onClick={() => setCurrentIndex(idx)}
-                  className={`h-1.5 transition-all duration-500 rounded-full ${idx === currentIndex ? 'w-10 bg-indigo-600 shadow-lg shadow-indigo-100' : 'w-2 bg-slate-200 hover:bg-slate-300'}`}
+                  className={`h-1 transition-all duration-500 rounded-full ${idx === currentIndex ? 'w-8 bg-indigo-600 shadow-lg shadow-indigo-100' : 'w-1.5 bg-slate-200 hover:bg-slate-300'}`}
                 />
               ))}
             </div>
           </div>
           
-          {/* Bottom padding to ensure content isn't cut off by container bottom */}
-          <div className="h-4"></div>
+          <div className="h-6"></div>
         </div>
       </div>
       
