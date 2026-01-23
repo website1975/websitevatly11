@@ -34,7 +34,7 @@ const TreeItem: React.FC<TreeItemProps> = ({
   const children = useMemo(() => {
     return allNodes
       .filter(n => n.parentId === node.id)
-      .sort((a, b) => a.order - b.order);
+      .sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
   }, [allNodes, node.id]);
 
   const isSelected = selectedId === node.id;
@@ -50,19 +50,19 @@ const TreeItem: React.FC<TreeItemProps> = ({
         style={{ marginLeft: `${level * 0.5}rem` }}
         onClick={() => onSelect(node.id)}
       >
-        <div className="flex items-center flex-1 min-w-0">
-          <div className="w-4 flex items-center justify-center shrink-0">
+        <div className="flex items-center flex-1 min-w-0 mr-1">
+          <div className="w-5 flex items-center justify-center shrink-0">
             {node.type === 'folder' ? (
               <button 
                 onClick={(e) => { e.stopPropagation(); setIsOpen(!isOpen); }}
-                className={`p-0.5 rounded transition-colors ${isSelected ? 'text-white/70 hover:text-white' : 'text-slate-400 hover:bg-slate-200'}`}
+                className={`p-1 rounded transition-colors ${isSelected ? 'text-white/70 hover:text-white' : 'text-slate-400 hover:bg-slate-200'}`}
               >
-                {isOpen ? <ChevronDown size={10} strokeWidth={3} /> : <ChevronRight size={10} strokeWidth={3} />}
+                {isOpen ? <ChevronDown size={11} strokeWidth={3} /> : <ChevronRight size={11} strokeWidth={3} />}
               </button>
             ) : null}
           </div>
           
-          <div className="w-4 flex items-center justify-center shrink-0 mr-1">
+          <div className="w-4 flex items-center justify-center shrink-0 mr-1.5">
             {node.type === 'folder' ? (
               <Folder size={12} className={`${isSelected ? 'text-white' : 'text-amber-500'}`} />
             ) : (
@@ -76,43 +76,43 @@ const TreeItem: React.FC<TreeItemProps> = ({
         </div>
 
         {isAdmin && (
-          <div className="flex items-center space-x-0.5 ml-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
-            {/* Reorder buttons */}
+          <div className="flex items-center space-x-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0 bg-inherit pl-1">
+            {/* Reorder buttons with improved click area */}
             <button 
               onClick={(e) => { e.stopPropagation(); onReorder(node.id, 'up'); }}
-              className={`p-1 rounded ${isSelected ? 'hover:bg-white/20 text-white' : 'hover:bg-slate-200 text-slate-400'}`}
+              className={`p-1.5 rounded-md transition-all active:scale-90 ${isSelected ? 'hover:bg-white/20 text-white' : 'hover:bg-slate-200 text-slate-400'}`}
               title="Di chuyển lên"
             >
-              <ArrowUp size={10} />
+              <ArrowUp size={12} strokeWidth={2.5} />
             </button>
             <button 
               onClick={(e) => { e.stopPropagation(); onReorder(node.id, 'down'); }}
-              className={`p-1 rounded ${isSelected ? 'hover:bg-white/20 text-white' : 'hover:bg-slate-200 text-slate-400'}`}
+              className={`p-1.5 rounded-md transition-all active:scale-90 ${isSelected ? 'hover:bg-white/20 text-white' : 'hover:bg-slate-200 text-slate-400'}`}
               title="Di chuyển xuống"
             >
-              <ArrowDown size={10} />
+              <ArrowDown size={12} strokeWidth={2.5} />
             </button>
 
             {node.type === 'folder' && (
               <button 
                 onClick={(e) => { e.stopPropagation(); onAdd(node.id, 'lesson'); }}
-                className={`p-1 rounded ${isSelected ? 'hover:bg-white/20 text-white' : 'hover:bg-indigo-100 text-indigo-500'}`}
+                className={`p-1.5 rounded-md transition-all active:scale-90 ${isSelected ? 'hover:bg-white/20 text-white' : 'hover:bg-indigo-100 text-indigo-500'}`}
                 title="Thêm mục con"
               >
-                <Plus size={10} />
+                <Plus size={12} strokeWidth={2.5} />
               </button>
             )}
             <button 
               onClick={(e) => { e.stopPropagation(); onEdit(node); }}
-              className={`p-1 rounded ${isSelected ? 'hover:bg-white/20 text-white' : 'hover:bg-amber-100 text-amber-600'}`}
+              className={`p-1.5 rounded-md transition-all active:scale-90 ${isSelected ? 'hover:bg-white/20 text-white' : 'hover:bg-amber-100 text-amber-600'}`}
             >
-              <Pencil size={10} />
+              <Pencil size={12} />
             </button>
             <button 
               onClick={(e) => { e.stopPropagation(); onDelete(node.id); }}
-              className={`p-1 rounded ${isSelected ? 'hover:bg-white/20 text-white' : 'hover:bg-red-100 text-red-500'}`}
+              className={`p-1.5 rounded-md transition-all active:scale-90 ${isSelected ? 'hover:bg-white/20 text-white' : 'hover:bg-red-100 text-red-500'}`}
             >
-              <Trash2 size={10} />
+              <Trash2 size={12} />
             </button>
           </div>
         )}
