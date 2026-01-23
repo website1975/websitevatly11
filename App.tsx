@@ -103,7 +103,7 @@ const LandingPage: React.FC<{ visitorCount: number }> = ({ visitorCount }) => {
           ) : (
             <form onSubmit={(e)=>{e.preventDefault(); if(pin===TEACHER_PWD) {sessionStorage.setItem('teacher_auth','true'); navigate('/teacher');} else setError(true);}} 
               className="bg-white p-10 rounded-[40px] shadow-2xl border border-amber-100 flex flex-col items-center space-y-6 animate-in zoom-in-95">
-              <input type="password" autoFocus value={pin} onChange={(e)=>{setPin(e.target.value); setError(false);}} className={`w-full px-4 py-5 bg-slate-50 border-2 rounded-2xl text-center font-black text-3xl tracking-[0.5em] ${error?'border-red-400 animate-shake':'border-transparent focus:border-amber-400 outline-none'}`} placeholder="****"/>
+              <input type="password" autoFocus value={pin} onChange={(e)=>{setPin(e.target.value); setError(false);}} className={`w-full px-4 py-5 bg-slate-50 border-2 rounded-2xl text-center font-black text-3xl tracking-[0.5em] ${error?'border-red-400 animate-shake':'border-transparent focus:border-amber-400 outline-none'}`} placeholder="****" autoFill="off"/>
               <div className="flex gap-4 w-full">
                 <button type="button" onClick={()=>setShowPass(false)} className="flex-1 font-bold text-slate-300 uppercase text-[10px] tracking-widest">Hủy bỏ</button>
                 <button type="submit" className="flex-1 px-4 py-4 bg-amber-500 text-white rounded-2xl font-bold uppercase text-[10px] shadow-lg shadow-amber-200 tracking-widest">Đăng nhập</button>
@@ -128,11 +128,11 @@ const MainView: React.FC<{ isAdmin: boolean; data: AppData; updateData: (d: AppD
   const selectedNode = data.nodes.find(n => n.id === selectedId);
   const childNodes = useMemo(() => {
     if (!selectedId || selectedNode?.type !== 'folder') return [];
-    return data.nodes.filter(n => n.parentId === selectedId).sort((a,b) => a.order - b.order);
+    return data.nodes.filter(n => n.parentId === selectedId).sort((a,b) => (a.order ?? 0) - (b.order ?? 0));
   }, [selectedId, data.nodes]);
 
   const filteredRootNodes = useMemo(() => {
-    return data.nodes.filter(n => n.parentId === null).sort((a,b) => a.order - b.order);
+    return data.nodes.filter(n => n.parentId === null).sort((a,b) => (a.order ?? 0) - (b.order ?? 0));
   }, [data.nodes]);
 
   useEffect(() => {
@@ -164,22 +164,33 @@ const MainView: React.FC<{ isAdmin: boolean; data: AppData; updateData: (d: AppD
     const node = data.nodes.find(n => n.id === id);
     if (!node) return;
 
+    // Lấy tất cả anh em (siblings) và sắp xếp chúng theo order hiện tại
     const siblings = data.nodes
       .filter(n => n.parentId === node.parentId)
-      .sort((a, b) => a.order - b.order);
+      .sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
 
-    const currentIndex = siblings.findIndex(n => n.id === id);
+    // CHUẨN HÓA: Gán lại order duy nhất (0, 1, 2...) để tránh bị trùng lặp hoặc undefined
+    const normalizedSiblings = siblings.map((s, idx) => ({ ...s, order: idx }));
+
+    const currentIndex = normalizedSiblings.findIndex(n => n.id === id);
     const targetIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
 
-    if (targetIndex < 0 || targetIndex >= siblings.length) return;
+    // Nếu đã ở đầu hoặc cuối thì không làm gì
+    if (targetIndex < 0 || targetIndex >= normalizedSiblings.length) return;
 
-    const targetNode = siblings[targetIndex];
+    const targetNode = normalizedSiblings[targetIndex];
     
-    // Swap orders
+    // Tạo mảng nodes mới với các giá trị order đã được hoán đổi
     const newNodes = data.nodes.map(n => {
-      if (n.id === id) return { ...n, order: targetNode.order };
-      if (n.id === targetNode.id) return { ...n, order: node.order };
-      return n;
+      // Đầu tiên, cập nhật order cho tất cả siblings theo bản chuẩn hóa
+      const normalizedMatch = normalizedSiblings.find(s => s.id === n.id);
+      let updatedNode = normalizedMatch ? { ...n, order: normalizedMatch.order } : n;
+
+      // Sau đó thực hiện hoán đổi thực sự
+      if (updatedNode.id === id) return { ...updatedNode, order: targetNode.order };
+      if (updatedNode.id === targetNode.id) return { ...updatedNode, order: currentIndex };
+      
+      return updatedNode;
     });
 
     updateData({ ...data, nodes: newNodes });
