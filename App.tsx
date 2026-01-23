@@ -128,11 +128,11 @@ const MainView: React.FC<{ isAdmin: boolean; data: AppData; updateData: (d: AppD
   const selectedNode = data.nodes.find(n => n.id === selectedId);
   const childNodes = useMemo(() => {
     if (!selectedId || selectedNode?.type !== 'folder') return [];
-    return data.nodes.filter(n => n.parentId === selectedId);
+    return data.nodes.filter(n => n.parentId === selectedId).sort((a,b) => a.order - b.order);
   }, [selectedId, data.nodes]);
 
   const filteredRootNodes = useMemo(() => {
-    return data.nodes.filter(n => n.parentId === null);
+    return data.nodes.filter(n => n.parentId === null).sort((a,b) => a.order - b.order);
   }, [data.nodes]);
 
   useEffect(() => {
@@ -141,7 +141,7 @@ const MainView: React.FC<{ isAdmin: boolean; data: AppData; updateData: (d: AppD
   }, []);
 
   const [showNodeModal, setShowNodeModal] = useState(false);
-  const [nodeModalData, setNodeModalData] = useState<any>({parentId: null, type: 'lesson', title: '', url: '', imageUrl: ''});
+  const [nodeModalData, setNodeModalData] = useState<any>({parentId: null, type: 'lesson', title: '', url: '', imageUrl: '', order: 0});
 
   const [showResModal, setShowResModal] = useState(false);
   const [resModalData, setResModalData] = useState<{id?: string, title: string, url: string, isGlobal: boolean}>({title: '', url: '', isGlobal: false});
@@ -158,6 +158,31 @@ const MainView: React.FC<{ isAdmin: boolean; data: AppData; updateData: (d: AppD
     const newData = {...data, nodes: data.nodes.filter(n => !idsToDelete.includes(n.id))};
     updateData(newData);
     if(selectedId && idsToDelete.includes(selectedId)) setSelectedId(null);
+  };
+
+  const handleReorderNode = (id: string, direction: 'up' | 'down') => {
+    const node = data.nodes.find(n => n.id === id);
+    if (!node) return;
+
+    const siblings = data.nodes
+      .filter(n => n.parentId === node.parentId)
+      .sort((a, b) => a.order - b.order);
+
+    const currentIndex = siblings.findIndex(n => n.id === id);
+    const targetIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
+
+    if (targetIndex < 0 || targetIndex >= siblings.length) return;
+
+    const targetNode = siblings[targetIndex];
+    
+    // Swap orders
+    const newNodes = data.nodes.map(n => {
+      if (n.id === id) return { ...n, order: targetNode.order };
+      if (n.id === targetNode.id) return { ...n, order: node.order };
+      return n;
+    });
+
+    updateData({ ...data, nodes: newNodes });
   };
 
   const handleSaveResource = (e: React.FormEvent) => {
@@ -209,7 +234,11 @@ const MainView: React.FC<{ isAdmin: boolean; data: AppData; updateData: (d: AppD
       <aside className="w-[230px] border-r border-slate-100 flex flex-col shrink-0 bg-[#fbfcfd] transition-all">
         <header className={`px-5 py-4 text-white ${isAdmin ? 'bg-amber-600' : 'bg-indigo-600'} flex justify-between items-center shrink-0`}>
           <div className="flex items-center gap-2"><Book size={16}/><h1 className="font-bold text-[9px] uppercase tracking-[0.2em]">Cấu trúc sách</h1></div>
-          {isAdmin && <button onClick={()=>{setNodeModalData({parentId:null, type:'folder', title:'', url:'', imageUrl: ''}); setShowNodeModal(true);}} className="p-1.5 hover:bg-white/20 rounded-lg transition-colors"><Plus size={14}/></button>}
+          {isAdmin && <button onClick={()=>{
+            const nextOrder = data.nodes.filter(n => n.parentId === null).length;
+            setNodeModalData({parentId:null, type:'folder', title:'', url:'', imageUrl: '', order: nextOrder}); 
+            setShowNodeModal(true);
+          }} className="p-1.5 hover:bg-white/20 rounded-lg transition-colors"><Plus size={14}/></button>}
         </header>
 
         <div className="p-3 shrink-0 bg-[#fbfcfd]">
@@ -223,9 +252,14 @@ const MainView: React.FC<{ isAdmin: boolean; data: AppData; updateData: (d: AppD
           {filteredRootNodes.map(node=>(
             <TreeItem key={node.id} node={node} allNodes={data.nodes} selectedId={selectedId} isAdmin={isAdmin} level={0}
               onSelect={(id)=>{setSelectedId(id); if(data.nodes.find(n=>n.id===id)?.url) setIframeLoading(true);}}
-              onAdd={(p,t)=>{setNodeModalData({parentId:p, type:t, title:'', url:'', imageUrl: ''}); setShowNodeModal(true);}}
+              onAdd={(p,t)=>{
+                const nextOrder = data.nodes.filter(n => n.parentId === p).length;
+                setNodeModalData({parentId:p, type:t, title:'', url:'', imageUrl: '', order: nextOrder}); 
+                setShowNodeModal(true);
+              }}
               onEdit={(n)=>{setNodeModalData({...n}); setShowNodeModal(true);}}
-              onDelete={handleDeleteNode}/>
+              onDelete={handleDeleteNode}
+              onReorder={handleReorderNode}/>
           ))}
         </div>
 
