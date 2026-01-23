@@ -10,7 +10,8 @@ export const INITIAL_DATA: AppData = {
       url: '',
       imageUrl: '',
       parentId: null,
-      lessonResources: []
+      lessonResources: [],
+      order: 0
     },
     {
       id: 'lesson-1-1',
@@ -21,7 +22,8 @@ export const INITIAL_DATA: AppData = {
       parentId: 'root-1',
       lessonResources: [
         { id: 'res-1', title: 'Video bổ trợ', url: 'https://youtube.com' }
-      ]
+      ],
+      order: 0
     },
     {
       id: 'lesson-1-2',
@@ -30,7 +32,8 @@ export const INITIAL_DATA: AppData = {
       url: 'https://vi.wikipedia.org/wiki/Con_l%E1%BA%AFc_l%C3%B2_xo',
       imageUrl: 'https://images.unsplash.com/photo-1532187875605-7fe3b35dd562?q=80&w=2070&auto=format&fit=crop',
       parentId: 'root-1',
-      lessonResources: []
+      lessonResources: [],
+      order: 1
     },
     {
       id: 'root-2',
@@ -39,7 +42,8 @@ export const INITIAL_DATA: AppData = {
       url: '',
       imageUrl: '',
       parentId: null,
-      lessonResources: []
+      lessonResources: [],
+      order: 1
     },
     {
       id: 'lesson-2-1',
@@ -48,7 +52,8 @@ export const INITIAL_DATA: AppData = {
       url: 'https://vi.wikipedia.org/wiki/S%C3%B3ng_c%C6%A1',
       imageUrl: 'https://images.unsplash.com/photo-1505118380757-91f5f45d8de4?q=80&w=2000&auto=format&fit=crop',
       parentId: 'root-2',
-      lessonResources: []
+      lessonResources: [],
+      order: 0
     }
   ],
   globalResources: [
