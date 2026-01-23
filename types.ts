@@ -22,9 +22,10 @@ export interface BookNode {
   title: string;
   type: NodeType;
   url: string;
-  imageUrl?: string; // Trường mới: Ảnh minh họa bài học
+  imageUrl?: string;
   parentId: string | null;
   lessonResources: ResourceLink[];
+  order: number; // Thêm trường order để sắp xếp
 }
 
 export interface AppData {
