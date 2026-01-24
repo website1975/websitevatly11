@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'https://esm.sh/react@^19.2.3';
-import { Send, Trash2, Image as ImageIcon, Wifi, WifiOff, RefreshCw, ChevronDown, Eye } from 'https://esm.sh/lucide-react@^0.562.0';
+import { Send, Trash2, Image as ImageIcon, Wifi, WifiOff, RefreshCw, ChevronDown, Eye, AlertCircle } from 'https://esm.sh/lucide-react@^0.562.0';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { ForumComment } from '../types';
 import { renderLatex } from '../utils';
@@ -54,25 +54,46 @@ const Forum: React.FC<ForumProps> = ({ nodeId, isAdmin }) => {
 
   const fetchComments = async (silent = false) => {
     if (!silent) setIsRefreshing(true);
-    const { data } = await supabase.from('forum_comments').select('*').eq('nodeId', nodeId).order('createdAt', { ascending: true });
+    const { data, error } = await supabase.from('forum_comments').select('*').eq('nodeId', nodeId).order('createdAt', { ascending: true });
     if (data) {
       setComments(data);
       if (!silent) setTimeout(() => scrollToBottom('auto'), 50);
     }
+    if (error) console.error("Fetch error:", error);
     setIsRefreshing(false);
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!isAdmin) return;
+    if (!window.confirm("Bạn có chắc chắn muốn xoá bình luận này?")) return;
+    
+    try {
+      const { error } = await supabase.from('forum_comments').delete().eq('id', id);
+      if (error) throw error;
+      // Real-time sẽ lo việc cập nhật UI, nhưng ta lọc local luôn cho nhanh
+      setComments(prev => prev.filter(c => c.id !== id));
+    } catch (err) {
+      alert("Lỗi khi xoá bình luận. Vui lòng thử lại.");
+      console.error(err);
+    }
   };
 
   useEffect(() => {
     fetchComments();
-    const channel = supabase.channel(`public:forum_comments:${nodeId}`).on('postgres_changes', { event: '*', schema: 'public', table: 'forum_comments', filter: `nodeId=eq.${nodeId}` }, (payload) => {
+    const channel = supabase.channel(`public:forum_comments:${nodeId}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'forum_comments', filter: `nodeId=eq.${nodeId}` }, (payload) => {
           if (payload.eventType === 'INSERT') {
             const newC = payload.new as ForumComment;
-            setComments(prev => [...prev, newC]);
+            setComments(prev => {
+              if (prev.some(c => c.id === newC.id)) return prev;
+              return [...prev, newC];
+            });
             setTimeout(() => scrollToBottom('smooth'), 100);
           } else if (payload.eventType === 'DELETE') {
             setComments(prev => prev.filter(c => c.id !== payload.old.id));
           }
-      }).subscribe((status) => setIsConnected(status === 'SUBSCRIBED'));
+      })
+      .subscribe((status) => setIsConnected(status === 'SUBSCRIBED'));
 
     return () => { supabase.removeChannel(channel); };
   }, [nodeId, scrollToBottom]);
@@ -108,7 +129,12 @@ const Forum: React.FC<ForumProps> = ({ nodeId, isAdmin }) => {
 
     const newComment = { nodeId, author: finalName, content, imageUrl, isAdmin, createdAt: new Date().toISOString() };
     const { error } = await supabase.from('forum_comments').insert([newComment]);
-    if (!error) { setContent(''); setSelectedFile(null); setPreviewUrl(null); scrollToBottom('smooth'); }
+    if (error) {
+      alert("Không thể gửi bình luận.");
+      console.error(error);
+    } else {
+      setContent(''); setSelectedFile(null); setPreviewUrl(null); scrollToBottom('smooth');
+    }
     setLoading(false);
   };
 
@@ -125,15 +151,29 @@ const Forum: React.FC<ForumProps> = ({ nodeId, isAdmin }) => {
       </div>
 
       <div ref={scrollRef} onScroll={handleScroll} className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
+        {comments.length === 0 && !isRefreshing && (
+          <div className="h-full flex flex-col items-center justify-center opacity-20 py-10">
+             <AlertCircle size={32} className="mb-2" />
+             <p className="text-[10px] font-black uppercase tracking-widest">Chưa có thảo luận</p>
+          </div>
+        )}
         {comments.map((c, idx) => (
-          <div key={c.id || idx} className={`flex flex-col ${c.isAdmin ? 'items-end' : 'items-start'} animate-in fade-in duration-300`}>
-            <div className={`max-w-[85%] rounded-2xl p-4 shadow-sm border ${c.isAdmin ? 'bg-indigo-600 border-indigo-600 text-white' : 'bg-white border-slate-100 text-slate-800'}`}>
+          <div key={c.id || idx} className={`flex flex-col ${c.isAdmin ? 'items-end' : 'items-start'} animate-in fade-in duration-300 group`}>
+            <div className={`max-w-[85%] rounded-2xl p-4 shadow-sm border relative ${c.isAdmin ? 'bg-indigo-600 border-indigo-600 text-white' : 'bg-white border-slate-100 text-slate-800'}`}>
               <div className="flex items-center gap-3 mb-2">
                 <span className={`text-[10px] font-black uppercase tracking-widest ${c.isAdmin ? 'text-indigo-100' : 'text-indigo-500'}`}>{c.author}</span>
                 <span className={`text-[8px] opacity-40 ${c.isAdmin ? 'text-white' : 'text-slate-400'}`}>{new Date(c.createdAt).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</span>
-                {isAdmin && <button onClick={() => supabase.from('forum_comments').delete().eq('id', c.id)} className="ml-auto text-red-300 hover:text-red-100"><Trash2 size={12}/></button>}
+                {isAdmin && (
+                  <button 
+                    onClick={() => handleDelete(c.id)} 
+                    className="ml-auto p-1.5 bg-red-500/10 hover:bg-red-500/30 text-red-100 rounded-lg transition-all opacity-0 group-hover:opacity-100"
+                    title="Xoá bình luận"
+                  >
+                    <Trash2 size={10}/>
+                  </button>
+                )}
               </div>
-              {c.imageUrl && <div className="mb-3 rounded-lg overflow-hidden border border-white/10"><img src={c.imageUrl} className="max-w-full max-h-80 object-contain" /></div>}
+              {c.imageUrl && <div className="mb-3 rounded-lg overflow-hidden border border-white/10"><img src={c.imageUrl} className="max-w-full max-h-80 object-contain mx-auto" alt="attachment" /></div>}
               <div className="text-sm leading-relaxed whitespace-pre-wrap">{renderLatex(c.content)}</div>
             </div>
           </div>
@@ -143,7 +183,6 @@ const Forum: React.FC<ForumProps> = ({ nodeId, isAdmin }) => {
       {showScrollBtn && <button onClick={() => scrollToBottom()} className="absolute bottom-40 right-6 p-3 bg-white shadow-xl rounded-full text-indigo-600 border border-slate-100 animate-bounce z-20"><ChevronDown size={20} /></button>}
 
       <div className="p-4 bg-white border-t space-y-3 shadow-2xl">
-        {/* MATH TEMPLATES */}
         <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
           {MATH_TEMPLATES.map(t => (
             <button key={t.label} onClick={() => setContent(prev => prev + ' ' + t.value)} className="shrink-0 px-3 py-1.5 bg-slate-50 hover:bg-indigo-50 border border-slate-100 rounded-lg text-[9px] font-bold uppercase transition-all">
@@ -152,7 +191,6 @@ const Forum: React.FC<ForumProps> = ({ nodeId, isAdmin }) => {
           ))}
         </div>
 
-        {/* PREVIEW BOX */}
         {showPreview && content.trim() && (
           <div className="p-3 bg-indigo-50/30 border border-indigo-100 rounded-xl text-sm italic text-slate-500 animate-in fade-in zoom-in-95">
              <div className="text-[9px] font-black text-indigo-400 uppercase tracking-widest mb-1 flex items-center gap-1"><Eye size={10}/> Preview:</div>
@@ -167,8 +205,8 @@ const Forum: React.FC<ForumProps> = ({ nodeId, isAdmin }) => {
               value={content} 
               onChange={e => setContent(e.target.value)} 
               onKeyDown={(e) => { if (e.key === 'Enter' && e.ctrlKey) handleSubmit(); }}
-              placeholder="Nhập nội dung hỏi bài... (Nhấn Ctrl + Enter để gửi nhanh)" 
-              className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl text-sm outline-none focus:border-indigo-400 focus:bg-white transition-all min-h-[60px] max-h-[150px]" 
+              placeholder="Nhập câu hỏi... (Nhấn Ctrl + Enter để gửi)" 
+              className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl text-sm outline-none focus:border-indigo-400 focus:bg-white transition-all min-h-[50px] max-h-[120px]" 
             />
           </div>
           <div className="flex flex-col gap-2 shrink-0">
@@ -184,8 +222,8 @@ const Forum: React.FC<ForumProps> = ({ nodeId, isAdmin }) => {
         
         {previewUrl && (
           <div className="relative inline-block mt-2 group">
-            <img src={previewUrl} className="h-16 w-16 object-cover rounded-xl border-2 border-indigo-100" />
-            <button onClick={() => { setSelectedFile(null); setPreviewUrl(null); }} className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 shadow-lg"><Send size={10} className="rotate-45" /></button>
+            <img src={previewUrl} className="h-16 w-16 object-cover rounded-xl border-2 border-indigo-100" alt="preview" />
+            <button onClick={() => { setSelectedFile(null); setPreviewUrl(null); }} className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 shadow-lg"><Trash2 size={10} /></button>
           </div>
         )}
       </div>
