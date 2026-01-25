@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bài 19: Tụ điện</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']]
+      }
+    };
+    </script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            background-color: #f8fafc;
+        }
+        .math {
+            font-family: 'Times New Roman', Times, serif;
+            font-style: italic;
+            font-weight: bold;
+            color: #1d4ed8;
+        }
+        .section-card {
+            background: white;
+            border-radius: 1rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            border: 1px solid #e5e7eb;
+            margin-bottom: 2rem;
+            overflow: hidden;
+        }
+        .section-header {
+            background: linear-gradient(to right, #0d9488, #0f766e);
+            color: white;
+            padding: 1rem 1.5rem;
+            font-weight: bold;
+            font-size: 1.25rem;
+            text-transform: uppercase;
+        }
+        .content-body {
+            padding: 1.5rem;
+        }
+        .theory-box {
+            border-left: 4px solid #f97316;
+            background: #fff7ed;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+        .important-note {
+            background: #eff6ff;
+            border: 1px solid #dbeafe;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin: 1rem 0;
+        }
+        .exercise-box {
+            background: #fdf2f2;
+            border: 1px solid #fee2e2;
+            border-radius: 0.75rem;
+            padding: 1.25rem;
+            margin-bottom: 1.5rem;
+        }
+        .answer-box {
+            display: none;
+            margin-top: 1rem;
+            padding: 1rem;
+            background: #f0fdf4;
+            border: 1px solid #dcfce7;
+            border-radius: 0.5rem;
+        }
+        .btn-toggle {
+            background: #1d4ed8;
+            color: white;
+            padding: 0.4rem 1rem;
+            border-radius: 0.4rem;
+            font-size: 0.875rem;
+            cursor: pointer;
+            margin-top: 0.5rem;
+            transition: background 0.2s;
+        }
+        .btn-toggle:hover {
+            background: #1e40af;
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+    <!-- Header đồng bộ màu sắc -->
+    <header class="bg-teal-600 text-white py-10 px-4 text-center shadow-lg mb-8 rounded-xl">
+        <h1 class="text-3xl font-extrabold uppercase tracking-widest">Chương 3: Điện tích - Điện trường</h1>
+        <p class="mt-2 text-xl opacity-90">Bài 19: TỤ ĐIỆN</p>
+    </header>
+
+    <div class="max-w-4xl mx-auto">
+        <!-- I. TỤ ĐIỆN -->
+        <div class="section-card">
+            <div class="section-header">
+                <span>I. TỤ ĐIỆN</span>
+            </div>
+            <div class="content-body">
+                <div class="theory-box">
+                    <h3 class="font-bold text-orange-800 uppercase">1. Tụ điện là gì?</h3>
+                    <p class="mt-2 text-gray-700">Tụ điện là một hệ hai vật dẫn đặt gần nhau và ngăn cách nhau bằng một lớp cách điện. Tụ điện dùng để <span class="font-bold text-orange-600">chứa điện tích</span>.</p>
+                </div>
+                <div class="theory-box border-l-teal-600 bg-teal-50">
+                    <h3 class="font-bold text-teal-800 uppercase">2. Tụ điện phẳng</h3>
+                    <p class="mt-2 text-gray-700">Cấu tạo gồm hai bản kim loại phẳng đặt song song với nhau và ngăn cách nhau bằng một lớp điện môi (giấy tẩm parafin, mica, nhựa...).</p>
+                </div>
+                <div class="theory-box border-l-blue-600 bg-blue-50">
+                    <h3 class="font-bold text-blue-800 uppercase">3. Cách tích điện cho tụ điện</h3>
+                    <p class="mt-2 text-gray-700">Nối hai bản của tụ điện với hai cực của nguồn điện. Bản nối cực dương tích điện dương, bản nối cực âm tích điện âm.</p>
+                    <p class="mt-1 font-bold italic text-red-600 underline">➜ Độ lớn điện tích trên bản dương được gọi là điện tích của tụ điện.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- II. ĐIỆN DUNG CỦA TỤ ĐIỆN -->
+        <div class="section-card">
+            <div class="section-header">
+                <span>II. ĐIỆN DUNG CỦA TỤ ĐIỆN</span>
+            </div>
+            <div class="content-body">
+                <h3 class="font-bold text-gray-800 uppercase mb-2">1. Định nghĩa</h3>
+                <p class="text-gray-700">Điện dung của tụ điện là đại lượng đặc trưng cho khả năng tích điện của tụ điện ở một hiệu điện thế nhất định. Nó được xác định bằng thương số của điện tích của tụ điện và hiệu điện thế giữa hai bản của nó.</p>
+                
+                <div class="my-6 py-4 bg-gray-50 rounded-xl text-center border border-dashed border-blue-300">
+                    <span class="text-3xl math">$C = \frac{Q}{U}$</span>
+                </div>
+
+                <h3 class="font-bold text-gray-800 uppercase mt-8 mb-2">2. Đơn vị điện dung</h3>
+                <p class="text-gray-700 italic">Đơn vị là Fara (kí hiệu: F).</p>
+                <div class="grid grid-cols-2 md:grid-cols-3 gap-2 mt-2 text-sm">
+                    <div class="bg-gray-100 p-2 rounded text-center">$1\mu F = 10^{-6} F$</div>
+                    <div class="bg-gray-100 p-2 rounded text-center">$1nF = 10^{-9} F$</div>
+                    <div class="bg-gray-100 p-2 rounded text-center">$1pF = 10^{-12} F$</div>
+                </div>
+
+                <h3 class="font-bold text-gray-800 uppercase mt-8 mb-2">3. Bản chất các đại lượng</h3>
+                <div class="important-note">
+                    <ul class="list-disc ml-6 space-y-2 text-gray-700">
+                        <li><span class="font-bold">Q tỉ lệ thuận với U:</span> Với một tụ điện nhất định, nếu tăng $U$ thì $Q$ tăng tương ứng.</li>
+                        <li><span class="font-bold text-red-600">C KHÔNG phụ thuộc vào Q và U:</span> Điện dung $C$ là hằng số, chỉ phụ thuộc vào cấu tạo của tụ.</li>
+                    </ul>
+                </div>
+
+                <h3 class="font-bold text-gray-800 uppercase mt-8 mb-2">4. Công thức tính C cho tụ điện phẳng</h3>
+                <div class="bg-orange-50 p-4 rounded-lg border border-orange-200">
+                    <div class="py-4 text-center">
+                        <span class="text-3xl math">$C = \frac{\epsilon \cdot S}{9 \cdot 10^9 \cdot 4\pi \cdot d}$</span>
+                    </div>
+                    <p class="text-xs text-center text-gray-600 italic">($\epsilon$: hằng số điện môi; $S$: diện tích bản tụ; $d$: khoảng cách giữa 2 bản)</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- III. NĂNG LƯỢNG ĐIỆN TRƯỜNG -->
+        <div class="section-card">
+            <div class="section-header">
+                <span>III. NĂNG LƯỢNG ĐIỆN TRƯỜNG</span>
+            </div>
+            <div class="content-body">
+                <p class="text-gray-700 mb-4">Khi tụ điện tích điện, nó dự trữ năng lượng dưới dạng năng lượng điện trường trong khoảng không gian giữa hai bản.</p>
+                <div class="bg-blue-50 p-6 rounded-lg text-center shadow-inner">
+                    <span class="text-2xl math">$W = \frac{Q^2}{2C} = \frac{1}{2} C \cdot U^2 = \frac{1}{2} Q \cdot U$</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- IV. BÀI TẬP VẬN DỤNG -->
+        <div class="section-card">
+            <div class="section-header">
+                <span>IV. BÀI TẬP VẬN DỤNG</span>
+            </div>
+            
+            <div class="content-body">
+                <!-- A. Câu hỏi Lý thuyết -->
+                <div class="mb-10">
+                    <h2 class="text-xl font-bold text-orange-600 mb-4 border-b-2 border-orange-200 pb-2">A. Câu hỏi Lý thuyết</h2>
+                    
+                    <div class="exercise-box">
+                        <p class="font-bold text-gray-800">1. Tụ điện là gì? Tụ điện phẳng có cấu tạo như thế nào?</p>
+                        <button class="btn-toggle" onclick="toggleAns('lt1')">Xem gợi ý</button>
+                        <div id="lt1" class="answer-box">
+                            <p>- Tụ điện là hệ 2 vật dẫn gần nhau ngăn cách bởi lớp cách điện.</p>
+                            <p>- Tụ phẳng gồm 2 bản kim loại phẳng song song ngăn cách bởi lớp điện môi.</p>
+                        </div>
+                    </div>
+
+                    <div class="exercise-box">
+                        <p class="font-bold text-gray-800">2. Gọi Q, C, U là điện tích, điện dung và hiệu điện thế. Phát biểu nào đúng?</p>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-2 mt-2 text-sm">
+                            <p>A. C tỉ lệ thuận với Q.</p>
+                            <p>B. C tỉ lệ nghịch với U.</p>
+                            <p>C. C phụ thuộc Q và U.</p>
+                            <p class="text-blue-700 font-bold">D. C không phụ thuộc Q và U.</p>
+                        </div>
+                        <button class="btn-toggle" onclick="toggleAns('lt2')">Giải thích</button>
+                        <div id="lt2" class="answer-box">
+                            <p>Chọn <strong>D</strong>. Điện dung $C$ là đại lượng đặc trưng cho cấu tạo của tụ, không phụ thuộc vào các đại lượng điện bên ngoài như $Q$ và $U$.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- B. Bài tập tính toán -->
+                <div>
+                    <h2 class="text-xl font-bold text-blue-700 mb-4 border-b-2 border-blue-200 pb-2">B. Bài tập tính toán</h2>
+                    
+                    <div class="exercise-box border-l-4 border-l-green-500">
+                        <span class="inline-block bg-green-100 text-green-700 text-xs px-2 py-1 rounded font-bold uppercase mb-2">Bài 1</span>
+                        <p class="font-bold text-gray-800">Trên vỏ một tụ điện có ghi $20 \mu F - 200V$. Tính điện tích tối đa tụ có thể tích được.</p>
+                        <button class="btn-toggle" onclick="toggleAns('bt1')">Giải chi tiết</button>
+                        <div id="bt1" class="answer-box">
+                            <p>- $C = 20 \mu F = 20 \cdot 10^{-6} F$.</p>
+                            <p>- $U_{max} = 200V$.</p>
+                            <p class="math text-center py-2">$Q_{max} = C \cdot U_{max} = 20 \cdot 10^{-6} \cdot 200 = 4 \cdot 10^{-3} (C)$</p>
+                        </div>
+                    </div>
+
+                    <div class="exercise-box border-l-4 border-l-orange-500">
+                        <span class="inline-block bg-orange-100 text-orange-700 text-xs px-2 py-1 rounded font-bold uppercase mb-2">Bài 2</span>
+                        <p class="font-bold text-gray-800">Một tụ điện tích điện dưới $U=60V$ thì năng lượng là $0,036 J$. Tính điện dung $C$.</p>
+                        <button class="btn-toggle" onclick="toggleAns('bt2')">Giải chi tiết</button>
+                        <div id="bt2" class="answer-box">
+                            <p>- Áp dụng: $W = \frac{1}{2} C \cdot U^2$.</p>
+                            <p class="math text-center py-2">$C = \frac{2W}{U^2} = \frac{2 \cdot 0,036}{60^2} = 2 \cdot 10^{-5} (F) = 20 \mu F$</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <footer class="text-center text-gray-500 text-sm mb-10 italic">
+            &copy; 2024 - Bài giảng Vật lý 11 - Bài 19: Tụ điện
+        </footer>
+    </div>
+
+    <script>
+        function toggleAns(id) {
+            const el = document.getElementById(id);
+            el.style.display = (el.style.display === "block") ? "none" : "block";
+        }
+    </script>
+</body>
+</html>
