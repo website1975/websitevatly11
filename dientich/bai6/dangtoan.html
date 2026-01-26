@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tổng Hợp Phương Pháp Giải Bài Toán Tụ Điện Phẳng</title>
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <style>
+        :root {
+            --primary-color: #2563eb;
+            --bg-color: #f8fafc;
+            --text-color: #1e293b;
+            --card-bg: #ffffff;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: var(--text-color);
+            background-color: var(--bg-color);
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 850px;
+            margin: 0 auto;
+            background: var(--card-bg);
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            color: var(--primary-color);
+            text-align: center;
+            border-bottom: 2px solid var(--primary-color);
+            padding-bottom: 10px;
+            margin-bottom: 30px;
+        }
+
+        h2 {
+            color: var(--primary-color);
+            border-left: 4px solid var(--primary-color);
+            padding-left: 15px;
+            margin-top: 30px;
+        }
+
+        h3 {
+            color: #334155;
+            margin-top: 20px;
+        }
+
+        .formula-box {
+            background: #f1f5f9;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            overflow-x: auto;
+            text-align: center;
+        }
+
+        ul, ol {
+            margin-bottom: 15px;
+        }
+
+        li {
+            margin-bottom: 8px;
+        }
+
+        .note {
+            background-color: #fff7ed;
+            border-left: 4px solid #f97316;
+            padding: 15px;
+            margin: 20px 0;
+            font-style: italic;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            font-size: 0.9em;
+            color: #64748b;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Tổng Hợp Phương Pháp Giải Bài Toán Tụ Điện Phẳng</h1>
+
+    <h2>1. Các Công Thức Cơ Bản</h2>
+    <p>Đối với một tụ điện phẳng, ta cần nhớ các đại lượng đặc trưng sau:</p>
+
+    <h3>Điện dung của tụ điện phẳng:</h3>
+    <div class="formula-box">
+        $$C = \frac{\epsilon \cdot S}{9 \cdot 10^9 \cdot 4\pi \cdot d}$$
+    </div>
+    <p><strong>Trong đó:</strong></p>
+    <ul>
+        <li><strong>C:</strong> Điện dung (đơn vị: F - Farad).</li>
+        <li><strong>\(\epsilon\):</strong> Hằng số điện môi của lớp cách điện giữa hai bản tụ (với chân không và không khí \(\epsilon \approx 1\)).</li>
+        <li><strong>S:</strong> Diện tích phần đối diện giữa hai bản tụ (\(m^2\)).</li>
+        <li><strong>d:</strong> Khoảng cách giữa hai bản tụ (m).</li>
+    </ul>
+
+    <h3>Mối liên hệ giữa Điện tích, Điện dung và Hiệu điện thế:</h3>
+    <div class="formula-box">
+        $$Q = C \cdot U$$
+    </div>
+
+    <h3>Cường độ điện trường trong lòng tụ điện phẳng:</h3>
+    <div class="formula-box">
+        $$E = \frac{U}{d} = \frac{Q}{\epsilon \cdot S / (9 \cdot 10^9 \cdot 4\pi)}$$
+    </div>
+
+    <h3>Năng lượng điện trường bên trong tụ điện:</h3>
+    <div class="formula-box">
+        $$W = \frac{1}{2}CU^2 = \frac{1}{2}QU = \frac{Q^2}{2C}$$
+    </div>
+
+    <h2>2. Các Dạng Bài Tập Thường Gặp</h2>
+
+    <h3>Dạng 1: Thay đổi cấu trúc tụ điện (Thay đổi d, S hoặc \(\epsilon\))</h3>
+    <p>Khi thay đổi các thông số hình học của tụ điện, cần lưu ý trạng thái kết nối của tụ với nguồn điện:</p>
+    <ol>
+        <li><strong>Trường hợp 1: Tụ vẫn nối với nguồn điện (\(U = \text{const}\))</strong>
+            <ul>
+                <li>Hiệu điện thế \(U\) không đổi.</li>
+                <li>Khi thay đổi \(d, S, \epsilon \rightarrow C\) thay đổi \(\rightarrow Q = C \cdot U\) thay đổi.</li>
+                <li>\(E = U/d\) (chỉ phụ thuộc vào \(d\)).</li>
+            </ul>
+        </li>
+        <li><strong>Trường hợp 2: Tụ đã được tích điện rồi ngắt khỏi nguồn (\(Q = \text{const}\))</strong>
+            <ul>
+                <li>Điện tích \(Q\) không đổi.</li>
+                <li>Khi thay đổi \(d, S, \epsilon \rightarrow C\) thay đổi \(\rightarrow U = Q/C\) thay đổi.</li>
+                <li>Cường độ điện trường \(E = \frac{Q}{\epsilon \cdot S \dots}\) thường sẽ không đổi nếu chỉ thay đổi \(d\).</li>
+            </ul>
+        </li>
+    </ol>
+
+    <h3>Dạng 2: Ghép các tụ điện</h3>
+    <p><strong>Ghép nối tiếp:</strong></p>
+    <ul>
+        <li>\(Q = Q_1 = Q_2 = \dots = Q_n\)</li>
+        <li>\(U = U_1 + U_2 + \dots + U_n\)</li>
+        <li>\(\frac{1}{C_{td}} = \frac{1}{C_1} + \frac{1}{C_2} + \dots + \frac{1}{C_n}\)</li>
+    </ul>
+    <p><strong>Ghép song song:</strong></p>
+    <ul>
+        <li>\(Q = Q_1 + Q_2 + \dots + Q_n\)</li>
+        <li>\(U = U_1 = U_2 = \dots = U_n\)</li>
+        <li>\(C_{td} = C_1 + C_2 + \dots + C_n\)</li>
+    </ul>
+
+    <h3>Dạng 3: Chuyển động của điện tích trong điện trường tụ điện</h3>
+    <p>Sử dụng phương pháp động lực học hoặc định luật bảo toàn năng lượng:</p>
+    <ol>
+        <li>Lực điện tác dụng: \(F = |q|E\)</li>
+        <li>Gia tốc: \(a = \frac{F}{m} = \frac{|q|E}{m}\)</li>
+        <li><strong>Bay dọc theo đường sức:</strong> Chuyển động thẳng biến đổi đều.
+            <ul>
+                <li>Công thức: \(v^2 - v_0^2 = 2as\)</li>
+                <li>Biến thiên động năng: \(W_{d2} - W_{d1} = A_{\text{lực điện}} = qU_{12}\)</li>
+            </ul>
+        </li>
+        <li><strong>Bay vuông góc với đường sức:</strong> Tương tự chuyển động ném ngang.
+            <ul>
+                <li>Trục Ox: \(x = v_0t\)</li>
+                <li>Trục Oy: \(y = \frac{1}{2}at^2\)</li>
+            </ul>
+        </li>
+    </ol>
+
+    <h2>3. Các Bước Giải Tổng Quát</h2>
+    <ol>
+        <li><strong>Xác định giả thiết:</strong> Tụ đang nối nguồn (\(U\) không đổi) hay đã ngắt nguồn (\(Q\) không đổi).</li>
+        <li><strong>Tính toán điện dung:</strong> Sử dụng công thức tụ điện phẳng.</li>
+        <li><strong>Thiết lập phương trình:</strong> Liên hệ \(Q, U, C, E\) trước và sau khi biến đổi.</li>
+        <li><strong>Kiểm tra đơn vị:</strong> Đổi về đơn vị chuẩn (F, C, m, V).</li>
+    </ol>
+
+    <h2>4. Lưu ý về Điện môi</h2>
+    <div class="note">
+        <ul>
+            <li><strong>Lớp điện môi xếp chồng (song song bản tụ):</strong> Coi như các tụ điện con ghép <strong>nối tiếp</strong>.</li>
+            <li><strong>Lớp điện môi đặt cạnh nhau (vuông góc bản tụ):</strong> Coi như các tụ điện con ghép <strong>song song</strong>.</li>
+        </ul>
+    </div>
+
+</div>
+
+</body>
+</html>
