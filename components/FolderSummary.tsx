@@ -45,7 +45,7 @@ const FolderSummary: React.FC<FolderSummaryProps> = ({ folder, children, onSelec
 
       {/* Main Scrollable Area */}
       <div className="relative z-10 flex-1 overflow-y-auto custom-scrollbar p-3 md:p-5 lg:p-6">
-        <div className="max-w-4xl w-full mx-auto">
+        <div className="max-w-full w-full mx-auto">
           
           {/* Header Chương - Thu gọn tối đa */}
           <div className="mb-2">
@@ -66,7 +66,7 @@ const FolderSummary: React.FC<FolderSummaryProps> = ({ folder, children, onSelec
 
           {/* Carousel Area */}
           <div className="flex flex-col gap-2 w-full">
-            {/* Image Container */}
+            {/* Image Container - Mở rộng full width Panel 2 */}
             <div className="relative w-full aspect-video group rounded-[24px] overflow-hidden shadow-2xl shadow-indigo-100/50 border-[2px] border-white transition-all duration-700 hover:shadow-indigo-200/60">
                {currentLesson.imageUrl ? (
                  <img 
