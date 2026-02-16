@@ -34,30 +34,10 @@ export const INITIAL_DATA: AppData = {
       parentId: 'root-1',
       lessonResources: [],
       order: 1
-    },
-    {
-      id: 'root-2',
-      title: 'Chương 2: Sóng',
-      type: 'folder',
-      url: '',
-      imageUrl: '',
-      parentId: null,
-      lessonResources: [],
-      order: 1
-    },
-    {
-      id: 'lesson-2-1',
-      title: 'Bài 3: Sóng cơ và sự truyền sóng',
-      type: 'lesson',
-      url: 'https://vi.wikipedia.org/wiki/S%C3%B3ng_c%C6%A1',
-      imageUrl: 'https://images.unsplash.com/photo-1505118380757-91f5f45d8de4?q=80&w=2000&auto=format&fit=crop',
-      parentId: 'root-2',
-      lessonResources: [],
-      order: 0
     }
   ],
   globalResources: [
-    { id: 'g-1', title: 'Thư viện trực tuyến', url: 'https://archive.org' },
-    { id: 'g-2', title: 'Nội quy lớp học', url: '#' }
-  ]
+    { id: 'g-1', title: 'Thư viện trực tuyến', url: 'https://archive.org' }
+  ],
+  homeUrl: 'https://vi.wikipedia.org/wiki/V%E1%BA%ADt_l%C3%BD_h%E1%BB%8Dc' // Trang mặc định khi chưa chọn bài
 };
