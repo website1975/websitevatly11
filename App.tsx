@@ -1,14 +1,14 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from 'https://esm.sh/react@^19.2.3';
 import { Routes, Route, useNavigate, Navigate } from 'https://esm.sh/react-router-dom@^6.22.3';
-import { Book, Plus, Maximize2, Loader2, BrainCircuit, GraduationCap, ShieldCheck, Search, LogOut, Folder, Globe, Zap, Image as ImageIcon } from 'https://esm.sh/lucide-react@^0.562.0';
+import { Book, Plus, Maximize2, Loader2, BrainCircuit, GraduationCap, ShieldCheck, Search, LogOut, Folder, Globe, Zap, Image as ImageIcon, Settings } from 'https://esm.sh/lucide-react@^0.562.0';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { AppData, ResourceLink, BookNode, NodeType } from './types';
 import { INITIAL_DATA } from './constants';
 import TreeItem from './components/TreeItem';
 import QuizModal from './components/QuizModal';
 import ResourcesPanel from './components/ResourcesPanel';
-import FolderSummary from './components/FolderSummary'; // New import
+import FolderSummary from './components/FolderSummary';
 import Forum from './components/Forum';
 import { getSafeEnv, SLOGANS } from './utils';
 
@@ -145,6 +145,9 @@ const MainView: React.FC<{ isAdmin: boolean; data: AppData; updateData: (d: AppD
 
   const [showResModal, setShowResModal] = useState(false);
   const [resModalData, setResModalData] = useState<{id?: string, title: string, url: string, isGlobal: boolean}>({title: '', url: '', isGlobal: false});
+  
+  const [showHomeConfig, setShowHomeConfig] = useState(false);
+  const [tempHomeUrl, setTempHomeUrl] = useState(data.homeUrl || '');
 
   useEffect(() => { setActiveTab('content'); }, [selectedId]);
 
@@ -163,36 +166,19 @@ const MainView: React.FC<{ isAdmin: boolean; data: AppData; updateData: (d: AppD
   const handleReorderNode = (id: string, direction: 'up' | 'down') => {
     const node = data.nodes.find(n => n.id === id);
     if (!node) return;
-
-    // Lấy tất cả anh em (siblings) và sắp xếp chúng theo order hiện tại
-    const siblings = data.nodes
-      .filter(n => n.parentId === node.parentId)
-      .sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
-
-    // CHUẨN HÓA: Gán lại order duy nhất (0, 1, 2...) để tránh bị trùng lặp hoặc undefined
+    const siblings = data.nodes.filter(n => n.parentId === node.parentId).sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
     const normalizedSiblings = siblings.map((s, idx) => ({ ...s, order: idx }));
-
     const currentIndex = normalizedSiblings.findIndex(n => n.id === id);
     const targetIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
-
-    // Nếu đã ở đầu hoặc cuối thì không làm gì
     if (targetIndex < 0 || targetIndex >= normalizedSiblings.length) return;
-
     const targetNode = normalizedSiblings[targetIndex];
-    
-    // Tạo mảng nodes mới với các giá trị order đã được hoán đổi
     const newNodes = data.nodes.map(n => {
-      // Đầu tiên, cập nhật order cho tất cả siblings theo bản chuẩn hóa
       const normalizedMatch = normalizedSiblings.find(s => s.id === n.id);
       let updatedNode = normalizedMatch ? { ...n, order: normalizedMatch.order } : n;
-
-      // Sau đó thực hiện hoán đổi thực sự
       if (updatedNode.id === id) return { ...updatedNode, order: targetNode.order };
       if (updatedNode.id === targetNode.id) return { ...updatedNode, order: currentIndex };
-      
       return updatedNode;
     });
-
     updateData({ ...data, nodes: newNodes });
   };
 
@@ -202,7 +188,6 @@ const MainView: React.FC<{ isAdmin: boolean; data: AppData; updateData: (d: AppD
     const newData = {...data};
     const resId = resModalData.id || `res-${Date.now()}`;
     const newRes = { id: resId, title: resModalData.title, url: resModalData.url };
-
     if(resModalData.isGlobal) {
       if(resModalData.id) newData.globalResources = newData.globalResources.map(r => r.id === resId ? newRes : r);
       else newData.globalResources.push(newRes);
@@ -230,6 +215,11 @@ const MainView: React.FC<{ isAdmin: boolean; data: AppData; updateData: (d: AppD
     updateData(newData);
   };
 
+  const handleSaveHomeConfig = () => {
+    updateData({...data, homeUrl: tempHomeUrl});
+    setShowHomeConfig(false);
+  };
+
   return (
     <div className="flex h-screen overflow-hidden font-sans bg-white text-slate-900 transition-colors duration-300">
       {isQuizOpen && selectedNode && (
@@ -245,11 +235,14 @@ const MainView: React.FC<{ isAdmin: boolean; data: AppData; updateData: (d: AppD
       <aside className="w-[230px] border-r border-slate-100 flex flex-col shrink-0 bg-[#fbfcfd] transition-all">
         <header className={`px-5 py-4 text-white ${isAdmin ? 'bg-amber-600' : 'bg-indigo-600'} flex justify-between items-center shrink-0`}>
           <div className="flex items-center gap-2"><Book size={16}/><h1 className="font-bold text-[9px] uppercase tracking-[0.2em]">Cấu trúc sách</h1></div>
-          {isAdmin && <button onClick={()=>{
-            const nextOrder = data.nodes.filter(n => n.parentId === null).length;
-            setNodeModalData({parentId:null, type:'folder', title:'', url:'', imageUrl: '', order: nextOrder}); 
-            setShowNodeModal(true);
-          }} className="p-1.5 hover:bg-white/20 rounded-lg transition-colors"><Plus size={14}/></button>}
+          <div className="flex items-center gap-1">
+            {isAdmin && <button onClick={()=>setShowHomeConfig(true)} className="p-1.5 hover:bg-white/20 rounded-lg transition-colors" title="Cấu hình trang chủ"><Settings size={14}/></button>}
+            {isAdmin && <button onClick={()=>{
+              const nextOrder = data.nodes.filter(n => n.parentId === null).length;
+              setNodeModalData({parentId:null, type:'folder', title:'', url:'', imageUrl: '', order: nextOrder}); 
+              setShowNodeModal(true);
+            }} className="p-1.5 hover:bg-white/20 rounded-lg transition-colors"><Plus size={14}/></button>}
+          </div>
         </header>
 
         <div className="p-3 shrink-0 bg-[#fbfcfd]">
@@ -338,12 +331,18 @@ const MainView: React.FC<{ isAdmin: boolean; data: AppData; updateData: (d: AppD
             )}
           </>
         ) : (
-          <div className="flex-1 flex flex-col items-center justify-center text-center p-12 bg-white">
-             <div className="w-24 h-24 bg-slate-50 rounded-[40px] flex items-center justify-center mb-6 border border-slate-100">
-                <Book size={48} className="text-indigo-600 opacity-10"/>
-             </div>
-             <h2 className="text-2xl font-black uppercase tracking-tighter text-slate-900 opacity-5">VẬT LÝ 11</h2>
-             <p className="text-[10px] font-bold text-slate-200 uppercase tracking-[0.4em] mt-4">Chọn bài học để bắt đầu</p>
+          <div className="flex-1 flex flex-col overflow-hidden bg-white">
+             {data.homeUrl ? (
+               <iframe src={data.homeUrl} className="w-full h-full border-none" title="Trang chủ" />
+             ) : (
+               <div className="flex-1 flex flex-col items-center justify-center text-center p-12">
+                 <div className="w-24 h-24 bg-slate-50 rounded-[40px] flex items-center justify-center mb-6 border border-slate-100">
+                    <Book size={48} className="text-indigo-600 opacity-10"/>
+                 </div>
+                 <h2 className="text-2xl font-black uppercase tracking-tighter text-slate-900 opacity-5">VẬT LÝ 11</h2>
+                 <p className="text-[10px] font-bold text-slate-200 uppercase tracking-[0.4em] mt-4">Chọn bài học để bắt đầu</p>
+               </div>
+             )}
           </div>
         )}
       </main>
@@ -354,7 +353,25 @@ const MainView: React.FC<{ isAdmin: boolean; data: AppData; updateData: (d: AppD
         onEdit={(r,isG)=> {setResModalData({...r, isGlobal: isG}); setShowResModal(true);}}
         onDelete={handleDeleteResource}/>
 
-      {/* MODALS */}
+      {/* MODAL CONFIG HOME URL */}
+      {showHomeConfig && (
+        <div className="fixed inset-0 z-[300] bg-slate-900/40 flex items-center justify-center p-4 backdrop-blur-md animate-in fade-in duration-300">
+          <div className="bg-white p-8 rounded-[32px] shadow-2xl w-full max-w-md space-y-4 border border-slate-100 animate-in zoom-in-95">
+            <h3 className="font-black text-center text-amber-600 uppercase text-[11px] tracking-widest mb-2">Cấu hình trang chủ</h3>
+            <div className="space-y-1">
+              <label className="text-[9px] font-bold text-slate-400 uppercase ml-1 tracking-widest">Link trang chủ (URL)</label>
+              <input value={tempHomeUrl} onChange={e=>setTempHomeUrl(e.target.value)} className="w-full px-4 py-3 text-sm font-medium outline-none bg-slate-50 border border-slate-100 rounded-xl focus:border-amber-400 transition-all" placeholder="https://..."/>
+              <p className="text-[8px] text-slate-400 p-1">Đây là trang hiện ra khi học sinh chưa chọn bài học nào.</p>
+            </div>
+            <div className="flex gap-4 pt-2">
+                <button type="button" onClick={()=>setShowHomeConfig(false)} className="flex-1 py-3 text-[10px] font-bold uppercase text-slate-300 tracking-widest">Hủy</button>
+                <button onClick={handleSaveHomeConfig} className="flex-1 py-3 bg-amber-500 text-white rounded-xl font-bold uppercase text-[10px] shadow-lg shadow-amber-200 tracking-widest">Lưu cấu hình</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODALS CẤU TRÚC BÀI HỌC */}
       {showNodeModal && (
         <div className="fixed inset-0 z-[300] bg-slate-900/40 flex items-center justify-center p-4 backdrop-blur-md animate-in fade-in duration-300">
           <form onSubmit={(e)=>{e.preventDefault(); if(!nodeModalData.title)return; let nodes=[...data.nodes]; if(nodeModalData.id) nodes=nodes.map(n=>n.id===nodeModalData.id?{...n,title:nodeModalData.title,url:nodeModalData.url,type:nodeModalData.type,imageUrl:nodeModalData.imageUrl}:n); else nodes.push({id:`n-${Date.now()}`, ...nodeModalData, lessonResources:[]}); updateData({...data, nodes}); setShowNodeModal(false);}}
