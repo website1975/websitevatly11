@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pháo Hoa Bính Ngọ 2026 - Đồi Núi</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #000;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        canvas {
+            display: block;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 5;
+            pointer-events: none;
+        }
+
+        #ui-layer {
+            position: absolute;
+            top: 40px;
+            width: 100%;
+            text-align: center;
+            z-index: 20;
+            color: #ffd700;
+            pointer-events: none;
+            text-transform: uppercase;
+        }
+
+        .title-text {
+            font-size: 2rem;
+            font-weight: bold;
+            letter-spacing: 0.3em;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8), 0 0 10px rgba(255, 215, 0, 0.5);
+            margin: 0;
+        }
+        
+        .firework-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: clamp(3rem, 12vw, 7rem);
+            font-weight: 900;
+            color: #ffd700;
+            text-shadow: 0 0 25px #ff4500, 0 0 50px #ff0000, 0 0 75px #ffd700;
+            pointer-events: none;
+            text-align: center;
+            opacity: 0;
+            z-index: 25;
+            width: 100%;
+            transition: opacity 2s ease;
+            filter: drop-shadow(0 0 15px rgba(0,0,0,0.9));
+            letter-spacing: 0.1em;
+            line-height: 1.2;
+        }
+        .firework-text.show { opacity: 1; }
+
+        @media (max-width: 640px) {
+            .title-text { font-size: 1.2rem; letter-spacing: 0.1em; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="ui-layer">
+        <h1 class="title-text">Mừng Xuân Bính Ngọ 2026</h1>
+    </div>
+
+    <div id="new-year-msg" class="firework-text">
+        MÃ ĐÁO<br>THÀNH CÔNG
+    </div>
+
+    <canvas id="fireworksCanvas"></canvas>
+
+    <script>
+        const canvas = document.getElementById('fireworksCanvas');
+        const ctx = canvas.getContext('2d');
+        const newYearMsg = document.getElementById('new-year-msg');
+
+        let width, height, isRunning = false;
+        let fireworks = [], particles = [];
+        let audioCtx;
+
+        // Cấu hình dãy núi
+        const mountains = [
+            { amplitude: 100, frequency: 0.005, color: '#0a0a0a', offset: 0 },
+            { amplitude: 60, frequency: 0.01, color: '#151515', offset: 100 },
+            { amplitude: 40, frequency: 0.02, color: '#1a1a1a', offset: 200 }
+        ];
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+        }
+
+        function playSound(type) {
+            if (!audioCtx || audioCtx.state === 'suspended') return; 
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            if (type === 'whistle') {
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(1000, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(4500, audioCtx.currentTime + 0.4);
+                gain.gain.setValueAtTime(0.01, audioCtx.currentTime);
+            } else {
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(120, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+                gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+            }
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.5);
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            osc.start(); osc.stop(audioCtx.currentTime + 0.5);
+        }
+
+        function resize() {
+            width = window.innerWidth;
+            height = window.innerHeight;
+            canvas.width = width;
+            canvas.height = height;
+        }
+        window.addEventListener('resize', resize);
+        resize();
+
+        // Hàm vẽ đồi núi bằng thuật toán nhiễu đơn giản (sine waves)
+        function drawMountains() {
+            mountains.forEach(mt => {
+                ctx.beginPath();
+                ctx.moveTo(0, height);
+                for (let x = 0; x <= width; x++) {
+                    // Tạo hình dáng núi nhấp nhô
+                    const y = height - 50 - mt.offset - Math.sin(x * mt.frequency) * mt.amplitude;
+                    ctx.lineTo(x, y);
+                }
+                ctx.lineTo(width, height);
+                ctx.fillStyle = mt.color;
+                ctx.fill();
+                ctx.closePath();
+            });
+        }
+
+        class Particle {
+            constructor(x, y, color, velocity) {
+                this.x = x; this.y = y; this.color = color; this.velocity = velocity;
+                this.alpha = 1; 
+                this.fade = Math.random() * 0.015 + 0.012;
+                this.friction = 0.95;
+                this.gravity = 0.07;
+            }
+            update() {
+                this.velocity.x *= this.friction;
+                this.velocity.y *= this.friction;
+                this.velocity.y += this.gravity;
+                this.x += this.velocity.x;
+                this.y += this.velocity.y;
+                this.alpha -= this.fade;
+            }
+            draw() {
+                ctx.save();
+                ctx.globalAlpha = this.alpha;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, 2, 0, Math.PI*2);
+                ctx.fillStyle = this.color;
+                ctx.shadowBlur = 8; ctx.shadowColor = this.color;
+                ctx.fill();
+                ctx.restore();
+            }
+        }
+
+        class Firework {
+            constructor() {
+                this.x = Math.random() * width;
+                this.y = height;
+                this.targetY = Math.random() * (height * 0.5) + 50;
+                this.color = `hsl(${Math.random()*360}, 100%, 65%)`;
+                this.exploded = false;
+                this.speed = 10 + Math.random() * 5;
+                playSound('whistle');
+            }
+            update() {
+                if (!this.exploded) {
+                    this.y -= this.speed;
+                    if (this.y <= this.targetY) {
+                        this.exploded = true;
+                        playSound('explosion');
+                        const pCount = 70 + Math.floor(Math.random() * 40);
+                        for(let i=0; i<pCount; i++) {
+                            const angle = Math.random()*Math.PI*2;
+                            const speed = Math.random()*5+1;
+                            particles.push(new Particle(this.x, this.y, this.color, {
+                                x: Math.cos(angle)*speed, y: Math.sin(angle)*speed
+                            }));
+                        }
+                    }
+                }
+            }
+            draw() {
+                if (!this.exploded) {
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, 2.5, 0, Math.PI*2);
+                    ctx.fillStyle = '#FFF';
+                    ctx.fill();
+                }
+            }
+        }
+
+        function animate() {
+            // Hiệu ứng mờ dần lớp trước để tạo đuôi pháo hoa
+            ctx.fillStyle = 'rgba(0,0,0,0.25)';
+            ctx.fillRect(0,0,width,height);
+            
+            // Vẽ đồi núi phía sau pháo hoa
+            drawMountains();
+            
+            fireworks.forEach((fw, i) => { 
+                fw.update(); 
+                fw.draw(); 
+                if (fw.exploded) fireworks.splice(i,1); 
+            });
+            
+            particles.forEach((p, i) => { 
+                p.update(); 
+                p.draw(); 
+                if (p.alpha <= 0) particles.splice(i,1); 
+            });
+            
+            requestAnimationFrame(animate);
+        }
+
+        function startSequence() {
+            if (isRunning) return;
+            isRunning = true;
+            let count = 0;
+            const maxFireworks = 45;
+            const launchInterval = setInterval(() => {
+                fireworks.push(new Firework());
+                count++;
+                if (count >= maxFireworks) {
+                    clearInterval(launchInterval);
+                    setTimeout(() => {
+                        newYearMsg.classList.add('show');
+                        setTimeout(() => { resetAndRestart(); }, 7000); 
+                    }, 2000);
+                }
+            }, 450);
+        }
+
+        function resetAndRestart() {
+            newYearMsg.classList.remove('show');
+            isRunning = false;
+            setTimeout(startSequence, 1500);
+        }
+
+        window.onload = () => {
+            animate();
+            setTimeout(startSequence, 1000);
+        };
+
+        const interactionEvents = ['mousedown', 'touchstart', 'click'];
+        interactionEvents.forEach(event => document.body.addEventListener(event, initAudio, { once: false }));
+
+    </script>
+</body>
+</html>
