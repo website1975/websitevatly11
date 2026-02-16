@@ -25,12 +25,13 @@ export interface BookNode {
   imageUrl?: string;
   parentId: string | null;
   lessonResources: ResourceLink[];
-  order: number; // Thêm trường order để sắp xếp
+  order: number;
 }
 
 export interface AppData {
   nodes: BookNode[];
   globalResources: ResourceLink[];
+  homeUrl?: string; // Link trang chào mừng/trang chủ
 }
 
 export interface QuizQuestion {
