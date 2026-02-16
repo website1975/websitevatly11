@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pháo Hoa Bính Ngọ 2026 - Đồi Núi</title>
+    <title>Pháo Hoa Bính Ngọ 2026 - Lời Chúc Học Sinh</title>
     <style>
         body {
             margin: 0;
@@ -57,13 +57,27 @@
             text-align: center;
             opacity: 0;
             z-index: 25;
-            width: 100%;
+            width: 90%;
             transition: opacity 2s ease;
             filter: drop-shadow(0 0 15px rgba(0,0,0,0.9));
             letter-spacing: 0.1em;
             line-height: 1.2;
+            visibility: hidden;
         }
-        .firework-text.show { opacity: 1; }
+
+        /* Lời chúc dành cho học sinh */
+        .student-wish {
+            font-size: clamp(1.5rem, 5vw, 3rem);
+            color: #fff;
+            text-shadow: 0 0 15px #ffd700;
+            font-weight: 600;
+            text-transform: none; /* Giữ chữ thường/hoa bình thường */
+        }
+
+        .firework-text.show { 
+            opacity: 1; 
+            visibility: visible;
+        }
 
         @media (max-width: 640px) {
             .title-text { font-size: 1.2rem; letter-spacing: 0.1em; }
@@ -76,8 +90,15 @@
         <h1 class="title-text">Mừng Xuân Bính Ngọ 2026</h1>
     </div>
 
+    <!-- Thông điệp chính -->
     <div id="new-year-msg" class="firework-text">
         MÃ ĐÁO<br>THÀNH CÔNG
+    </div>
+
+    <!-- Lời chúc học sinh -->
+    <div id="student-msg" class="firework-text student-wish">
+        Chúc các em và gia đình một năm mới <br> 
+        <span style="color: #ffd700; font-size: 1.2em;">AN BÌNH và HẠNH PHÚC</span>
     </div>
 
     <canvas id="fireworksCanvas"></canvas>
@@ -86,12 +107,12 @@
         const canvas = document.getElementById('fireworksCanvas');
         const ctx = canvas.getContext('2d');
         const newYearMsg = document.getElementById('new-year-msg');
+        const studentMsg = document.getElementById('student-msg');
 
         let width, height, isRunning = false;
         let fireworks = [], particles = [];
         let audioCtx;
 
-        // Cấu hình dãy núi
         const mountains = [
             { amplitude: 100, frequency: 0.005, color: '#0a0a0a', offset: 0 },
             { amplitude: 60, frequency: 0.01, color: '#151515', offset: 100 },
@@ -134,13 +155,11 @@
         window.addEventListener('resize', resize);
         resize();
 
-        // Hàm vẽ đồi núi bằng thuật toán nhiễu đơn giản (sine waves)
         function drawMountains() {
             mountains.forEach(mt => {
                 ctx.beginPath();
                 ctx.moveTo(0, height);
                 for (let x = 0; x <= width; x++) {
-                    // Tạo hình dáng núi nhấp nhô
                     const y = height - 50 - mt.offset - Math.sin(x * mt.frequency) * mt.amplitude;
                     ctx.lineTo(x, y);
                 }
@@ -217,25 +236,19 @@
         }
 
         function animate() {
-            // Hiệu ứng mờ dần lớp trước để tạo đuôi pháo hoa
             ctx.fillStyle = 'rgba(0,0,0,0.25)';
             ctx.fillRect(0,0,width,height);
-            
-            // Vẽ đồi núi phía sau pháo hoa
             drawMountains();
-            
             fireworks.forEach((fw, i) => { 
                 fw.update(); 
                 fw.draw(); 
                 if (fw.exploded) fireworks.splice(i,1); 
             });
-            
             particles.forEach((p, i) => { 
                 p.update(); 
                 p.draw(); 
                 if (p.alpha <= 0) particles.splice(i,1); 
             });
-            
             requestAnimationFrame(animate);
         }
 
@@ -249,18 +262,32 @@
                 count++;
                 if (count >= maxFireworks) {
                     clearInterval(launchInterval);
+                    
+                    // Bước 1: Hiện "MÃ ĐÁO THÀNH CÔNG"
                     setTimeout(() => {
                         newYearMsg.classList.add('show');
-                        setTimeout(() => { resetAndRestart(); }, 7000); 
+                        
+                        // Bước 2: Ẩn thông điệp chính sau 4 giây và hiện lời chúc học sinh
+                        setTimeout(() => {
+                            newYearMsg.classList.remove('show');
+                            
+                            setTimeout(() => {
+                                studentMsg.classList.add('show');
+                                
+                                // Bước 3: Ẩn lời chúc và bắt đầu lại từ đầu sau 6 giây
+                                setTimeout(() => {
+                                    studentMsg.classList.remove('show');
+                                    setTimeout(() => {
+                                        isRunning = false;
+                                        startSequence();
+                                    }, 2000);
+                                }, 6000);
+                            }, 1000);
+
+                        }, 4000); 
                     }, 2000);
                 }
             }, 450);
-        }
-
-        function resetAndRestart() {
-            newYearMsg.classList.remove('show');
-            isRunning = false;
-            setTimeout(startSequence, 1500);
         }
 
         window.onload = () => {
