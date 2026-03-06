@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bài 16: Dòng điện. Cường độ dòng điện - Vật lí 11</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']]
+      }
+    };
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+        }
+        
+        .math-text {
+            font-family: 'Times New Roman', Times, serif;
+            font-style: italic;
+            font-weight: 600;
+            color: #1e40af;
+        }
+
+        .section-card {
+            background: white;
+            border-left: 6px solid #10b981;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+            transition: transform 0.2s;
+        }
+
+        .section-card:hover {
+            transform: translateY(-2px);
+        }
+
+        .formula-box {
+            background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+            border: 1px dashed #10b981;
+        }
+
+        .solution-box {
+            background-color: #f1f5f9;
+            border-radius: 8px;
+            padding: 15px;
+            border-left: 4px solid #64748b;
+        }
+
+        .step-title {
+            color: #0f172a;
+            font-weight: 700;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.05em;
+        }
+
+        .highlight-yellow {
+            background-color: #fef08a;
+            padding: 2px 4px;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+    <div class="max-w-4xl mx-auto">
+        <!-- Header -->
+        <header class="mb-10 text-center">
+            <h2 class="text-emerald-600 font-extrabold text-sm tracking-widest uppercase mb-2">Chương 4: Dòng điện không đổi</h2>
+            <h1 class="text-3xl md:text-4xl font-black text-slate-900 leading-tight">
+                BÀI 16: DÒNG ĐIỆN.<br>CƯỜNG ĐỘ DÒNG ĐIỆN
+            </h1>
+            <div class="w-24 h-1.5 bg-emerald-500 mx-auto mt-4 rounded-full"></div>
+        </header>
+
+        <!-- Mục tiêu bài học -->
+        <div class="bg-blue-50 border-l-4 border-blue-500 p-4 mb-8 rounded-r-lg">
+            <h2 class="font-bold text-blue-800 mb-1 flex items-center">
+                <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20"><path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"/><path fill-rule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clip-rule="evenodd"/></svg>
+                Mục tiêu bài học
+            </h2>
+            <ul class="text-sm text-blue-900 space-y-1 ml-7 list-disc">
+                <li>Định nghĩa các khái niệm dòng điện, cường độ dòng điện, đơn vị điện lượng.</li>
+                <li>Vận dụng được biểu thức: $I = Snve$.</li>
+            </ul>
+        </div>
+
+        <!-- Section 1: Khái niệm dòng điện -->
+        <section class="section-card p-6 mb-8 rounded-xl">
+            <h2 class="text-xl font-bold text-slate-800 mb-4 flex items-center">
+                <span class="bg-emerald-500 text-white w-8 h-8 rounded-full flex items-center justify-center mr-3 text-sm">I</span>
+                KHÁI NIỆM DÒNG ĐIỆN
+            </h2>
+            <div class="space-y-4 text-slate-700 leading-relaxed">
+                <p>
+                    <span class="highlight-yellow">Dòng điện</span> là dòng dịch chuyển có hướng của các điện tích.
+                </p>
+                <div class="bg-slate-50 p-4 rounded-lg border border-slate-200 italic">
+                    <p><strong>Quy ước chiều dòng điện:</strong> Là chiều dịch chuyển có hướng của các điện tích dương (ngược với chiều dịch chuyển của các điện tích âm).</p>
+                </div>
+                <p>
+                    Tác dụng đặc trưng của dòng điện là <span class="font-semibold text-emerald-700">tác dụng từ</span>. Ngoài ra, dòng điện còn có tác dụng nhiệt, tác dụng hóa học, tác dụng sinh lí...
+                </p>
+            </div>
+        </section>
+
+        <!-- Section 2: Cường độ dòng điện -->
+        <section class="section-card p-6 mb-8 rounded-xl">
+            <h2 class="text-xl font-bold text-slate-800 mb-4 flex items-center">
+                <span class="bg-emerald-500 text-white w-8 h-8 rounded-full flex items-center justify-center mr-3 text-sm">II</span>
+                CƯỜNG ĐỘ DÒNG ĐIỆN
+            </h2>
+            
+            <h3 class="font-bold text-emerald-800 mt-4 mb-2">1. Định nghĩa</h3>
+            <p class="mb-4">Đại lượng đặc trưng cho độ mạnh yếu của dòng điện gọi là cường độ dòng điện.</p>
+            
+            <div class="formula-box p-6 rounded-xl text-center mb-6">
+                <p class="text-sm text-emerald-800 font-bold uppercase mb-2">Công thức tính cường độ dòng điện</p>
+                <div class="text-2xl font-black text-emerald-900">
+                    $$I = \frac{\Delta q}{\Delta t}$$
+                </div>
+                <p class="text-xs text-emerald-700 mt-2 italic">Trong đó: $\Delta q$ là điện lượng dịch qua tiết diện thẳng trong thời gian $\Delta t$.</p>
+            </div>
+
+            <h3 class="font-bold text-emerald-800 mt-4 mb-2">2. Đơn vị</h3>
+            <ul class="list-disc ml-6 space-y-2 text-slate-700">
+                <li>Trong hệ SI, cường độ dòng điện có đơn vị là <span class="font-bold">Ampe (A)</span>.</li>
+                <li>Đơn vị điện lượng là <span class="font-bold">Coulomb (C)</span>: $1C = 1A \cdot 1s$.</li>
+            </ul>
+        </section>
+
+        <!-- Section 3: Vận tốc trôi -->
+        <section class="section-card p-6 mb-8 rounded-xl" style="border-left-color: #3b82f6;">
+            <h2 class="text-xl font-bold text-slate-800 mb-4 flex items-center">
+                <span class="bg-blue-500 text-white w-8 h-8 rounded-full flex items-center justify-center mr-3 text-sm">III</span>
+                DÒNG ĐIỆN TRONG VẬT DẪN KIM LOẠI
+            </h2>
+            
+            <p class="mb-4 italic text-sm text-slate-600">Cường độ dòng điện chạy qua một dây dẫn kim loại tỉ lệ thuận với tốc độ dịch chuyển có hướng của các hạt tải điện.</p>
+
+            <div class="formula-box p-6 rounded-xl text-center mb-6" style="background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%); border-color: #3b82f6;">
+                <p class="text-sm text-blue-800 font-bold uppercase mb-2">Liên hệ giữa I và vận tốc trôi</p>
+                <div class="text-2xl font-black text-blue-900">
+                    $$I = n \cdot S \cdot v \cdot e$$
+                </div>
+                <div class="grid grid-cols-2 gap-2 text-left mt-4 text-xs text-blue-800 max-w-md mx-auto">
+                    <p>• <span class="font-bold">n:</span> mật độ hạt tải điện (m⁻³)</p>
+                    <p>• <span class="font-bold">S:</span> diện tích tiết diện (m²)</p>
+                    <p>• <span class="font-bold">v:</span> vận tốc trôi (m/s)</p>
+                    <p>• <span class="font-bold">e:</span> độ lớn điện tích (1,6.10⁻¹⁹ C)</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 4: Bài tập ví dụ -->
+        <section class="mb-10">
+            <div class="flex items-center mb-6">
+                <div class="h-px bg-slate-300 flex-grow"></div>
+                <span class="px-4 text-slate-500 font-bold text-sm tracking-widest uppercase">Bài tập vận dụng</span>
+                <div class="h-px bg-slate-300 flex-grow"></div>
+            </div>
+
+            <!-- Ví dụ 1 -->
+            <div class="bg-white border border-slate-200 rounded-xl p-6 mb-6 shadow-sm">
+                <div class="flex justify-between items-start mb-2">
+                    <h3 class="font-bold text-lg text-emerald-900">Ví dụ 1: Tính điện lượng</h3>
+                    <span class="bg-emerald-200 text-emerald-800 text-xs font-bold px-2 py-1 rounded">CƠ BẢN</span>
+                </div>
+                <p class="text-slate-700 mb-4">
+                    Một dòng điện không đổi có cường độ <span class="math-text">I = 2 A</span> chạy qua một dây dẫn. Tính điện lượng <span class="math-text">q</span> chuyển qua tiết diện thẳng của dây dẫn trong thời gian <span class="math-text">10s</span>.
+                </p>
+                <div class="solution-box">
+                    <p class="step-title mb-2">Lời giải:</p>
+                    <div class="pl-6 space-y-2 text-sm">
+                        <p>• Áp dụng công thức: <span class="math-text">q = I \cdot t</span></p>
+                        <p>• Thay số: <span class="math-text">q = 2 \cdot 10 = 20</span> (C)</p>
+                        <p>• <strong>Kết luận:</strong> Điện lượng chuyển qua là <span class="font-bold text-emerald-700">20 Coulomb</span>.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Ví dụ 2 -->
+            <div class="bg-white border border-slate-200 rounded-xl p-6 mb-6 shadow-sm">
+                <div class="flex justify-between items-start mb-2">
+                    <h3 class="font-bold text-lg text-emerald-900">Ví dụ 2: Tính vận tốc trôi</h3>
+                    <span class="bg-blue-200 text-blue-800 text-xs font-bold px-2 py-1 rounded">VẬN DỤNG</span>
+                </div>
+                <p class="text-slate-700 mb-4">
+                    Một dây đồng có <span class="math-text">S = 1,0 \text{ mm}^2</span> mang dòng điện <span class="math-text">I = 1,3 A</span>. Cho mật độ electron là <span class="math-text">n = 8,45 \cdot 10^{28} \text{ m}^{-3}</span>. Tính vận tốc trôi của electron.
+                </p>
+                <div class="solution-box">
+                    <p class="step-title mb-2">Lời giải:</p>
+                    <div class="pl-6 space-y-2 text-sm">
+                        <p>• Đổi đơn vị: <span class="math-text">S = 1,0 \cdot 10^{-6} \text{ m}^2</span>.</p>
+                        <p>• Công thức: <span class="math-text">v = \frac{I}{n \cdot S \cdot e}</span>.</p>
+                        <p>• Thay số: <span class="math-text">v = \frac{1,3}{8,45 \cdot 10^{28} \cdot 1,0 \cdot 10^{-6} \cdot 1,6 \cdot 10^{-19}}</span>.</p>
+                        <p>• Kết quả: <span class="math-text">v \approx 9,6 \cdot 10^{-5} \text{ m/s} \approx 0,096 \text{ mm/s}</span>.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="text-center text-slate-400 text-xs mt-12 pb-8 border-t border-slate-100 pt-6">
+            <p>&copy; 2024 - Tài liệu học tập Vật lí 11 - Bài 16</p>
+        </footer>
+    </div>
+</body>
+</html>
