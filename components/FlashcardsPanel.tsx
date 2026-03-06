@@ -107,14 +107,14 @@ const FlashcardsPanel: React.FC<FlashcardsPanelProps> = ({ nodeId, isAdmin }) =>
   }
 
   return (
-    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-2xl font-black text-slate-800 tracking-tight flex items-center gap-2">
-            <RotateCcw className="text-indigo-600" size={24} />
+          <h3 className="text-xl font-black text-slate-800 tracking-tight flex items-center gap-2">
+            <RotateCcw className="text-indigo-600" size={20} />
             FLASHCARDS
           </h3>
-          <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">
+          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">
             {flashcards.length} thẻ ghi nhớ trong bài học này
           </p>
         </div>
@@ -169,47 +169,47 @@ const FlashcardsPanel: React.FC<FlashcardsPanelProps> = ({ nodeId, isAdmin }) =>
       ) : null}
 
       {flashcards.length > 0 ? (
-        <div className="flex flex-col items-center space-y-8">
+        <div className="flex flex-col items-center space-y-4">
           {/* Card Display */}
           <div 
-            className="relative w-full max-w-2xl h-[400px] cursor-pointer perspective-1000 group"
+            className="relative w-full max-w-2xl h-[280px] cursor-pointer perspective-1000 group"
             onClick={() => setIsFlipped(!isFlipped)}
           >
             <div className={`relative w-full h-full transition-all duration-500 preserve-3d ${isFlipped ? 'rotate-y-180' : ''}`}>
               {/* Front */}
-              <div className="absolute inset-0 bg-white rounded-[40px] shadow-2xl border border-slate-100 flex flex-col items-center justify-center p-12 backface-hidden">
-                <div className="absolute top-8 left-8 text-[10px] font-black text-indigo-500/40 uppercase tracking-[0.3em]">Câu hỏi</div>
-                <p className="text-3xl font-black text-slate-800 text-center leading-tight tracking-tight">
+              <div className="absolute inset-0 bg-white rounded-[32px] shadow-2xl border border-slate-100 flex flex-col items-center justify-center p-8 backface-hidden">
+                <div className="absolute top-6 left-8 text-[10px] font-black text-indigo-500/40 uppercase tracking-[0.3em]">Câu hỏi</div>
+                <p className="text-2xl font-black text-slate-800 text-center leading-tight tracking-tight">
                   {flashcards[currentIndex].front}
                 </p>
-                <div className="absolute bottom-8 text-[10px] font-bold text-slate-300 uppercase tracking-widest group-hover:text-indigo-400 transition-colors">Chạm để xem đáp án</div>
+                <div className="absolute bottom-6 text-[10px] font-bold text-slate-300 uppercase tracking-widest group-hover:text-indigo-400 transition-colors">Chạm để xem đáp án</div>
               </div>
               
               {/* Back */}
-              <div className="absolute inset-0 bg-indigo-600 rounded-[40px] shadow-2xl flex flex-col items-center justify-center p-12 backface-hidden rotate-y-180">
-                <div className="absolute top-8 left-8 text-[10px] font-black text-white/40 uppercase tracking-[0.3em]">Đáp án</div>
-                <p className="text-2xl font-bold text-white text-center leading-relaxed">
+              <div className="absolute inset-0 bg-indigo-600 rounded-[32px] shadow-2xl flex flex-col items-center justify-center p-8 backface-hidden rotate-y-180">
+                <div className="absolute top-6 left-8 text-[10px] font-black text-white/40 uppercase tracking-[0.3em]">Đáp án</div>
+                <p className="text-xl font-bold text-white text-center leading-relaxed">
                   {flashcards[currentIndex].back}
                 </p>
-                <div className="absolute bottom-8 text-[10px] font-bold text-white/40 uppercase tracking-widest">Chạm để quay lại</div>
+                <div className="absolute bottom-6 text-[10px] font-bold text-white/40 uppercase tracking-widest">Chạm để quay lại</div>
               </div>
             </div>
           </div>
 
           {/* Controls */}
-          <div className="flex items-center gap-8">
+          <div className="flex items-center gap-4">
             <button 
               onClick={(e) => { e.stopPropagation(); prevCard(); }}
-              className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center text-slate-400 hover:text-indigo-600 hover:shadow-xl transition-all border border-slate-100"
+              className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-slate-400 hover:text-indigo-600 hover:shadow-xl transition-all border border-slate-100"
             >
-              <ChevronLeft size={32} />
+              <ChevronLeft size={24} />
             </button>
             
             <div className="flex flex-col items-center">
-              <span className="text-2xl font-black text-slate-800 tracking-tighter">
+              <span className="text-xl font-black text-slate-800 tracking-tighter">
                 {currentIndex + 1} <span className="text-slate-300">/</span> {flashcards.length}
               </span>
-              <div className="w-32 h-1.5 bg-slate-100 rounded-full mt-2 overflow-hidden">
+              <div className="w-24 h-1 bg-slate-100 rounded-full mt-1 overflow-hidden">
                 <div 
                   className="h-full bg-indigo-500 transition-all duration-300" 
                   style={{ width: `${((currentIndex + 1) / flashcards.length) * 100}%` }}
@@ -219,30 +219,30 @@ const FlashcardsPanel: React.FC<FlashcardsPanelProps> = ({ nodeId, isAdmin }) =>
 
             <button 
               onClick={(e) => { e.stopPropagation(); nextCard(); }}
-              className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center text-slate-400 hover:text-indigo-600 hover:shadow-xl transition-all border border-slate-100"
+              className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-slate-400 hover:text-indigo-600 hover:shadow-xl transition-all border border-slate-100"
             >
-              <ChevronRight size={32} />
+              <ChevronRight size={24} />
             </button>
           </div>
 
           {/* Admin Actions for current card */}
           {isAdmin && !isAdding && !editingId && (
-            <div className="flex gap-4">
+            <div className="flex gap-2">
               <button 
                 onClick={() => {
                   const card = flashcards[currentIndex];
                   setEditingId(card.id);
                   setFormData({ front: card.front, back: card.back });
                 }}
-                className="flex items-center gap-2 px-4 py-2 bg-slate-100 text-slate-600 rounded-xl font-bold text-[10px] uppercase tracking-widest hover:bg-slate-200 transition-all"
+                className="flex items-center gap-2 px-3 py-1.5 bg-slate-100 text-slate-600 rounded-xl font-bold text-[9px] uppercase tracking-widest hover:bg-slate-200 transition-all"
               >
-                <Edit2 size={14} /> Sửa thẻ này
+                <Edit2 size={12} /> Sửa thẻ này
               </button>
               <button 
                 onClick={() => handleDelete(flashcards[currentIndex].id)}
-                className="flex items-center gap-2 px-4 py-2 bg-red-50 text-red-600 rounded-xl font-bold text-[10px] uppercase tracking-widest hover:bg-red-100 transition-all"
+                className="flex items-center gap-2 px-3 py-1.5 bg-red-50 text-red-600 rounded-xl font-bold text-[9px] uppercase tracking-widest hover:bg-red-100 transition-all"
               >
-                <Trash2 size={14} /> Xóa thẻ này
+                <Trash2 size={12} /> Xóa thẻ này
               </button>
             </div>
           )}
