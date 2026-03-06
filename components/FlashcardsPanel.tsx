@@ -99,9 +99,30 @@ const FlashcardsPanel: React.FC<FlashcardsPanelProps> = ({ nodeId, isAdmin }) =>
       const separator = firstLine.includes(';') ? ';' : ',';
       
       const newFlashcards = [];
+      
+      // Helper to parse CSV line respecting quotes
+      const parseCSVLine = (line: string, sep: string) => {
+        const result = [];
+        let current = '';
+        let inQuotes = false;
+        for (let i = 0; i < line.length; i++) {
+          const char = line[i];
+          if (char === '"') {
+            inQuotes = !inQuotes;
+          } else if (char === sep && !inQuotes) {
+            result.push(current.trim().replace(/^"|"$/g, '').replace(/""/g, '"'));
+            current = '';
+          } else {
+            current += char;
+          }
+        }
+        result.push(current.trim().replace(/^"|"$/g, '').replace(/""/g, '"'));
+        return result;
+      };
+
       // Skip header
       for (let i = 1; i < lines.length; i++) {
-        const parts = lines[i].split(separator).map(p => p.trim().replace(/^"|"$/g, ''));
+        const parts = parseCSVLine(lines[i], separator);
         if (parts.length >= 2) {
           newFlashcards.push({
             node_id: nodeId,
