@@ -3,6 +3,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'https://esm.sh/
 import { Plus, Trash2, Edit2, ChevronLeft, ChevronRight, RotateCcw, Save, X, Loader2, FileUp } from 'https://esm.sh/lucide-react@^0.562.0';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { Flashcard } from '../types';
+import { renderLatex } from '../utils';
 
 const SUPABASE_URL = 'https://ktottoplusantmadclpg.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_Fa4z8bEgByw3pGTJdvBqmQ_D_KeDGdl';
@@ -254,18 +255,18 @@ const FlashcardsPanel: React.FC<FlashcardsPanelProps> = ({ nodeId, isAdmin }) =>
               {/* Front */}
               <div className="absolute inset-0 bg-white rounded-[32px] shadow-2xl border border-slate-100 flex flex-col items-center justify-center p-8 backface-hidden">
                 <div className="absolute top-6 left-8 text-[10px] font-black text-indigo-500/40 uppercase tracking-[0.3em]">Câu hỏi</div>
-                <p className="text-2xl font-black text-slate-800 text-center leading-tight tracking-tight">
-                  {flashcards[currentIndex].front}
-                </p>
+                <div className="text-2xl font-black text-slate-800 text-center leading-tight tracking-tight">
+                  {renderLatex(flashcards[currentIndex].front)}
+                </div>
                 <div className="absolute bottom-6 text-[10px] font-bold text-slate-300 uppercase tracking-widest group-hover:text-indigo-400 transition-colors">Chạm để xem đáp án</div>
               </div>
               
               {/* Back */}
               <div className="absolute inset-0 bg-indigo-600 rounded-[32px] shadow-2xl flex flex-col items-center justify-center p-8 backface-hidden rotate-y-180">
                 <div className="absolute top-6 left-8 text-[10px] font-black text-white/40 uppercase tracking-[0.3em]">Đáp án</div>
-                <p className="text-xl font-bold text-white text-center leading-relaxed">
-                  {flashcards[currentIndex].back}
-                </p>
+                <div className="text-xl font-bold text-white text-center leading-relaxed">
+                  {renderLatex(flashcards[currentIndex].back)}
+                </div>
                 <div className="absolute bottom-6 text-[10px] font-bold text-white/40 uppercase tracking-widest">Chạm để quay lại</div>
               </div>
             </div>
