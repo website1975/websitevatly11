@@ -34,6 +34,14 @@ export interface AppData {
   homeUrl?: string; // Link trang chào mừng/trang chủ
 }
 
+export interface Flashcard {
+  id: string;
+  nodeId: string;
+  front: string;
+  back: string;
+  createdAt?: string;
+}
+
 export interface QuizQuestion {
   question: string;
   options: string[];
