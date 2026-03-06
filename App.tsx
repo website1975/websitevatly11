@@ -10,6 +10,7 @@ import QuizModal from './components/QuizModal';
 import ResourcesPanel from './components/ResourcesPanel';
 import FolderSummary from './components/FolderSummary';
 import Forum from './components/Forum';
+import FlashcardsPanel from './components/FlashcardsPanel';
 import { getSafeEnv, SLOGANS } from './utils';
 
 const SUPABASE_URL = 'https://ktottoplusantmadclpg.supabase.co';
@@ -119,7 +120,7 @@ const LandingPage: React.FC<{ visitorCount: number }> = ({ visitorCount }) => {
 const MainView: React.FC<{ isAdmin: boolean; data: AppData; updateData: (d: AppData) => void; isSyncing: boolean; visitorCount: number }> = ({ isAdmin, data, updateData, isSyncing, visitorCount }) => {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [iframeLoading, setIframeLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState<'content' | 'forum'>('content');
+  const [activeTab, setActiveTab] = useState<'content' | 'forum' | 'flashcards'>('content');
   const [sloganIdx, setSloganIdx] = useState(0);
   const [searchTerm, setSearchTerm] = useState('');
   const [isQuizOpen, setIsQuizOpen] = useState(false);
@@ -313,16 +314,19 @@ const MainView: React.FC<{ isAdmin: boolean; data: AppData; updateData: (d: AppD
                   
                   <div className="flex gap-6 mt-3">
                     <button onClick={()=>setActiveTab('content')} className={`pb-2 text-[10px] font-bold uppercase tracking-widest border-b-2 transition-all ${activeTab==='content' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-300 hover:text-slate-500'}`}>Học liệu</button>
+                    <button onClick={()=>setActiveTab('flashcards')} className={`pb-2 text-[10px] font-bold uppercase tracking-widest border-b-2 transition-all ${activeTab==='flashcards' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-300 hover:text-slate-500'}`}>Flashcards</button>
                     <button onClick={()=>setActiveTab('forum')} className={`pb-2 text-[10px] font-bold uppercase tracking-widest border-b-2 transition-all ${activeTab==='forum' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-300 hover:text-slate-500'}`}>Thảo luận</button>
                   </div>
                 </header>
                 
-                <div className="flex-1 relative overflow-hidden bg-[#fcfdfe]">
+                <div className="flex-1 relative overflow-y-auto custom-scrollbar bg-[#fcfdfe] p-6">
                   {activeTab === 'content' ? (
-                    <>
+                    <div className="h-full relative">
                       {iframeLoading && <div className="absolute inset-0 flex flex-col items-center justify-center z-10 bg-white/90 backdrop-blur-sm"><Loader2 className="animate-spin text-indigo-500 mb-2" size={32}/><p className="text-[10px] uppercase font-bold text-slate-300 tracking-widest">Đang tải...</p></div>}
                       {selectedNode?.url ? <iframe src={selectedNode.url} title={selectedNode.title} className={`w-full h-full border-none transition-opacity duration-500 ${iframeLoading ? 'opacity-0' : 'opacity-100'}`} onLoad={()=>setIframeLoading(false)}/> : <div className="h-full flex items-center justify-center italic text-slate-200 text-xl font-light tracking-widest">Nội dung chưa cập nhật...</div>}
-                    </>
+                    </div>
+                  ) : activeTab === 'flashcards' ? (
+                    <FlashcardsPanel nodeId={selectedId!} isAdmin={isAdmin} />
                   ) : (
                     <Forum nodeId={selectedId} isAdmin={isAdmin} />
                   )}
