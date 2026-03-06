@@ -1,6 +1,6 @@
 
-import React, { useState, useEffect, useCallback } from 'https://esm.sh/react@^19.2.3';
-import { Plus, Trash2, Edit2, ChevronLeft, ChevronRight, RotateCcw, Save, X, Loader2 } from 'https://esm.sh/lucide-react@^0.562.0';
+import React, { useState, useEffect, useCallback, useRef } from 'https://esm.sh/react@^19.2.3';
+import { Plus, Trash2, Edit2, ChevronLeft, ChevronRight, RotateCcw, Save, X, Loader2, FileUp } from 'https://esm.sh/lucide-react@^0.562.0';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { Flashcard } from '../types';
 
@@ -18,6 +18,7 @@ const FlashcardsPanel: React.FC<FlashcardsPanelProps> = ({ nodeId, isAdmin }) =>
   const [loading, setLoading] = useState(true);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
   // Admin state
   const [isAdding, setIsAdding] = useState(false);
@@ -76,6 +77,64 @@ const FlashcardsPanel: React.FC<FlashcardsPanelProps> = ({ nodeId, isAdmin }) =>
     }
   };
 
+  const handleCSVUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+      const text = event.target?.result as string;
+      if (!text) return;
+
+      // Simple CSV parsing (handles comma and semicolon)
+      const lines = text.split(/\r?\n/).filter(line => line.trim() !== '');
+      if (lines.length < 2) {
+        alert('File CSV không hợp lệ hoặc trống.');
+        return;
+      }
+
+      // Detect separator (comma or semicolon)
+      const firstLine = lines[0];
+      const separator = firstLine.includes(';') ? ';' : ',';
+      
+      const newFlashcards = [];
+      // Skip header
+      for (let i = 1; i < lines.length; i++) {
+        const parts = lines[i].split(separator).map(p => p.trim().replace(/^"|"$/g, ''));
+        if (parts.length >= 2) {
+          newFlashcards.push({
+            node_id: nodeId,
+            front: parts[0],
+            back: parts[1]
+          });
+        }
+      }
+
+      if (newFlashcards.length === 0) {
+        alert('Không tìm thấy dữ liệu hợp lệ trong file.');
+        return;
+      }
+
+      if (!window.confirm(`Tìm thấy ${newFlashcards.length} thẻ. Bạn có muốn nhập vào không?`)) return;
+
+      setLoading(true);
+      try {
+        const { error } = await supabase.from('flashcards').insert(newFlashcards);
+        if (error) throw error;
+        alert(`Đã nhập thành công ${newFlashcards.length} thẻ.`);
+        fetchFlashcards();
+      } catch (err) {
+        console.error('Error importing CSV:', err);
+        alert('Lỗi khi nhập dữ liệu từ CSV.');
+      } finally {
+        setLoading(false);
+      }
+    };
+    reader.readAsText(file);
+    // Reset input
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
   const handleDelete = async (id: string) => {
     if (!window.confirm('Bạn có chắc chắn muốn xóa flashcard này?')) return;
     try {
@@ -119,12 +178,28 @@ const FlashcardsPanel: React.FC<FlashcardsPanelProps> = ({ nodeId, isAdmin }) =>
           </p>
         </div>
         {isAdmin && (
-          <button 
-            onClick={() => { setIsAdding(true); setEditingId(null); setFormData({ front: '', back: '' }); }}
-            className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200"
-          >
-            <Plus size={16} /> Thêm thẻ mới
-          </button>
+          <div className="flex items-center gap-2">
+            <input 
+              type="file" 
+              ref={fileInputRef} 
+              onChange={handleCSVUpload} 
+              accept=".csv" 
+              className="hidden" 
+            />
+            <button 
+              onClick={() => fileInputRef.current?.click()}
+              className="flex items-center gap-2 px-4 py-2 bg-slate-100 text-slate-600 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-slate-200 transition-all"
+              title="Nhập từ file CSV (Cột 1: Câu hỏi, Cột 2: Trả lời)"
+            >
+              <FileUp size={16} /> Nhập CSV
+            </button>
+            <button 
+              onClick={() => { setIsAdding(true); setEditingId(null); setFormData({ front: '', back: '' }); }}
+              className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200"
+            >
+              <Plus size={16} /> Thêm thẻ mới
+            </button>
+          </div>
         )}
       </div>
 
