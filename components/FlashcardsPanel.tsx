@@ -276,7 +276,10 @@ const FlashcardsPanel: React.FC<FlashcardsPanelProps> = ({ nodeId, isAdmin }) =>
           >
             <div className={`relative w-full h-full transition-all duration-500 preserve-3d ${isFlipped ? 'rotate-y-180' : ''}`}>
               {/* Front */}
-              <div className="absolute inset-0 bg-amber-50 rounded-[32px] shadow-2xl border border-amber-200/60 flex flex-col items-center justify-center p-8 backface-hidden overflow-hidden">
+              <div 
+                className="absolute inset-0 bg-amber-50 rounded-[32px] shadow-2xl border border-amber-200/60 flex flex-col items-center justify-center p-8 backface-hidden overflow-hidden"
+                style={{ transform: 'translateZ(1px)', WebkitTransform: 'translateZ(1px)' }}
+              >
                 {/* Real card texture/lines effect */}
                 <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: 'radial-gradient(#000 1px, transparent 0)', backgroundSize: '20px 20px' }}></div>
                 <div className="absolute top-0 left-0 w-full h-1 bg-amber-200/40"></div>
@@ -289,7 +292,10 @@ const FlashcardsPanel: React.FC<FlashcardsPanelProps> = ({ nodeId, isAdmin }) =>
               </div>
               
               {/* Back */}
-              <div className="absolute inset-0 bg-indigo-600 rounded-[32px] shadow-2xl border border-white/10 flex flex-col items-center justify-center p-8 backface-hidden rotate-y-180 overflow-hidden">
+              <div 
+                className="absolute inset-0 bg-indigo-600 rounded-[32px] shadow-2xl border border-white/10 flex flex-col items-center justify-center p-8 backface-hidden rotate-y-180 overflow-hidden"
+                style={{ transform: 'rotateY(180deg) translateZ(1px)', WebkitTransform: 'rotateY(180deg) translateZ(1px)' }}
+              >
                 <div className="absolute top-0 left-0 w-full h-1 bg-white/10"></div>
                 <div className="absolute top-6 left-8 text-[10px] font-black text-white/40 uppercase tracking-[0.3em]">Đáp án</div>
                 <div className="text-xl font-bold text-white text-center leading-relaxed z-10">
@@ -376,10 +382,22 @@ const FlashcardsPanel: React.FC<FlashcardsPanelProps> = ({ nodeId, isAdmin }) =>
       )}
 
       <style>{`
-        .perspective-1000 { perspective: 1000px; }
-        .preserve-3d { transform-style: preserve-3d; }
-        .backface-hidden { backface-visibility: hidden; }
-        .rotate-y-180 { transform: rotateY(180deg); }
+        .perspective-1000 { 
+          perspective: 1000px; 
+          -webkit-perspective: 1000px; 
+        }
+        .preserve-3d { 
+          transform-style: preserve-3d; 
+          -webkit-transform-style: preserve-3d; 
+        }
+        .backface-hidden { 
+          backface-visibility: hidden; 
+          -webkit-backface-visibility: hidden; 
+        }
+        .rotate-y-180 { 
+          transform: rotateY(180deg); 
+          -webkit-transform: rotateY(180deg); 
+        }
       `}</style>
     </div>
   );
