@@ -29,11 +29,13 @@ const FlashcardsPanel: React.FC<FlashcardsPanelProps> = ({ nodeId, isAdmin }) =>
   const fetchFlashcards = useCallback(async () => {
     setLoading(true);
     try {
+      // Tăng giới hạn lên 5000 để tránh bỏ sót khi số lượng câu hỏi lớn
       const { data, error } = await supabase
         .from('flashcards')
         .select('*')
         .eq('node_id', nodeId)
-        .order('created_at', { ascending: true });
+        .order('created_at', { ascending: true })
+        .limit(5000);
       
       if (error) throw error;
       setFlashcards(data || []);
@@ -274,18 +276,23 @@ const FlashcardsPanel: React.FC<FlashcardsPanelProps> = ({ nodeId, isAdmin }) =>
           >
             <div className={`relative w-full h-full transition-all duration-500 preserve-3d ${isFlipped ? 'rotate-y-180' : ''}`}>
               {/* Front */}
-              <div className="absolute inset-0 bg-white rounded-[32px] shadow-2xl border border-slate-100 flex flex-col items-center justify-center p-8 backface-hidden">
-                <div className="absolute top-6 left-8 text-[10px] font-black text-indigo-500/40 uppercase tracking-[0.3em]">Câu hỏi</div>
-                <div className="text-2xl font-black text-slate-800 text-center leading-tight tracking-tight">
+              <div className="absolute inset-0 bg-amber-50 rounded-[32px] shadow-2xl border border-amber-200/60 flex flex-col items-center justify-center p-8 backface-hidden overflow-hidden">
+                {/* Real card texture/lines effect */}
+                <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: 'radial-gradient(#000 1px, transparent 0)', backgroundSize: '20px 20px' }}></div>
+                <div className="absolute top-0 left-0 w-full h-1 bg-amber-200/40"></div>
+                
+                <div className="absolute top-6 left-8 text-[10px] font-black text-amber-600/40 uppercase tracking-[0.3em]">Câu hỏi</div>
+                <div className="text-2xl font-black text-slate-800 text-center leading-tight tracking-tight z-10">
                   {renderLatex(flashcards[currentIndex].front)}
                 </div>
-                <div className="absolute bottom-6 text-[10px] font-bold text-slate-300 uppercase tracking-widest group-hover:text-indigo-400 transition-colors">Chạm để xem đáp án</div>
+                <div className="absolute bottom-6 text-[10px] font-bold text-amber-600/40 uppercase tracking-widest group-hover:text-amber-600 transition-colors">Chạm để xem đáp án</div>
               </div>
               
               {/* Back */}
-              <div className="absolute inset-0 bg-indigo-600 rounded-[32px] shadow-2xl flex flex-col items-center justify-center p-8 backface-hidden rotate-y-180">
+              <div className="absolute inset-0 bg-indigo-600 rounded-[32px] shadow-2xl border border-white/10 flex flex-col items-center justify-center p-8 backface-hidden rotate-y-180 overflow-hidden">
+                <div className="absolute top-0 left-0 w-full h-1 bg-white/10"></div>
                 <div className="absolute top-6 left-8 text-[10px] font-black text-white/40 uppercase tracking-[0.3em]">Đáp án</div>
-                <div className="text-xl font-bold text-white text-center leading-relaxed">
+                <div className="text-xl font-bold text-white text-center leading-relaxed z-10">
                   {renderLatex(flashcards[currentIndex].back)}
                 </div>
                 <div className="absolute bottom-6 text-[10px] font-bold text-white/40 uppercase tracking-widest">Chạm để quay lại</div>
