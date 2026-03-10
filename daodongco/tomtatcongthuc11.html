@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hệ Thống Hóa Công Thức Vật Lý 11</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=JetBrains+Mono&display=swap" rel="stylesheet">
+    <script type="text/javascript" id="MathJax-script" async
+      src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
+    </script>
+
+    <script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']], // Bắt buộc nhận diện $...$
+        displayMath: [['$$', '$$'], ['\\[', '\\]']]
+      },
+      // ...
+    };
+    </script>
+    
+      <style>
+        :root { --primary: #6366f1; --secondary: #ec4899; --bg-dark: #0f172a; }
+        body { font-family: 'Inter', sans-serif; background-color: var(--bg-dark); color: #f8fafc; scroll-behavior: smooth; }
+        .glass-card { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 1rem; padding: 1.5rem; margin-bottom: 2rem; }
+        .formula-box { font-family: 'JetBrains Mono', monospace; background: rgba(0, 0, 0, 0.3); padding: 1rem; border-radius: 0.5rem; border-left: 4px solid var(--primary); margin: 0.5rem 0; overflow-x: auto; font-size: 0.95rem; }
+        .section-title { font-size: 1.875rem; font-weight: 700; color: white; margin-bottom: 1.5rem; display: flex; items-center: center; border-bottom: 2px solid #334155; padding-bottom: 0.5rem; }
+        .sub-title { font-size: 1.25rem; font-weight: 600; color: var(--primary); margin-top: 1.5rem; margin-bottom: 1rem; display: flex; align-items: center; }
+        .nav-link { transition: all 0.2s; padding: 0.5rem 1rem; border-radius: 0.5rem; display: block; color: #94a3b8; }
+        .nav-link:hover { background: rgba(99, 102, 241, 0.1); color: white; }
+        .badge { font-size: 0.7rem; padding: 2px 6px; border-radius: 4px; font-weight: bold; text-transform: uppercase; margin-right: 8px; }
+        .bg-blue-glow { background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.2); }
+        table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.875rem; }
+        th, td { border: 1px solid #334155; padding: 0.75rem; text-align: left; }
+        th { background: rgba(0, 0, 0, 0.4); color: var(--primary); }
+    </style>
+</head>
+<body class="min-h-screen">
+
+    <header class="fixed top-0 w-full z-50 bg-slate-900/90 backdrop-blur-md border-b border-slate-700">
+        <div class="container mx-auto px-4 h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-2">
+                <i class="fas fa-atom text-indigo-500 text-2xl"></i>
+                <span class="text-xl font-bold">TÓM TẮT VẬT LÝ <span class="text-indigo-500"> LỚP 11 </span></span>
+            </div>
+            <button onclick="window.print()" class="bg-indigo-600 hover:bg-indigo-700 px-4 py-2 rounded-lg text-sm transition">
+                <i class="fas fa-print mr-2"></i>In tài liệu
+            </button>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-4 pt-24 pb-12 flex flex-col md:flex-row gap-8">
+        
+        <!-- Sidebar -->
+        <aside class="md:w-1/4">
+            <div class="sticky top-24 glass-card p-4">
+                <h3 class="font-bold text-white mb-4 uppercase tracking-wider text-sm">Hệ thống chương mục</h3>
+                <nav class="space-y-1">
+                    <a href="#chuong1" class="nav-link text-xs">I. DAO ĐỘNG CƠ</a>
+                    <a href="#chuong2" class="nav-link text-xs">II. SÓNG CƠ</a>
+                    <a href="#chuong3" class="nav-link text-xs">III. ĐIỆN TÍCH - ĐIỆN TRƯỜNG</a>
+                    <a href="#chuong4" class="nav-link text-xs">IV. DÒNG ĐIỆN KHÔNG ĐỔI</a>
+                </nav>
+            </div>
+        </aside>
+
+        <!-- Content -->
+        <div class="md:w-3/4">
+            
+            <!-- I. DAO ĐỘNG CƠ -->
+            <section id="chuong1">
+                <h2 class="section-title"><span class="mr-3 text-indigo-500">I.</span> DAO ĐỘNG CƠ</h2>
+                
+                <div class="glass-card">
+                    <h3 class="sub-title">1. Dao động điều hòa</h3>
+                    
+                    <p class="font-semibold text-slate-300">A. Phương trình dao động theo thời gian:</p>
+                    <div class="grid md:grid-cols-2 gap-4">
+                        <div class="formula-box">Li độ: $$x = A\cos(\omega t + \varphi)$$</div>
+                        <div class="formula-box">Vận tốc: $$v = x' = -\omega A\sin(\omega t + \varphi)$$</div>
+                        <div class="formula-box">Gia tốc: $$a = v' = -\omega^2 x$$</div>
+                        <div class="formula-box">Lực hồi phục: $$F = ma = -m\omega^2 x$$</div>
+                    </div>
+
+                    <p class="font-semibold text-slate-300 mt-6">B. Phương trình độc lập với thời gian:</p>
+                    <div class="grid md:grid-cols-2 gap-4">
+                        <div class="formula-box">$(v, x): A^2 = x^2 + \frac{v^2}{\omega^2}$</div>
+                        <div class="formula-box">$(a, v): A^2 = \frac{a^2}{\omega^4} + \frac{v^2}{\omega^2}$</div>
+                        <div class="formula-box">$(a, x): a = -\omega^2 x$</div>
+                        <div class="formula-box">$(F, x): F = -m\omega^2 x$</div>
+                    </div>
+
+                    <p class="font-semibold text-slate-300 mt-6">C. Mối quan hệ pha:</p>
+                    <div class="bg-slate-900/50 p-4 rounded-lg text-sm space-y-2">
+                        <p>• $v$ sớm pha hơn $x$ góc $\pi/2$.</p>
+                        <p>• $a$ sớm pha hơn $v$ góc $\pi/2$, ngược pha với $x$ (lệch pha $\pi$).</p>
+                        <p>• $F$ cùng pha với $a$, ngược pha với $x$.</p>
+                    </div>
+
+                    <p class="font-semibold text-slate-300 mt-6">D. Chu kỳ, tần số:</p>
+                    <div class="formula-box">
+                        $$\omega = \frac{2\pi}{T} = 2\pi f = \frac{N}{\Delta t}$$
+                    </div>
+                </div>
+
+                <div class="glass-card">
+                    <h3 class="sub-title">2 & 3. Hệ con lắc lò xo (CLLX) & Con lắc đơn (CLĐ)</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Đại lượng</th>
+                                <th>Con lắc lò xo</th>
+                                <th>Con lắc đơn ($\alpha \le 10^\circ$)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>$\omega, T, f$</td>
+                                <td>$\omega = \sqrt{\frac{k}{m}}; T = 2\pi\sqrt{\frac{m}{k}}$</td>
+                                <td>$\omega = \sqrt{\frac{g}{l}}; T = 2\pi\sqrt{\frac{l}{g}}$</td>
+                            </tr>
+                            <tr>
+                                <td>Động năng ($W_d$)</td>
+                                <td>$\frac{1}{2}mv^2$</td>
+                                <td>$\frac{1}{2}mv^2$</td>
+                            </tr>
+                            <tr>
+                                <td>Thế năng ($W_t$)</td>
+                                <td>$\frac{1}{2}kx^2$</td>
+                                <td>$mgl(1-\cos\alpha) \approx \frac{1}{2}mgl\alpha^2$</td>
+                            </tr>
+                            <tr>
+                                <td>Cơ năng ($W$)</td>
+                                <td>$\frac{1}{2}kA^2$ (Hằng số)</td>
+                                <td>$mgl(1-\cos\alpha_0) \approx \frac{1}{2}mgl\alpha_0^2$</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <div class="bg-blue-glow p-4 rounded-lg mt-4 text-xs">
+                        <i class="fas fa-info-circle mr-2"></i><strong>Biến thiên:</strong> $W_d, W_t$ biến thiên tuần hoàn với $\omega' = 2\omega; f' = 2f; T' = T/2$.
+                    </div>
+                </div>
+            </section>
+
+            <!-- II. SÓNG CƠ -->
+            <section id="chuong2">
+                <h2 class="section-title"><span class="mr-3 text-pink-500">II.</span> SÓNG CƠ</h2>
+                <div class="glass-card">
+                    <h3 class="sub-title">1. Sóng và sự truyền sóng</h3>
+                    <div class="formula-box">Liên hệ: $v = \lambda f = \frac{\lambda}{T}$</div>
+                    <div class="formula-box">PT truyền sóng (tại M cách O một đoạn x): $u_M = A\cos(\omega t + \varphi - \frac{2\pi x}{\lambda})$</div>
+                    <div class="formula-box">Độ lệch pha giữa 2 điểm: $\Delta \varphi = \frac{2\pi d}{\lambda}$</div>
+                </div>
+
+                <div class="glass-card">
+                    <h3 class="sub-title">2. Giao thoa sóng (2 nguồn cùng pha)</h3>
+                    <div class="formula-box">Biên độ tại M: $A_M = |2A\cos(\frac{\pi(d_2-d_1)}{\lambda})|$</div>
+                    <div class="grid md:grid-cols-2 gap-4">
+                        <div class="p-3 bg-slate-900/50 rounded">
+                            <p class="text-xs text-indigo-400">Cực đại:</p>
+                            $d_2 - d_1 = k\lambda$
+                        </div>
+                        <div class="p-3 bg-slate-900/50 rounded">
+                            <p class="text-xs text-pink-400">Cực tiểu:</p>
+                            $d_2 - d_1 = (k + 0,5)\lambda$
+                        </div>
+                    </div>
+                </div>
+
+                <div class="glass-card">
+                    <h3 class="sub-title">3 & 4. Sóng âm</h3>
+                    <div class="formula-box">Cường độ âm: $I = \frac{P}{S} = \frac{P}{4\pi r^2} \Rightarrow \frac{I_1}{I_2} = \frac{r_2^2}{r_1^2}$</div>
+                    <table>
+                        <tr>
+                            <th>Đặc trưng vật lý</th>
+                            <th>Đặc trưng sinh lý</th>
+                        </tr>
+                        <tr>
+                            <td>Tần số âm ($f$)</td>
+                            <td>Độ cao</td>
+                        </tr>
+                        <tr>
+                            <td>Mức cường độ âm ($L$)</td>
+                            <td>Độ to</td>
+                        </tr>
+                        <tr>
+                            <td>Đồ thị dao động âm</td>
+                            <td>Âm sắc</td>
+                        </tr>
+                    </table>
+                </div>
+            </section>
+
+            <!-- III. ĐIỆN TÍCH - ĐIỆN TRƯỜNG -->
+            <section id="chuong3">
+                <h2 class="section-title"><span class="mr-3 text-blue-500">III.</span> ĐIỆN TÍCH VÀ ĐIỆN TRƯỜNG</h2>
+                <div class="glass-card">
+                    <h3 class="sub-title">1 -> 5. Tương tác và Cường độ điện trường</h3>
+                    <div class="formula-box">Định luật Cu-lông: $F = k\frac{|q_1 q_2|}{\varepsilon r^2}$ ($k = 9.10^9$)</div>
+                    <div class="formula-box">Tiếp xúc 2 vật giống nhau: $q'_1 = q'_2 = \frac{q_1 + q_2}{2}$</div>
+                    <div class="formula-box">Điện trường do q gây ra: $E = k\frac{|q|}{\varepsilon r^2}$</div>
+                    <div class="formula-box">Lực điện: $\vec{F} = q\vec{E} \Rightarrow$ q > 0 ($\vec{F} \uparrow \uparrow \vec{E}$); q < 0 ($\vec{F} \uparrow \downarrow \vec{E}$)</div>
+                </div>
+
+                <div class="glass-card">
+                    <h3 class="sub-title">6 -> 12. Công, Thế năng, Điện thế</h3>
+                    <div class="grid md:grid-cols-2 gap-4">
+                        <div class="formula-box">Công ($E$ đều): $A_{MN} = qEd$ ($d$ là hình chiếu)</div>
+                        <div class="formula-box">Thế năng: $W_M = A_{M\infty}$</div>
+                        <div class="formula-box">Điện thế: $V_M = \frac{W_M}{q}$</div>
+                        <div class="formula-box">Hiệu điện thế: $U_{MN} = V_M - V_N = \frac{A_{MN}}{q}$</div>
+                    </div>
+                    <div class="bg-blue-glow p-3 rounded mt-2 text-center">Liên hệ: $U = E.d$</div>
+                </div>
+
+                <div class="glass-card">
+                    <h3 class="sub-title">13 -> 17. Tụ điện</h3>
+                    <div class="formula-box">Điện dung: $C = \frac{\varepsilon S}{9.10^9 . 4\pi d}$ (Tụ phẳng)</div>
+                    <div class="formula-box">Mối quan hệ: $Q = C.U$</div>
+                    <div class="grid md:grid-cols-2 gap-4 text-xs">
+                        <div class="p-3 bg-red-900/20 border border-red-800/30 rounded">
+                            <p class="font-bold text-red-400">NGẮT KHỎI NGUỒN</p>
+                            $Q$ không đổi. Nếu $d$ tăng $\rightarrow C$ giảm $\rightarrow U$ tăng.
+                        </div>
+                        <div class="p-3 bg-green-900/20 border border-green-800/30 rounded">
+                            <p class="font-bold text-green-400">VẪN NỐI NGUỒN</p>
+                            $U$ không đổi. Nếu $d$ tăng $\rightarrow C$ giảm $\rightarrow Q$ giảm.
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <p class="text-sm font-bold mb-2">Ghép tụ:</p>
+                        <table>
+                            <tr>
+                                <th>Ghép</th>
+                                <th>$C_b$</th>
+                                <th>$Q$</th>
+                                <th>$U$</th>
+                            </tr>
+                            <tr>
+                                <td>Nối tiếp</td>
+                                <td>$1/C_b = \sum 1/C_i$</td>
+                                <td>$Q_b = Q_1 = Q_2$</td>
+                                <td>$U_b = U_1 + U_2$</td>
+                            </tr>
+                            <tr>
+                                <td>Song song</td>
+                                <td>$C_b = \sum C_i$</td>
+                                <td>$Q_b = Q_1 + Q_2$</td>
+                                <td>$U_b = U_1 = U_2$</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- IV. DÒNG ĐIỆN KHÔNG ĐỔI -->
+            <section id="chuong4">
+                <h2 class="section-title"><span class="mr-3 text-emerald-500">IV.</span> DÒNG ĐIỆN KHÔNG ĐỔI</h2>
+                <div class="glass-card">
+                    <div class="grid md:grid-cols-2 gap-4">
+                        <div class="formula-box">Cường độ dòng điện: $I = \frac{\Delta q}{\Delta t}$</div>
+                        <div class="formula-box">Dòng điện trong vật dẫn: $I = n.e.v.S$</div>
+                    </div>
+                    <h3 class="sub-title">Định luật Ohm & Công suất</h3>
+                    <div class="grid md:grid-cols-2 gap-4">
+                        <div class="p-4 bg-slate-900/50 rounded-lg">
+                            <p class="font-bold text-emerald-400 mb-2">Mạch kín:</p>
+                            $$I = \frac{\xi}{R_N + r}$$
+                            <p class="text-xs text-slate-400 mt-2">Đoạn mạch: $U = I.R$</p>
+                        </div>
+                        <div class="p-4 bg-slate-900/50 rounded-lg">
+                            <p class="font-bold text-emerald-400 mb-2">Năng lượng & Công suất:</p>
+                            <p class="text-xs">Tiêu thụ: $A = UIt; P = UI = I^2R$</p>
+                            <p class="text-xs mt-2">Nguồn: $A_{ng} = \xi It; P_{ng} = \xi I$</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+        </div>
+    </main>
+
+    <footer class="border-t border-slate-800 py-8 text-center text-slate-500 text-sm">
+        <p>© 2024 Sổ Tay Vật Lý 11 - Thống kê hệ thống hóa kiến thức</p>
+    </footer>
+
+</body>
+</html>
