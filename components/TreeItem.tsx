@@ -28,7 +28,22 @@ const TreeItem: React.FC<TreeItemProps> = ({
   onReorder,
   level 
 }) => {
-  const [isOpen, setIsOpen] = useState(true);
+  const [isOpen, setIsOpen] = useState(false);
+
+  // Auto-expand if a descendant is selected
+  React.useEffect(() => {
+    if (selectedId) {
+      const checkDescendant = (parentId: string): boolean => {
+        const directChildren = allNodes.filter(n => n.parentId === parentId);
+        if (directChildren.some(c => c.id === selectedId)) return true;
+        return directChildren.some(c => checkDescendant(c.id));
+      };
+      
+      if (checkDescendant(node.id)) {
+        setIsOpen(true);
+      }
+    }
+  }, [selectedId, allNodes, node.id]);
   
   const children = useMemo(() => {
     return allNodes
