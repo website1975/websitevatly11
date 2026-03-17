@@ -81,8 +81,7 @@ const LandingPage: React.FC<{ visitorCount: number }> = ({ visitorCount }) => {
         <div className="mb-8 p-5 bg-white border border-slate-200 shadow-sm rounded-3xl">
             <Book size={48} className="text-indigo-600"/>
         </div>
-        <h1 className="text-6xl font-black text-slate-900 uppercase mb-2 tracking-tighter">VẬT LÝ 11</h1>
-        <p className="text-[10px] font-bold tracking-[0.5em] text-indigo-500/60 uppercase mb-16 italic">Công nghệ giáo dục tương lai</p>
+        <h1 className="text-6xl font-black text-slate-900 uppercase mb-16 tracking-tighter">VẬT LÝ 11</h1>
         
         <div className="max-w-3xl w-full grid grid-cols-1 md:grid-cols-2 gap-8">
           <button onClick={() => navigate('/student')} className="bg-white p-12 rounded-[40px] shadow-2xl shadow-slate-200/50 border border-white flex flex-col items-center space-y-4 hover:scale-[1.02] transition-all group">
@@ -132,9 +131,34 @@ const MainView: React.FC<{ isAdmin: boolean; data: AppData; updateData: (d: AppD
     return data.nodes.filter(n => n.parentId === selectedId).sort((a,b) => (a.order ?? 0) - (b.order ?? 0));
   }, [selectedId, data.nodes]);
 
+  const visibleNodeIds = useMemo(() => {
+    if (!searchTerm.trim()) return null;
+    const term = searchTerm.toLowerCase();
+    const matches = new Set<string>();
+    
+    data.nodes.forEach(node => {
+      if (node.title.toLowerCase().includes(term)) {
+        matches.add(node.id);
+      }
+    });
+
+    const visible = new Set<string>(matches);
+    matches.forEach(id => {
+      let current = data.nodes.find(n => n.id === id);
+      while (current && current.parentId) {
+        visible.add(current.parentId);
+        current = data.nodes.find(n => n.id === current.parentId);
+      }
+    });
+
+    return visible;
+  }, [data.nodes, searchTerm]);
+
   const filteredRootNodes = useMemo(() => {
-    return data.nodes.filter(n => n.parentId === null).sort((a,b) => (a.order ?? 0) - (b.order ?? 0));
-  }, [data.nodes]);
+    const roots = data.nodes.filter(n => n.parentId === null).sort((a,b) => (a.order ?? 0) - (b.order ?? 0));
+    if (!visibleNodeIds) return roots;
+    return roots.filter(n => visibleNodeIds.has(n.id));
+  }, [data.nodes, visibleNodeIds]);
 
   useEffect(() => {
     const timer = setInterval(() => setSloganIdx(prev => (prev + 1) % SLOGANS.length), 30000);
@@ -256,6 +280,8 @@ const MainView: React.FC<{ isAdmin: boolean; data: AppData; updateData: (d: AppD
         <div className="flex-1 overflow-y-auto p-2 custom-scrollbar bg-[#fbfcfd]">
           {filteredRootNodes.map(node=>(
             <TreeItem key={node.id} node={node} allNodes={data.nodes} selectedId={selectedId} isAdmin={isAdmin} level={0}
+              visibleNodeIds={visibleNodeIds}
+              searchTerm={searchTerm}
               onSelect={(id)=>{setSelectedId(id); if(data.nodes.find(n=>n.id===id)?.url) setIframeLoading(true);}}
               onAdd={(p,t)=>{
                 const nextOrder = data.nodes.filter(n => n.parentId === p).length;
