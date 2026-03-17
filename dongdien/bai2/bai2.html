@@ -1,0 +1,326 @@
+
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bài 17: Điện trở. Định luật Ohm - Vật lí 11</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']]
+      }
+    };
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+        }
+        
+        .math-text {
+            font-family: 'Times New Roman', Times, serif;
+            font-style: italic;
+            font-weight: 600;
+            color: #1e40af;
+        }
+
+        .section-card {
+            background: white;
+            border-left: 6px solid #3b82f6;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+            transition: transform 0.2s;
+        }
+
+        .section-card:hover {
+            transform: translateY(-2px);
+        }
+
+        .formula-box {
+            background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+            border: 1px dashed #3b82f6;
+        }
+
+        .solution-box {
+            background-color: #f1f5f9;
+            border-radius: 8px;
+            padding: 15px;
+            border-left: 4px solid #64748b;
+        }
+
+        .step-title {
+            color: #0f172a;
+            font-weight: 700;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.05em;
+        }
+
+        .highlight-blue {
+            background-color: #dbeafe;
+            padding: 2px 4px;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+
+        .main-header {
+            background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+            color: white;
+            padding: 3rem 1rem;
+            border-radius: 0 0 2rem 2rem;
+            margin-bottom: 3rem;
+            box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.2);
+        }
+
+        .image-container {
+            margin: 1.5rem 0;
+            text-align: center;
+        }
+
+        .image-container img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            display: block;
+            margin: 0 auto;
+        }
+
+        .image-caption {
+            margin-top: 0.5rem;
+            font-size: 0.875rem;
+            color: #64748b;
+            font-style: italic;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 0.9rem;
+        }
+
+        th, td {
+            border: 1px solid #e2e8f0;
+            padding: 10px;
+            text-align: center;
+        }
+
+        th {
+            background-color: #f1f5f9;
+            font-weight: 700;
+        }
+    </style>
+</head>
+<body class="text-slate-800 antialiased">
+
+    <!-- Header -->
+    <header class="main-header text-center">
+        <h2 class="text-blue-100 font-extrabold text-sm tracking-widest uppercase mb-2"> Chương 4: Dòng Điện Không Đổi</h2>
+        <h1 class="text-3xl md:text-4xl font-black text-white leading-tight">
+            BÀI 17: ĐIỆN TRỞ.<br>ĐỊNH LUẬT OHM
+        </h1>
+        <div class="w-24 h-1.5 bg-white mx-auto mt-4 rounded-full opacity-50"></div>
+    </header>
+
+    <div class="max-w-4xl mx-auto px-4">
+        
+        <!-- Khởi động -->
+        <div class="bg-amber-50 border-l-4 border-amber-400 p-5 mb-8 rounded-r-lg">
+            <h2 class="font-bold text-amber-800 mb-2 flex items-center">
+                <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20"><path d="M11 3a1 1 0 10-2 0v1a1 1 0 102 0V3zM15.657 5.757a1 1 0 00-1.414-1.414l-.707.707a1 1 0 001.414 1.414l.707-.707zM18 10a1 1 0 01-1 1h-1a1 1 0 110-2h1a1 1 0 011 1zM5.05 6.464A1 1 0 106.464 5.05l-.707-.707a1 1 0 00-1.414 1.414l.707.707zM5 10a1 1 0 01-1 1H3a1 1 0 110-2h1a1 1 0 011 1zM8 16v-1a1 1 0 112 0v1a1 1 0 11-2 0zM13.335 16.515a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414l.707.707zM16 10a1 1 0 01-1 1h-1a1 1 0 110-2h1a1 1 0 011 1z"/></svg>
+                Câu hỏi khởi động
+            </h2>
+            <p class="text-sm text-amber-900 italic leading-relaxed">
+                Khi vô tình chạm vào đoạn dây có điện bị hở lớp vỏ cách điện, một thợ sửa chữa bị điện giật nhẹ vì có một dòng điện cỡ 10 mA chạy qua người. Nhưng một người khác cũng chạm vào đoạn dây trên thì có thể nguy hiểm đến tính mạng do có dòng điện 90 mA chạy qua người. Điều gì tạo nên sự khác biệt này?
+            </p>
+        </div>
+
+        <!-- Section 1: Điện trở -->
+        <section class="section-card p-6 mb-8 rounded-xl">
+            <h2 class="text-xl font-bold text-slate-800 mb-4 flex items-center">
+                <span class="bg-blue-600 text-white w-8 h-8 rounded-full flex items-center justify-center mr-3 text-sm">I</span>
+                ĐIỆN TRỞ
+            </h2>
+            
+            <h3 class="font-bold text-blue-700 mb-2">1. Khái niệm điện trở</h3>
+            <p class="mb-4">
+                Đại lượng đặc trưng cho khả năng cản trở dòng điện của một vật dẫn được gọi là <span class="highlight-blue">điện trở</span>.
+            </p>
+            
+            <div class="image-container">
+                <img src="" alt="Mô phỏng sự cản trở chuyển động của các hạt mang điện" onerror="this.src='h24.png'">
+                <div class="image-caption">Hình 17.1. Mô phỏng sự cản trở chuyển động của các hạt mang điện tự do trong vật dẫn</div>
+            </div>
+
+            <p class="mb-4">
+                Điện trở của một vật dẫn là đại lượng đặc trưng cho khả năng cản trở dòng điện của vật dẫn đó khi có một hiệu điện thế đặt vào hai đầu vật dẫn.
+            </p>
+
+            <div class="formula-box p-6 rounded-xl text-center mb-6">
+                <p class="text-sm text-blue-800 font-bold uppercase mb-2">Công thức tính điện trở</p>
+                <div class="text-2xl font-black text-blue-900">
+                    $$R = \frac{U}{I}$$
+                </div>
+                <p class="text-xs text-blue-700 mt-2 italic">Trong đó: $U$ là hiệu điện thế (V), $I$ là cường độ dòng điện (A).</p>
+            </div>
+
+            <h3 class="font-bold text-blue-700 mb-2">2. Đơn vị đo điện trở</h3>
+            <ul class="list-disc ml-6 space-y-1 mb-4 text-sm">
+                <li>Trong hệ SI, đơn vị của điện trở là <span class="font-bold">ôm (ohm)</span>, kí hiệu là $\Omega$.</li>
+                <li>$1 \Omega = 1 V / 1 A$.</li>
+                <li>Các ước số và bội số: $1 m\Omega = 10^{-3} \Omega$; $1 k\Omega = 10^3 \Omega$; $1 M\Omega = 10^6 \Omega$.</li>
+            </ul>
+
+            <h3 class="font-bold text-blue-700 mb-2">3. Điện trở của đoạn dây dẫn kim loại</h3>
+            <p class="text-sm mb-4">Ở một nhiệt độ xác định, điện trở $R$ của một đoạn dây dẫn kim loại phụ thuộc vào vật liệu làm dây dẫn, tỉ lệ thuận với chiều dài $l$ và tỉ lệ nghịch với diện tích tiết diện $S$ của dây dẫn đó:</p>
+            
+            <div class="formula-box p-6 rounded-xl text-center mb-6">
+                <div class="text-2xl font-black text-blue-900">
+                    $$R = \rho \frac{l}{S}$$
+                </div>
+            </div>
+            
+            <p class="text-sm">Trong đó $\rho$ là <span class="font-bold italic">điện trở suất</span> của vật liệu, đơn vị là ôm mét ($\Omega \cdot m$).</p>
+        </section>
+
+        <!-- Section 2: Định luật Ohm -->
+        <section class="section-card p-6 mb-8 rounded-xl">
+            <h2 class="text-xl font-bold text-slate-800 mb-4 flex items-center">
+                <span class="bg-blue-600 text-white w-8 h-8 rounded-full flex items-center justify-center mr-3 text-sm">II</span>
+                ĐỊNH LUẬT OHM
+            </h2>
+            
+            <h3 class="font-bold text-blue-700 mb-2">1. Nội dung định luật</h3>
+            <div class="bg-blue-50 p-4 border-l-4 border-blue-400 rounded mb-4 italic">
+                Cường độ dòng điện $I$ chạy qua một vật dẫn kim loại tỉ lệ thuận với hiệu điện thế $U$ giữa hai đầu vật dẫn và tỉ lệ nghịch với điện trở $R$ của nó.
+            </div>
+
+            <div class="formula-box p-6 rounded-xl text-center mb-6">
+                <div class="text-2xl font-black text-blue-900">
+                    $$I = \frac{U}{R}$$
+                </div>
+            </div>
+
+            <h3 class="font-bold text-blue-700 mb-2">2. Đường đặc trưng I - U</h3>
+            <p class="text-sm mb-4">Đường biểu diễn sự phụ thuộc của cường độ dòng điện vào hiệu điện thế gọi là <span class="font-bold text-blue-900">đường đặc trưng I - U</span>. Đối với vật dẫn kim loại ở nhiệt độ không đổi, đường này là một đoạn thẳng đi qua gốc tọa độ.</p>
+            
+            <div class="image-container">
+                <img src="" alt="Đường đặc trưng I - U của vật dẫn kim loại" onerror="this.src='h25.png'">
+                <div class="image-caption">Hình 17.3. Đường đặc trưng I - U của vật dẫn kim loại ở nhiệt độ xác định</div>
+            </div>
+        </section>
+
+        <!-- Section 3: Đèn sợi đốt và Điện trở nhiệt -->
+        <section class="section-card p-6 mb-8 rounded-xl">
+            <h2 class="text-xl font-bold text-slate-800 mb-4 flex items-center">
+                <span class="bg-blue-600 text-white w-8 h-8 rounded-full flex items-center justify-center mr-3 text-sm">III</span>
+                ĐÈN SỢI ĐỐT VÀ ĐIỆN TRỞ NHIỆT
+            </h2>
+
+            <div class="grid md:grid-cols-2 gap-6">
+                <div>
+                    <h3 class="font-bold text-blue-700 mb-2">Đèn sợi đốt</h3>
+                    <p class="text-sm leading-relaxed">
+                        Khi đèn hoạt động, dòng điện làm sợi đốt nóng lên đến nhiệt độ cao nên điện trở của nó thay đổi. Đường đặc trưng I-U không còn là đường thẳng.
+                    </p>
+                    <div class="image-container">
+                        <img src="" alt="Đường đặc trưng I-U của đèn sợi đốt" onerror="this.src='h27.png'">
+                        <div class="image-caption">Hình 17.5. Đường đặc trưng I-U của đèn sợi đốt</div>
+                    </div>
+                </div>
+                <div>
+                    <h3 class="font-bold text-blue-700 mb-2">Điện trở nhiệt (Thermistor)</h3>
+                    <p class="text-sm leading-relaxed">
+                        Là linh kiện có điện trở thay đổi nhạy cảm theo nhiệt độ. Có hai loại chính:
+                    </p>
+                    <ul class="text-xs list-disc ml-4 mt-2 space-y-1">
+                        <li><strong>NTC:</strong> Nhiệt độ tăng thì điện trở giảm.</li>
+                        <li><strong>PTC:</strong> Nhiệt độ tăng thì điện trở tăng.</li>
+                    </ul>
+                    <div class="image-container">
+                        <img src="" alt="Điện trở nhiệt và đường đặc trưng I-U" onerror="this.src='h28.png'">
+                        <div class="image-caption">Hình 17.6. Điện trở nhiệt và đường đặc trưng I-U</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Bài tập -->
+        <section class="mb-10">
+            <div class="flex items-center mb-6">
+                <div class="h-px bg-slate-300 flex-grow"></div>
+                <span class="px-4 text-slate-500 font-bold text-sm tracking-widest uppercase">BÀI TẬP VẬN DỤNG</span>
+                <div class="h-px bg-slate-300 flex-grow"></div>
+            </div>
+
+            <!-- Bài 1 -->
+            <div class="bg-white border border-slate-200 rounded-xl p-6 mb-6 shadow-sm">
+                <div class="flex items-center mb-3">
+                    <span class="bg-blue-200 text-blue-800 text-xs font-bold px-2 py-1 rounded">BÀI 1</span>
+                </div>
+                <p class="text-slate-700 mb-4">
+                    Thông tin kĩ thuật của một loại cáp điện: Diện tích tiết diện <span class="math-text">\(1,5 \text{ mm}^2\)</span>, điện trở mỗi km chiều dài là <span class="math-text">\(12,12 \Omega\)</span>. Hãy xác định điện trở suất của vật liệu làm cáp này.
+                </p>
+                <div class="solution-box">
+                    <p class="step-title mb-2">Lời giải:</p>
+                    <div class="pl-6 space-y-2 text-sm">
+                        <p>• Đổi đơn vị: <span class="math-text">\(S = 1,5 \cdot 10^{-6} \text{ m}^2\)</span>; <span class="math-text">\(l = 1000 \text{ m}\)</span>.</p>
+                        <p>• Từ công thức: <span class="math-text">\(R = \rho \frac{l}{S} \implies \rho = \frac{R \cdot S}{l}\)</span>.</p>
+                        <p>• Thay số: <span class="math-text">\(\rho = \frac{12,12 \cdot 1,5 \cdot 10^{-6}}{1000} = 1,818 \cdot 10^{-8} \Omega \cdot m\)</span>.</p>
+                        <p>• <span class="font-bold">Kết quả:</span> Đây là điện trở suất xấp xỉ của đồng.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bài 2 -->
+            <div class="bg-white border border-slate-200 rounded-xl p-6 mb-6 shadow-sm">
+                <div class="flex items-center mb-3">
+                    <span class="bg-blue-200 text-blue-800 text-xs font-bold px-2 py-1 rounded">BÀI 2</span>
+                </div>
+                <p class="text-slate-700 mb-4">
+                    Dựa vào bảng số liệu bên dưới của một vật dẫn kim loại, hãy vẽ đường đặc trưng I - U và tính điện trở của vật dẫn.
+                </p>
+                <table class="text-xs mb-4">
+                    <tr>
+                        <th>U (V)</th>
+                        <td>0,0</td>
+                        <td>1,5</td>
+                        <td>3,0</td>
+                        <td>4,5</td>
+                        <td>6,0</td>
+                    </tr>
+                    <tr>
+                        <th>I (A)</th>
+                        <td>0,00</td>
+                        <td>0,25</td>
+                        <td>0,50</td>
+                        <td>0,75</td>
+                        <td>1,00</td>
+                    </tr>
+                </table>
+                <div class="solution-box">
+                    <p class="step-title mb-2">Lời giải:</p>
+                    <div class="pl-6 space-y-2 text-sm">
+                        <p>• Đường đặc trưng là đường thẳng đi qua các điểm (0;0), (1.5;0.25)...</p>
+                        <p>• Độ dốc của đường thẳng cho biết giá trị <span class="math-text">1/R</span>.</p>
+                        <p>• Tính điện trở: <span class="math-text">\(R = \frac{U}{I} = \frac{1,5}{0,25} = 6,0 \Omega\)</span>.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="text-center text-slate-400 text-xs mt-12 pb-8 border-t border-slate-100 pt-6">
+            <p>&copy; 2024 - Tài liệu học tập Vật lí 11</p>
+        </footer>
+    </div>
+
+</body>
+</html>
