@@ -26,8 +26,8 @@
 
     <div class="max-w-6xl w-full">
         <header class="text-center mb-6">
-            <h1 class="text-3xl font-bold text-blue-400">NHIỆT ĐỘ & SỰ VA CHẠM</h1>
-            <p class="text-slate-400 mt-2">Nhiệt độ tăng làm Ion rung mạnh, tăng xác suất va chạm và cản trở dòng điện</p>
+            <h1 class="text-3xl font-bold text-blue-400">NHIỆT ĐỘ & ĐIỆN TRỞ</h1>
+            <p class="text-slate-400 mt-2">Nhiệt độ tăng làm tăng điện trở, khiến cường độ dòng điện (e/s) giảm xuống</p>
         </header>
 
         <!-- Điều khiển chung -->
@@ -66,15 +66,14 @@
         </div>
 
         <footer class="mt-8 p-6 bg-slate-800/30 rounded-2xl border border-slate-700">
-            <h3 class="text-lg font-bold text-red-400 mb-2">Quan sát sự va chạm:</h3>
+            <h3 class="text-lg font-bold text-red-400 mb-2">Tại sao e/s giảm khi T tăng?</h3>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm text-slate-300">
                 <ul class="list-disc pl-5 space-y-2">
-                    <li><strong class="text-white">Ion rung động:</strong> Khi tăng <span class="text-red-400">T</span>, các vòng tròn vàng rung mạnh hơn. Đây là mô phỏng năng lượng nhiệt trong mạng tinh thể.</li>
-                    <li><strong class="text-white">Lóe sáng (Collision Flash):</strong> Mỗi khi electron chạm vào Ion, một vòng tròn sáng xuất hiện. Nhiệt càng cao, bạn sẽ thấy "lóe sáng" càng dày đặc.</li>
+                    <li><strong class="text-white">Tán xạ mạnh hơn:</strong> Nhiệt độ cao làm các Ion chiếm diện tích lớn hơn, electron bị "vấp" liên tục (lóe sáng trắng), làm mất đi vận tốc hướng về phía trước.</li>
+                    <li><strong class="text-white">Mất năng lượng:</strong> Mỗi va chạm được thiết kế để triệt tiêu một phần vận tốc trôi ($v_x$). Nhiệt càng cao, electron càng khó tích lũy vận tốc để băng qua vạch đếm.</li>
                 </ul>
                 <ul class="list-disc pl-5 space-y-2">
-                    <li><strong class="text-white">Điện trở:</strong> Va chạm nhiều làm electron mất nhiều thời gian hơn để đi từ trái sang phải $\rightarrow$ Cường độ <span class="text-blue-400">e/s</span> giảm xuống rõ rệt.</li>
-                    <li><strong class="text-white">Vết zic-zac:</strong> Electron đỏ sẽ bị đổi hướng liên tục, khó có thể duy trì được vận tốc trôi ổn định khi nhiệt độ quá cao.</li>
+                    <li><strong class="text-white">Thí nghiệm:</strong> Hãy để <span class="text-blue-400">E=5.0</span> và <span class="text-red-400">T=1</span> để thấy dòng cực mạnh. Sau đó kéo <span class="text-red-400">T lên 15</span>, bạn sẽ thấy cường độ giảm đi đáng kể.</li>
                 </ul>
             </div>
         </footer>
@@ -92,7 +91,7 @@
         ];
 
         const GRID_SPACING = 60;
-        const ELECTRON_COUNT = 40;
+        const ELECTRON_COUNT = 45;
 
         class Ion {
             constructor(x, y) {
@@ -101,25 +100,22 @@
                 this.flash = 0;
             }
             draw(ctx, temp) {
-                // Rung động dựa trên nhiệt độ
-                const amplitude = temp * 0.8;
+                const amplitude = temp * 1.0;
                 const sx = (Math.random() - 0.5) * amplitude;
                 const sy = (Math.random() - 0.5) * amplitude;
                 
-                // Vẽ vùng ảnh hưởng nhiệt
                 ctx.beginPath();
-                ctx.arc(this.x + sx, this.y + sy, this.radius + temp * 0.5, 0, Math.PI * 2);
-                ctx.fillStyle = `rgba(251, 191, 36, ${0.05 + temp * 0.01})`;
+                ctx.arc(this.x + sx, this.y + sy, this.radius + temp * 0.6, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(251, 191, 36, ${0.04 + temp * 0.012})`;
                 ctx.fill();
 
-                // Vẽ lõi Ion
                 ctx.beginPath();
                 ctx.arc(this.x + sx, this.y + sy, this.radius, 0, Math.PI * 2);
                 ctx.strokeStyle = this.flash > 0 ? `rgba(255,255,255,${this.flash})` : 'rgba(251, 191, 36, 0.4)';
-                ctx.lineWidth = this.flash > 0 ? 2 : 1;
+                ctx.lineWidth = this.flash > 0 ? 3 : 1;
                 ctx.stroke();
 
-                if (this.flash > 0) this.flash -= 0.1;
+                if (this.flash > 0) this.flash -= 0.15;
             }
         }
 
@@ -135,15 +131,18 @@
             reset(randomX = false) {
                 this.x = randomX ? Math.random() * this.width : 0;
                 this.y = Math.random() * this.height;
-                // Vận tốc nhiệt ngẫu nhiên
-                this.vx = (Math.random() - 0.5) * 6;
-                this.vy = (Math.random() - 0.5) * 6;
+                // Vận tốc nhiệt ban đầu
+                this.vx = (Math.random() - 0.5) * 5;
+                this.vy = (Math.random() - 0.5) * 5;
                 if(this.isTraced) this.path = [];
             }
 
             update(E, T, ions) {
+                // Gia tốc do điện trường
                 this.vx += E;
-                const thermal = T * 0.25;
+                
+                // Thành phần hỗn loạn nhiệt (nhưng giảm ảnh hưởng tích cực đến vx)
+                const thermal = T * 0.3;
                 this.vx += (Math.random() - 0.5) * thermal;
                 this.vy += (Math.random() - 0.5) * thermal;
 
@@ -164,16 +163,15 @@
                 if (this.x < 0) { this.x = 0; this.vx *= -0.5; }
                 if (this.x > this.width) { this.reset(false); }
 
-                // Va chạm Ion logic
+                // Va chạm Ion logic - Tăng hiệu ứng cản trở khi T cao
                 ions.forEach(ion => {
                     const dist = Math.sqrt((this.x - ion.x)**2 + (this.y - ion.y)**2);
-                    // Hiệu dụng bán kính va chạm tăng theo nhiệt độ
-                    const effectiveRadius = ion.radius + (T * 0.3);
+                    const effectiveRadius = ion.radius + (T * 0.4); // Vùng cản trở to hơn khi T tăng
                     if (dist < effectiveRadius) {
-                        ion.flash = 1.0; // Kích hoạt lóe sáng
+                        ion.flash = 1.0; 
                         const angle = Math.random() * Math.PI * 2;
-                        // Va chạm không đàn hồi (mất năng lượng)
-                        const speed = Math.sqrt(this.vx**2 + this.vy**2) * 0.65; 
+                        // Va chạm làm tiêu hao động năng trôi rất mạnh
+                        const speed = Math.sqrt(this.vx**2 + this.vy**2) * (0.6 - (T * 0.01)); 
                         this.vx = Math.cos(angle) * speed;
                         this.vy = Math.sin(angle) * speed;
                     }
@@ -186,7 +184,7 @@
                 if (this.isTraced) {
                     ctx.beginPath();
                     ctx.setLineDash([2, 2]);
-                    ctx.strokeStyle = 'rgba(248, 113, 113, 0.6)';
+                    ctx.strokeStyle = 'rgba(248, 113, 113, 0.7)';
                     this.path.forEach((p, i) => {
                         if(i===0) ctx.moveTo(p.x, p.y);
                         else ctx.lineTo(p.x, p.y);
@@ -195,7 +193,7 @@
                     ctx.setLineDash([]);
                 }
                 ctx.beginPath();
-                ctx.arc(this.x, this.y, this.isTraced ? 4 : 2, 0, Math.PI * 2);
+                ctx.arc(this.x, this.y, this.isTraced ? 5 : 2, 0, Math.PI * 2);
                 ctx.fillStyle = this.isTraced ? '#f87171' : '#60a5fa';
                 ctx.fill();
             }
@@ -231,22 +229,22 @@
             }
 
             render(E, T) {
-                this.ctx.fillStyle = 'rgba(2, 6, 23, 0.4)';
+                this.ctx.fillStyle = 'rgba(2, 6, 23, 0.5)';
                 this.ctx.fillRect(0, 0, this.width, this.height);
 
                 this.ions.forEach(ion => ion.draw(this.ctx, T));
                 
-                const currentE = this.hasE ? E * 0.08 : 0;
+                const currentE = this.hasE ? E * 0.07 : 0;
                 this.electrons.forEach(e => {
                     if (e.update(currentE, T, this.ions)) this.count++;
                     e.draw(this.ctx);
                 });
 
                 const now = Date.now();
-                if (now - this.lastUpdate > 200) {
+                if (now - this.lastUpdate > 250) {
                     const rate = this.count / ((now - this.lastUpdate) / 1000);
                     this.history.push(rate);
-                    if (this.history.length > 15) this.history.shift();
+                    if (this.history.length > 20) this.history.shift(); // Làm mượt hơn nữa
                     const avgRate = this.history.reduce((a, b) => a + b, 0) / this.history.length;
                     this.readout.innerText = avgRate.toFixed(2) + " e/s";
                     this.count = 0;
