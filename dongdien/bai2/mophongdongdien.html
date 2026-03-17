@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>So sánh Chuyển động Electron: E=0 vs E>0</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        canvas { image-rendering: antialiased; touch-action: none; background: #020617; }
+        .label-overlay {
+            position: absolute;
+            top: 10px;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        .ammeter-reading {
+            font-family: 'Courier New', Courier, monospace;
+            text-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
+        }
+    </style>
+</head>
+<body class="bg-slate-900 text-white min-h-screen flex flex-col items-center p-4">
+
+    <div class="max-w-6xl w-full">
+        <header class="text-center mb-6">
+            <h1 class="text-3xl font-bold text-blue-400">DÒNG ĐIỆN</h1>
+            <p class="text-slate-400 mt-2">Dòng điện không đổi có số electron trung bình đi qua mỗi giây là hằng số</p>
+        </header>
+
+        <!-- Điều khiển chung -->
+        <div class="mb-6 flex flex-wrap justify-center gap-8 bg-slate-800 p-4 rounded-2xl border border-slate-700">
+            <div class="flex items-center gap-4">
+                <label class="text-sm font-bold text-red-400">Nhiệt độ (T):</label>
+                <input type="range" id="tempRange" min="1" max="10" step="1" value="4" class="w-32">
+                <span id="tempVal" class="font-mono w-4 text-red-400">4</span>
+            </div>
+            <div class="flex items-center gap-4">
+                <label class="text-sm font-bold text-blue-400">Điện trường (E):</label>
+                <input type="range" id="voltageRange" min="0" max="5" step="0.5" value="2" class="w-32">
+                <span id="voltageVal" class="font-mono w-4 text-blue-400">2.0</span>
+            </div>
+            <button id="resetBtn" class="bg-blue-600 hover:bg-blue-500 px-4 py-1 rounded text-sm transition">Tái lập</button>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 relative">
+            <!-- Phần 1: Không có E -->
+            <div class="relative rounded-xl overflow-hidden border-2 border-slate-700 shadow-2xl bg-black">
+                <div class="label-overlay left-4 bg-slate-600/80 text-white">E = 0</div>
+                <div class="absolute top-10 right-4 text-right">
+                    <div class="text-[10px] text-slate-500 uppercase">Cường độ (I₁)</div>
+                    <div id="readoutNone" class="ammeter-reading text-xl font-bold text-slate-400">0.00 e/s</div>
+                </div>
+                <canvas id="canvasNone"></canvas>
+            </div>
+
+            <!-- Phần 2: Có E -->
+            <div class="relative rounded-xl overflow-hidden border-2 border-blue-500/50 shadow-2xl bg-black">
+                <div class="label-overlay left-4 bg-blue-600/80 text-white">E > 0</div>
+                <div class="absolute top-10 right-4 text-right">
+                    <div class="text-[10px] text-blue-400 uppercase">Cường độ (I₂)</div>
+                    <div id="readoutElectric" class="ammeter-reading text-xl font-bold text-blue-400">0.00 e/s</div>
+                </div>
+                <canvas id="canvasElectric"></canvas>
+            </div>
+        </div>
+
+        <footer class="mt-8 p-6 bg-slate-800/30 rounded-2xl border border-slate-700">
+            <h3 class="text-lg font-bold text-blue-300 mb-2">Tại sao con số đã ổn định hơn?</h3>
+            <p class="text-sm text-slate-300">
+                Tôi đã áp dụng <strong>Thuật toán Trung bình trượt (Moving Average)</strong>. Thay vì chỉ đếm tức thời, hệ thống sẽ tính trung bình số electron trong 2 giây gần nhất. Điều này giúp loại bỏ các "nhiễu" ngẫu nhiên do va chạm cục bộ, phản ánh đúng bản chất của dòng điện một chiều không đổi.
+            </p>
+        </footer>
+    </div>
+
+    <script>
+        const tempInput = document.getElementById('tempRange');
+        const voltageInput = document.getElementById('voltageRange');
+        const tempValDisplay = document.getElementById('tempVal');
+        const voltageValDisplay = document.getElementById('voltageVal');
+
+        const configs = [
+            { id: 'canvasNone', readoutId: 'readoutNone', hasE: false },
+            { id: 'canvasElectric', readoutId: 'readoutElectric', hasE: true }
+        ];
+
+        const GRID_SPACING = 60;
+        const ELECTRON_COUNT = 45; // Tăng số lượng e để giảm sai số thống kê
+
+        class Ion {
+            constructor(x, y) {
+                this.x = x; this.y = y;
+                this.radius = 8;
+            }
+            draw(ctx, temp) {
+                const shake = (Math.random() - 0.5) * (temp * 0.8);
+                ctx.beginPath();
+                ctx.arc(this.x + shake, this.y + shake, this.radius, 0, Math.PI * 2);
+                ctx.fillStyle = 'rgba(251, 191, 36, 0.08)';
+                ctx.fill();
+                ctx.strokeStyle = 'rgba(251, 191, 36, 0.3)';
+                ctx.stroke();
+            }
+        }
+
+        class Electron {
+            constructor(width, height, isTraced = false) {
+                this.width = width;
+                this.height = height;
+                this.isTraced = isTraced;
+                this.path = [];
+                this.reset(true);
+            }
+
+            reset(randomX = false) {
+                this.x = randomX ? Math.random() * this.width : 0;
+                this.y = Math.random() * this.height;
+                this.vx = (Math.random() - 0.5) * 6;
+                this.vy = (Math.random() - 0.5) * 6;
+                if(this.isTraced) this.path = [];
+            }
+
+            update(E, T, ions) {
+                this.vx += E;
+                const thermal = T * 0.25;
+                this.vx += (Math.random() - 0.5) * thermal;
+                this.vy += (Math.random() - 0.5) * thermal;
+
+                if (this.isTraced) {
+                    this.path.push({x: this.x, y: this.y});
+                    if (this.path.length > 60) this.path.shift();
+                }
+
+                let crossed = false;
+                const oldX = this.x;
+                this.x += this.vx;
+                this.y += this.vy;
+
+                // Vạch cảm biến tại 90% chiều dài
+                const sensorX = this.width * 0.9;
+                if (oldX < sensorX && this.x >= sensorX) {
+                    crossed = true;
+                }
+
+                if (this.y < 0 || this.y > this.height) { this.vy *= -0.8; this.y = Math.max(0, Math.min(this.height, this.y)); }
+                if (this.x < 0) { this.x = 0; this.vx *= -0.5; }
+                if (this.x > this.width) { this.reset(false); }
+
+                ions.forEach(ion => {
+                    const dist = Math.sqrt((this.x - ion.x)**2 + (this.y - ion.y)**2);
+                    if (dist < ion.radius + 3) {
+                        const angle = Math.random() * Math.PI * 2;
+                        const speed = Math.sqrt(this.vx**2 + this.vy**2) * 0.75;
+                        this.vx = Math.cos(angle) * speed;
+                        this.vy = Math.sin(angle) * speed;
+                    }
+                });
+
+                return crossed;
+            }
+
+            draw(ctx) {
+                if (this.isTraced) {
+                    ctx.beginPath();
+                    ctx.setLineDash([2, 2]);
+                    ctx.strokeStyle = 'rgba(248, 113, 113, 0.5)';
+                    this.path.forEach((p, i) => {
+                        if(i===0) ctx.moveTo(p.x, p.y);
+                        else ctx.lineTo(p.x, p.y);
+                    });
+                    ctx.stroke();
+                    ctx.setLineDash([]);
+                }
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.isTraced ? 4 : 2, 0, Math.PI * 2);
+                ctx.fillStyle = this.isTraced ? '#f87171' : '#60a5fa';
+                ctx.fill();
+            }
+        }
+
+        class Simulation {
+            constructor(config) {
+                this.canvas = document.getElementById(config.id);
+                this.readout = document.getElementById(config.readoutId);
+                this.ctx = this.canvas.getContext('2d');
+                this.hasE = config.hasE;
+                this.count = 0;
+                this.history = []; // Lưu lịch sử số lượng e để tính trung bình
+                this.lastUpdate = Date.now();
+                this.init();
+            }
+
+            init() {
+                this.width = this.canvas.parentElement.clientWidth;
+                this.height = 300;
+                this.canvas.width = this.width;
+                this.canvas.height = this.height;
+                this.ions = [];
+                this.electrons = [];
+                for (let x = GRID_SPACING/2; x < this.width; x += GRID_SPACING) {
+                    for (let y = GRID_SPACING/2; y < this.height; y += GRID_SPACING) {
+                        this.ions.push(new Ion(x, y));
+                    }
+                }
+                for (let i = 0; i < ELECTRON_COUNT; i++) {
+                    this.electrons.push(new Electron(this.width, this.height, i === 0));
+                }
+            }
+
+            render(E, T) {
+                this.ctx.fillStyle = 'rgba(2, 6, 23, 0.3)';
+                this.ctx.fillRect(0, 0, this.width, this.height);
+
+                const sensorX = this.width * 0.9;
+                this.ctx.beginPath();
+                this.ctx.setLineDash([5, 5]);
+                this.ctx.strokeStyle = 'rgba(239, 68, 68, 0.3)';
+                this.ctx.moveTo(sensorX, 0);
+                this.ctx.lineTo(sensorX, this.height);
+                this.ctx.stroke();
+                this.ctx.setLineDash([]);
+
+                this.ions.forEach(ion => ion.draw(this.ctx, T));
+                
+                const currentE = this.hasE ? E * 0.08 : 0;
+                this.electrons.forEach(e => {
+                    if (e.update(currentE, T, this.ions)) {
+                        this.count++;
+                    }
+                    e.draw(this.ctx);
+                });
+
+                const now = Date.now();
+                if (now - this.lastUpdate > 200) { // Cập nhật mẫu mỗi 200ms
+                    const rate = this.count / ((now - this.lastUpdate) / 1000);
+                    this.history.push(rate);
+                    if (this.history.length > 10) this.history.shift(); // Giữ 10 mẫu gần nhất (~2 giây)
+                    
+                    const avgRate = this.history.reduce((a, b) => a + b, 0) / this.history.length;
+                    this.readout.innerText = avgRate.toFixed(2) + " e/s";
+                    
+                    this.count = 0;
+                    this.lastUpdate = now;
+                }
+            }
+        }
+
+        let sims = [];
+        function start() {
+            sims = configs.map(c => new Simulation(c));
+        }
+
+        function loop() {
+            const T = parseFloat(tempInput.value);
+            const E = parseFloat(voltageInput.value);
+            tempValDisplay.innerText = T;
+            voltageValDisplay.innerText = E.toFixed(1);
+            sims.forEach(s => s.render(E, T));
+            requestAnimationFrame(loop);
+        }
+
+        window.addEventListener('resize', start);
+        document.getElementById('resetBtn').onclick = start;
+        start();
+        loop();
+    </script>
+</body>
+</html>
