@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mô phỏng Đường đặc trưng V-I</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { background-color: #f8fafc; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        .panel-shadow { box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1); }
+        canvas { background-color: white; border-radius: 8px; }
+        .knob-container { position: relative; width: 100px; height: 100px; margin: 0 auto; }
+        input[type="range"] { cursor: pointer; }
+    </style>
+</head>
+<body class="h-screen flex flex-col md:flex-row overflow-hidden">
+
+    <!-- Panel Trái: Biểu diễn TN và Đồ thị (Lớn) -->
+    <div class="flex-1 p-6 flex flex-col gap-4 overflow-y-auto">
+        <div class="bg-white p-4 rounded-xl panel-shadow flex-1 flex flex-col">
+            <h2 class="text-xl font-bold mb-4 text-blue-800">Đồ thị đặc trưng Vôn - Ampe (V-I)</h2>
+            <div class="relative flex-1">
+                <canvas id="viChart"></canvas>
+            </div>
+        </div>
+
+        <div class="bg-white p-4 rounded-xl panel-shadow h-48 flex items-center justify-around border-t-4 border-blue-500">
+            <div class="text-center">
+                <div class="text-xs font-bold uppercase text-gray-500">Vôn kế (V)</div>
+                <div id="voltmeter" class="text-4xl font-mono text-red-600 bg-black p-2 rounded border-4 border-gray-400">0.00</div>
+            </div>
+            
+            <!-- Sơ đồ mạch điện tối giản bằng SVG -->
+            <div class="hidden lg:block">
+                <svg width="200" height="100" viewBox="0 0 200 100">
+                    <rect x="10" y="40" width="30" height="20" fill="none" stroke="black" stroke-width="2"/>
+                    <text x="15" y="55" font-size="10">DC</text>
+                    <line x1="40" y1="50" x2="80" y2="50" stroke="black" stroke-width="2"/>
+                    <circle cx="90" cy="50" r="10" fill="none" stroke="black" stroke-width="2"/>
+                    <text x="86" y="54" font-size="10">A</text>
+                    <line x1="100" y1="50" x2="130" y2="50" stroke="black" stroke-width="2"/>
+                    <rect x="130" y="40" width="40" height="20" fill="#3b82f6" stroke="black" stroke-width="2" id="componentGraphic"/>
+                    <text x="142" y="55" font-size="12" fill="white" id="componentLabel">R</text>
+                    <line x1="170" y1="50" x2="190" y2="50" stroke="black" stroke-width="2"/>
+                    <line x1="190" y1="50" x2="190" y2="90" stroke="black" stroke-width="2"/>
+                    <line x1="190" y1="90" x2="10" y2="90" stroke="black" stroke-width="2"/>
+                    <line x1="10" y1="90" x2="10" y2="60" stroke="black" stroke-width="2"/>
+                </svg>
+            </div>
+
+            <div class="text-center">
+                <div class="text-xs font-bold uppercase text-gray-500">Ampe kế (mA)</div>
+                <div id="ammeter" class="text-4xl font-mono text-green-600 bg-black p-2 rounded border-4 border-gray-400">0.00</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Panel Phải: Bộ điều khiển (Nhỏ) -->
+    <div class="w-full md:w-80 bg-slate-900 text-white p-6 flex flex-col gap-6 panel-shadow">
+        <h2 class="text-xl font-bold border-b border-slate-700 pb-2">Bảng Điều Khiển</h2>
+        
+        <!-- Chọn Linh kiện -->
+        <div>
+            <label class="block text-sm font-medium mb-2 text-slate-400">Chọn linh kiện thí nghiệm:</label>
+            <select id="componentSelect" class="w-full bg-slate-800 border border-slate-700 p-2 rounded focus:ring-2 focus:ring-blue-500 outline-none">
+                <option value="resistor">Điện trở (R = 100Ω)</option>
+                <option value="lamp">Bóng đèn dây tóc (6V)</option>
+                <option value="ntc">Nhiệt điện trở NTC</option>
+                <option value="ptc">Nhiệt điện trở PTC</option>
+            </select>
+        </div>
+
+        <!-- Điều chỉnh Điện áp -->
+        <div>
+            <label class="block text-sm font-medium mb-2 text-slate-400">Điều chỉnh điện áp (0 - 12V):</label>
+            <input type="range" id="voltageSlider" min="0" max="12" step="0.1" value="0" class="w-full h-2 bg-blue-700 rounded-lg appearance-none">
+            <div class="flex justify-between text-xs mt-1 text-slate-500">
+                <span>0V</span>
+                <span>6V</span>
+                <span>12V</span>
+            </div>
+        </div>
+
+        <!-- Thao tác dữ liệu -->
+        <div class="flex flex-col gap-2 pt-4">
+            <button id="addPointBtn" class="bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 px-4 rounded transition">
+                Lấy số liệu (Ghi điểm)
+            </button>
+            <button id="clearBtn" class="bg-red-600 hover:bg-red-500 text-white font-bold py-2 px-4 rounded transition">
+                Xóa dữ liệu đồ thị
+            </button>
+        </div>
+
+        <!-- Thông tin lý thuyết ngắn -->
+        <div class="mt-auto p-4 bg-slate-800 rounded-lg text-sm text-slate-300 italic border-l-4 border-blue-500">
+            <p id="theoryNote">Điện trở thuần tuân theo định luật Ohm, đồ thị là đường thẳng.</p>
+        </div>
+    </div>
+
+    <script>
+        // Khởi tạo các biến mạch điện
+        let currentVoltage = 0;
+        let currentIntensity = 0;
+        let selectedComponent = 'resistor';
+        let dataPoints = [];
+
+        // Tham chiếu DOM
+        const voltageSlider = document.getElementById('voltageSlider');
+        const voltmeterDisplay = document.getElementById('voltmeter');
+        const ammeterDisplay = document.getElementById('ammeter');
+        const componentSelect = document.getElementById('componentSelect');
+        const addPointBtn = document.getElementById('addPointBtn');
+        const clearBtn = document.getElementById('clearBtn');
+        const theoryNote = document.getElementById('theoryNote');
+        const componentLabel = document.getElementById('componentLabel');
+
+        // Cấu hình đồ thị Chart.js
+        const ctx = document.getElementById('viChart').getContext('2d');
+        const viChart = new Chart(ctx, {
+            type: 'scatter',
+            data: {
+                datasets: [{
+                    label: 'Đặc tuyến V-I',
+                    data: [],
+                    borderColor: '#3b82f6',
+                    backgroundColor: '#3b82f6',
+                    showLine: true,
+                    tension: 0.3
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: {
+                        type: 'linear',
+                        position: 'bottom',
+                        title: { display: true, text: 'Hiệu điện thế V (Vôn)', font: { weight: 'bold' } },
+                        min: 0,
+                        max: 12
+                    },
+                    y: {
+                        title: { display: true, text: 'Cường độ dòng điện I (mA)', font: { weight: 'bold' } },
+                        min: 0,
+                        suggestedMax: 150
+                    }
+                },
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return `V: ${context.parsed.x}V, I: ${context.parsed.y}mA`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        // Hàm tính toán cường độ dòng điện dựa trên linh kiện
+        function calculateCurrent(v) {
+            let i = 0; // đơn vị mA
+            switch(selectedComponent) {
+                case 'resistor':
+                    // R = 100 Ohm => I = V/100 * 1000 = 10*V (mA)
+                    i = v * 10;
+                    theoryNote.innerText = "Điện trở thuần: I tỉ lệ thuận với V. Đồ thị là đường thẳng.";
+                    componentLabel.textContent = "R";
+                    break;
+                case 'lamp':
+                    // Bóng đèn: R tăng khi nóng lên (khi I tăng)
+                    // Mô hình: I = k * V^(0.6)
+                    i = 35 * Math.pow(v, 0.65);
+                    theoryNote.innerText = "Bóng đèn: Khi V tăng, dây tóc nóng lên làm R tăng. I tăng chậm lại ở điện áp cao.";
+                    componentLabel.textContent = "Lamp";
+                    break;
+                case 'ntc':
+                    // NTC: R giảm khi nóng lên
+                    // Mô hình: I tăng nhanh hơn tuyến tính
+                    i = 8 * Math.pow(v, 1.4);
+                    theoryNote.innerText = "NTC: Nhiệt độ tăng làm điện trở giảm mạnh. Dòng điện vọt lên nhanh ở áp cao.";
+                    componentLabel.textContent = "NTC";
+                    break;
+                case 'ptc':
+                    // PTC: R tăng vọt khi đạt nhiệt độ ngưỡng
+                    if (v < 6) {
+                        i = 15 * v;
+                    } else {
+                        // Sau 6V, PTC nóng lên và 'khóa' dòng
+                        i = 90 / (1 + (v - 6) * 2);
+                    }
+                    theoryNote.innerText = "PTC: Sau một ngưỡng điện áp, điện trở tăng đột ngột làm dòng điện giảm xuống.";
+                    componentLabel.textContent = "PTC";
+                    break;
+            }
+            return i;
+        }
+
+        // Cập nhật hiển thị
+        function updateDisplay() {
+            currentVoltage = parseFloat(voltageSlider.value);
+            currentIntensity = calculateCurrent(currentVoltage);
+            
+            voltmeterDisplay.innerText = currentVoltage.toFixed(2);
+            ammeterDisplay.innerText = currentIntensity.toFixed(2);
+        }
+
+        // Sự kiện thay đổi
+        voltageSlider.addEventListener('input', updateDisplay);
+        
+        componentSelect.addEventListener('change', (e) => {
+            selectedComponent = e.target.value;
+            // Xóa dữ liệu cũ khi đổi linh kiện để tránh nhầm lẫn
+            dataPoints = [];
+            viChart.data.datasets[0].data = [];
+            viChart.update();
+            updateDisplay();
+        });
+
+        addPointBtn.addEventListener('click', () => {
+            const point = { x: currentVoltage, y: parseFloat(currentIntensity.toFixed(2)) };
+            
+            // Sắp xếp để đồ thị vẽ đúng thứ tự
+            dataPoints.push(point);
+            dataPoints.sort((a, b) => a.x - b.x);
+            
+            viChart.data.datasets[0].data = dataPoints;
+            viChart.update();
+        });
+
+        clearBtn.addEventListener('click', () => {
+            dataPoints = [];
+            viChart.data.datasets[0].data = [];
+            viChart.update();
+        });
+
+        // Khởi tạo lần đầu
+        updateDisplay();
+    </script>
+</body>
+</html>
