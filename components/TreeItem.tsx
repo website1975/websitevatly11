@@ -14,6 +14,8 @@ interface TreeItemProps {
   onDelete: (id: string) => void;
   onReorder: (id: string, direction: 'up' | 'down') => void;
   level: number;
+  visibleNodeIds: Set<string> | null;
+  searchTerm: string;
 }
 
 const TreeItem: React.FC<TreeItemProps> = ({ 
@@ -26,30 +28,51 @@ const TreeItem: React.FC<TreeItemProps> = ({
   onEdit, 
   onDelete,
   onReorder,
-  level 
+  level,
+  visibleNodeIds,
+  searchTerm
 }) => {
   const [isOpen, setIsOpen] = useState(false);
 
-  // Auto-expand if a descendant is selected
+  // Auto-expand if a descendant is selected or if searching and has matching descendants
   React.useEffect(() => {
-    if (selectedId) {
+    if (selectedId || searchTerm.trim()) {
       const checkDescendant = (parentId: string): boolean => {
         const directChildren = allNodes.filter(n => n.parentId === parentId);
-        if (directChildren.some(c => c.id === selectedId)) return true;
-        return directChildren.some(c => checkDescendant(c.id));
+        
+        // If searching, check if any descendant matches the search term
+        if (searchTerm.trim()) {
+          const term = searchTerm.toLowerCase();
+          const hasMatchingDescendant = (pid: string): boolean => {
+            const children = allNodes.filter(n => n.parentId === pid);
+            return children.some(c => c.title.toLowerCase().includes(term) || hasMatchingDescendant(c.id));
+          };
+          if (hasMatchingDescendant(node.id)) return true;
+        }
+
+        // Check if selected node is a descendant
+        if (selectedId) {
+          if (directChildren.some(c => c.id === selectedId)) return true;
+          return directChildren.some(c => checkDescendant(c.id));
+        }
+        
+        return false;
       };
       
       if (checkDescendant(node.id)) {
         setIsOpen(true);
       }
     }
-  }, [selectedId, allNodes, node.id]);
+  }, [selectedId, allNodes, node.id, searchTerm]);
   
   const children = useMemo(() => {
-    return allNodes
+    const items = allNodes
       .filter(n => n.parentId === node.id)
       .sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
-  }, [allNodes, node.id]);
+    
+    if (!visibleNodeIds) return items;
+    return items.filter(n => visibleNodeIds.has(n.id));
+  }, [allNodes, node.id, visibleNodeIds]);
 
   const isSelected = selectedId === node.id;
 
@@ -147,6 +170,8 @@ const TreeItem: React.FC<TreeItemProps> = ({
               onDelete={onDelete}
               onReorder={onReorder}
               level={level + 1}
+              visibleNodeIds={visibleNodeIds}
+              searchTerm={searchTerm}
             />
           ))}
         </div>
