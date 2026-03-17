@@ -13,6 +13,49 @@ import Forum from './components/Forum';
 import FlashcardsPanel from './components/FlashcardsPanel';
 import { getSafeEnv, SLOGANS } from './utils';
 
+class ErrorBoundary extends React.Component<any, any> {
+  constructor(props: any) {
+    super(props);
+    (this as any).state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error: any) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: any, errorInfo: any) {
+    console.error("ErrorBoundary caught an error", error, errorInfo);
+  }
+
+  render() {
+    const state = (this as any).state;
+    const props = (this as any).props;
+    if (state.hasError) {
+      return (
+        <div className="h-screen w-full flex flex-col items-center justify-center bg-slate-50 p-6 text-center">
+          <div className="mb-6 p-4 bg-red-50 text-red-600 rounded-2xl border border-red-100">
+            <ShieldCheck size={48} className="mx-auto mb-4" />
+            <h2 className="text-xl font-bold mb-2">Đã có lỗi xảy ra!</h2>
+            <p className="text-sm opacity-80 max-w-md mx-auto">
+              Ứng dụng gặp sự cố kỹ thuật. Vui lòng thử tải lại trang hoặc liên hệ quản trị viên.
+            </p>
+            <pre className="mt-4 p-3 bg-white/50 rounded-lg text-[10px] text-left overflow-auto max-h-40">
+              {state.error?.message}
+            </pre>
+          </div>
+          <button 
+            onClick={() => window.location.reload()} 
+            className="px-6 py-3 bg-indigo-600 text-white rounded-full font-bold uppercase text-[10px] tracking-widest shadow-lg shadow-indigo-100"
+          >
+            Tải lại trang
+          </button>
+        </div>
+      );
+    }
+    return props.children;
+  }
+}
+
 const SUPABASE_URL = 'https://ktottoplusantmadclpg.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_Fa4z8bEgByw3pGTJdvBqmQ_D_KeDGdl';
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -26,8 +69,15 @@ const App: React.FC = () => {
   const fetchCloudData = useCallback(async () => {
     setIsSyncing(true);
     try {
-      const { data: cloud } = await supabase.from('app_settings').select('data').eq('id', 1).single();
-      if (cloud?.data) setData(cloud.data);
+      const { data: cloud, error: cloudError } = await supabase.from('app_settings').select('data').eq('id', 1).single();
+      if (cloudError) console.error("Cloud fetch error:", cloudError);
+      
+      if (cloud?.data && Array.isArray(cloud.data.nodes)) {
+        setData(cloud.data);
+      } else if (cloud?.data) {
+        // Fallback if data exists but structure is wrong
+        setData({ ...INITIAL_DATA, ...cloud.data, nodes: cloud.data.nodes || INITIAL_DATA.nodes });
+      }
       
       const { data: stats, error: statsError } = await supabase.from('app_settings').select('data').eq('id', 99).single();
       if (!statsError && stats?.data && typeof stats.data.visitorCount === 'number') {
@@ -55,12 +105,14 @@ const App: React.FC = () => {
   };
 
   return (
-    <Routes>
-      <Route path="/" element={<LandingPage visitorCount={visitorCount} />} />
-      <Route path="/teacher" element={<ProtectedRoute><MainView isAdmin={true} data={data} updateData={updateData} isSyncing={isSyncing} visitorCount={visitorCount}/></ProtectedRoute>} />
-      <Route path="/student" element={<MainView isAdmin={false} data={data} updateData={updateData} isSyncing={isSyncing} visitorCount={visitorCount}/>} />
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+    <ErrorBoundary>
+      <Routes>
+        <Route path="/" element={<LandingPage visitorCount={visitorCount} />} />
+        <Route path="/teacher" element={<ProtectedRoute><MainView isAdmin={true} data={data} updateData={updateData} isSyncing={isSyncing} visitorCount={visitorCount}/></ProtectedRoute>} />
+        <Route path="/student" element={<MainView isAdmin={false} data={data} updateData={updateData} isSyncing={isSyncing} visitorCount={visitorCount}/>} />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </ErrorBoundary>
   );
 };
 
@@ -125,14 +177,14 @@ const MainView: React.FC<{ isAdmin: boolean; data: AppData; updateData: (d: AppD
   const [isQuizOpen, setIsQuizOpen] = useState(false);
   const navigate = useNavigate();
 
-  const selectedNode = data.nodes.find(n => n.id === selectedId);
+  const selectedNode = data?.nodes?.find(n => n.id === selectedId);
   const childNodes = useMemo(() => {
-    if (!selectedId || selectedNode?.type !== 'folder') return [];
+    if (!selectedId || selectedNode?.type !== 'folder' || !data?.nodes) return [];
     return data.nodes.filter(n => n.parentId === selectedId).sort((a,b) => (a.order ?? 0) - (b.order ?? 0));
-  }, [selectedId, data.nodes]);
+  }, [selectedId, data?.nodes, selectedNode?.type]);
 
   const visibleNodeIds = useMemo(() => {
-    if (!searchTerm.trim()) return null;
+    if (!searchTerm.trim() || !data?.nodes) return null;
     const term = searchTerm.toLowerCase();
     const matches = new Set<string>();
     
@@ -152,13 +204,14 @@ const MainView: React.FC<{ isAdmin: boolean; data: AppData; updateData: (d: AppD
     });
 
     return visible;
-  }, [data.nodes, searchTerm]);
+  }, [data?.nodes, searchTerm]);
 
   const filteredRootNodes = useMemo(() => {
+    if (!data?.nodes) return [];
     const roots = data.nodes.filter(n => n.parentId === null).sort((a,b) => (a.order ?? 0) - (b.order ?? 0));
     if (!visibleNodeIds) return roots;
     return roots.filter(n => visibleNodeIds.has(n.id));
-  }, [data.nodes, visibleNodeIds]);
+  }, [data?.nodes, visibleNodeIds]);
 
   useEffect(() => {
     const timer = setInterval(() => setSloganIdx(prev => (prev + 1) % SLOGANS.length), 30000);
@@ -179,25 +232,25 @@ const MainView: React.FC<{ isAdmin: boolean; data: AppData; updateData: (d: AppD
   const handleDeleteNode = (id: string) => {
     if(!window.confirm("Xóa thư mục/bài học này? Hệ thống sẽ xóa cả các mục con bên trong.")) return;
     const getChildIds = (parentId: string): string[] => {
-      const children = data.nodes.filter(n => n.parentId === parentId);
+      const children = (data?.nodes || []).filter(n => n.parentId === parentId);
       return [parentId, ...children.flatMap(c => getChildIds(c.id))];
     };
     const idsToDelete = getChildIds(id);
-    const newData = {...data, nodes: data.nodes.filter(n => !idsToDelete.includes(n.id))};
+    const newData = {...data, nodes: (data?.nodes || []).filter(n => !idsToDelete.includes(n.id))};
     updateData(newData);
     if(selectedId && idsToDelete.includes(selectedId)) setSelectedId(null);
   };
 
   const handleReorderNode = (id: string, direction: 'up' | 'down') => {
-    const node = data.nodes.find(n => n.id === id);
+    const node = data?.nodes?.find(n => n.id === id);
     if (!node) return;
-    const siblings = data.nodes.filter(n => n.parentId === node.parentId).sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+    const siblings = (data?.nodes || []).filter(n => n.parentId === node.parentId).sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
     const normalizedSiblings = siblings.map((s, idx) => ({ ...s, order: idx }));
     const currentIndex = normalizedSiblings.findIndex(n => n.id === id);
     const targetIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
     if (targetIndex < 0 || targetIndex >= normalizedSiblings.length) return;
     const targetNode = normalizedSiblings[targetIndex];
-    const newNodes = data.nodes.map(n => {
+    const newNodes = (data?.nodes || []).map(n => {
       const normalizedMatch = normalizedSiblings.find(s => s.id === n.id);
       let updatedNode = normalizedMatch ? { ...n, order: normalizedMatch.order } : n;
       if (updatedNode.id === id) return { ...updatedNode, order: targetNode.order };
@@ -218,9 +271,9 @@ const MainView: React.FC<{ isAdmin: boolean; data: AppData; updateData: (d: AppD
       else newData.globalResources.push(newRes);
     } else {
       if(!selectedId) return;
-      newData.nodes = newData.nodes.map(n => {
+      newData.nodes = (data?.nodes || []).map(n => {
         if(n.id === selectedId) {
-          let updatedRes = [...n.lessonResources];
+          let updatedRes = [...(n.lessonResources || [])];
           if(resModalData.id) updatedRes = updatedRes.map(r => r.id === resId ? newRes : r);
           else updatedRes.push(newRes);
           return {...n, lessonResources: updatedRes};
@@ -235,8 +288,8 @@ const MainView: React.FC<{ isAdmin: boolean; data: AppData; updateData: (d: AppD
   const handleDeleteResource = (id: string, title: string, isGlobal: boolean) => {
     if(!window.confirm(`Xóa học liệu: ${title}?`)) return;
     const newData = {...data};
-    if(isGlobal) newData.globalResources = newData.globalResources.filter(r => r.id !== id);
-    else newData.nodes = newData.nodes.map(n => n.id === selectedId ? {...n, lessonResources: n.lessonResources.filter(r => r.id !== id)} : n);
+    if(isGlobal) newData.globalResources = (data?.globalResources || []).filter(r => r.id !== id);
+    else newData.nodes = (data?.nodes || []).map(n => n.id === selectedId ? {...n, lessonResources: (n.lessonResources || []).filter(r => r.id !== id)} : n);
     updateData(newData);
   };
 
