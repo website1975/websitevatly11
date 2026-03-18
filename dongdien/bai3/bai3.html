@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bài 18: Nguồn Điện - Vật lí 11</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']]
+      }
+    };
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+            color: #1e293b;
+        }
+        
+        .math-text {
+            font-family: 'Times New Roman', Times, serif;
+            font-style: italic;
+            font-weight: 600;
+            color: #1e40af;
+        }
+
+        /* Header Style giống bai2.html */
+        .main-header {
+            background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%);
+            color: white;
+            padding: 4rem 1rem;
+            border-radius: 0 0 3rem 3rem;
+            margin-bottom: 3rem;
+            box-shadow: 0 10px 25px -5px rgba(37, 99, 235, 0.3);
+        }
+
+        .section-card {
+            background: white;
+            border-radius: 1.25rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            border-left: 6px solid #3b82f6;
+            margin-bottom: 2.5rem;
+            padding: 1.75rem;
+        }
+
+        .formula-box {
+            background: linear-gradient(135deg, #f0f7ff 0%, #e0f2fe 100%);
+            border: 1px dashed #3b82f6;
+            border-radius: 1rem;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            text-align: center;
+        }
+
+        .important-note {
+            background: #fffbeb;
+            border-left: 4px solid #f59e0b;
+            padding: 1.25rem;
+            border-radius: 0.75rem;
+            margin: 1.25rem 0;
+            font-size: 0.95rem;
+        }
+
+        .solution-box {
+            background-color: #f1f5f9;
+            border-radius: 12px;
+            padding: 20px;
+            border-left: 4px solid #64748b;
+            margin-top: 1.25rem;
+        }
+
+        .step-title {
+            color: #0f172a;
+            font-weight: 800;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.1em;
+            margin-bottom: 0.75rem;
+            display: block;
+        }
+
+        .img-placeholder {
+            background-color: #f1f5f9;
+            border: 2px dashed #cbd5e1;
+            border-radius: 1rem;
+            padding: 2rem;
+            text-align: center;
+            margin: 1.5rem 0;
+            color: #64748b;
+            font-style: italic;
+            font-size: 0.875rem;
+        }
+
+        .highlight-text {
+            color: #2563eb;
+            font-weight: 700;
+        }
+    </style>
+</head>
+<body class="max-w-4xl mx-auto pb-16">
+
+    <!-- Header Section -->
+    <header class="main-header text-center">
+        <div class="inline-block px-4 py-1 mb-4 text-xs font-bold tracking-widest text-blue-100 uppercase bg-white/10 rounded-full backdrop-blur-md">
+    	Chương 4: DÒNG ĐIỆN KHÔNG ĐỔI
+        </div>
+        <h1 class="text-4xl md:text-6xl font-extrabold mb-4 tracking-tight">
+            Bài 22: Nguồn Điện, Ghép nguồn thành bộ
+        </h1>
+        <p class="text-blue-100 text-lg md:text-xl font-medium max-w-2xl mx-auto opacity-90 leading-relaxed">
+            
+        </p>
+    </header>
+
+    <div class="px-4 md:px-0">
+        
+        <!-- Section 1: Khái niệm -->
+        <section class="section-card">
+            <h2 class="text-2xl font-bold text-slate-800 mb-5 flex items-center">
+                <span class="w-10 h-10 bg-blue-600 text-white rounded-xl flex items-center justify-center mr-4 shadow-lg shadow-blue-200">01</span>
+                Khái niệm nguồn điện
+            </h2>
+            <div class="space-y-4 text-slate-600 leading-relaxed text-lg">
+                <p>
+                    Để duy trì dòng điện trong mạch lâu dài, ta cần một thiết bị có khả năng đưa các hạt tải điện chuyển động ngược chiều điện trường. Thiết bị đó được gọi là <span class="highlight-text">nguồn điện</span>.
+                </p>
+                <div class="img-placeholder">
+                    
+                    <p class="mt-2 text-xs font-bold uppercase tracking-widest text-slate-400"><img src='h1.png'></img>Hình 18.1: Các nguồn điện thông dụng</p>
+                </div>
+                <div class="bg-blue-50 p-5 rounded-2xl border border-blue-100">
+                    <p class="font-bold text-blue-900 mb-2 underline decoration-blue-300">Bản chất của Lực lạ:</p>
+                    <p class="text-sm italic text-blue-800">
+                        Bên trong nguồn điện, các lực không có bản chất điện (như lực hóa học, lực từ) thực hiện công để tách electron và di chuyển chúng. Các lực này được gọi là <strong>lực lạ</strong>.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 2: Suất điện động -->
+        <section class="section-card" style="border-left-color: #10b981;">
+            <h2 class="text-2xl font-bold text-slate-800 mb-5 flex items-center">
+                <span class="w-10 h-10 bg-emerald-600 text-white rounded-xl flex items-center justify-center mr-4 shadow-lg shadow-emerald-200">02</span>
+                Suất điện động của nguồn điện
+            </h2>
+            <div class="space-y-4 text-slate-600">
+                <p>Suất điện động <span class="math-text">$\mathcal{E}$</span> là đại lượng đặc trưng cho khả năng thực hiện công của nguồn điện.</p>
+                <div class="formula-box">
+                    <p class="text-3xl font-black text-emerald-700">$$\mathcal{E} = \frac{A}{q}$$</p>
+                    <div class="text-sm text-slate-500 mt-4 flex justify-center gap-8">
+                        <span>$A$: Công lực lạ (J)</span>
+                        <span>$q$: Điện tích (C)</span>
+                    </div>
+                    <p class="text-xs font-bold text-emerald-600 mt-3 uppercase tracking-widest">Đơn vị: Vôn (V)</p>
+                </div>
+                <div class="important-note">
+                    <p class="font-bold text-slate-800 mb-1">Mối liên hệ với Hiệu điện thế:</p>
+                    <p>Mọi nguồn điện đều có điện trở trong <span class="math-text">$r$</span>. Hiệu điện thế giữa hai cực nguồn điện là:</p>
+                    <p class="text-center font-bold text-xl mt-3 text-emerald-800">$$U = \mathcal{E} - I \cdot r$$</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 3: Ghép bộ nguồn -->
+        <section class="section-card" style="border-left-color: #ef4444;">
+            <h2 class="text-2xl font-bold text-slate-800 mb-5 flex items-center">
+                <span class="w-10 h-10 bg-red-600 text-white rounded-xl flex items-center justify-center mr-4 shadow-lg shadow-red-200">03</span>
+                Các cách ghép bộ nguồn
+            </h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
+                <!-- Ghép nối tiếp -->
+                <div class="p-6 border-2 border-red-50 rounded-3xl bg-white shadow-sm hover:border-red-100 transition-colors">
+                    <h3 class="font-black text-red-600 mb-4 flex justify-between items-center text-sm tracking-tighter">
+                        GHÉP NỐI TIẾP
+                        <span class="px-2 py-1 bg-red-100 text-[10px] rounded-lg">TĂNG SUẤT ĐIỆN ĐỘNG</span>
+                    </h3>
+                    <div class="space-y-4">
+                        <div class="bg-red-50 p-4 rounded-xl">
+                            <p class="text-lg font-bold">$\mathcal{E}_b = \sum \mathcal{E}_i$</p>
+                            <p class="text-lg font-bold mt-2">$r_b = \sum r_i$</p>
+                        </div>
+			<div class="bg-red-50 p-4 rounded-xl">
+                            <img src="h2.png"></img>
+                        </div>
+                        <p class="text-xs text-slate-400 italic text-center">Nối cực âm nguồn này với cực dương nguồn kia.</p>
+                    </div>
+                    <h3 class="font-black text-red-600 mb-4 flex justify-between items-center text-sm tracking-tighter">
+                        GHÉP XUNG ĐỐI
+                        <span class="px-2 py-1 bg-red-100 text-[10px] rounded-lg">GIẢM SUẤT ĐIỆN ĐỘNG</span>
+
+                    </h3>
+                    <div class="space-y-4">
+                        <div class="bg-red-50 p-4 rounded-xl">
+                            <p class="text-lg font-bold">$\mathcal{E}_b = \mathcal{E}_1-\mathcal{E}_2 (\mathcal{E}_1>\mathcal{E}_2)$</p>
+                            <p class="text-lg font-bold mt-2">$r_b = r_1+r_2$</p>
+                        </div>
+			<div class="bg-red-50 p-4 rounded-xl">
+                            <img src="h5.png"></img>
+                        </div>
+                        <p class="text-xs text-slate-400 italic text-center">Nối hai cực cùng dấu của hai nguồn.</p>
+                    </div>
+
+                </div>
+
+                <!-- Ghép song song -->
+                <div class="p-6 border-2 border-red-50 rounded-3xl bg-white shadow-sm hover:border-red-100 transition-colors">
+                    <h3 class="font-black text-red-600 mb-4 flex justify-between items-center text-sm tracking-tighter">
+                        GHÉP SONG SONG
+                        <span class="px-2 py-1 bg-red-100 text-[10px] rounded-lg">GIẢM ĐIỆN TRỞ TRONG</span>
+                    </h3>
+                    <div class="space-y-4">
+                        <div class="bg-red-50 p-4 rounded-xl text-center">
+                            <p class="text-lg font-bold">$\mathcal{E}_b = \mathcal{E}$</p>
+                            <p class="text-lg font-bold mt-2">$r_b = \frac{r}{n}$</p>
+                        </div>
+		        <div class="bg-red-50 p-4 rounded-xl text-center">
+		           <img src="h3.png"></img>
+		        </div>
+                        <p class="text-xs text-slate-400 italic text-center">(Áp dụng cho n nguồn giống nhau)</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Hỗn hợp đối xứng -->
+            <div class="mt-8 p-6 bg-slate-50 rounded-2xl border-l-8 border-slate-300 relative overflow-hidden">
+                <div class="absolute right-0 top-0 opacity-10 pointer-events-none">
+                    <svg width="100" height="100" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M2 12h20"/></svg>
+                </div>
+                <h3 class="font-bold text-slate-700 mb-4 text-sm uppercase tracking-widest">Ghép hỗn hợp đối xứng</h3>
+                <div class="grid grid-cols-2 gap-6">
+                    <div class="bg-white p-4 rounded-xl shadow-sm">
+                        <p class="text-xs text-slate-400 mb-1">Suất điện động bộ:</p>
+                        <p class="text-2xl font-black text-red-600">$\mathcal{E}_b = m \cdot \mathcal{E}$</p>
+                    </div>
+                    <div class="bg-white p-4 rounded-xl shadow-sm">
+                        <p class="text-xs text-slate-400 mb-1">Điện trở trong bộ:</p>
+                        <p class="text-2xl font-black text-red-600">$r_b = \frac{m \cdot r}{n}$</p>
+                    </div>
+		    <div class="bg-white p-4 rounded-xl shadow-sm">
+ 	            <img src="h4.png"></img>                    
+                    </div>
+
+                </div>
+                <p class="text-[11px] text-slate-500 mt-4 italic text-right">* m: số nguồn nối tiếp mỗi dãy | n: số dãy song song</p>
+            </div>
+        </section>
+
+        <!-- Section 4: Bài tập -->
+        <section class="section-card" style="border-left-color: #6366f1;">
+            <h2 class="text-2xl font-bold text-slate-800 mb-5 flex items-center">
+                <span class="w-10 h-10 bg-indigo-600 text-white rounded-xl flex items-center justify-center mr-4 shadow-lg shadow-indigo-200">04</span>
+                Bài tập thực hành
+            </h2>
+            
+            <div class="space-y-8">
+                <!-- Bài 1 -->
+                <div class="relative pl-4">
+                    <p class="text-slate-800 font-semibold mb-4 text-lg">
+                        <span class="text-indigo-600 mr-2">1.</span>
+                        Một nguồn điện có $\mathcal{E} = 6\text{ V}$ và $r = 0,5\text{ }\Omega$. Khi dòng điện trong mạch là $1,4\text{ A}$, hãy tính hiệu điện thế giữa hai cực của nguồn.
+                    </p>
+                    <div class="solution-box">
+                        <span class="step-title">Hướng dẫn giải</span>
+                        <div class="space-y-3 text-slate-600">
+                            <p>• Áp dụng hệ thức liên hệ: <span class="math-text">$U = \mathcal{E} - I \cdot r$</span></p>
+                            <p>• Thay số: <span class="math-text">\(U = 6 - (1,4 \cdot 0,5) = 6 - 0,7 = 5,3\text{ V}\)</span>.</p>
+                            <p class="font-bold text-indigo-700 mt-2">Đáp số: $U = 5,3\text{ V}$.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bài 2 -->
+                <div class="relative pl-4">
+                    <p class="text-slate-800 font-semibold mb-4 text-lg">
+                        <span class="text-indigo-600 mr-2">2.</span>
+                        Bộ nguồn gồm 4 pin giống nhau ($1,5\text{V} - 1\text{ }\Omega$) mắc nối tiếp. Tính $\mathcal{E}_b$ và $r_b$.
+                    </p>
+                    <div class="solution-box">
+                        <span class="step-title">Hướng dẫn giải</span>
+                        <div class="space-y-2 text-slate-600">
+                            <p>• Suất điện động bộ: <span class="math-text">$\mathcal{E}_b = 4 \times 1,5 = 6\text{ V}$</span>.</p>
+                            <p>• Điện trở trong bộ: <span class="math-text">$r_b = 4 \times 1 = 4\text{ }\Omega$</span>.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="text-center text-slate-400 text-xs mt-12 pb-10 border-t border-slate-100 pt-8">
+            <p class="mb-2">© 2024 - Vật lí 11 - Chân trời sáng tạo</p>
+            <p>Thiết kế bài giảng tương tác - Phong cách Canvas</p>
+        </footer>
+    </div>
+
+</body>
+</html>
