@@ -104,20 +104,21 @@
                                 <span>Suất điện động (E):</span>
                                 <span id="valVoltage" class="text-white">12V</span>
                             </label>
-                            <input type="range" id="inputVoltage" min="5" max="30" value="12" class="w-full">
+                            <input type="range" id="inputVoltage" min="0" max="60" value="12" class="w-full">
                         </div>
                         <div>
                             <label class="block text-xs font-bold text-blue-400 uppercase mb-1 flex justify-between">
                                 <span>Điện trở tải (R):</span>
                                 <span id="valResistance" class="text-white">10Ω</span>
                             </label>
-                            <input type="range" id="inputResistance" min="5" max="50" value="10" class="w-full">
+                            <input type="range" id="inputResistance" min="2" max="50" value="10" class="w-full">
                         </div>
                     </div>
 
                     <div class="mt-6 p-4 bg-slate-900/80 rounded-lg border border-slate-700">
                         <h4 class="text-sm font-bold text-yellow-500 mb-2 italic">Trạng thái hệ thống:</h4>
                         <p id="statusDisplay" class="text-xs text-emerald-400 font-mono">● Đang hoạt động...</p>
+                        <p id="intensityDisplay" class="text-[10px] text-slate-400 mt-2 font-mono">Độ sáng đèn: 100%</p>
                     </div>
                 </div>
             </div>
@@ -135,6 +136,7 @@
         const valV = document.getElementById('valVoltage');
         const valR = document.getElementById('valResistance');
         const statusDisplay = document.getElementById('statusDisplay');
+        const intensityDisplay = document.getElementById('intensityDisplay');
 
         cCanvas.width = 800; cCanvas.height = 320;
         wCanvas.width = 800; wCanvas.height = 320;
@@ -169,7 +171,6 @@
         function stopSim() {
             isRunning = false;
             time = 0;
-            // Reset progress hạt
             particles.forEach((p, i) => p.progress = i / particles.length);
             waterDrops.forEach((d, i) => d.progress = i / waterDrops.length);
             statusDisplay.innerText = "● Đã dừng & Reset";
@@ -279,20 +280,47 @@
             cCtx.fillStyle = "#3b82f6";
             cCtx.fillText("-", sx + 95, sy + 32);
 
+            // Vẽ Bóng Đèn (Tải R)
             const rx = rect.x + rect.w/2;
             const ry = rect.y;
+            
+            // Tính toán độ sáng dựa trên công suất hoặc cường độ I = U/R
+            const currentIntensity = voltage / resistance;
+            const maxIntensity = 3.0; // Định mức giả định cho hiệu ứng
+            const brightnessFactor = Math.min(currentIntensity / 1.2, 1.5); 
+
+            if (isRunning && voltage > 0) {
+                // Ánh sáng tỏa (Glow effect)
+                const gradient = cCtx.createRadialGradient(rx, ry, 5, rx, ry, 50 * brightnessFactor);
+                gradient.addColorStop(0, `rgba(251, 191, 36, ${0.6 * brightnessFactor})`);
+                gradient.addColorStop(1, 'rgba(251, 191, 36, 0)');
+                
+                cCtx.fillStyle = gradient;
+                cCtx.beginPath();
+                cCtx.arc(rx, ry, 60 * brightnessFactor, 0, Math.PI * 2);
+                cCtx.fill();
+
+                // Sợi đốt đèn
+                cCtx.strokeStyle = '#fbbf24';
+                cCtx.lineWidth = 3;
+                cCtx.shadowBlur = 15 * brightnessFactor;
+                cCtx.shadowColor = '#fbbf24';
+            } else {
+                cCtx.strokeStyle = '#475569';
+                cCtx.lineWidth = 3;
+                cCtx.shadowBlur = 0;
+            }
+
             cCtx.beginPath();
             cCtx.arc(rx, ry, 22, 0, Math.PI * 2);
-            cCtx.fillStyle = '#0f172a';
+            cCtx.fillStyle = isRunning && voltage > 0 ? '#451a03' : '#0f172a';
             cCtx.fill();
-            cCtx.strokeStyle = isRunning ? '#fbbf24' : '#475569';
-            cCtx.lineWidth = 3;
-            if (isRunning) {
-                cCtx.shadowBlur = (voltage/resistance) * 20;
-                cCtx.shadowColor = '#fbbf24';
-            }
             cCtx.stroke();
             cCtx.shadowBlur = 0;
+
+            // Hiển thị % độ sáng
+            const brightnessPercent = Math.round(brightnessFactor * 100);
+            intensityDisplay.innerText = `Độ sáng đèn: ${isRunning ? brightnessPercent : 0}%`;
 
             const speed = (voltage / resistance) * 0.0018;
             particles.forEach(p => {
@@ -332,7 +360,7 @@
             wCtx.save();
             wCtx.translate(wx, wy);
             if (isRunning) wCtx.rotate(time * (voltage/resistance));
-            wCtx.strokeStyle = isRunning ? '#fbbf24' : '#475569';
+            wCtx.strokeStyle = isRunning && voltage > 0 ? '#fbbf24' : '#475569';
             wCtx.beginPath(); wCtx.arc(0,0,22,0,Math.PI*2); wCtx.stroke();
             for(let i=0; i<6; i++){
                 wCtx.rotate(Math.PI/3);
