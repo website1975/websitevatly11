@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mô phỏng Chiều Dòng Điện & Lực Lạ</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-color: #0f172a;
+            color: #f8fafc;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow-x: hidden;
+        }
+        canvas {
+            background: #111827;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+        .control-panel {
+            background: rgba(30, 41, 59, 0.9);
+            backdrop-filter: blur(10px);
+        }
+        input[type="range"] {
+            accent-color: #3b82f6;
+        }
+        .energy-btn, .ctrl-btn {
+            transition: all 0.2s ease;
+        }
+        .energy-btn.active {
+            background-color: #f97316;
+            color: white;
+            border-color: #fdba74;
+            box-shadow: 0 0 15px rgba(249, 115, 22, 0.4);
+        }
+        .ctrl-btn:active {
+            transform: scale(0.95);
+        }
+    </style>
+</head>
+<body class="p-4 md:p-6">
+    <div class="max-w-6xl mx-auto">
+        <header class="mb-6 text-center">
+            <h1 class="text-3xl font-bold text-red-400">Chiều Dòng Điện Quy Ước & Lực Lạ</h1>
+            <p class="text-slate-400 italic">Điều khiển dòng chảy và quan sát cơ chế của Lực Lạ</p>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <!-- Khu vực mô phỏng -->
+            <div class="lg:col-span-8 space-y-6">
+                <!-- Mạch điện -->
+                <div>
+                    <h2 class="text-lg font-semibold mb-2 flex items-center gap-2 text-red-300">
+                        <span class="bg-red-500 w-2 h-6 rounded-full"></span> 1. Mạch điện (Chiều (+) sang (-))
+                    </h2>
+                    <canvas id="circuitCanvas"></canvas>
+                </div>
+
+                <!-- Dòng nước -->
+                <div>
+                    <h2 class="text-lg font-semibold mb-2 flex items-center gap-2 text-cyan-300">
+                        <span class="bg-cyan-500 w-2 h-6 rounded-full"></span> 2. Tương đương Thủy lực (Bơm nước)
+                    </h2>
+                    <canvas id="waterCanvas"></canvas>
+                </div>
+            </div>
+
+            <!-- Khu vực điều khiển -->
+            <div class="lg:col-span-4 space-y-6">
+                <div class="control-panel p-6 rounded-xl border border-slate-700 shadow-xl">
+                    <h3 class="text-xl font-bold mb-4 border-b border-slate-600 pb-2 text-blue-400">Bộ Điều Khiển</h3>
+                    
+                    <!-- Nút điều khiển chính -->
+                    <div class="grid grid-cols-3 gap-2 mb-6">
+                        <button onclick="startSim()" id="btnStart" class="ctrl-btn bg-emerald-600 hover:bg-emerald-500 py-2 rounded-lg font-bold flex flex-col items-center justify-center text-xs">
+                            <span class="text-lg">▶</span> BẮT ĐẦU
+                        </button>
+                        <button onclick="pauseSim()" id="btnPause" class="ctrl-btn bg-amber-600 hover:bg-amber-500 py-2 rounded-lg font-bold flex flex-col items-center justify-center text-xs">
+                            <span class="text-lg">⏸</span> TẠM DỪNG
+                        </button>
+                        <button onclick="stopSim()" id="btnStop" class="ctrl-btn bg-rose-600 hover:bg-rose-500 py-2 rounded-lg font-bold flex flex-col items-center justify-center text-xs">
+                            <span class="text-lg">⏹</span> DỪNG LẠI
+                        </button>
+                    </div>
+
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium mb-3 text-slate-300">Nguồn năng lượng A (Lực Lạ):</label>
+                        <div class="grid grid-cols-1 gap-2">
+                            <button onclick="setSource('chemical')" id="btn-chemical" class="energy-btn active px-4 py-2 rounded-lg border border-slate-600 text-left text-sm flex items-center gap-3">
+                                <span>🔋</span> <div><b>Hóa năng</b> <br><small class="opacity-70">Phản ứng hóa học trong pin</small></div>
+                            </button>
+                            <button onclick="setSource('mechanical')" id="btn-mechanical" class="energy-btn px-4 py-2 rounded-lg border border-slate-600 text-left text-sm flex items-center gap-3">
+                                <span>⚙️</span> <div><b>Cơ năng</b> <br><small class="opacity-70">Máy phát (Lực từ trường)</small></div>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-xs font-bold text-orange-400 uppercase mb-1 flex justify-between">
+                                <span>Suất điện động (E):</span>
+                                <span id="valVoltage" class="text-white">12V</span>
+                            </label>
+                            <input type="range" id="inputVoltage" min="5" max="30" value="12" class="w-full">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-blue-400 uppercase mb-1 flex justify-between">
+                                <span>Điện trở tải (R):</span>
+                                <span id="valResistance" class="text-white">10Ω</span>
+                            </label>
+                            <input type="range" id="inputResistance" min="5" max="50" value="10" class="w-full">
+                        </div>
+                    </div>
+
+                    <div class="mt-6 p-4 bg-slate-900/80 rounded-lg border border-slate-700">
+                        <h4 class="text-sm font-bold text-yellow-500 mb-2 italic">Trạng thái hệ thống:</h4>
+                        <p id="statusDisplay" class="text-xs text-emerald-400 font-mono">● Đang hoạt động...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const cCanvas = document.getElementById('circuitCanvas');
+        const wCanvas = document.getElementById('waterCanvas');
+        const cCtx = cCanvas.getContext('2d');
+        const wCtx = wCanvas.getContext('2d');
+
+        const inputV = document.getElementById('inputVoltage');
+        const inputR = document.getElementById('inputResistance');
+        const valV = document.getElementById('valVoltage');
+        const valR = document.getElementById('valResistance');
+        const statusDisplay = document.getElementById('statusDisplay');
+
+        cCanvas.width = 800; cCanvas.height = 320;
+        wCanvas.width = 800; wCanvas.height = 320;
+
+        let voltage = 12;
+        let resistance = 10;
+        let sourceType = 'chemical';
+        let time = 0;
+        let isRunning = true;
+
+        const rect = { x: 150, y: 60, w: 500, h: 180 };
+
+        function setSource(type) {
+            sourceType = type;
+            document.querySelectorAll('.energy-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById('btn-' + type).classList.add('active');
+        }
+
+        // Điều khiển mô phỏng
+        function startSim() {
+            isRunning = true;
+            statusDisplay.innerText = "● Đang hoạt động...";
+            statusDisplay.className = "text-xs text-emerald-400 font-mono";
+        }
+
+        function pauseSim() {
+            isRunning = false;
+            statusDisplay.innerText = "● Đã tạm dừng";
+            statusDisplay.className = "text-xs text-amber-400 font-mono";
+        }
+
+        function stopSim() {
+            isRunning = false;
+            time = 0;
+            // Reset progress hạt
+            particles.forEach((p, i) => p.progress = i / particles.length);
+            waterDrops.forEach((d, i) => d.progress = i / waterDrops.length);
+            statusDisplay.innerText = "● Đã dừng & Reset";
+            statusDisplay.className = "text-xs text-rose-400 font-mono";
+        }
+
+        class Particle {
+            constructor(offset, isWater) {
+                this.progress = offset;
+                this.isWater = isWater;
+            }
+
+            getPos() {
+                const total = 2 * (rect.w + rect.h);
+                let d = this.progress * total;
+                if (d < rect.w) return { x: rect.x + d, y: rect.y, zone: 'top' };
+                if (d < rect.w + rect.h) return { x: rect.x + rect.w, y: rect.y + (d - rect.w), zone: 'right' };
+                if (d < 2 * rect.w + rect.h) {
+                    const x = rect.x + rect.w - (d - (rect.w + rect.h));
+                    const isSource = Math.abs(x - (rect.x + rect.w/2)) < 50;
+                    return { x, y: rect.y + rect.h, zone: isSource ? 'source' : 'bottom' };
+                }
+                return { x: rect.x, y: rect.y + rect.h - (d - (2 * rect.w + rect.h)), zone: 'left' };
+            }
+
+            draw(ctx) {
+                const p = this.getPos();
+                ctx.beginPath();
+                ctx.fillStyle = this.isWater ? '#38bdf8' : '#ef4444';
+                if(!this.isWater) {
+                    ctx.shadowBlur = isRunning ? 8 : 0;
+                    ctx.shadowColor = '#ef4444';
+                }
+                ctx.arc(p.x, p.y, 4, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.shadowBlur = 0;
+
+                if (p.zone === 'source' && isRunning) {
+                    this.drawArrow(ctx, p.x, p.y + 18, -22, '#f97316', this.isWater ? 'Bơm' : 'F lạ');
+                } else if (isRunning) {
+                    if (Math.floor(this.progress * 100) % 12 === 0) {
+                        let dx = 0, dy = 0;
+                        if(p.zone === 'top') dx = 15;
+                        if(p.zone === 'right') dy = 15;
+                        if(p.zone === 'bottom') dx = -15;
+                        if(p.zone === 'left') dy = -15;
+                        this.drawArrow(ctx, p.x, p.y - 12, dx || dy, '#3b82f6', '', dx !== 0);
+                    }
+                }
+            }
+
+            drawArrow(ctx, x, y, len, color, label, horizontal = true) {
+                ctx.strokeStyle = color;
+                ctx.fillStyle = color;
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(x, y);
+                if(horizontal) {
+                    ctx.lineTo(x + len, y);
+                    ctx.stroke();
+                    ctx.beginPath();
+                    ctx.moveTo(x + len, y);
+                    ctx.lineTo(x + len - (Math.sign(len)*5), y - 4);
+                    ctx.lineTo(x + len - (Math.sign(len)*5), y + 4);
+                } else {
+                    ctx.lineTo(x, y + len);
+                    ctx.stroke();
+                    ctx.beginPath();
+                    ctx.moveTo(x, y + len);
+                    ctx.lineTo(x - 4, y + len - (Math.sign(len)*5));
+                    ctx.lineTo(x + 4, y + len - (Math.sign(len)*5));
+                }
+                ctx.fill();
+                if(label) {
+                    ctx.font = "bold 10px Arial";
+                    ctx.fillText(label, x - 12, y + 12);
+                }
+            }
+
+            update(speed) {
+                if (!isRunning) return;
+                this.progress += speed;
+                if (this.progress >= 1) this.progress -= 1;
+            }
+        }
+
+        const particles = Array.from({length: 25}, (_, i) => new Particle(i/25, false));
+        const waterDrops = Array.from({length: 30}, (_, i) => new Particle(i/30, true));
+
+        function drawCircuit() {
+            cCtx.clearRect(0, 0, cCanvas.width, cCanvas.height);
+            cCtx.strokeStyle = '#334155';
+            cCtx.lineWidth = 10;
+            cCtx.strokeRect(rect.x, rect.y, rect.w, rect.h);
+
+            const sx = rect.x + rect.w/2 - 60;
+            const sy = rect.y + rect.h - 25;
+            cCtx.fillStyle = '#1e293b';
+            cCtx.fillRect(sx, sy, 120, 50);
+            cCtx.strokeStyle = isRunning ? '#f97316' : '#475569';
+            cCtx.lineWidth = 2;
+            cCtx.strokeRect(sx, sy, 120, 50);
+
+            cCtx.font = "bold 22px Arial";
+            cCtx.fillStyle = "#ef4444"; 
+            cCtx.fillText("+", sx + 10, sy + 32); 
+            cCtx.fillStyle = "#3b82f6";
+            cCtx.fillText("-", sx + 95, sy + 32);
+
+            const rx = rect.x + rect.w/2;
+            const ry = rect.y;
+            cCtx.beginPath();
+            cCtx.arc(rx, ry, 22, 0, Math.PI * 2);
+            cCtx.fillStyle = '#0f172a';
+            cCtx.fill();
+            cCtx.strokeStyle = isRunning ? '#fbbf24' : '#475569';
+            cCtx.lineWidth = 3;
+            if (isRunning) {
+                cCtx.shadowBlur = (voltage/resistance) * 20;
+                cCtx.shadowColor = '#fbbf24';
+            }
+            cCtx.stroke();
+            cCtx.shadowBlur = 0;
+
+            const speed = (voltage / resistance) * 0.0018;
+            particles.forEach(p => {
+                p.update(speed);
+                p.draw(cCtx);
+            });
+        }
+
+        function drawWater() {
+            wCtx.clearRect(0, 0, wCanvas.width, wCanvas.height);
+            wCtx.strokeStyle = '#1e293b';
+            wCtx.lineWidth = 14;
+            wCtx.strokeRect(rect.x, rect.y, rect.w, rect.h);
+
+            const px = rect.x + rect.w/2;
+            const py = rect.y + rect.h;
+            wCtx.beginPath();
+            wCtx.arc(px, py, 28, 0, Math.PI * 2);
+            wCtx.fillStyle = '#0f172a';
+            wCtx.fill();
+            wCtx.strokeStyle = isRunning ? '#0ea5e9' : '#475569';
+            wCtx.lineWidth = 3;
+            wCtx.stroke();
+
+            wCtx.save();
+            wCtx.translate(px, py);
+            if (isRunning) wCtx.rotate(-time * (voltage/5));
+            wCtx.strokeStyle = isRunning ? '#38bdf8' : '#475569';
+            for(let i=0; i<4; i++){
+                wCtx.rotate(Math.PI/2);
+                wCtx.strokeRect(-2, -15, 4, 30);
+            }
+            wCtx.restore();
+
+            const wx = rect.x + rect.w/2;
+            const wy = rect.y;
+            wCtx.save();
+            wCtx.translate(wx, wy);
+            if (isRunning) wCtx.rotate(time * (voltage/resistance));
+            wCtx.strokeStyle = isRunning ? '#fbbf24' : '#475569';
+            wCtx.beginPath(); wCtx.arc(0,0,22,0,Math.PI*2); wCtx.stroke();
+            for(let i=0; i<6; i++){
+                wCtx.rotate(Math.PI/3);
+                wCtx.strokeRect(10, -4, 15, 8);
+            }
+            wCtx.restore();
+
+            const speed = (voltage / resistance) * 0.0018;
+            waterDrops.forEach(d => {
+                d.update(speed);
+                d.draw(wCtx);
+            });
+        }
+
+        function animate() {
+            if (isRunning) time += 0.05;
+            voltage = parseFloat(inputV.value);
+            resistance = parseFloat(inputR.value);
+            valV.innerText = voltage + "V";
+            valR.innerText = resistance + "Ω";
+
+            drawCircuit();
+            drawWater();
+            requestAnimationFrame(animate);
+        }
+
+        animate();
+    </script>
+</body>
+</html>
