@@ -45,7 +45,7 @@
     <div class="max-w-6xl mx-auto">
         <header class="mb-6 text-center">
             <h1 class="text-3xl font-bold text-red-400">Chiều Dòng Điện Quy Ước & Lực Lạ</h1>
-            <p class="text-slate-400 italic">Điều khiển dòng chảy và quan sát cơ chế của Lực Lạ</p>
+            <p class="text-slate-400 italic">Mô phỏng dòng điện tích dương (quy ước) và dòng electron thực tế</p>
         </header>
 
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
@@ -54,7 +54,7 @@
                 <!-- Mạch điện -->
                 <div>
                     <h2 class="text-lg font-semibold mb-2 flex items-center gap-2 text-red-300">
-                        <span class="bg-red-500 w-2 h-6 rounded-full"></span> 1. Mạch điện (Chiều (+) sang (-))
+                        <span class="bg-red-500 w-2 h-6 rounded-full"></span> 1. Mạch điện (Hạt đỏ: Dòng quy ước | Hạt xanh nhỏ: Electron)
                     </h2>
                     <canvas id="circuitCanvas"></canvas>
                 </div>
@@ -119,6 +119,10 @@
                         <h4 class="text-sm font-bold text-yellow-500 mb-2 italic">Trạng thái hệ thống:</h4>
                         <p id="statusDisplay" class="text-xs text-emerald-400 font-mono">● Đang hoạt động...</p>
                         <p id="intensityDisplay" class="text-[10px] text-slate-400 mt-2 font-mono">Độ sáng đèn: 100%</p>
+                        <div class="flex items-center gap-4 mt-3 pt-3 border-t border-slate-700">
+                             <div class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-red-500"></span> <span class="text-[10px]">Dòng quy ước</span></div>
+                             <div class="flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-blue-400"></span> <span class="text-[10px]">Dòng electron</span></div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -172,20 +176,26 @@
             isRunning = false;
             time = 0;
             particles.forEach((p, i) => p.progress = i / particles.length);
+            electrons.forEach((e, i) => e.progress = i / electrons.length);
             waterDrops.forEach((d, i) => d.progress = i / waterDrops.length);
             statusDisplay.innerText = "● Đã dừng & Reset";
             statusDisplay.className = "text-xs text-rose-400 font-mono";
         }
 
         class Particle {
-            constructor(offset, isWater) {
+            constructor(offset, type) {
                 this.progress = offset;
-                this.isWater = isWater;
+                this.type = type; // 'pos' (quy ước), 'electron', 'water'
             }
 
             getPos() {
                 const total = 2 * (rect.w + rect.h);
-                let d = this.progress * total;
+                // Nếu là electron, di chuyển ngược chiều (1 - progress)
+                let actualProgress = this.type === 'electron' ? (1 - this.progress) : this.progress;
+                if (actualProgress < 0) actualProgress += 1;
+                if (actualProgress > 1) actualProgress -= 1;
+
+                let d = actualProgress * total;
                 if (d < rect.w) return { x: rect.x + d, y: rect.y, zone: 'top' };
                 if (d < rect.w + rect.h) return { x: rect.x + rect.w, y: rect.y + (d - rect.w), zone: 'right' };
                 if (d < 2 * rect.w + rect.h) {
@@ -199,26 +209,26 @@
             draw(ctx) {
                 const p = this.getPos();
                 ctx.beginPath();
-                ctx.fillStyle = this.isWater ? '#38bdf8' : '#ef4444';
-                if(!this.isWater) {
+                
+                if (this.type === 'water') {
+                    ctx.fillStyle = '#38bdf8';
+                    ctx.arc(p.x, p.y, 4, 0, Math.PI * 2);
+                } else if (this.type === 'pos') {
+                    ctx.fillStyle = '#ef4444';
                     ctx.shadowBlur = isRunning ? 8 : 0;
                     ctx.shadowColor = '#ef4444';
+                    ctx.arc(p.x, p.y, 4.5, 0, Math.PI * 2);
+                } else if (this.type === 'electron') {
+                    ctx.fillStyle = '#60a5fa';
+                    ctx.arc(p.x, p.y, 2.5, 0, Math.PI * 2); // Electron nhỏ hơn
                 }
-                ctx.arc(p.x, p.y, 4, 0, Math.PI * 2);
+                
                 ctx.fill();
                 ctx.shadowBlur = 0;
 
-                if (p.zone === 'source' && isRunning) {
-                    this.drawArrow(ctx, p.x, p.y + 18, -22, '#f97316', this.isWater ? 'Bơm' : 'F lạ');
-                } else if (isRunning) {
-                    if (Math.floor(this.progress * 100) % 12 === 0) {
-                        let dx = 0, dy = 0;
-                        if(p.zone === 'top') dx = 15;
-                        if(p.zone === 'right') dy = 15;
-                        if(p.zone === 'bottom') dx = -15;
-                        if(p.zone === 'left') dy = -15;
-                        this.drawArrow(ctx, p.x, p.y - 12, dx || dy, '#3b82f6', '', dx !== 0);
-                    }
+                // Chỉ vẽ mũi tên lực lạ cho hạt dương và nước
+                if (this.type !== 'electron' && p.zone === 'source' && isRunning) {
+                    this.drawArrow(ctx, p.x, p.y + 18, -22, '#f97316', this.type === 'water' ? 'Bơm' : 'F lạ');
                 }
             }
 
@@ -257,8 +267,9 @@
             }
         }
 
-        const particles = Array.from({length: 25}, (_, i) => new Particle(i/25, false));
-        const waterDrops = Array.from({length: 30}, (_, i) => new Particle(i/30, true));
+        const particles = Array.from({length: 20}, (_, i) => new Particle(i/20, 'pos'));
+        const electrons = Array.from({length: 35}, (_, i) => new Particle((i+0.5)/35, 'electron'));
+        const waterDrops = Array.from({length: 30}, (_, i) => new Particle(i/30, 'water'));
 
         function drawCircuit() {
             cCtx.clearRect(0, 0, cCanvas.width, cCanvas.height);
@@ -280,17 +291,13 @@
             cCtx.fillStyle = "#3b82f6";
             cCtx.fillText("-", sx + 95, sy + 32);
 
-            // Vẽ Bóng Đèn (Tải R)
             const rx = rect.x + rect.w/2;
             const ry = rect.y;
             
-            // Tính toán độ sáng dựa trên công suất hoặc cường độ I = U/R
             const currentIntensity = voltage / resistance;
-            const maxIntensity = 3.0; // Định mức giả định cho hiệu ứng
             const brightnessFactor = Math.min(currentIntensity / 1.2, 1.5); 
 
             if (isRunning && voltage > 0) {
-                // Ánh sáng tỏa (Glow effect)
                 const gradient = cCtx.createRadialGradient(rx, ry, 5, rx, ry, 50 * brightnessFactor);
                 gradient.addColorStop(0, `rgba(251, 191, 36, ${0.6 * brightnessFactor})`);
                 gradient.addColorStop(1, 'rgba(251, 191, 36, 0)');
@@ -300,7 +307,6 @@
                 cCtx.arc(rx, ry, 60 * brightnessFactor, 0, Math.PI * 2);
                 cCtx.fill();
 
-                // Sợi đốt đèn
                 cCtx.strokeStyle = '#fbbf24';
                 cCtx.lineWidth = 3;
                 cCtx.shadowBlur = 15 * brightnessFactor;
@@ -318,11 +324,17 @@
             cCtx.stroke();
             cCtx.shadowBlur = 0;
 
-            // Hiển thị % độ sáng
             const brightnessPercent = Math.round(brightnessFactor * 100);
             intensityDisplay.innerText = `Độ sáng đèn: ${isRunning ? brightnessPercent : 0}%`;
 
             const speed = (voltage / resistance) * 0.0018;
+            
+            // Vẽ electron trước (lớp dưới)
+            electrons.forEach(e => {
+                e.update(speed);
+                e.draw(cCtx);
+            });
+            // Vẽ hạt dương sau (lớp trên)
             particles.forEach(p => {
                 p.update(speed);
                 p.draw(cCtx);
