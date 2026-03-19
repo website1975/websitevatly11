@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from 'https://esm.sh/react@^19.2.3';
 import { Routes, Route, useNavigate, Navigate } from 'https://esm.sh/react-router-dom@^6.22.3';
-import { Book, Plus, Maximize2, Loader2, BrainCircuit, GraduationCap, ShieldCheck, Search, LogOut, Folder, Globe, Zap, Image as ImageIcon, Settings } from 'https://esm.sh/lucide-react@^0.562.0';
+import { Book, Plus, Maximize2, Loader2, BrainCircuit, GraduationCap, ShieldCheck, Search, LogOut, Folder, Globe, Zap, Image as ImageIcon, Settings, ArrowLeft } from 'https://esm.sh/lucide-react@^0.562.0';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { AppData, ResourceLink, BookNode, NodeType } from './types';
 import { INITIAL_DATA } from './constants';
@@ -145,6 +145,15 @@ const LandingPage: React.FC<{ visitorCount: number, onSelectGrade: (g: number) =
 
   return (
     <div className="h-screen w-full flex flex-col items-center justify-center bg-slate-50 overflow-hidden relative text-center px-4">
+      {selectedGrade && (
+        <button 
+          onClick={() => onSelectGrade(null as any)}
+          className="absolute top-6 left-6 md:top-10 md:left-10 flex items-center gap-2 px-5 py-2.5 bg-white border border-slate-200 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-red-500 hover:border-red-100 transition-all shadow-sm z-50 group"
+        >
+          <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform"/> 
+          Thoát ra ngoài
+        </button>
+      )}
       <div className="relative z-10 flex flex-col items-center w-full max-w-4xl">
         <div className="mb-8 p-5 bg-white border border-slate-200 shadow-sm rounded-3xl">
             <Book size={48} className={selectedGrade ? (selectedGrade === 10 ? 'text-emerald-600' : selectedGrade === 12 ? 'text-rose-600' : 'text-indigo-600') : 'text-slate-400'}/>
@@ -197,7 +206,6 @@ const LandingPage: React.FC<{ visitorCount: number, onSelectGrade: (g: number) =
                 </div>
               </form>
             )}
-            <button onClick={() => onSelectGrade(null as any)} className="md:col-span-2 text-[10px] font-bold text-slate-300 uppercase tracking-[0.3em] hover:text-slate-500 transition-colors mt-4">Quay lại chọn khối</button>
           </div>
         )}
       </div>
