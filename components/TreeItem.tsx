@@ -16,6 +16,7 @@ interface TreeItemProps {
   level: number;
   visibleNodeIds: Set<string> | null;
   searchTerm: string;
+  themeColor: string;
 }
 
 const TreeItem: React.FC<TreeItemProps> = ({ 
@@ -30,7 +31,8 @@ const TreeItem: React.FC<TreeItemProps> = ({
   onReorder,
   level,
   visibleNodeIds,
-  searchTerm
+  searchTerm,
+  themeColor
 }) => {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -76,12 +78,27 @@ const TreeItem: React.FC<TreeItemProps> = ({
 
   const isSelected = selectedId === node.id;
 
+  const themeBgClasses = {
+    'indigo-600': 'bg-indigo-600',
+    'emerald-600': 'bg-emerald-600',
+    'rose-600': 'bg-rose-600',
+  };
+
+  const themeAdminBgClasses = {
+    'indigo-600': 'bg-indigo-700 border-indigo-500',
+    'emerald-600': 'bg-emerald-700 border-emerald-500',
+    'rose-600': 'bg-rose-700 border-rose-500',
+  };
+
+  const currentThemeBgClass = themeBgClasses[themeColor as keyof typeof themeBgClasses] || themeBgClasses['indigo-600'];
+  const currentThemeAdminBgClass = themeAdminBgClasses[themeColor as keyof typeof themeAdminBgClasses] || themeAdminBgClasses['indigo-600'];
+
   return (
     <div className="select-none mb-0.5">
       <div 
         className={`group relative flex items-center py-1.5 px-2 rounded-lg cursor-pointer transition-all ${
           isSelected 
-            ? 'bg-indigo-600 text-white shadow-sm' 
+            ? `${currentThemeBgClass} text-white shadow-sm` 
             : 'hover:bg-slate-100 text-slate-600'
         }`}
         style={{ marginLeft: `${level * 0.5}rem` }}
@@ -114,7 +131,7 @@ const TreeItem: React.FC<TreeItemProps> = ({
 
         {isAdmin && (
           <div className="absolute right-1 flex items-center space-x-0 opacity-0 group-hover:opacity-100 transition-opacity transition-transform translate-x-1 group-hover:translate-x-0 z-10">
-            <div className={`flex items-center p-0.5 rounded-lg shadow-xl border ${isSelected ? 'bg-indigo-700 border-indigo-500' : 'bg-white border-slate-200'}`}>
+            <div className={`flex items-center p-0.5 rounded-lg shadow-xl border ${isSelected ? currentThemeAdminBgClass : 'bg-white border-slate-200'}`}>
               <button 
                 onClick={(e) => { e.stopPropagation(); onReorder(node.id, 'up'); }}
                 className={`p-1 rounded transition-all active:scale-75 ${isSelected ? 'hover:bg-white/10 text-white' : 'hover:bg-slate-100 text-slate-400'}`}
@@ -172,6 +189,7 @@ const TreeItem: React.FC<TreeItemProps> = ({
               level={level + 1}
               visibleNodeIds={visibleNodeIds}
               searchTerm={searchTerm}
+              themeColor={themeColor}
             />
           ))}
         </div>
