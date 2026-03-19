@@ -62,21 +62,26 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 const TEACHER_PWD = getSafeEnv('TEACHER_PASSWORD') || '1234';
 
 const App: React.FC = () => {
+  const [selectedGrade, setSelectedGrade] = useState<number | null>(null);
   const [data, setData] = useState<AppData>(INITIAL_DATA);
   const [visitorCount, setVisitorCount] = useState<number>(0);
   const [isSyncing, setIsSyncing] = useState(false);
 
-  const fetchCloudData = useCallback(async () => {
+  const fetchCloudData = useCallback(async (gradeId: number) => {
     setIsSyncing(true);
     try {
-      const { data: cloud, error: cloudError } = await supabase.from('app_settings').select('data').eq('id', 1).single();
-      if (cloudError) console.error("Cloud fetch error:", cloudError);
+      const { data: cloud, error: cloudError } = await supabase.from('app_settings').select('data').eq('id', gradeId).single();
+      if (cloudError) {
+        console.error("Cloud fetch error:", cloudError);
+        setData(INITIAL_DATA); // Fallback if no data for this grade yet
+      }
       
       if (cloud?.data && Array.isArray(cloud.data.nodes)) {
         setData(cloud.data);
       } else if (cloud?.data) {
-        // Fallback if data exists but structure is wrong
         setData({ ...INITIAL_DATA, ...cloud.data, nodes: cloud.data.nodes || INITIAL_DATA.nodes });
+      } else {
+        setData(INITIAL_DATA);
       }
       
       const { data: stats, error: statsError } = await supabase.from('app_settings').select('data').eq('id', 99).single();
@@ -95,21 +100,26 @@ const App: React.FC = () => {
     finally { setIsSyncing(false); }
   }, []);
 
-  useEffect(() => { fetchCloudData(); }, [fetchCloudData]);
+  useEffect(() => { 
+    if (selectedGrade !== null) {
+      fetchCloudData(selectedGrade); 
+    }
+  }, [selectedGrade, fetchCloudData]);
 
   const updateData = async (newData: AppData) => {
+    if (selectedGrade === null) return;
     setData(newData);
     setIsSyncing(true);
-    try { await supabase.from('app_settings').upsert({ id: 1, data: newData }); }
+    try { await supabase.from('app_settings').upsert({ id: selectedGrade, data: newData }); }
     finally { setIsSyncing(false); }
   };
 
   return (
     <ErrorBoundary>
       <Routes>
-        <Route path="/" element={<LandingPage visitorCount={visitorCount} />} />
-        <Route path="/teacher" element={<ProtectedRoute><MainView isAdmin={true} data={data} updateData={updateData} isSyncing={isSyncing} visitorCount={visitorCount}/></ProtectedRoute>} />
-        <Route path="/student" element={<MainView isAdmin={false} data={data} updateData={updateData} isSyncing={isSyncing} visitorCount={visitorCount}/>} />
+        <Route path="/" element={<LandingPage visitorCount={visitorCount} onSelectGrade={(g) => setSelectedGrade(g)} selectedGrade={selectedGrade} />} />
+        <Route path="/teacher" element={<ProtectedRoute><MainView isAdmin={true} data={data} updateData={updateData} isSyncing={isSyncing} visitorCount={visitorCount} selectedGrade={selectedGrade}/></ProtectedRoute>} />
+        <Route path="/student" element={<MainView isAdmin={false} data={data} updateData={updateData} isSyncing={isSyncing} visitorCount={visitorCount} selectedGrade={selectedGrade}/>} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </ErrorBoundary>
@@ -121,54 +131,81 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
   return <>{children}</>;
 };
 
-const LandingPage: React.FC<{ visitorCount: number }> = ({ visitorCount }) => {
+const LandingPage: React.FC<{ visitorCount: number, onSelectGrade: (g: number) => void, selectedGrade: number | null }> = ({ visitorCount, onSelectGrade, selectedGrade }) => {
   const [showPass, setShowPass] = useState(false);
   const [pin, setPin] = useState('');
   const [error, setError] = useState(false);
   const navigate = useNavigate();
 
+  const grades = [
+    { id: 10, label: 'Khối 10', color: 'bg-emerald-600', shadow: 'shadow-emerald-100', theme: 'emerald' },
+    { id: 1, label: 'Khối 11', color: 'bg-indigo-600', shadow: 'shadow-indigo-100', theme: 'indigo' },
+    { id: 12, label: 'Khối 12', color: 'bg-rose-600', shadow: 'shadow-rose-100', theme: 'rose' },
+  ];
+
   return (
     <div className="h-screen w-full flex flex-col items-center justify-center bg-slate-50 overflow-hidden relative text-center px-4">
-      <div className="relative z-10 flex flex-col items-center">
+      <div className="relative z-10 flex flex-col items-center w-full max-w-4xl">
         <div className="mb-8 p-5 bg-white border border-slate-200 shadow-sm rounded-3xl">
-            <Book size={48} className="text-indigo-600"/>
+            <Book size={48} className={selectedGrade ? (selectedGrade === 10 ? 'text-emerald-600' : selectedGrade === 12 ? 'text-rose-600' : 'text-indigo-600') : 'text-slate-400'}/>
         </div>
-        <h1 className="text-6xl font-black text-slate-900 uppercase mb-16 tracking-tighter">VẬT LÝ 11</h1>
+        <h1 className="text-4xl md:text-6xl font-black text-slate-900 uppercase mb-12 tracking-tighter">
+          {selectedGrade ? `VẬT LÝ ${selectedGrade === 1 ? '11' : selectedGrade}` : 'HỆ THỐNG HỌC TẬP'}
+        </h1>
         
-        <div className="max-w-3xl w-full grid grid-cols-1 md:grid-cols-2 gap-8">
-          <button onClick={() => navigate('/student')} className="bg-white p-12 rounded-[40px] shadow-2xl shadow-slate-200/50 border border-white flex flex-col items-center space-y-4 hover:scale-[1.02] transition-all group">
-            <div className="w-20 h-20 bg-sky-50 rounded-3xl flex items-center justify-center group-hover:bg-sky-600 transition-colors">
-                <GraduationCap size={36} className="text-sky-600 group-hover:text-white transition-colors"/>
-            </div>
-            <h2 className="text-2xl font-black text-slate-800 tracking-tight">HỌC SINH</h2>
-            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Truy cập bài giảng & Quiz AI</p>
-          </button>
-          
-          {!showPass ? (
-            <button onClick={()=>setShowPass(true)} className="bg-white p-12 rounded-[40px] shadow-2xl shadow-slate-200/50 border border-white flex flex-col items-center space-y-4 hover:scale-[1.02] transition-all group">
-              <div className="w-20 h-20 bg-amber-50 rounded-3xl flex items-center justify-center group-hover:bg-amber-500 transition-colors">
-                  <ShieldCheck size={36} className="text-amber-600 group-hover:text-white transition-colors"/>
+        {!selectedGrade ? (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full">
+            {grades.map((g) => (
+              <button 
+                key={g.id}
+                onClick={() => onSelectGrade(g.id)}
+                className="bg-white p-10 rounded-[40px] shadow-xl shadow-slate-200/50 border border-white flex flex-col items-center space-y-4 hover:scale-[1.05] transition-all group"
+              >
+                <div className={`w-16 h-16 ${g.color} rounded-2xl flex items-center justify-center shadow-lg ${g.shadow}`}>
+                  <GraduationCap size={32} className="text-white"/>
+                </div>
+                <h2 className="text-xl font-black text-slate-800 tracking-tight">{g.label}</h2>
+                <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest">Chọn để bắt đầu</p>
+              </button>
+            ))}
+          </div>
+        ) : (
+          <div className="max-w-3xl w-full grid grid-cols-1 md:grid-cols-2 gap-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <button onClick={() => navigate('/student')} className="bg-white p-12 rounded-[40px] shadow-2xl shadow-slate-200/50 border border-white flex flex-col items-center space-y-4 hover:scale-[1.02] transition-all group">
+              <div className={`w-20 h-20 ${selectedGrade === 10 ? 'bg-emerald-50' : selectedGrade === 12 ? 'bg-rose-50' : 'bg-sky-50'} rounded-3xl flex items-center justify-center group-hover:bg-indigo-600 transition-colors`}>
+                  <GraduationCap size={36} className={`${selectedGrade === 10 ? 'text-emerald-600' : selectedGrade === 12 ? 'text-rose-600' : 'text-sky-600'} group-hover:text-white transition-colors`}/>
               </div>
-              <h2 className="text-2xl font-black text-slate-800 tracking-tight">GIÁO VIÊN</h2>
-              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Thiết lập học liệu & Quản lý</p>
+              <h2 className="text-2xl font-black text-slate-800 tracking-tight">HỌC SINH</h2>
+              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Truy cập bài giảng & Quiz AI</p>
             </button>
-          ) : (
-            <form onSubmit={(e)=>{e.preventDefault(); if(pin===TEACHER_PWD) {sessionStorage.setItem('teacher_auth','true'); navigate('/teacher');} else setError(true);}} 
-              className="bg-white p-10 rounded-[40px] shadow-2xl border border-amber-100 flex flex-col items-center space-y-6 animate-in zoom-in-95">
-              <input type="password" autoFocus value={pin} onChange={(e)=>{setPin(e.target.value); setError(false);}} className={`w-full px-4 py-5 bg-slate-50 border-2 rounded-2xl text-center font-black text-3xl tracking-[0.5em] ${error?'border-red-400 animate-shake':'border-transparent focus:border-amber-400 outline-none'}`} placeholder="****" autoFill="off"/>
-              <div className="flex gap-4 w-full">
-                <button type="button" onClick={()=>setShowPass(false)} className="flex-1 font-bold text-slate-300 uppercase text-[10px] tracking-widest">Hủy bỏ</button>
-                <button type="submit" className="flex-1 px-4 py-4 bg-amber-500 text-white rounded-2xl font-bold uppercase text-[10px] shadow-lg shadow-amber-200 tracking-widest">Đăng nhập</button>
-              </div>
-            </form>
-          )}
-        </div>
+            
+            {!showPass ? (
+              <button onClick={()=>setShowPass(true)} className="bg-white p-12 rounded-[40px] shadow-2xl shadow-slate-200/50 border border-white flex flex-col items-center space-y-4 hover:scale-[1.02] transition-all group">
+                <div className="w-20 h-20 bg-amber-50 rounded-3xl flex items-center justify-center group-hover:bg-amber-500 transition-colors">
+                    <ShieldCheck size={36} className="text-amber-600 group-hover:text-white transition-colors"/>
+                </div>
+                <h2 className="text-2xl font-black text-slate-800 tracking-tight">GIÁO VIÊN</h2>
+                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Thiết lập học liệu & Quản lý</p>
+              </button>
+            ) : (
+              <form onSubmit={(e)=>{e.preventDefault(); if(pin===TEACHER_PWD) {sessionStorage.setItem('teacher_auth','true'); navigate('/teacher');} else setError(true);}} 
+                className="bg-white p-10 rounded-[40px] shadow-2xl border border-amber-100 flex flex-col items-center space-y-6 animate-in zoom-in-95">
+                <input type="password" autoFocus value={pin} onChange={(e)=>{setPin(e.target.value); setError(false);}} className={`w-full px-4 py-5 bg-slate-50 border-2 rounded-2xl text-center font-black text-3xl tracking-[0.5em] ${error?'border-red-400 animate-shake':'border-transparent focus:border-amber-400 outline-none'}`} placeholder="****" autoFill="off"/>
+                <div className="flex gap-4 w-full">
+                  <button type="button" onClick={()=>setShowPass(false)} className="flex-1 font-bold text-slate-300 uppercase text-[10px] tracking-widest">Hủy bỏ</button>
+                  <button type="submit" className="flex-1 px-4 py-4 bg-amber-500 text-white rounded-2xl font-bold uppercase text-[10px] shadow-lg shadow-amber-200 tracking-widest">Đăng nhập</button>
+                </div>
+              </form>
+            )}
+            <button onClick={() => onSelectGrade(null as any)} className="md:col-span-2 text-[10px] font-bold text-slate-300 uppercase tracking-[0.3em] hover:text-slate-500 transition-colors mt-4">Quay lại chọn khối</button>
+          </div>
+        )}
       </div>
     </div>
   );
 };
 
-const MainView: React.FC<{ isAdmin: boolean; data: AppData; updateData: (d: AppData) => void; isSyncing: boolean; visitorCount: number }> = ({ isAdmin, data, updateData, isSyncing, visitorCount }) => {
+const MainView: React.FC<{ isAdmin: boolean; data: AppData; updateData: (d: AppData) => void; isSyncing: boolean; visitorCount: number; selectedGrade: number | null }> = ({ isAdmin, data, updateData, isSyncing, visitorCount, selectedGrade }) => {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [iframeLoading, setIframeLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<'content' | 'forum' | 'flashcards'>('content');
@@ -176,6 +213,18 @@ const MainView: React.FC<{ isAdmin: boolean; data: AppData; updateData: (d: AppD
   const [searchTerm, setSearchTerm] = useState('');
   const [isQuizOpen, setIsQuizOpen] = useState(false);
   const navigate = useNavigate();
+
+  const themeColor = useMemo(() => {
+    if (selectedGrade === 10) return 'emerald';
+    if (selectedGrade === 12) return 'rose';
+    return 'indigo';
+  }, [selectedGrade]);
+
+  const gradeTitle = useMemo(() => {
+    if (selectedGrade === 10) return 'VẬT LÝ 10';
+    if (selectedGrade === 12) return 'VẬT LÝ 12';
+    return 'VẬT LÝ 11';
+  }, [selectedGrade]);
 
   const selectedNode = data?.nodes?.find(n => n.id === selectedId);
   const childNodes = useMemo(() => {
@@ -305,18 +354,20 @@ const MainView: React.FC<{ isAdmin: boolean; data: AppData; updateData: (d: AppD
           nodeId={selectedId!}
           lessonTitle={selectedNode.title} 
           isAdmin={isAdmin}
+          selectedGrade={selectedGrade}
+          themeColor={themeColor}
           onClose={() => setIsQuizOpen(false)} 
         />
       )}
       
       {/* PANEL 1: SIDEBAR */}
       <aside className="w-[230px] border-r border-slate-100 flex flex-col shrink-0 bg-[#fbfcfd] transition-all">
-        <header className={`px-5 py-4 text-white ${isAdmin ? 'bg-amber-600' : 'bg-indigo-600'} flex justify-between items-center shrink-0`}>
+        <header className={`px-5 py-4 text-white ${isAdmin ? 'bg-amber-600' : `bg-${themeColor}-600`} flex justify-between items-center shrink-0`}>
           <div className="flex items-center gap-2"><Book size={16}/><h1 className="font-bold text-[9px] uppercase tracking-[0.2em]">Cấu trúc sách</h1></div>
           <div className="flex items-center gap-1">
             {isAdmin && <button onClick={()=>setShowHomeConfig(true)} className="p-1.5 hover:bg-white/20 rounded-lg transition-colors" title="Cấu hình trang chủ"><Settings size={14}/></button>}
             {isAdmin && <button onClick={()=>{
-              const nextOrder = data.nodes.filter(n => n.parentId === null).length;
+              const nextOrder = (data?.nodes || []).filter(n => n.parentId === null).length;
               setNodeModalData({parentId:null, type:'folder', title:'', url:'', imageUrl: '', order: nextOrder}); 
               setShowNodeModal(true);
             }} className="p-1.5 hover:bg-white/20 rounded-lg transition-colors"><Plus size={14}/></button>}
@@ -324,7 +375,7 @@ const MainView: React.FC<{ isAdmin: boolean; data: AppData; updateData: (d: AppD
         </header>
 
         <div className="p-3 shrink-0 bg-[#fbfcfd]">
-          <div className="flex items-center bg-white border border-slate-200 rounded-xl px-3 py-1.5 shadow-sm focus-within:border-indigo-400 transition-all">
+          <div className={`flex items-center bg-white border border-slate-200 rounded-xl px-3 py-1.5 shadow-sm focus-within:border-${themeColor}-400 transition-all`}>
             <Search size={12} className="text-slate-400"/>
             <input value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} placeholder="Tìm kiếm..." className="bg-transparent border-none outline-none text-[10px] font-medium w-full ml-2"/>
           </div>
@@ -335,6 +386,7 @@ const MainView: React.FC<{ isAdmin: boolean; data: AppData; updateData: (d: AppD
             <TreeItem key={node.id} node={node} allNodes={data.nodes} selectedId={selectedId} isAdmin={isAdmin} level={0}
               visibleNodeIds={visibleNodeIds}
               searchTerm={searchTerm}
+              themeColor={themeColor}
               onSelect={(id)=>{setSelectedId(id); if(data.nodes.find(n=>n.id===id)?.url) setIframeLoading(true);}}
               onAdd={(p,t)=>{
                 const nextOrder = data.nodes.filter(n => n.parentId === p).length;
@@ -364,6 +416,7 @@ const MainView: React.FC<{ isAdmin: boolean; data: AppData; updateData: (d: AppD
                 folder={selectedNode} 
                 children={childNodes} 
                 onSelectLesson={(id) => { setSelectedId(id); setIframeLoading(true); }} 
+                themeColor={themeColor}
               />
             ) : (
               <>
@@ -382,32 +435,32 @@ const MainView: React.FC<{ isAdmin: boolean; data: AppData; updateData: (d: AppD
                             <Zap size={14} className="fill-current text-amber-300"/> Soạn Quiz AI
                           </button>
                         ) : (
-                          <button onClick={()=>setIsQuizOpen(true)} className="group flex items-center gap-2 px-5 py-2 bg-emerald-600 text-white font-bold text-[10px] uppercase shadow-lg shadow-emerald-100 rounded-full hover:bg-emerald-700 hover:scale-105 transition-all">
+                          <button onClick={()=>setIsQuizOpen(true)} className={`group flex items-center gap-2 px-5 py-2 bg-${themeColor}-600 text-white font-bold text-[10px] uppercase shadow-lg shadow-${themeColor}-100 rounded-full hover:bg-${themeColor}-700 hover:scale-105 transition-all`}>
                             <BrainCircuit size={14}/> Rèn luyện
                           </button>
                         )}
                       </div>
-                      {selectedNode?.url && <button onClick={()=>window.open(selectedNode.url, '_blank')} className="p-2 bg-slate-50 text-slate-400 hover:text-indigo-600 rounded-full hover:bg-indigo-50 transition-colors"><Maximize2 size={16}/></button>}
+                      {selectedNode?.url && <button onClick={()=>window.open(selectedNode.url, '_blank')} className={`p-2 bg-slate-50 text-slate-400 hover:text-${themeColor}-600 rounded-full hover:bg-${themeColor}-50 transition-colors`}><Maximize2 size={16}/></button>}
                     </div>
                   </div>
                   
                   <div className="flex gap-6 mt-3">
-                    <button onClick={()=>setActiveTab('content')} className={`pb-2 text-[10px] font-bold uppercase tracking-widest border-b-2 transition-all ${activeTab==='content' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-300 hover:text-slate-500'}`}>Học liệu</button>
-                    <button onClick={()=>setActiveTab('flashcards')} className={`pb-2 text-[10px] font-bold uppercase tracking-widest border-b-2 transition-all ${activeTab==='flashcards' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-300 hover:text-slate-500'}`}>Flashcards</button>
-                    <button onClick={()=>setActiveTab('forum')} className={`pb-2 text-[10px] font-bold uppercase tracking-widest border-b-2 transition-all ${activeTab==='forum' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-300 hover:text-slate-500'}`}>Thảo luận</button>
+                    <button onClick={()=>setActiveTab('content')} className={`pb-2 text-[10px] font-bold uppercase tracking-widest border-b-2 transition-all ${activeTab==='content' ? `border-${themeColor}-600 text-${themeColor}-600` : 'border-transparent text-slate-300 hover:text-slate-500'}`}>Học liệu</button>
+                    <button onClick={()=>setActiveTab('flashcards')} className={`pb-2 text-[10px] font-bold uppercase tracking-widest border-b-2 transition-all ${activeTab==='flashcards' ? `border-${themeColor}-600 text-${themeColor}-600` : 'border-transparent text-slate-300 hover:text-slate-500'}`}>Flashcards</button>
+                    <button onClick={()=>setActiveTab('forum')} className={`pb-2 text-[10px] font-bold uppercase tracking-widest border-b-2 transition-all ${activeTab==='forum' ? `border-${themeColor}-600 text-${themeColor}-600` : 'border-transparent text-slate-300 hover:text-slate-500'}`}>Thảo luận</button>
                   </div>
                 </header>
                 
                 <div className="flex-1 relative overflow-y-auto custom-scrollbar bg-[#fcfdfe] p-6">
                   {activeTab === 'content' ? (
                     <div className="h-full relative">
-                      {iframeLoading && <div className="absolute inset-0 flex flex-col items-center justify-center z-10 bg-white/90 backdrop-blur-sm"><Loader2 className="animate-spin text-indigo-500 mb-2" size={32}/><p className="text-[10px] uppercase font-bold text-slate-300 tracking-widest">Đang tải...</p></div>}
+                      {iframeLoading && <div className="absolute inset-0 flex flex-col items-center justify-center z-10 bg-white/90 backdrop-blur-sm"><Loader2 className={`animate-spin text-${themeColor}-500 mb-2`} size={32}/><p className="text-[10px] uppercase font-bold text-slate-300 tracking-widest">Đang tải...</p></div>}
                       {selectedNode?.url ? <iframe src={selectedNode.url} title={selectedNode.title} className={`w-full h-full border-none transition-opacity duration-500 ${iframeLoading ? 'opacity-0' : 'opacity-100'}`} onLoad={()=>setIframeLoading(false)}/> : <div className="h-full flex items-center justify-center italic text-slate-200 text-xl font-light tracking-widest">Nội dung chưa cập nhật...</div>}
                     </div>
                   ) : activeTab === 'flashcards' ? (
-                    <FlashcardsPanel nodeId={selectedId!} isAdmin={isAdmin} />
+                    <FlashcardsPanel nodeId={selectedId!} isAdmin={isAdmin} themeColor={themeColor} />
                   ) : (
-                    <Forum nodeId={selectedId} isAdmin={isAdmin} />
+                    <Forum nodeId={selectedId} isAdmin={isAdmin} themeColor={themeColor} />
                   )}
                 </div>
               </>
@@ -420,9 +473,9 @@ const MainView: React.FC<{ isAdmin: boolean; data: AppData; updateData: (d: AppD
              ) : (
                <div className="flex-1 flex flex-col items-center justify-center text-center p-12">
                  <div className="w-24 h-24 bg-slate-50 rounded-[40px] flex items-center justify-center mb-6 border border-slate-100">
-                    <Book size={48} className="text-indigo-600 opacity-10"/>
+                    <Book size={48} className={`text-${themeColor}-600 opacity-10`}/>
                  </div>
-                 <h2 className="text-2xl font-black uppercase tracking-tighter text-slate-900 opacity-5">VẬT LÝ 11</h2>
+                 <h2 className="text-2xl font-black uppercase tracking-tighter text-slate-900 opacity-5">{gradeTitle}</h2>
                  <p className="text-[10px] font-bold text-slate-200 uppercase tracking-[0.4em] mt-4">Chọn bài học để bắt đầu</p>
                </div>
              )}
@@ -432,6 +485,7 @@ const MainView: React.FC<{ isAdmin: boolean; data: AppData; updateData: (d: AppD
 
       {/* PANEL 3: RESOURCES */}
       <ResourcesPanel isAdmin={isAdmin} selectedId={selectedId} lessonResources={selectedNode?.lessonResources||[]} globalResources={data.globalResources}
+        themeColor={themeColor}
         onAdd={(isG)=> {setResModalData({title:'', url:'', isGlobal: isG}); setShowResModal(true);}}
         onEdit={(r,isG)=> {setResModalData({...r, isGlobal: isG}); setShowResModal(true);}}
         onDelete={handleDeleteResource}/>
@@ -459,7 +513,7 @@ const MainView: React.FC<{ isAdmin: boolean; data: AppData; updateData: (d: AppD
         <div className="fixed inset-0 z-[300] bg-slate-900/40 flex items-center justify-center p-4 backdrop-blur-md animate-in fade-in duration-300">
           <form onSubmit={(e)=>{e.preventDefault(); if(!nodeModalData.title)return; let nodes=[...data.nodes]; if(nodeModalData.id) nodes=nodes.map(n=>n.id===nodeModalData.id?{...n,title:nodeModalData.title,url:nodeModalData.url,type:nodeModalData.type,imageUrl:nodeModalData.imageUrl}:n); else nodes.push({id:`n-${Date.now()}`, ...nodeModalData, lessonResources:[]}); updateData({...data, nodes}); setShowNodeModal(false);}}
             className="bg-white p-8 rounded-[32px] shadow-2xl w-full max-w-md space-y-4 border border-slate-100 animate-in zoom-in-95">
-            <h3 className="font-black text-center text-indigo-600 uppercase text-[11px] tracking-widest mb-2">Cấu trúc bài học</h3>
+            <h3 className={`font-black text-center text-${themeColor}-600 uppercase text-[11px] tracking-widest mb-2`}>Cấu trúc bài học</h3>
             <div className="flex gap-2 p-1 bg-slate-100 rounded-xl mb-4">
               <button type="button" onClick={()=>setNodeModalData({...nodeModalData, type:'folder'})} className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-[10px] font-black uppercase transition-all ${nodeModalData.type==='folder' ? 'bg-white shadow-sm text-amber-600' : 'text-slate-400'}`}>
                 <Folder size={14}/> Thư mục
@@ -470,23 +524,23 @@ const MainView: React.FC<{ isAdmin: boolean; data: AppData; updateData: (d: AppD
             </div>
             <div className="space-y-1">
               <label className="text-[9px] font-bold text-slate-400 uppercase ml-1 tracking-widest">Tiêu đề</label>
-              <input autoFocus value={nodeModalData.title} onChange={e=>setNodeModalData({...nodeModalData, title:e.target.value})} className="w-full px-4 py-3 text-sm font-medium outline-none bg-slate-50 border border-slate-100 rounded-xl focus:border-indigo-400 transition-all" placeholder={nodeModalData.type==='folder'?'Tên thư mục...':'Tên bài học...'}/>
+              <input autoFocus value={nodeModalData.title} onChange={e=>setNodeModalData({...nodeModalData, title:e.target.value})} className={`w-full px-4 py-3 text-sm font-medium outline-none bg-slate-50 border border-slate-100 rounded-xl focus:border-${themeColor}-400 transition-all`} placeholder={nodeModalData.type==='folder'?'Tên thư mục...':'Tên bài học...'}/>
             </div>
             {nodeModalData.type === 'lesson' && (
               <>
                 <div className="space-y-1">
                   <label className="text-[9px] font-bold text-slate-400 uppercase ml-1 tracking-widest">Link tài liệu (Iframe)</label>
-                  <input value={nodeModalData.url} onChange={e=>setNodeModalData({...nodeModalData, url:e.target.value})} className="w-full px-4 py-3 text-[11px] outline-none bg-slate-50 border border-slate-100 rounded-xl focus:border-indigo-400 transition-all" placeholder="https://..."/>
+                  <input value={nodeModalData.url} onChange={e=>setNodeModalData({...nodeModalData, url:e.target.value})} className={`w-full px-4 py-3 text-[11px] outline-none bg-slate-50 border border-slate-100 rounded-xl focus:border-${themeColor}-400 transition-all`} placeholder="https://..."/>
                 </div>
                 <div className="space-y-1">
                   <label className="text-[9px] font-bold text-slate-400 uppercase ml-1 tracking-widest flex items-center gap-1"><ImageIcon size={10}/> Link hình ảnh bài học</label>
-                  <input value={nodeModalData.imageUrl || ''} onChange={e=>setNodeModalData({...nodeModalData, imageUrl:e.target.value})} className="w-full px-4 py-3 text-[11px] outline-none bg-slate-50 border border-slate-100 rounded-xl focus:border-indigo-400 transition-all" placeholder="https://anh-minh-hoa.png"/>
+                  <input value={nodeModalData.imageUrl || ''} onChange={e=>setNodeModalData({...nodeModalData, imageUrl:e.target.value})} className={`w-full px-4 py-3 text-[11px] outline-none bg-slate-50 border border-slate-100 rounded-xl focus:border-${themeColor}-400 transition-all`} placeholder="https://anh-minh-hoa.png"/>
                 </div>
               </>
             )}
             <div className="flex gap-4 pt-2">
                 <button type="button" onClick={()=>setShowNodeModal(false)} className="flex-1 py-3 text-[10px] font-bold uppercase text-slate-300 tracking-widest">Hủy</button>
-                <button type="submit" className="flex-1 py-3 bg-indigo-600 text-white rounded-xl font-bold uppercase text-[10px] shadow-lg shadow-indigo-100 tracking-widest">Lưu lại</button>
+                <button type="submit" className={`flex-1 py-3 bg-${themeColor}-600 text-white rounded-xl font-bold uppercase text-[10px] shadow-lg shadow-${themeColor}-100 tracking-widest`}>Lưu lại</button>
             </div>
           </form>
         </div>
@@ -496,18 +550,18 @@ const MainView: React.FC<{ isAdmin: boolean; data: AppData; updateData: (d: AppD
         <div className="fixed inset-0 z-[300] bg-slate-900/40 flex items-center justify-center p-4 backdrop-blur-md animate-in fade-in duration-300">
           <form onSubmit={handleSaveResource}
             className="bg-white p-8 rounded-[32px] shadow-2xl w-full max-w-md space-y-4 border border-slate-100 animate-in zoom-in-95">
-            <h3 className="font-black text-center text-indigo-600 uppercase text-[11px] tracking-widest mb-2">Quản lý Học liệu</h3>
+            <h3 className={`font-black text-center text-${themeColor}-600 uppercase text-[11px] tracking-widest mb-2`}>Quản lý Học liệu</h3>
             <div className="space-y-1">
               <label className="text-[9px] font-bold text-slate-400 uppercase ml-1 tracking-widest">Tiêu đề tài liệu</label>
-              <input autoFocus value={resModalData.title} onChange={e=>setResModalData({...resModalData, title:e.target.value})} className="w-full px-4 py-3 text-sm font-medium outline-none bg-slate-50 border border-slate-100 rounded-xl focus:border-indigo-400 transition-all" placeholder="Ví dụ: Video thí nghiệm..."/>
+              <input autoFocus value={resModalData.title} onChange={e=>setResModalData({...resModalData, title:e.target.value})} className={`w-full px-4 py-3 text-sm font-medium outline-none bg-slate-50 border border-slate-100 rounded-xl focus:border-${themeColor}-400 transition-all`} placeholder="Ví dụ: Video thí nghiệm..."/>
             </div>
             <div className="space-y-1">
               <label className="text-[9px] font-bold text-slate-400 uppercase ml-1 tracking-widest">Đường dẫn (URL)</label>
-              <input value={resModalData.url} onChange={e=>setResModalData({...resModalData, url:e.target.value})} className="w-full px-4 py-3 text-[11px] outline-none bg-slate-50 border border-slate-100 rounded-xl focus:border-indigo-400 transition-all" placeholder="https://drive.google.com/..."/>
+              <input value={resModalData.url} onChange={e=>setResModalData({...resModalData, url:e.target.value})} className={`w-full px-4 py-3 text-[11px] outline-none bg-slate-50 border border-slate-100 rounded-xl focus:border-${themeColor}-400 transition-all`} placeholder="https://drive.google.com/..."/>
             </div>
             <div className="flex gap-4 pt-2">
                 <button type="button" onClick={()=>setShowResModal(false)} className="flex-1 py-3 text-[10px] font-bold uppercase text-slate-300 tracking-widest">Hủy</button>
-                <button type="submit" className="flex-1 py-3 bg-indigo-600 text-white rounded-xl font-bold uppercase text-[10px] shadow-lg shadow-indigo-100 tracking-widest">Lưu tài liệu</button>
+                <button type="submit" className={`flex-1 py-3 bg-${themeColor}-600 text-white rounded-xl font-bold uppercase text-[10px] shadow-lg shadow-${themeColor}-100 tracking-widest`}>Lưu tài liệu</button>
             </div>
           </form>
         </div>
