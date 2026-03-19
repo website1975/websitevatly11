@@ -457,7 +457,7 @@ const MainView: React.FC<{ isAdmin: boolean; data: AppData; updateData: (d: AppD
               />
             ) : (
               <>
-                <header className="px-6 py-4 border-b border-slate-100 shrink-0 bg-white">
+                <header className={`px-6 ${activeTab === 'content' ? 'pt-4 pb-0' : 'py-4'} border-b border-slate-100 shrink-0 bg-white`}>
                   <div className="flex justify-between items-center">
                     <div className="min-w-0 flex-1 mr-4">
                       <h2 className="text-lg font-black text-slate-900 uppercase tracking-tight truncate mb-0.5">{selectedNode?.title}</h2>
@@ -481,14 +481,14 @@ const MainView: React.FC<{ isAdmin: boolean; data: AppData; updateData: (d: AppD
                     </div>
                   </div>
                   
-                  <div className="flex gap-6 mt-3">
+                  <div className={`flex gap-6 ${activeTab === 'content' ? 'mt-2' : 'mt-3'}`}>
                     <button onClick={()=>setActiveTab('content')} className={`pb-2 text-[10px] font-bold uppercase tracking-widest border-b-2 transition-all ${activeTab==='content' ? `border-${themeColor}-600 text-${themeColor}-600` : 'border-transparent text-slate-300 hover:text-slate-500'}`}>Học liệu</button>
                     <button onClick={()=>setActiveTab('flashcards')} className={`pb-2 text-[10px] font-bold uppercase tracking-widest border-b-2 transition-all ${activeTab==='flashcards' ? `border-${themeColor}-600 text-${themeColor}-600` : 'border-transparent text-slate-300 hover:text-slate-500'}`}>Flashcards</button>
                     <button onClick={()=>setActiveTab('forum')} className={`pb-2 text-[10px] font-bold uppercase tracking-widest border-b-2 transition-all ${activeTab==='forum' ? `border-${themeColor}-600 text-${themeColor}-600` : 'border-transparent text-slate-300 hover:text-slate-500'}`}>Thảo luận</button>
                   </div>
                 </header>
                 
-                <div className="flex-1 relative overflow-y-auto custom-scrollbar bg-[#fcfdfe] p-6">
+                <div className={`flex-1 relative overflow-y-auto custom-scrollbar bg-[#fcfdfe] ${activeTab === 'content' ? 'p-0' : 'p-6'}`}>
                   {activeTab === 'content' ? (
                     <div className="h-full relative">
                       {iframeLoading && <div className="absolute inset-0 flex flex-col items-center justify-center z-10 bg-white/90 backdrop-blur-sm"><Loader2 className={`animate-spin text-${themeColor}-500 mb-2`} size={32}/><p className="text-[10px] uppercase font-bold text-slate-300 tracking-widest">Đang tải...</p></div>}
