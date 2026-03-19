@@ -62,10 +62,22 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 const TEACHER_PWD = getSafeEnv('TEACHER_PASSWORD') || '1234';
 
 const App: React.FC = () => {
-  const [selectedGrade, setSelectedGrade] = useState<number | null>(null);
+  const [selectedGrade, setSelectedGrade] = useState<number | null>(() => {
+    const saved = localStorage.getItem('selected_grade');
+    return saved ? parseInt(saved) : null;
+  });
   const [data, setData] = useState<AppData>(INITIAL_DATA);
   const [visitorCount, setVisitorCount] = useState<number>(0);
   const [isSyncing, setIsSyncing] = useState(false);
+
+  const handleSelectGrade = (grade: number | null) => {
+    setSelectedGrade(grade);
+    if (grade === null) {
+      localStorage.removeItem('selected_grade');
+    } else {
+      localStorage.setItem('selected_grade', grade.toString());
+    }
+  };
 
   const fetchCloudData = useCallback(async (gradeId: number) => {
     setIsSyncing(true);
@@ -117,7 +129,7 @@ const App: React.FC = () => {
   return (
     <ErrorBoundary>
       <Routes>
-        <Route path="/" element={<LandingPage visitorCount={visitorCount} onSelectGrade={(g) => setSelectedGrade(g)} selectedGrade={selectedGrade} />} />
+        <Route path="/" element={<LandingPage visitorCount={visitorCount} onSelectGrade={handleSelectGrade} selectedGrade={selectedGrade} />} />
         <Route path="/teacher" element={<ProtectedRoute><MainView isAdmin={true} data={data} updateData={updateData} isSyncing={isSyncing} visitorCount={visitorCount} selectedGrade={selectedGrade}/></ProtectedRoute>} />
         <Route path="/student" element={<MainView isAdmin={false} data={data} updateData={updateData} isSyncing={isSyncing} visitorCount={visitorCount} selectedGrade={selectedGrade}/>} />
         <Route path="*" element={<Navigate to="/" replace />} />
@@ -214,7 +226,9 @@ const LandingPage: React.FC<{ visitorCount: number, onSelectGrade: (g: number) =
 };
 
 const MainView: React.FC<{ isAdmin: boolean; data: AppData; updateData: (d: AppData) => void; isSyncing: boolean; visitorCount: number; selectedGrade: number | null }> = ({ isAdmin, data, updateData, isSyncing, visitorCount, selectedGrade }) => {
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(() => {
+    return localStorage.getItem(`selected_id_${selectedGrade}`);
+  });
   const [iframeLoading, setIframeLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<'content' | 'forum' | 'flashcards'>('content');
   const [sloganIdx, setSloganIdx] = useState(0);
@@ -355,6 +369,16 @@ const MainView: React.FC<{ isAdmin: boolean; data: AppData; updateData: (d: AppD
     setShowHomeConfig(false);
   };
 
+  const handleSelectNode = (id: string | null) => {
+    setSelectedId(id);
+    if (id) {
+      localStorage.setItem(`selected_id_${selectedGrade}`, id);
+      if (data.nodes.find(n => n.id === id)?.url) setIframeLoading(true);
+    } else {
+      localStorage.removeItem(`selected_id_${selectedGrade}`);
+    }
+  };
+
   return (
     <div className="flex h-screen overflow-hidden font-sans bg-white text-slate-900 transition-colors duration-300">
       {isQuizOpen && selectedNode && (
@@ -400,7 +424,7 @@ const MainView: React.FC<{ isAdmin: boolean; data: AppData; updateData: (d: AppD
               visibleNodeIds={visibleNodeIds}
               searchTerm={searchTerm}
               themeColor={themeColor}
-              onSelect={(id)=>{setSelectedId(id); if(data.nodes.find(n=>n.id===id)?.url) setIframeLoading(true);}}
+              onSelect={handleSelectNode}
               onAdd={(p,t)=>{
                 const nextOrder = data.nodes.filter(n => n.parentId === p).length;
                 setNodeModalData({parentId:p, type:t, title:'', url:'', imageUrl: '', order: nextOrder}); 
@@ -428,7 +452,7 @@ const MainView: React.FC<{ isAdmin: boolean; data: AppData; updateData: (d: AppD
               <FolderSummary 
                 folder={selectedNode} 
                 children={childNodes} 
-                onSelectLesson={(id) => { setSelectedId(id); setIframeLoading(true); }} 
+                onSelectLesson={handleSelectNode} 
                 themeColor={themeColor}
               />
             ) : (
