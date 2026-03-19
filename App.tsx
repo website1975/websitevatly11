@@ -363,7 +363,12 @@ const MainView: React.FC<{ isAdmin: boolean; data: AppData; updateData: (d: AppD
       {/* PANEL 1: SIDEBAR */}
       <aside className="w-[230px] border-r border-slate-100 flex flex-col shrink-0 bg-[#fbfcfd] transition-all">
         <header className={`px-5 py-4 text-white ${isAdmin ? 'bg-amber-600' : `bg-${themeColor}-600`} flex justify-between items-center shrink-0`}>
-          <div className="flex items-center gap-2"><Book size={16}/><h1 className="font-bold text-[9px] uppercase tracking-[0.2em]">Cấu trúc sách</h1></div>
+          <div className="flex items-center gap-2">
+            <Book size={16}/>
+            <h1 className="font-bold text-[9px] uppercase tracking-[0.2em]">
+              Cấu trúc sách - Lớp {selectedGrade === 1 ? '11' : selectedGrade}
+            </h1>
+          </div>
           <div className="flex items-center gap-1">
             {isAdmin && <button onClick={()=>setShowHomeConfig(true)} className="p-1.5 hover:bg-white/20 rounded-lg transition-colors" title="Cấu hình trang chủ"><Settings size={14}/></button>}
             {isAdmin && <button onClick={()=>{
