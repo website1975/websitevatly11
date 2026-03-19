@@ -7,9 +7,10 @@ interface FolderSummaryProps {
   folder: BookNode;
   children: BookNode[];
   onSelectLesson: (id: string) => void;
+  themeColor: string;
 }
 
-const FolderSummary: React.FC<FolderSummaryProps> = ({ folder, children, onSelectLesson }) => {
+const FolderSummary: React.FC<FolderSummaryProps> = ({ folder, children, onSelectLesson, themeColor }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
 
   useEffect(() => {
@@ -35,11 +36,40 @@ const FolderSummary: React.FC<FolderSummaryProps> = ({ folder, children, onSelec
 
   const currentLesson = children[currentIndex];
 
+  const themeClasses = {
+    'indigo-600': 'bg-indigo-600 hover:bg-indigo-700 shadow-indigo-900/20',
+    'emerald-600': 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-900/20',
+    'rose-600': 'bg-rose-600 hover:bg-rose-700 shadow-rose-900/20',
+  };
+
+  const themeTextClasses = {
+    'indigo-600': 'text-indigo-500',
+    'emerald-600': 'text-emerald-500',
+    'rose-600': 'text-rose-500',
+  };
+
+  const themeBgBlurClasses = {
+    'indigo-600': 'bg-indigo-400',
+    'emerald-600': 'bg-emerald-400',
+    'rose-600': 'bg-rose-400',
+  };
+
+  const themeDotClasses = {
+    'indigo-600': 'bg-indigo-600 shadow-indigo-100',
+    'emerald-600': 'bg-emerald-600 shadow-emerald-100',
+    'rose-600': 'bg-rose-600 shadow-rose-100',
+  };
+
+  const currentThemeClass = themeClasses[themeColor as keyof typeof themeClasses] || themeClasses['indigo-600'];
+  const currentThemeTextClass = themeTextClasses[themeColor as keyof typeof themeTextClasses] || themeTextClasses['indigo-600'];
+  const currentThemeBgBlurClass = themeBgBlurClasses[themeColor as keyof typeof themeBgBlurClasses] || themeBgBlurClasses['indigo-600'];
+  const currentThemeDotClass = themeDotClasses[themeColor as keyof typeof themeDotClasses] || themeDotClasses['indigo-600'];
+
   return (
     <div className="h-full w-full flex flex-col bg-white relative overflow-hidden">
       {/* Background Blur Effect */}
       <div className="absolute inset-0 z-0 opacity-5 pointer-events-none">
-        <div className="absolute top-[-10%] right-[-10%] w-[50%] h-[50%] bg-indigo-400 rounded-full blur-[120px]"></div>
+        <div className={`absolute top-[-10%] right-[-10%] w-[50%] h-[50%] ${currentThemeBgBlurClass} rounded-full blur-[120px]`}></div>
         <div className="absolute bottom-[-10%] left-[-10%] w-[50%] h-[50%] bg-sky-400 rounded-full blur-[120px]"></div>
       </div>
 
@@ -49,7 +79,7 @@ const FolderSummary: React.FC<FolderSummaryProps> = ({ folder, children, onSelec
           
           {/* Header Chương - Thu gọn tối đa */}
           <div className="mb-2">
-            <h2 className="text-[7px] font-black text-indigo-500 uppercase tracking-[0.4em] mb-0 opacity-70">CHƯƠNG HIỆN TẠI</h2>
+            <h2 className={`text-[7px] font-black ${currentThemeTextClass} uppercase tracking-[0.4em] mb-0 opacity-70`}>CHƯƠNG HIỆN TẠI</h2>
             <h1 className="text-base font-black text-slate-900 uppercase tracking-tighter leading-tight">{folder.title}</h1>
           </div>
 
@@ -67,7 +97,7 @@ const FolderSummary: React.FC<FolderSummaryProps> = ({ folder, children, onSelec
           {/* Carousel Area */}
           <div className="flex flex-col gap-2 w-full">
             {/* Image Container - Mở rộng full width Panel 2 */}
-            <div className="relative w-full aspect-video group rounded-[24px] overflow-hidden shadow-2xl shadow-indigo-100/50 border-[2px] border-white transition-all duration-700 hover:shadow-indigo-200/60">
+            <div className={`relative w-full aspect-video group rounded-[24px] overflow-hidden shadow-2xl border-[2px] border-white transition-all duration-700`}>
                {currentLesson.imageUrl ? (
                  <img 
                    src={currentLesson.imageUrl} 
@@ -76,7 +106,7 @@ const FolderSummary: React.FC<FolderSummaryProps> = ({ folder, children, onSelec
                    key={currentLesson.id}
                  />
                ) : (
-                 <div className="w-full h-full bg-gradient-to-br from-indigo-500 via-purple-500 to-sky-500 flex items-center justify-center text-white/20">
+                 <div className={`w-full h-full bg-gradient-to-br from-${themeColor.split('-')[0]}-500 via-purple-500 to-sky-500 flex items-center justify-center text-white/20`}>
                    <Play size={60} strokeWidth={1} />
                  </div>
                )}
@@ -94,7 +124,7 @@ const FolderSummary: React.FC<FolderSummaryProps> = ({ folder, children, onSelec
                {/* Nút vào học */}
                <button 
                 onClick={() => onSelectLesson(currentLesson.id)}
-                className="absolute bottom-3 right-3 bg-indigo-600 text-white px-4 py-2 rounded-xl font-black text-[8px] uppercase tracking-[0.15em] shadow-2xl shadow-indigo-900/20 flex items-center gap-1.5 hover:bg-indigo-700 hover:translate-y-[-2px] active:translate-y-0 transition-all z-20"
+                className={`absolute bottom-3 right-3 text-white px-4 py-2 rounded-xl font-black text-[8px] uppercase tracking-[0.15em] shadow-2xl flex items-center gap-1.5 hover:translate-y-[-2px] active:translate-y-0 transition-all z-20 ${currentThemeClass}`}
                >
                  BẮT ĐẦU <Play size={7} fill="currentColor" />
                </button>
@@ -106,7 +136,7 @@ const FolderSummary: React.FC<FolderSummaryProps> = ({ folder, children, onSelec
                 <button 
                   key={idx} 
                   onClick={() => setCurrentIndex(idx)}
-                  className={`h-1 transition-all duration-500 rounded-full ${idx === currentIndex ? 'w-6 bg-indigo-600 shadow-lg shadow-indigo-100' : 'w-1 bg-slate-200 hover:bg-slate-300'}`}
+                  className={`h-1 transition-all duration-500 rounded-full ${idx === currentIndex ? `w-6 ${currentThemeDotClass}` : 'w-1 bg-slate-200 hover:bg-slate-300'}`}
                 />
               ))}
             </div>
