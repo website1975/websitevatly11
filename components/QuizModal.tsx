@@ -15,10 +15,12 @@ interface QuizModalProps {
   nodeId: string;
   lessonTitle: string;
   isAdmin: boolean;
+  selectedGrade: number | null;
+  themeColor: string;
   onClose: () => void;
 }
 
-const QuizModal: React.FC<QuizModalProps> = ({ nodeId, lessonTitle, isAdmin, onClose }) => {
+const QuizModal: React.FC<QuizModalProps> = ({ nodeId, lessonTitle, isAdmin, selectedGrade, themeColor, onClose }) => {
   const [questions, setQuestions] = useState<QuizQuestion[]>([]);
   const [fullBank, setFullBank] = useState<QuizQuestion[]>([]);
   const [loading, setLoading] = useState(false);
@@ -34,7 +36,12 @@ const QuizModal: React.FC<QuizModalProps> = ({ nodeId, lessonTitle, isAdmin, onC
 
   const getDbId = () => {
     const numericPart = nodeId.replace(/\D/g, '');
-    return parseInt(numericPart || "0");
+    const baseId = parseInt(numericPart || "0");
+    // Nếu là Khối 11 (id: 1), giữ nguyên ID cũ để không mất dữ liệu
+    if (selectedGrade === 1 || !selectedGrade) return baseId;
+    // Với các khối khác, tạo ID duy nhất bằng cách thêm tiền tố grade
+    // Ví dụ: Khối 10 -> 100000000000000 + timestamp
+    return (selectedGrade * 100000000000000) + baseId;
   };
 
   const pickRandomQuestions = (bank: QuizQuestion[], count: number = 5) => {
@@ -88,9 +95,10 @@ const QuizModal: React.FC<QuizModalProps> = ({ nodeId, lessonTitle, isAdmin, onC
 
     try {
       const ai = new GoogleGenAI({ apiKey });
+      const gradeLabel = selectedGrade === 1 ? '11' : (selectedGrade || '11');
       const response = await ai.models.generateContent({
         model: 'gemini-3-flash-preview',
-        contents: `Tạo 5 câu trắc nghiệm Vật lý 11 bài: "${lessonTitle}". 
+        contents: `Tạo 5 câu trắc nghiệm Vật lý ${gradeLabel} bài: "${lessonTitle}". 
         2 Biết/Hiểu, 2 Vận dụng, 1 Vận dụng cao. 
         Sử dụng $...$ cho công thức. Xuất JSON array.`,
         config: {
@@ -190,6 +198,56 @@ const QuizModal: React.FC<QuizModalProps> = ({ nodeId, lessonTitle, isAdmin, onC
 
   const calculateScore = () => questions.filter((q, i) => userAnswers[i] === q.correctIndex).length;
 
+  const themeTextClasses = {
+    'indigo-600': 'text-indigo-600',
+    'emerald-600': 'text-emerald-600',
+    'rose-600': 'text-rose-600',
+  };
+
+  const themeBgClasses = {
+    'indigo-600': 'bg-indigo-600',
+    'emerald-600': 'bg-emerald-600',
+    'rose-600': 'bg-rose-600',
+  };
+
+  const themeHoverBgClasses = {
+    'indigo-600': 'hover:bg-indigo-700',
+    'emerald-600': 'hover:bg-emerald-700',
+    'rose-600': 'hover:bg-rose-700',
+  };
+
+  const themeBorderClasses = {
+    'indigo-600': 'focus:border-indigo-400',
+    'emerald-600': 'focus:border-emerald-400',
+    'rose-600': 'focus:border-rose-400',
+  };
+
+  const themeShadowClasses = {
+    'indigo-600': 'shadow-indigo-100',
+    'emerald-600': 'shadow-emerald-100',
+    'rose-600': 'shadow-rose-100',
+  };
+
+  const themeLightBgClasses = {
+    'indigo-600': 'bg-indigo-50/30',
+    'emerald-600': 'bg-emerald-50/30',
+    'rose-600': 'bg-rose-50/30',
+  };
+
+  const themeLightBorderClasses = {
+    'indigo-600': 'border-indigo-100/50',
+    'emerald-600': 'border-emerald-100/50',
+    'rose-600': 'border-rose-100/50',
+  };
+
+  const currentThemeTextClass = themeTextClasses[themeColor as keyof typeof themeTextClasses] || themeTextClasses['indigo-600'];
+  const currentThemeBgClass = themeBgClasses[themeColor as keyof typeof themeBgClasses] || themeBgClasses['indigo-600'];
+  const currentThemeHoverBgClass = themeHoverBgClasses[themeColor as keyof typeof themeHoverBgClasses] || themeHoverBgClasses['indigo-600'];
+  const currentThemeBorderClass = themeBorderClasses[themeColor as keyof typeof themeBorderClasses] || themeBorderClasses['indigo-600'];
+  const currentThemeShadowClass = themeShadowClasses[themeColor as keyof typeof themeShadowClasses] || themeShadowClasses['indigo-100'];
+  const currentThemeLightBgClass = themeLightBgClasses[themeColor as keyof typeof themeLightBgClasses] || themeLightBgClasses['indigo-600'];
+  const currentThemeLightBorderClass = themeLightBorderClasses[themeColor as keyof typeof themeLightBorderClasses] || themeLightBorderClasses['indigo-600'];
+
   const handleSubmit = () => {
     if (userAnswers.some(a => a === null)) { alert("Hãy hoàn thành tất cả câu hỏi!"); return; }
     const score = calculateScore();
@@ -207,15 +265,15 @@ const QuizModal: React.FC<QuizModalProps> = ({ nodeId, lessonTitle, isAdmin, onC
         {editingIndex !== null && editForm && (
           <div className="absolute inset-0 z-[600] bg-white flex flex-col animate-in slide-in-from-bottom-full duration-300">
             <header className="px-8 py-5 border-b flex justify-between items-center shrink-0">
-               <h3 className="text-xs font-black uppercase tracking-widest text-indigo-600">{editingIndex === -1 ? 'Thêm câu hỏi mới' : `Chỉnh sửa câu ${editingIndex + 1}`}</h3>
+               <h3 className={`text-xs font-black uppercase tracking-widest ${currentThemeTextClass}`}>{editingIndex === -1 ? 'Thêm câu hỏi mới' : `Chỉnh sửa câu ${editingIndex + 1}`}</h3>
                <button onClick={() => setEditingIndex(null)} className="p-2 text-slate-300 hover:text-red-500"><X size={20}/></button>
             </header>
             <form onSubmit={handleEditSubmit} className="flex-1 overflow-y-auto p-8 space-y-6 custom-scrollbar">
                <div className="space-y-2">
                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Nội dung câu hỏi (Dùng $...$ cho công thức)</label>
-                 <textarea required value={editForm.question} onChange={e => setEditForm({...editForm, question: e.target.value})} className="w-full p-4 bg-slate-50 border rounded-2xl text-sm min-h-[100px] outline-none focus:border-indigo-400 transition-all font-medium" />
-                 <div className="p-3 bg-indigo-50/30 rounded-xl border border-indigo-100/50 text-xs">
-                    <span className="font-black text-indigo-400 text-[9px] uppercase block mb-1">Xem trước:</span>
+                 <textarea required value={editForm.question} onChange={e => setEditForm({...editForm, question: e.target.value})} className={`w-full p-4 bg-slate-50 border rounded-2xl text-sm min-h-[100px] outline-none ${currentThemeBorderClass} transition-all font-medium`} />
+                 <div className={`p-3 ${currentThemeLightBgClass} rounded-xl border ${currentThemeLightBorderClass} text-xs`}>
+                    <span className={`font-black ${currentThemeTextClass} text-[9px] uppercase block mb-1`}>Xem trước:</span>
                     {renderLatex(editForm.question || '...')}
                  </div>
                </div>
@@ -225,7 +283,7 @@ const QuizModal: React.FC<QuizModalProps> = ({ nodeId, lessonTitle, isAdmin, onC
                    <div key={i} className="space-y-1">
                      <label className={`text-[9px] font-black uppercase tracking-widest ${editForm.correctIndex === i ? 'text-emerald-500' : 'text-slate-400'}`}>Đáp án {getOptionLabel(i)}</label>
                      <div className="flex gap-2">
-                       <input required value={opt} onChange={e => { const o = [...editForm.options]; o[i] = e.target.value; setEditForm({...editForm, options: o}); }} className="flex-1 p-3 bg-slate-50 border rounded-xl text-xs outline-none focus:border-indigo-400" />
+                       <input required value={opt} onChange={e => { const o = [...editForm.options]; o[i] = e.target.value; setEditForm({...editForm, options: o}); }} className={`flex-1 p-3 bg-slate-50 border rounded-xl text-xs outline-none ${currentThemeBorderClass}`} />
                        <button type="button" onClick={() => setEditForm({...editForm, correctIndex: i})} className={`px-3 rounded-xl border transition-all ${editForm.correctIndex === i ? 'bg-emerald-500 border-emerald-500 text-white' : 'bg-white text-slate-300 hover:border-emerald-200'}`}><CheckCircle2 size={14}/></button>
                      </div>
                    </div>
@@ -234,12 +292,12 @@ const QuizModal: React.FC<QuizModalProps> = ({ nodeId, lessonTitle, isAdmin, onC
 
                <div className="space-y-2">
                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Lời giải chi tiết</label>
-                 <textarea value={editForm.explanation} onChange={e => setEditForm({...editForm, explanation: e.target.value})} className="w-full p-4 bg-slate-50 border rounded-2xl text-xs min-h-[80px] outline-none focus:border-indigo-400" />
+                 <textarea value={editForm.explanation} onChange={e => setEditForm({...editForm, explanation: e.target.value})} className={`w-full p-4 bg-slate-50 border rounded-2xl text-xs min-h-[80px] outline-none ${currentThemeBorderClass}`} />
                </div>
 
                <div className="flex gap-4 pt-4">
                  <button type="button" onClick={() => setEditingIndex(null)} className="flex-1 py-4 text-[10px] font-black uppercase text-slate-400 tracking-widest">Hủy bỏ</button>
-                 <button type="submit" className="flex-1 py-4 bg-indigo-600 text-white rounded-2xl font-black uppercase text-[10px] shadow-lg shadow-indigo-100 tracking-widest flex items-center justify-center gap-2">
+                 <button type="submit" className={`flex-1 py-4 ${currentThemeBgClass} text-white rounded-2xl font-black uppercase text-[10px] shadow-lg ${currentThemeShadowClass} tracking-widest flex items-center justify-center gap-2`}>
                    <Save size={14}/> {editingIndex === -1 ? 'Thêm vào kho' : 'Cập nhật câu hỏi'}
                  </button>
                </div>
@@ -249,7 +307,7 @@ const QuizModal: React.FC<QuizModalProps> = ({ nodeId, lessonTitle, isAdmin, onC
 
         <header className="px-8 py-5 border-b flex justify-between items-center bg-white shrink-0">
           <div className="flex items-center gap-3">
-            <div className={`p-2 ${isAdmin ? 'bg-indigo-600' : 'bg-emerald-600'} text-white rounded-2xl`}>
+            <div className={`p-2 ${currentThemeBgClass} text-white rounded-2xl`}>
               <BrainCircuit size={18} />
             </div>
             <div className="min-w-0">
@@ -281,7 +339,7 @@ const QuizModal: React.FC<QuizModalProps> = ({ nodeId, lessonTitle, isAdmin, onC
         <div className="flex-1 overflow-y-auto p-8 custom-scrollbar space-y-12 bg-slate-50/30">
           {loading ? (
             <div className="h-full flex flex-col items-center justify-center space-y-4">
-              <div className="w-10 h-10 border-4 border-slate-100 border-t-indigo-600 rounded-full animate-spin"></div>
+              <div className={`w-10 h-10 border-4 border-slate-100 border-t-${themeColor.split('-')[0]}-600 rounded-full animate-spin`}></div>
               <p className="text-[9px] font-black text-slate-300 uppercase tracking-widest">Đang tải...</p>
             </div>
           ) : errorInfo ? (
@@ -292,15 +350,15 @@ const QuizModal: React.FC<QuizModalProps> = ({ nodeId, lessonTitle, isAdmin, onC
             </div>
           ) : questions.length === 0 ? (
              <div className="h-full flex flex-col items-center justify-center text-center space-y-6">
-                <div className="w-20 h-20 bg-indigo-50 rounded-full flex items-center justify-center"><BrainCircuit size={40} className="text-indigo-400"/></div>
+                <div className={`w-20 h-20 bg-${themeColor.split('-')[0]}-50 rounded-full flex items-center justify-center`}><BrainCircuit size={40} className={currentThemeTextClass}/></div>
                 <div className="space-y-2">
                   <h4 className="text-sm font-black text-slate-800 uppercase tracking-tight">Chưa có câu hỏi nào</h4>
                   <p className="text-[11px] text-slate-400 font-medium max-w-[200px] mx-auto">Hãy sử dụng AI hoặc tự soạn câu hỏi để xây dựng ngân hàng tài liệu.</p>
                 </div>
                 {isAdmin && (
                   <div className="flex flex-col gap-3 items-center">
-                    <button onClick={generateQuiz} className="px-10 py-4 bg-indigo-600 text-white text-[11px] font-black uppercase rounded-2xl shadow-xl shadow-indigo-100 hover:bg-indigo-700 transition-all">Tạo 5 câu với AI</button>
-                    <button onClick={() => openEditForm(-1)} className="text-[10px] font-black uppercase text-slate-400 hover:text-indigo-600 tracking-widest">Hoặc soạn thủ công</button>
+                    <button onClick={generateQuiz} className={`px-10 py-4 ${currentThemeBgClass} text-white text-[11px] font-black uppercase rounded-2xl shadow-xl ${currentThemeShadowClass} ${currentThemeHoverBgClass} transition-all`}>Tạo 5 câu với AI</button>
+                    <button onClick={() => openEditForm(-1)} className={`text-[10px] font-black uppercase text-slate-400 hover:${currentThemeTextClass} tracking-widest`}>Hoặc soạn thủ công</button>
                   </div>
                 )}
              </div>
@@ -315,7 +373,7 @@ const QuizModal: React.FC<QuizModalProps> = ({ nodeId, lessonTitle, isAdmin, onC
                     </div>
                   )}
                   <div className="flex gap-4 items-start pr-12">
-                    <span className="text-indigo-600 font-black text-lg leading-none">{qIdx + 1}.</span>
+                    <span className={`${currentThemeTextClass} font-black text-lg leading-none`}>{qIdx + 1}.</span>
                     <div className="text-sm md:text-base font-bold text-slate-700 leading-relaxed">
                       {renderLatex(q.question)}
                     </div>
@@ -323,9 +381,9 @@ const QuizModal: React.FC<QuizModalProps> = ({ nodeId, lessonTitle, isAdmin, onC
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pl-8">
                     {q.options.map((opt, oIdx) => (
-                      <button key={oIdx} onClick={() => { const n = [...userAnswers]; n[qIdx] = oIdx; setUserAnswers(n); }} className={`p-4 rounded-2xl text-left border-2 transition-all flex items-center gap-3 ${userAnswers[qIdx] === oIdx ? 'bg-indigo-50 border-indigo-500' : 'bg-slate-50 border-transparent hover:bg-slate-100'}`}>
-                        <span className={`text-xs font-black ${userAnswers[qIdx] === oIdx ? 'text-indigo-600' : 'text-slate-300'}`}>{getOptionLabel(oIdx)}.</span>
-                        <div className={`text-[13px] font-medium leading-tight ${userAnswers[qIdx] === oIdx ? 'text-indigo-900' : 'text-slate-600'}`}>{renderLatex(opt)}</div>
+                      <button key={oIdx} onClick={() => { const n = [...userAnswers]; n[qIdx] = oIdx; setUserAnswers(n); }} className={`p-4 rounded-2xl text-left border-2 transition-all flex items-center gap-3 ${userAnswers[qIdx] === oIdx ? `bg-${themeColor.split('-')[0]}-50 ${currentThemeBorderClass}` : 'bg-slate-50 border-transparent hover:bg-slate-100'}`}>
+                        <span className={`text-xs font-black ${userAnswers[qIdx] === oIdx ? currentThemeTextClass : 'text-slate-300'}`}>{getOptionLabel(oIdx)}.</span>
+                        <div className={`text-[13px] font-medium leading-tight ${userAnswers[qIdx] === oIdx ? `text-${themeColor.split('-')[0]}-900` : 'text-slate-600'}`}>{renderLatex(opt)}</div>
                       </button>
                     ))}
                   </div>
@@ -335,7 +393,7 @@ const QuizModal: React.FC<QuizModalProps> = ({ nodeId, lessonTitle, isAdmin, onC
             </>
           ) : (
             <div className="space-y-8 pb-10">
-              <div className="text-center p-8 bg-indigo-50 rounded-[32px] border border-indigo-100">
+              <div className={`text-center p-8 bg-${themeColor.split('-')[0]}-50 rounded-[32px] border border-${themeColor.split('-')[0]}-100`}>
                   <Trophy size={48} className="text-amber-500 mx-auto mb-3" />
                   <h2 className="text-3xl font-black text-slate-900 uppercase">Kết quả: {calculateScore()}/{questions.length}</h2>
               </div>
@@ -347,7 +405,7 @@ const QuizModal: React.FC<QuizModalProps> = ({ nodeId, lessonTitle, isAdmin, onC
                        <p className="text-sm font-bold text-slate-700 leading-tight">{i+1}. {renderLatex(q.question)}</p>
                     </div>
                     <div className="ml-7 space-y-1">
-                       <p className="text-xs font-bold text-indigo-600">Đáp án: {getOptionLabel(q.correctIndex)}. {renderLatex(q.options[q.correctIndex])}</p>
+                       <p className={`text-xs font-bold ${currentThemeTextClass}`}>Đáp án: {getOptionLabel(q.correctIndex)}. {renderLatex(q.options[q.correctIndex])}</p>
                        <p className="text-[11px] italic text-slate-400 leading-relaxed">{renderLatex(q.explanation)}</p>
                     </div>
                   </div>
@@ -388,7 +446,7 @@ const QuizModal: React.FC<QuizModalProps> = ({ nodeId, lessonTitle, isAdmin, onC
                           <Shuffle size={14}/> Trộn câu khác
                         </button>
                     )}
-                    <button onClick={handleSubmit} className="px-10 py-3 bg-indigo-600 text-white text-[10px] font-black uppercase rounded-2xl shadow-xl shadow-indigo-100 flex items-center gap-2 hover:bg-indigo-700 active:scale-95 transition-all">
+                    <button onClick={handleSubmit} className={`px-10 py-3 ${currentThemeBgClass} text-white text-[10px] font-black uppercase rounded-2xl shadow-xl ${currentThemeShadowClass} flex items-center gap-2 ${currentThemeHoverBgClass} active:scale-95 transition-all`}>
                       Nộp bài <Send size={14}/>
                     </button>
                   </>
