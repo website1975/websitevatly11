@@ -12,14 +12,51 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 interface FlashcardsPanelProps {
   nodeId: string;
   isAdmin: boolean;
+  themeColor: string;
 }
 
-const FlashcardsPanel: React.FC<FlashcardsPanelProps> = ({ nodeId, isAdmin }) => {
+const FlashcardsPanel: React.FC<FlashcardsPanelProps> = ({ nodeId, isAdmin, themeColor }) => {
   const [flashcards, setFlashcards] = useState<Flashcard[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  const themeTextClasses = {
+    'indigo-600': 'text-indigo-600',
+    'emerald-600': 'text-emerald-600',
+    'rose-600': 'text-rose-600',
+  };
+
+  const themeBgClasses = {
+    'indigo-600': 'bg-indigo-600',
+    'emerald-600': 'bg-emerald-600',
+    'rose-600': 'bg-rose-600',
+  };
+
+  const themeHoverBgClasses = {
+    'indigo-600': 'hover:bg-indigo-700',
+    'emerald-600': 'hover:bg-emerald-700',
+    'rose-600': 'hover:bg-rose-700',
+  };
+
+  const themeBorderClasses = {
+    'indigo-600': 'focus:border-indigo-400',
+    'emerald-600': 'focus:border-emerald-400',
+    'rose-600': 'focus:border-rose-400',
+  };
+
+  const themeShadowClasses = {
+    'indigo-600': 'shadow-indigo-200',
+    'emerald-600': 'shadow-emerald-200',
+    'rose-600': 'shadow-rose-200',
+  };
+
+  const currentThemeTextClass = themeTextClasses[themeColor as keyof typeof themeTextClasses] || themeTextClasses['indigo-600'];
+  const currentThemeBgClass = themeBgClasses[themeColor as keyof typeof themeBgClasses] || themeBgClasses['indigo-600'];
+  const currentThemeHoverBgClass = themeHoverBgClasses[themeColor as keyof typeof themeHoverBgClasses] || themeHoverBgClasses['indigo-600'];
+  const currentThemeBorderClass = themeBorderClasses[themeColor as keyof typeof themeBorderClasses] || themeBorderClasses['indigo-600'];
+  const currentThemeShadowClass = themeShadowClasses[themeColor as keyof typeof themeShadowClasses] || themeShadowClasses['indigo-600'];
   
   // Admin state
   const [isAdding, setIsAdding] = useState(false);
@@ -183,7 +220,7 @@ const FlashcardsPanel: React.FC<FlashcardsPanelProps> = ({ nodeId, isAdmin }) =>
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center h-64 space-y-4">
-        <Loader2 className="animate-spin text-indigo-600" size={40} />
+        <Loader2 className={`animate-spin ${currentThemeTextClass}`} size={40} />
         <p className="text-slate-400 font-medium animate-pulse">Đang tải bộ thẻ ghi nhớ...</p>
       </div>
     );
@@ -194,7 +231,7 @@ const FlashcardsPanel: React.FC<FlashcardsPanelProps> = ({ nodeId, isAdmin }) =>
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-xl font-black text-slate-800 tracking-tight flex items-center gap-2">
-            <RotateCcw className="text-indigo-600" size={20} />
+            <RotateCcw className={currentThemeTextClass} size={20} />
             FLASHCARDS
           </h3>
           <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">
@@ -219,7 +256,7 @@ const FlashcardsPanel: React.FC<FlashcardsPanelProps> = ({ nodeId, isAdmin }) =>
             </button>
             <button 
               onClick={() => { setIsAdding(true); setEditingId(null); setFormData({ front: '', back: '' }); }}
-              className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200"
+              className={`flex items-center gap-2 px-4 py-2 ${currentThemeBgClass} text-white rounded-xl font-bold text-xs uppercase tracking-widest ${currentThemeHoverBgClass} transition-all shadow-lg ${currentThemeShadowClass}`}
             >
               <Plus size={16} /> Thêm thẻ mới
             </button>
@@ -235,7 +272,7 @@ const FlashcardsPanel: React.FC<FlashcardsPanelProps> = ({ nodeId, isAdmin }) =>
               <textarea 
                 value={formData.front}
                 onChange={(e) => setFormData({ ...formData, front: e.target.value })}
-                className="w-full p-4 bg-slate-50 border-2 border-transparent focus:border-indigo-400 rounded-2xl outline-none transition-all min-h-[120px] font-medium"
+                className={`w-full p-4 bg-slate-50 border-2 border-transparent ${currentThemeBorderClass} rounded-2xl outline-none transition-all min-h-[120px] font-medium`}
                 placeholder="Nhập câu hỏi hoặc thuật ngữ..."
               />
             </div>
@@ -244,7 +281,7 @@ const FlashcardsPanel: React.FC<FlashcardsPanelProps> = ({ nodeId, isAdmin }) =>
               <textarea 
                 value={formData.back}
                 onChange={(e) => setFormData({ ...formData, back: e.target.value })}
-                className="w-full p-4 bg-slate-50 border-2 border-transparent focus:border-indigo-400 rounded-2xl outline-none transition-all min-h-[120px] font-medium"
+                className={`w-full p-4 bg-slate-50 border-2 border-transparent ${currentThemeBorderClass} rounded-2xl outline-none transition-all min-h-[120px] font-medium`}
                 placeholder="Nhập câu trả lời hoặc định nghĩa..."
               />
             </div>
@@ -259,7 +296,7 @@ const FlashcardsPanel: React.FC<FlashcardsPanelProps> = ({ nodeId, isAdmin }) =>
             </button>
             <button 
               type="submit"
-              className="flex items-center gap-2 px-8 py-2 bg-indigo-600 text-white rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200"
+              className={`flex items-center gap-2 px-8 py-2 ${currentThemeBgClass} text-white rounded-xl font-bold text-xs uppercase tracking-widest ${currentThemeHoverBgClass} transition-all shadow-lg ${currentThemeShadowClass}`}
             >
               <Save size={16} /> {editingId ? 'Cập nhật' : 'Lưu thẻ'}
             </button>
@@ -293,7 +330,7 @@ const FlashcardsPanel: React.FC<FlashcardsPanelProps> = ({ nodeId, isAdmin }) =>
               
               {/* Back */}
               <div 
-                className="absolute inset-0 bg-indigo-600 rounded-[32px] shadow-2xl border border-white/10 flex flex-col items-center justify-center p-8 backface-hidden rotate-y-180 overflow-hidden"
+                className={`absolute inset-0 ${currentThemeBgClass} rounded-[32px] shadow-2xl border border-white/10 flex flex-col items-center justify-center p-8 backface-hidden rotate-y-180 overflow-hidden`}
                 style={{ transform: 'rotateY(180deg) translateZ(1px)', WebkitTransform: 'rotateY(180deg) translateZ(1px)' }}
               >
                 <div className="absolute top-0 left-0 w-full h-1 bg-white/10"></div>
@@ -310,7 +347,7 @@ const FlashcardsPanel: React.FC<FlashcardsPanelProps> = ({ nodeId, isAdmin }) =>
           <div className="flex items-center gap-4">
             <button 
               onClick={(e) => { e.stopPropagation(); prevCard(); }}
-              className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-slate-400 hover:text-indigo-600 hover:shadow-xl transition-all border border-slate-100"
+              className={`w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-slate-400 hover:${currentThemeTextClass} hover:shadow-xl transition-all border border-slate-100`}
             >
               <ChevronLeft size={24} />
             </button>
@@ -321,7 +358,7 @@ const FlashcardsPanel: React.FC<FlashcardsPanelProps> = ({ nodeId, isAdmin }) =>
               </span>
               <div className="w-24 h-1 bg-slate-100 rounded-full mt-1 overflow-hidden">
                 <div 
-                  className="h-full bg-indigo-500 transition-all duration-300" 
+                  className={`h-full ${currentThemeBgClass} transition-all duration-300`} 
                   style={{ width: `${((currentIndex + 1) / flashcards.length) * 100}%` }}
                 />
               </div>
@@ -329,7 +366,7 @@ const FlashcardsPanel: React.FC<FlashcardsPanelProps> = ({ nodeId, isAdmin }) =>
 
             <button 
               onClick={(e) => { e.stopPropagation(); nextCard(); }}
-              className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-slate-400 hover:text-indigo-600 hover:shadow-xl transition-all border border-slate-100"
+              className={`w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-slate-400 hover:${currentThemeTextClass} hover:shadow-xl transition-all border border-slate-100`}
             >
               <ChevronRight size={24} />
             </button>
@@ -372,7 +409,7 @@ const FlashcardsPanel: React.FC<FlashcardsPanelProps> = ({ nodeId, isAdmin }) =>
             {isAdmin && (
               <button 
                 onClick={() => setIsAdding(true)}
-                className="mt-4 flex items-center gap-2 px-8 py-3 bg-indigo-600 text-white rounded-2xl font-bold text-xs uppercase tracking-widest hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200"
+                className={`mt-4 flex items-center gap-2 px-8 py-3 ${currentThemeBgClass} text-white rounded-2xl font-bold text-xs uppercase tracking-widest ${currentThemeHoverBgClass} transition-all shadow-lg ${currentThemeShadowClass}`}
               >
                 <Plus size={18} /> Tạo thẻ đầu tiên
               </button>
