@@ -12,6 +12,7 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 interface ForumProps {
   nodeId: string;
   isAdmin: boolean;
+  themeColor: string;
 }
 
 const MATH_TEMPLATES = [
@@ -23,7 +24,7 @@ const MATH_TEMPLATES = [
   { label: 'Véc-tơ', value: '$\\vec{F}$' },
 ];
 
-const Forum: React.FC<ForumProps> = ({ nodeId, isAdmin }) => {
+const Forum: React.FC<ForumProps> = ({ nodeId, isAdmin, themeColor }) => {
   const [comments, setComments] = useState<ForumComment[]>([]);
   const [name, setName] = useState(isAdmin ? 'Giáo viên' : (localStorage.getItem('forum_name') || ''));
   const [content, setContent] = useState('');
@@ -138,6 +139,28 @@ const Forum: React.FC<ForumProps> = ({ nodeId, isAdmin }) => {
     setLoading(false);
   };
 
+  const themeTextClasses = {
+    'indigo-600': 'text-indigo-600',
+    'emerald-600': 'text-emerald-600',
+    'rose-600': 'text-rose-600',
+  };
+
+  const themeBgClasses = {
+    'indigo-600': 'bg-indigo-600',
+    'emerald-600': 'bg-emerald-600',
+    'rose-600': 'bg-rose-600',
+  };
+
+  const themeBorderClasses = {
+    'indigo-600': 'focus:border-indigo-400',
+    'emerald-600': 'focus:border-emerald-400',
+    'rose-600': 'focus:border-rose-400',
+  };
+
+  const currentThemeTextClass = themeTextClasses[themeColor as keyof typeof themeTextClasses] || themeTextClasses['indigo-600'];
+  const currentThemeBgClass = themeBgClasses[themeColor as keyof typeof themeBgClasses] || themeBgClasses['indigo-600'];
+  const currentThemeBorderClass = themeBorderClasses[themeColor as keyof typeof themeBorderClasses] || themeBorderClasses['indigo-600'];
+
   return (
     <div className="flex flex-col h-full bg-slate-50 relative">
       <div className="bg-white px-4 py-2 border-b flex justify-between items-center z-10">
@@ -145,8 +168,8 @@ const Forum: React.FC<ForumProps> = ({ nodeId, isAdmin }) => {
           {isConnected ? <span className="text-[8px] font-black text-green-500 uppercase tracking-widest flex items-center gap-1"><Wifi size={10}/> Trực tiếp</span> : <span className="text-[8px] font-black text-amber-500 flex items-center gap-1"><WifiOff size={10}/> Kết nối...</span>}
         </div>
         <div className="flex items-center gap-3">
-           <button onClick={()=>setShowPreview(!showPreview)} className={`p-1 text-[9px] font-bold uppercase tracking-widest transition-all ${showPreview ? 'text-indigo-600' : 'text-slate-300'}`}>Xem trước</button>
-           <button onClick={() => fetchComments()} className="p-1 text-slate-300 hover:text-indigo-500 transition-all"><RefreshCw size={12} className={isRefreshing ? 'animate-spin' : ''}/></button>
+           <button onClick={()=>setShowPreview(!showPreview)} className={`p-1 text-[9px] font-bold uppercase tracking-widest transition-all ${showPreview ? currentThemeTextClass : 'text-slate-300'}`}>Xem trước</button>
+           <button onClick={() => fetchComments()} className={`p-1 text-slate-300 hover:${currentThemeTextClass} transition-all`}><RefreshCw size={12} className={isRefreshing ? 'animate-spin' : ''}/></button>
         </div>
       </div>
 
@@ -159,9 +182,9 @@ const Forum: React.FC<ForumProps> = ({ nodeId, isAdmin }) => {
         )}
         {comments.map((c, idx) => (
           <div key={c.id || idx} className={`flex flex-col ${c.isAdmin ? 'items-end' : 'items-start'} animate-in fade-in duration-300 group`}>
-            <div className={`max-w-[85%] rounded-2xl p-4 shadow-sm border relative ${c.isAdmin ? 'bg-indigo-600 border-indigo-600 text-white' : 'bg-white border-slate-100 text-slate-800'}`}>
+            <div className={`max-w-[85%] rounded-2xl p-4 shadow-sm border relative ${c.isAdmin ? `${currentThemeBgClass} border-${themeColor.split('-')[0]}-600 text-white` : 'bg-white border-slate-100 text-slate-800'}`}>
               <div className="flex items-center gap-3 mb-2">
-                <span className={`text-[10px] font-black uppercase tracking-widest ${c.isAdmin ? 'text-indigo-100' : 'text-indigo-500'}`}>{c.author}</span>
+                <span className={`text-[10px] font-black uppercase tracking-widest ${c.isAdmin ? 'text-white/80' : currentThemeTextClass}`}>{c.author}</span>
                 <span className={`text-[8px] opacity-40 ${c.isAdmin ? 'text-white' : 'text-slate-400'}`}>{new Date(c.createdAt).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</span>
                 {isAdmin && (
                   <button 
@@ -180,33 +203,33 @@ const Forum: React.FC<ForumProps> = ({ nodeId, isAdmin }) => {
         ))}
       </div>
 
-      {showScrollBtn && <button onClick={() => scrollToBottom()} className="absolute bottom-40 right-6 p-3 bg-white shadow-xl rounded-full text-indigo-600 border border-slate-100 animate-bounce z-20"><ChevronDown size={20} /></button>}
+      {showScrollBtn && <button onClick={() => scrollToBottom()} className={`absolute bottom-40 right-6 p-3 bg-white shadow-xl rounded-full ${currentThemeTextClass} border border-slate-100 animate-bounce z-20`}><ChevronDown size={20} /></button>}
 
       <div className="p-4 bg-white border-t space-y-3 shadow-2xl">
         <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
           {MATH_TEMPLATES.map(t => (
-            <button key={t.label} onClick={() => setContent(prev => prev + ' ' + t.value)} className="shrink-0 px-3 py-1.5 bg-slate-50 hover:bg-indigo-50 border border-slate-100 rounded-lg text-[9px] font-bold uppercase transition-all">
+            <button key={t.label} onClick={() => setContent(prev => prev + ' ' + t.value)} className={`shrink-0 px-3 py-1.5 bg-slate-50 hover:bg-${themeColor.split('-')[0]}-50 border border-slate-100 rounded-lg text-[9px] font-bold uppercase transition-all`}>
               {t.label}
             </button>
           ))}
         </div>
 
         {showPreview && content.trim() && (
-          <div className="p-3 bg-indigo-50/30 border border-indigo-100 rounded-xl text-sm italic text-slate-500 animate-in fade-in zoom-in-95">
-             <div className="text-[9px] font-black text-indigo-400 uppercase tracking-widest mb-1 flex items-center gap-1"><Eye size={10}/> Preview:</div>
+          <div className={`p-3 bg-${themeColor.split('-')[0]}-50/30 border border-${themeColor.split('-')[0]}-100 rounded-xl text-sm italic text-slate-500 animate-in fade-in zoom-in-95`}>
+             <div className={`text-[9px] font-black ${currentThemeTextClass} opacity-70 uppercase tracking-widest mb-1 flex items-center gap-1`}><Eye size={10}/> Preview:</div>
              <div className="not-italic">{renderLatex(content)}</div>
           </div>
         )}
 
         <div className="flex gap-3 items-end">
           <div className="flex-1 space-y-2">
-            {!isAdmin && <input value={name} onChange={e => setName(e.target.value)} placeholder="Tên em..." className="w-full px-3 py-1.5 bg-slate-50 border border-slate-100 rounded-lg text-[10px] font-black uppercase outline-none focus:border-indigo-400" />}
+            {!isAdmin && <input value={name} onChange={e => setName(e.target.value)} placeholder="Tên em..." className={`w-full px-3 py-1.5 bg-slate-50 border border-slate-100 rounded-lg text-[10px] font-black uppercase outline-none ${currentThemeBorderClass}`} />}
             <textarea 
               value={content} 
               onChange={e => setContent(e.target.value)} 
               onKeyDown={(e) => { if (e.key === 'Enter' && e.ctrlKey) handleSubmit(); }}
               placeholder="Nhập câu hỏi... (Nhấn Ctrl + Enter để gửi)" 
-              className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl text-sm outline-none focus:border-indigo-400 focus:bg-white transition-all min-h-[50px] max-h-[120px]" 
+              className={`w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl text-sm outline-none ${currentThemeBorderClass} focus:bg-white transition-all min-h-[50px] max-h-[120px]`} 
             />
           </div>
           <div className="flex flex-col gap-2 shrink-0">
@@ -214,7 +237,7 @@ const Forum: React.FC<ForumProps> = ({ nodeId, isAdmin }) => {
                 <ImageIcon size={20} />
              </button>
              <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept="image/*" />
-             <button onClick={() => handleSubmit()} disabled={loading || uploading} className="p-4 bg-indigo-600 text-white rounded-2xl hover:bg-indigo-700 shadow-xl shadow-indigo-100 disabled:opacity-50 transition-all">
+             <button onClick={() => handleSubmit()} disabled={loading || uploading} className={`p-4 ${currentThemeBgClass} text-white rounded-2xl hover:opacity-90 shadow-xl shadow-${themeColor.split('-')[0]}-100 disabled:opacity-50 transition-all`}>
                {loading ? <RefreshCw size={20} className="animate-spin" /> : <Send size={20} />}
              </button>
           </div>
