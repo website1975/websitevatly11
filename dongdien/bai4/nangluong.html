@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bài 19: Năng lượng điện. Công suất điện - Vật lí 11</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']]
+      }
+    };
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+            color: #1e293b;
+        }
+        
+        .math-text {
+            font-family: 'Times New Roman', Times, serif;
+            font-style: italic;
+            font-weight: 600;
+            color: #1e40af;
+        }
+
+        .main-header {
+            background: linear-gradient(135deg, #0f172a 0%, #1e40af 100%);
+            color: white;
+            padding: 4rem 1rem;
+            border-radius: 0 0 3rem 3rem;
+            margin-bottom: 3rem;
+            box-shadow: 0 10px 25px -5px rgba(30, 64, 175, 0.3);
+        }
+
+        .section-card {
+            background: white;
+            border-radius: 1.25rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            border-left: 6px solid #3b82f6;
+            margin-bottom: 2.5rem;
+            padding: 1.75rem;
+        }
+
+        .formula-box {
+            background: linear-gradient(135deg, #f0f7ff 0%, #e0f2fe 100%);
+            border: 1px dashed #3b82f6;
+            border-radius: 1rem;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            text-align: center;
+        }
+
+        .important-note {
+            background: #fffbeb;
+            border-left: 4px solid #f59e0b;
+            padding: 1.25rem;
+            border-radius: 0.75rem;
+            margin: 1.25rem 0;
+            font-size: 0.95rem;
+        }
+
+        .solution-box {
+            background-color: #f1f5f9;
+            border-radius: 12px;
+            padding: 20px;
+            border-left: 4px solid #64748b;
+            margin-top: 1.25rem;
+        }
+
+        .step-title {
+            color: #0f172a;
+            font-weight: 800;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.1em;
+            margin-bottom: 0.75rem;
+            display: block;
+        }
+
+        .highlight-text {
+            color: #2563eb;
+            font-weight: 700;
+        }
+
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1rem;
+        }
+    </style>
+</head>
+<body class="max-w-4xl mx-auto pb-16">
+
+    <header class="main-header text-center">
+        <div class="inline-block px-4 py-1 mb-4 text-xs font-bold tracking-widest text-blue-100 uppercase bg-white/10 rounded-full backdrop-blur-md">
+            Chương 4: Dòng điện không đổi
+        </div>
+        <h1 class="text-4xl md:text-5xl font-extrabold mb-4 tracking-tight">
+            Bài 19: Năng lượng điện. Công suất điện
+        </h1>
+        <p class="text-blue-100 text-lg opacity-90 leading-relaxed italic">
+            "Tìm hiểu cách điện năng chuyển hóa và đo lường khả năng thực hiện công của dòng điện"
+        </p>
+    </header>
+
+    <div class="px-4 md:px-0">
+        
+        <section class="section-card">
+            <h2 class="text-2xl font-bold text-slate-800 mb-5 flex items-center">
+                <span class="w-10 h-10 bg-blue-600 text-white rounded-xl flex items-center justify-center mr-4 shadow-lg shadow-blue-200">01</span>
+                Năng lượng tiêu thụ điện của đoạn mạch
+            </h2>
+            <div class="space-y-4 text-slate-600 leading-relaxed">
+                <p>Khi đặt hiệu điện thế $U$ vào hai đầu một đoạn mạch, lực điện thực hiện công làm cho các điện tích tự do dịch chuyển có hướng tạo thành dòng điện.</p>
+                
+                <div class="important-note">
+                    <p class="font-bold text-slate-800">Định nghĩa:</p>
+                    Năng lượng tiêu thụ của một đoạn mạch bằng tích của hiệu điện thế giữa hai đầu đoạn mạch với cường độ dòng điện và thời gian dòng điện chạy qua.
+                </div>
+
+                <div class="formula-box">
+                    <p class="text-3xl font-black text-blue-700">$$A = U \cdot I \cdot t$$</p>
+                    <div class="text-sm text-slate-500 mt-4">
+                        Đơn vị trong hệ SI: <span class="highlight-text">Jun (J)</span>
+                    </div>
+                </div>
+
+                <p class="italic text-sm">Chẳng hạn: Bóng đèn biến đổi điện năng thành quang năng, quạt máy thành cơ năng, và bàn là thành nhiệt năng.</p>
+            </div>
+        </section>
+
+        <section class="section-card" style="border-left-color: #10b981;">
+            <h2 class="text-2xl font-bold text-slate-800 mb-5 flex items-center">
+                <span class="w-10 h-10 bg-emerald-600 text-white rounded-xl flex items-center justify-center mr-4 shadow-lg shadow-emerald-200">02</span>
+                Công suất tiêu thụ điện
+            </h2>
+            <div class="space-y-4 text-slate-600">
+                <p>Công suất tiêu thụ của một đoạn mạch là năng lượng mà đoạn mạch tiêu thụ trong một đơn vị thời gian.</p>
+                
+                <div class="formula-box">
+                    <p class="text-3xl font-black text-emerald-700">$$\mathcal{P} = \frac{A}{t} = U \cdot I$$</p>
+                    <p class="text-xs font-bold text-emerald-600 mt-3 uppercase tracking-widest">Đơn vị: Oát (W)</p>
+                </div>
+
+                <div class="bg-emerald-50 p-5 rounded-2xl border border-emerald-100">
+                    <p class="font-bold text-emerald-900 mb-2">Trường hợp đoạn mạch là điện trở $R$:</p>
+                    <p>Năng lượng dòng điện cung cấp chuyển hoàn toàn thành nhiệt lượng tỏa ra ($Q$):</p>
+                    <p class="text-center font-bold text-xl my-3 text-emerald-800">$$Q = R \cdot I^2 \cdot t = \frac{U^2}{R} \cdot t$$</p>
+                    <p>Công suất tỏa nhiệt:</p>
+                    <p class="text-center font-bold text-xl text-emerald-800">$$\mathcal{P} = R \cdot I^2 = \frac{U^2}{R}$$</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="section-card" style="border-left-color: #f59e0b;">
+            <h2 class="text-2xl font-bold text-slate-800 mb-5 flex items-center">
+                <span class="w-10 h-10 bg-amber-500 text-white rounded-xl flex items-center justify-center mr-4 shadow-lg shadow-amber-200">03</span>
+                Năng lượng và công suất nguồn điện
+            </h2>
+            <div class="space-y-4 text-slate-600">
+                <p>Nguồn điện sinh công toàn phần trên toàn mạch (bao gồm mạch ngoài và điện trở trong $r$).</p>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="p-4 bg-amber-50 rounded-xl border border-amber-100 text-center">
+                        <p class="text-xs uppercase font-bold text-amber-600">Năng lượng toàn phần</p>
+                        <p class="text-xl font-black text-slate-800 mt-2">$$A_0 = \mathcal{E} \cdot I \cdot t$$</p>
+                    </div>
+                    <div class="p-4 bg-amber-50 rounded-xl border border-amber-100 text-center">
+                        <p class="text-xs uppercase font-bold text-amber-600">Công suất nguồn</p>
+                        <p class="text-xl font-black text-slate-800 mt-2">$$\mathcal{P}_0 = \mathcal{E} \cdot I$$</p>
+                    </div>
+                </div>
+
+                <div class="important-note" style="border-left-color: #ef4444; background: #fef2f2;">
+                    <p class="font-bold text-red-800 mb-1">Hiệu suất của nguồn điện ($H$):</p>
+                    <p class="text-center text-2xl font-bold text-red-700">$$H = \frac{\mathcal{P}}{\mathcal{P}_0} = \frac{U}{\mathcal{E}}$$</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="section-card" style="border-left-color: #6366f1;">
+            <h2 class="text-2xl font-bold text-slate-800 mb-5 flex items-center">
+                <span class="w-10 h-10 bg-indigo-600 text-white rounded-xl flex items-center justify-center mr-4 shadow-lg shadow-indigo-200">04</span>
+                Bài tập thực hành
+            </h2>
+            
+            <div class="space-y-8">
+                <div class="relative pl-4">
+                    <p class="text-slate-800 font-semibold mb-4 text-lg">
+                        <span class="text-indigo-600 mr-2">1.</span>
+                        Đặt hiệu điện thế $12\text{ V}$ vào hai đầu điện trở $8\text{ }\Omega$. Tính công suất tỏa nhiệt và nhiệt lượng tỏa ra sau $1\text{ phút}$.
+                    </p>
+                    <div class="solution-box">
+                        <span class="step-title">Hướng dẫn giải</span>
+                        <div class="space-y-3 text-slate-600">
+                            <p>• Công suất tỏa nhiệt: $\mathcal{P} = \frac{U^2}{R} = \frac{12^2}{8} = 18\text{ W}$</p>
+                            <p>• Đổi $1\text{ phút} = 60\text{ s}$</p>
+                            <p>• Nhiệt lượng tỏa ra: $Q = \mathcal{P} \cdot t = 18 \cdot 60 = 1080\text{ J}$</p>
+                            <p class="font-bold text-indigo-700 mt-2">Đáp số: $18\text{ W}$ và $1080\text{ J}$.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="relative pl-4">
+                    <p class="text-slate-800 font-semibold mb-4 text-lg">
+                        <span class="text-indigo-600 mr-2">2.</span>
+                        Một nguồn điện có $\mathcal{E} = 11,5\text{ V}$, $r = 0,8\text{ }\Omega$ phát dòng điện $1\text{ A}$. Tính công suất nguồn cung cấp cho mạch ngoài.
+                    </p>
+                    <div class="solution-box">
+                        <span class="step-title">Hướng dẫn giải</span>
+                        <div class="space-y-3 text-slate-600">
+                            <p>• Hiệu điện thế mạch ngoài: $U = \mathcal{E} - I \cdot r = 11,5 - 1 \cdot 0,8 = 10,7\text{ V}$</p>
+                            <p>• Công suất mạch ngoài: $\mathcal{P} = U \cdot I = 10,7 \cdot 1 = 10,7\text{ W}$</p>
+                            <p class="font-bold text-indigo-700 mt-2">Đáp số: $10,7\text{ W}$.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <footer class="text-center text-slate-400 text-xs mt-12 pb-10 border-t border-slate-100 pt-8">
+            <p class="mb-2">© 2026 - Vật lí 11 - Bộ sách Chân trời sáng tạo</p>
+            <p>Hỗ trợ học tập tương tác - Chủ đề: Dòng điện không đổi</p>
+        </footer>
+    </div>
+
+</body>
+</html>
