@@ -234,7 +234,24 @@ const MainView: React.FC<{ isAdmin: boolean; data: AppData; updateData: (d: AppD
   const [sloganIdx, setSloganIdx] = useState(0);
   const [searchTerm, setSearchTerm] = useState('');
   const [isQuizOpen, setIsQuizOpen] = useState(false);
+  const [currentTime, setCurrentTime] = useState(new Date());
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const formattedTime = useMemo(() => {
+    return currentTime.toLocaleString('vi-VN', {
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    });
+  }, [currentTime]);
 
   const themeColor = useMemo(() => {
     if (selectedGrade === 10) return 'emerald';
@@ -481,10 +498,15 @@ const MainView: React.FC<{ isAdmin: boolean; data: AppData; updateData: (d: AppD
                     </div>
                   </div>
                   
-                  <div className={`flex gap-6 ${activeTab === 'content' ? 'mt-2' : 'mt-3'}`}>
-                    <button onClick={()=>setActiveTab('content')} className={`pb-2 text-[10px] font-bold uppercase tracking-widest border-b-2 transition-all ${activeTab==='content' ? `border-${themeColor}-600 text-${themeColor}-600` : 'border-transparent text-slate-300 hover:text-slate-500'}`}>Học liệu</button>
-                    <button onClick={()=>setActiveTab('flashcards')} className={`pb-2 text-[10px] font-bold uppercase tracking-widest border-b-2 transition-all ${activeTab==='flashcards' ? `border-${themeColor}-600 text-${themeColor}-600` : 'border-transparent text-slate-300 hover:text-slate-500'}`}>Flashcards</button>
-                    <button onClick={()=>setActiveTab('forum')} className={`pb-2 text-[10px] font-bold uppercase tracking-widest border-b-2 transition-all ${activeTab==='forum' ? `border-${themeColor}-600 text-${themeColor}-600` : 'border-transparent text-slate-300 hover:text-slate-500'}`}>Thảo luận</button>
+                  <div className={`flex justify-between items-center ${activeTab === 'content' ? 'mt-2' : 'mt-3'}`}>
+                    <div className="flex gap-6">
+                      <button onClick={()=>setActiveTab('content')} className={`pb-2 text-[10px] font-bold uppercase tracking-widest border-b-2 transition-all ${activeTab==='content' ? `border-${themeColor}-600 text-${themeColor}-600` : 'border-transparent text-slate-300 hover:text-slate-500'}`}>Học liệu</button>
+                      <button onClick={()=>setActiveTab('flashcards')} className={`pb-2 text-[10px] font-bold uppercase tracking-widest border-b-2 transition-all ${activeTab==='flashcards' ? `border-${themeColor}-600 text-${themeColor}-600` : 'border-transparent text-slate-300 hover:text-slate-500'}`}>Flashcards</button>
+                      <button onClick={()=>setActiveTab('forum')} className={`pb-2 text-[10px] font-bold uppercase tracking-widest border-b-2 transition-all ${activeTab==='forum' ? `border-${themeColor}-600 text-${themeColor}-600` : 'border-transparent text-slate-300 hover:text-slate-500'}`}>Thảo luận</button>
+                    </div>
+                    <div className="pb-2 text-[9px] font-bold text-slate-400 uppercase tracking-widest opacity-60">
+                      {formattedTime}
+                    </div>
                   </div>
                 </header>
                 
