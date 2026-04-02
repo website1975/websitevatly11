@@ -348,6 +348,40 @@ const MainView: React.FC<{ isAdmin: boolean; data: AppData; updateData: (d: AppD
     updateData({ ...data, nodes: newNodes });
   };
 
+  const handleMoveNode = (id: string, direction: 'in' | 'out') => {
+    const node = data?.nodes?.find(n => n.id === id);
+    if (!node) return;
+
+    let newParentId = node.parentId;
+    const siblings = (data?.nodes || []).filter(n => n.parentId === node.parentId).sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+    const currentIndex = siblings.findIndex(n => n.id === id);
+
+    if (direction === 'in') {
+      // Move into the folder sibling immediately above
+      const prevSibling = siblings[currentIndex - 1];
+      if (prevSibling && prevSibling.type === 'folder') {
+        newParentId = prevSibling.id;
+      } else {
+        return; // No folder above to move into
+      }
+    } else if (direction === 'out') {
+      // Move out to be a sibling of the current parent
+      if (node.parentId === null) return; // Already at root
+      const parentNode = data.nodes.find(n => n.id === node.parentId);
+      newParentId = parentNode ? parentNode.parentId : null;
+    }
+
+    const newNodes = (data?.nodes || []).map(n => {
+      if (n.id === id) {
+        const newSiblings = (data?.nodes || []).filter(sn => sn.parentId === newParentId);
+        return { ...n, parentId: newParentId, order: newSiblings.length };
+      }
+      return n;
+    });
+
+    updateData({ ...data, nodes: newNodes });
+  };
+
   const handleSaveResource = (e: React.FormEvent) => {
     e.preventDefault();
     if(!resModalData.title || !resModalData.url) return;
@@ -449,7 +483,8 @@ const MainView: React.FC<{ isAdmin: boolean; data: AppData; updateData: (d: AppD
               }}
               onEdit={(n)=>{setNodeModalData({...n}); setShowNodeModal(true);}}
               onDelete={handleDeleteNode}
-              onReorder={handleReorderNode}/>
+              onReorder={handleReorderNode}
+              onMove={handleMoveNode}/>
           ))}
         </div>
 
