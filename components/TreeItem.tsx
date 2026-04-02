@@ -1,6 +1,6 @@
 
 import React, { useState, useMemo } from 'https://esm.sh/react@^19.2.3';
-import { ChevronRight, ChevronDown, Folder, Globe, Plus, Pencil, Trash2, ArrowUp, ArrowDown } from 'https://esm.sh/lucide-react@^0.562.0';
+import { ChevronRight, ChevronDown, Folder, Globe, Plus, Pencil, Trash2, ArrowUp, ArrowDown, ArrowLeft, ArrowRight } from 'https://esm.sh/lucide-react@^0.562.0';
 import { BookNode, NodeType } from '../types';
 
 interface TreeItemProps {
@@ -13,6 +13,7 @@ interface TreeItemProps {
   onEdit: (node: BookNode) => void;
   onDelete: (id: string) => void;
   onReorder: (id: string, direction: 'up' | 'down') => void;
+  onMove: (id: string, direction: 'in' | 'out') => void;
   level: number;
   visibleNodeIds: Set<string> | null;
   searchTerm: string;
@@ -29,6 +30,7 @@ const TreeItem: React.FC<TreeItemProps> = ({
   onEdit, 
   onDelete,
   onReorder,
+  onMove,
   level,
   visibleNodeIds,
   searchTerm,
@@ -146,6 +148,20 @@ const TreeItem: React.FC<TreeItemProps> = ({
               >
                 <ArrowDown size={11} />
               </button>
+              <button 
+                onClick={(e) => { e.stopPropagation(); onMove(node.id, 'in'); }}
+                className={`p-1 rounded transition-all active:scale-75 ${isSelected ? 'hover:bg-white/10 text-white' : 'hover:bg-slate-100 text-slate-400'}`}
+                title="Chuyển vào trong"
+              >
+                <ArrowRight size={11} />
+              </button>
+              <button 
+                onClick={(e) => { e.stopPropagation(); onMove(node.id, 'out'); }}
+                className={`p-1 rounded transition-all active:scale-75 ${isSelected ? 'hover:bg-white/10 text-white' : 'hover:bg-slate-100 text-slate-400'}`}
+                title="Chuyển ra ngoài"
+              >
+                <ArrowLeft size={11} />
+              </button>
               {node.type === 'folder' && (
                 <button 
                   onClick={(e) => { e.stopPropagation(); onAdd(node.id, 'lesson'); }}
@@ -186,6 +202,7 @@ const TreeItem: React.FC<TreeItemProps> = ({
               onEdit={onEdit}
               onDelete={onDelete}
               onReorder={onReorder}
+              onMove={onMove}
               level={level + 1}
               visibleNodeIds={visibleNodeIds}
               searchTerm={searchTerm}
