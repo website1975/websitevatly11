@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bài 1: Dao động điều hòa</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <style>
+        body {
+            background-color: #f4f7f9;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #333;
+        }
+        .header-box {
+            background-color: #454545;
+            color: white;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        .content-card {
+            background-color: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+        .intro-box {
+            border: 1px solid #ccc;
+            background-color: #fff;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            font-style: italic;
+        }
+        .section-header {
+            font-weight: bold;
+            text-transform: uppercase;
+            border-bottom: 4px solid #454545;
+            display: inline-block;
+            margin-bottom: 1.5rem;
+            color: #454545;
+        }
+        .question-box {
+            background-color: #edf2f7;
+            border-left: 5px solid #2b6cb0;
+            padding: 1rem;
+            margin: 1rem 0;
+            position: relative;
+        }
+        .answer-box {
+            background-color: #f0fff4;
+            border-left: 5px solid #38a169;
+            padding: 1rem;
+            margin-top: 0.5rem;
+            display: none;
+        }
+        .info-box { border-radius: 8px; padding: 1rem; margin: 1rem 0; }
+        .em-co-biet { background-color: #fffaf0; border: 1px solid #fbd38d; }
+        .em-da-hoc { background-color: #f0fff4; border: 1px solid #9ae6b4; }
+        .em-co-the { background-color: #ebf8ff; border: 1px solid #90cdf4; }
+        
+        .btn-action {
+            background-color: #454545;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+        .btn-action:hover { opacity: 0.9; }
+        
+        .img-placeholder {
+            background-color: #e2e8f0;
+            border: 2px dashed #cbd5e0;
+            border-radius: 8px;
+            width: 100%;
+            height: 250px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 1rem 0;
+            color: #718096;
+        }
+
+        table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
+        th, td { border: 1px solid #cbd5e0; padding: 12px; text-align: center; }
+        th { background-color: #e2e8f0; }
+
+        .quiz-option {
+            display: block;
+            padding: 10px;
+            margin: 5px 0;
+            background: #f8fafc;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .quiz-option:hover { background: #e2e8f0; }
+    </style>
+</head>
+<body class="p-4 md:p-8 max-w-4xl mx-auto">
+
+    <div class="header-box">
+        <p class="text-sm tracking-widest opacity-80 uppercase">Chương 1: Dao động điều hòa</p>
+        <hr>
+        <h1 class="text-3xl font-bold mt-2">BÀI 1: DAO ĐỘNG ĐIỀU HOÀ</h1>
+    </div>
+
+    <div class="intro-box">
+        "Trong cuộc sống hằng ngày và trong kĩ thuật ta thường gặp những vật dao động, ví dụ như dây đàn ghi ta rung động, chiếc đu đung đưa, pít-tông chuyển động lên xuống trong xi lanh của động cơ,... Chuyển động của những vật này được gọi là dao động cơ. Vậy dao động cơ có những đặc điểm gì chung?"
+    </div>
+
+    <div class="content-card">
+        <h2 class="section-header">I. Những đặc điểm của dao động cơ</h2>
+        
+        <h3 class="font-bold text-lg mb-2">1. Thí nghiệm</h3>
+        <p><strong>Chuẩn bị:</strong> Sử dụng con lắc lò xo hoặc con lắc đơn.</p>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="img-placeholder text-center p-2">
+		<img src="h1.png" class="max-h-full max-w-full object-contain"></img>
+            </div>
+            <div class="img-placeholder text-center p-2">
+		<img src="h2.png" class="max-h-full max-w-full object-contain"></img>
+            </div>
+        </div>
+
+        <p><strong>Tiến hành:</strong></p>
+        <ol class="list-decimal ml-6 space-y-2">
+            <li>Xác định vị trí cân bằng của vật.</li>
+            <li>Kéo vật lệch khỏi vị trí cân bằng rồi thả ra cho chuyển động. Quan sát chuyển động của mỗi vật và cho nhận xét về đặc điểm chung của chúng.</li>
+        </ol>
+
+        <div class="question-box">
+            <div class="flex justify-between items-center">
+                <span>Nêu những ví dụ về dao động cơ mà em biết.</span>
+                <button class="btn-action" onclick="toggleAnswer('ans-vd')">Xem câu trả lời</button>
+            </div>
+            <div id="ans-vd" class="answer-box">
+                Ví dụ: Cành cây đu đưa trước gió, màng loa rung động khi phát ra âm thanh, quả lắc của đồng hồ cổ chạy qua lại, dây đàn guitar sau khi gảy.
+            </div>
+        </div>
+
+        <h3 class="font-bold text-lg mb-2 mt-6">2. Dao động cơ</h3>
+        <p>Vật chuyển động qua lại quanh vị trí cân bằng. Chuyển động như vậy gọi là <strong>dao động cơ</strong>.</p>
+        <p class="mt-2 italic">Dao động cơ của một vật có thể là tuần hoàn hoặc không tuần hoàn.</p>
+        <ul class="list-disc ml-6 mt-2">
+            <li><strong>Dao động tuần hoàn:</strong> Sau những khoảng thời gian bằng nhau, vật trở lại vị trí cũ theo hướng cũ. (Ví dụ: con lắc đồng hồ).</li>
+            <li><strong>Dao động không tuần hoàn:</strong> (Ví dụ: cành cây đu đưa khi gió thổi).</li>
+        </ul>
+        <p class="mt-2">Dao động tuần hoàn đơn giản nhất là <strong>dao động điều hoà</strong>.</p>
+    </div>
+
+    <div class="content-card">
+        <h2 class="section-header">II. Dao động điều hoà</h2>
+        
+        <h3 class="font-bold text-lg mb-2">1. Đồ thị của dao động điều hoà</h3>
+        <div class="img-placeholder">
+		<img src="h3.png" class="max-h-full max-w-full object-contain"></img>
+        </div>
+        <p>Đường cong trên Hình 1.2 là đồ thị dao động của con lắc, nó có dạng <strong>hình sin</strong>. Nó cho biết vị trí của quả cầu trên trục x tại những thời điểm khác nhau.</p>
+
+        <h3 class="font-bold text-lg mb-2 mt-6">2. Phương trình của dao động điều hoà</h3>
+        <p>Phương trình li độ của dao động điều hòa có dạng:</p>
+        <div class="bg-gray-100 p-4 text-center rounded-lg my-4 font-serif text-xl">
+            \( x = A \cos(\omega t + \varphi) \)
+        </div>
+        
+        <p>Trong đó:</p>
+        <ul class="list-disc ml-6 space-y-1">
+            <li>\( x \): li độ dao động (cm, m...).</li>
+            <li>\( A \): biên độ dao động (luôn dương).</li>
+            <li>\( (\omega t + \varphi) \): pha của dao động ở thời điểm \( t \) (rad).</li>
+            <li>\( \varphi \): pha ban đầu (rad).</li>
+        </ul>
+
+        <div class="question-box">
+            <div class="font-bold mb-2">? Luyện tập:</div>
+            <p>Một vật dao động điều hoà có phương trình \( x = 2 \cos(4\pi t + \frac{\pi}{2}) \) (cm). Hãy xác định:</p>
+            <p>a) Biên độ và pha ban đầu của dao động.</p>
+            <p>b) Pha và li độ của dao động khi \( t = 2 \) s.</p>
+            <button class="btn-action mt-2" onclick="toggleAnswer('ans-lt1')">Xem lời giải chi tiết</button>
+            <div id="ans-lt1" class="answer-box">
+                <p>a) Từ phương trình, ta có:</p>
+                <ul class="list-none ml-4">
+                    <li>- Biên độ \( A = 2 \) cm.</li>
+                    <li>- Pha ban đầu \( \varphi = \frac{\pi}{2} \) rad.</li>
+                </ul>
+                <p class="mt-2">b) Khi \( t = 2 \) s:</p>
+                <ul class="list-none ml-4">
+                    <li>- Pha dao động: \( 4\pi \cdot 2 + \frac{\pi}{2} = 8\pi + \frac{\pi}{2} = 8,5\pi \) rad.</li>
+                    <li>- Li độ: \( x = 2 \cos(8,5\pi) = 0 \) cm.</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="question-box">
+            <div class="font-bold mb-2">? Thảo luận:</div>
+            <p>Đồ thị li độ - thời gian của một con lắc đơn được mô tả trên Hình 1.3 (biên độ 40cm, chu kì 2s).</p>
+            <p>1. Hãy mô tả dao động của con lắc đơn.</p>
+            <p>2. Xác định biên độ và li độ của con lắc ở các thời điểm \( t = 0; t = 0,5; t = 2,0 \) s.</p>
+            <button class="btn-action mt-2" onclick="toggleAnswer('ans-tl2')">Xem lời giải</button>
+            <div id="ans-tl2" class="answer-box">
+                <p>1. Con lắc dao động điều hòa quanh vị trí cân bằng với biên độ 40 cm. Tại thời điểm ban đầu vật ở vị trí biên âm và di chuyển về phía VTCB.</p>
+                <p>2. Dựa vào đồ thị:</p>
+                <ul class="list-disc ml-6">
+                    <li>Biên độ \( A = 40 \) cm.</li>
+                    <li>Tại \( t = 0 \): \( x = -40 \) cm.</li>
+                    <li>Tại \( t = 0,5 \) s: \( x = 0 \) cm.</li>
+                    <li>Tại \( t = 2,0 \) s: \( x = -40 \) cm (vật thực hiện xong 1 chu kì).</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div class="info-box em-co-biet">
+        <h4 class="font-bold text-orange-800">EM CÓ BIẾT: Mối liên hệ giữa dao động điều hòa và chuyển động tròn đều</h4>
+        <p class="mt-2">Điểm Q là hình chiếu của điểm M chuyển động tròn đều trên trục Ox. Khi M chuyển động tròn đều, điểm Q dao động điều hoà.</p>
+        <div class="img-placeholder"><img src="h4.png" class="max-h-full max-w-full object-contain"></img></div>
+    </div>
+
+    <div class="info-box em-da-hoc">
+        <h4 class="font-bold text-green-800">EM ĐÃ HỌC</h4>
+        <ul class="list-disc ml-6 mt-2">
+            <li>Dao động điều hoà là dao động trong đó li độ của vật là một hàm cosin (hay sin) của thời gian.</li>
+            <li>Phương trình: \( x = A \cos(\omega t + \varphi) \).</li>
+        </ul>
+    </div>
+
+    <div class="info-box em-co-the">
+        <h4 class="font-bold text-blue-800">EM CÓ THỂ</h4>
+        <ul class="list-disc ml-6 mt-2">
+            <li>Xác định biên độ của pít-tông trong xi lanh của động cơ đốt trong.</li>
+            <li>Mô tả được dao động điều hoà của con lắc đồng hồ.</li>
+        </ul>
+    </div>
+
+    <!-- PHẦN TRẮC NGHIỆM CỦNG CỐ -->
+    <div class="content-card">
+        <h2 class="section-header">BÀI TẬP TRẮC NGHIỆM CỦNG CỐ</h2>
+        
+        <div id="quiz-container" class="space-y-6">
+            <!-- Câu 1 -->
+            <div class="quiz-item" data-correct="1">
+                <p class="font-bold">Câu 1: Một vật dao động điều hoà theo phương trình \( x = A \cos(\omega t + \varphi) \). Đại lượng \( A \) được gọi là:</p>
+                <label class="quiz-option"><input type="radio" name="q1" value="0"> Pha của dao động.</label>
+                <label class="quiz-option"><input type="radio" name="q1" value="1"> Biên độ dao động.</label>
+                <label class="quiz-option"><input type="radio" name="q1" value="2"> Tần số góc của dao động.</label>
+                <label class="quiz-option"><input type="radio" name="q1" value="3"> Chu kì dao động.</label>
+            </div>
+
+            <!-- Câu 2 -->
+            <div class="quiz-item" data-correct="2">
+                <p class="font-bold">Câu 2: Đồ thị li độ - thời gian của dao động điều hòa có dạng là đường:</p>
+                <label class="quiz-option"><input type="radio" name="q2" value="0"> Thẳng.</label>
+                <label class="quiz-option"><input type="radio" name="q2" value="1"> Parabol.</label>
+                <label class="quiz-option"><input type="radio" name="q2" value="2"> Hình sin.</label>
+                <label class="quiz-option"><input type="radio" name="q2" value="3"> Elip.</label>
+            </div>
+
+            <!-- Câu 3 -->
+            <div class="quiz-item" data-correct="0">
+                <p class="font-bold">Câu 3: Pha của dao động tại thời điểm \( t \) cho phép xác định:</p>
+                <label class="quiz-option"><input type="radio" name="q3" value="0"> Trạng thái dao động của vật.</label>
+                <label class="quiz-option"><input type="radio" name="q3" value="1"> Biên độ dao động.</label>
+                <label class="quiz-option"><input type="radio" name="q3" value="2"> Chiều dài quỹ đạo.</label>
+                <label class="quiz-option"><input type="radio" name="q3" value="3"> Cách kích thích dao động.</label>
+            </div>
+
+            <!-- Câu 4 -->
+            <div class="quiz-item" data-correct="3">
+                <p class="font-bold">Câu 4: Cho phương trình \( x = 5 \cos(2\pi t + \pi) \) (cm). Pha ban đầu của dao động là:</p>
+                <label class="quiz-option"><input type="radio" name="q4" value="0"> \( 5 \) rad.</label>
+                <label class="quiz-option"><input type="radio" name="q4" value="1"> \( 2\pi \) rad.</label>
+                <label class="quiz-option"><input type="radio" name="q4" value="2"> \( 0 \) rad.</label>
+                <label class="quiz-option"><input type="radio" name="q4" value="3"> \( \pi \) rad.</label>
+            </div>
+
+            <!-- Câu 5 -->
+            <div class="quiz-item" data-correct="1">
+                <p class="font-bold">Câu 5: Một vật dao động trên đoạn thẳng dài 10 cm. Biên độ dao động của vật là:</p>
+                <label class="quiz-option"><input type="radio" name="q5" value="0"> 10 cm.</label>
+                <label class="quiz-option"><input type="radio" name="q5" value="1"> 5 cm.</label>
+                <label class="quiz-option"><input type="radio" name="q5" value="2"> 20 cm.</label>
+                <label class="quiz-option"><input type="radio" name="q5" value="3"> 2,5 cm.</label>
+            </div>
+        </div>
+
+        <div class="mt-8 text-center">
+            <button onclick="checkQuiz()" class="btn-action bg-black px-8 py-3 text-lg">NỘP BÀI</button>
+            <div id="quiz-result" class="mt-4 font-bold text-xl"></div>
+        </div>
+    </div>
+
+    <!-- BÀI TẬP VẬN DỤNG -->
+    <div class="content-card">
+        <h2 class="section-header">BÀI TẬP VẬN DỤNG</h2>
+        
+        <div class="space-y-6">
+            <div class="p-4 border-b border-gray-100">
+                <p><strong>Bài 1:</strong> Pít-tông của một động cơ đốt trong dao động trên một đoạn thẳng dài 16 cm. Xác định biên độ dao động của một điểm trên mặt pít-tông.</p>
+                <button class="btn-action mt-2" onclick="toggleAnswer('vd-1')">Xem lời giải</button>
+                <div id="vd-1" class="answer-box">
+                    Quỹ đạo chuyển động là một đoạn thẳng \( L = 16 \) cm. <br>
+                    Biên độ \( A = L / 2 = 16 / 2 = 8 \) cm.
+                </div>
+            </div>
+
+            <div class="p-4 border-b border-gray-100">
+                <p><strong>Bài 2:</strong> Một vật dao động điều hòa theo phương trình \( x = 10 \cos(5\pi t - \pi/3) \) (cm). Tính li độ của vật tại thời điểm \( t = 0,2 \) s.</p>
+                <button class="btn-action mt-2" onclick="toggleAnswer('vd-2')">Xem lời giải</button>
+                <div id="vd-2" class="answer-box">
+                    Thay \( t = 0,2 \) vào phương trình: <br>
+                    \( x = 10 \cos(5\pi \cdot 0,2 - \pi/3) = 10 \cos(\pi - \pi/3) = 10 \cos(2\pi/3) \). <br>
+                    \( x = 10 \cdot (-0,5) = -5 \) cm.
+                </div>
+            </div>
+
+            <div class="p-4">
+                <p><strong>Bài 3:</strong> Một con lắc đơn dao động với biên độ \( A = 5 \) cm. Trong 10 giây vật thực hiện được 20 dao động. Viết phương trình dao động biết tại \( t = 0 \) vật đi qua VTCB theo chiều dương.</p>
+                <button class="btn-action mt-2" onclick="toggleAnswer('vd-3')">Xem lời giải</button>
+                <div id="vd-3" class="answer-box">
+                    - Biên độ \( A = 5 \) cm. <br>
+                    - Chu kì \( T = 10 / 20 = 0,5 \) s \( \Rightarrow \omega = 2\pi / T = 4\pi \) rad/s. <br>
+                    - Tại \( t = 0 \), \( x = 0 \) và đi theo chiều dương \( \Rightarrow \varphi = -\pi/2 \). <br>
+                    \( \Rightarrow x = 5 \cos(4\pi t - \pi/2) \) (cm).
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function toggleAnswer(id) {
+            const element = document.getElementById(id);
+            if (element.style.display === "block") {
+                element.style.display = "none";
+            } else {
+                element.style.display = "block";
+            }
+        }
+
+        function checkQuiz() {
+            const quizItems = document.querySelectorAll('.quiz-item');
+            let score = 0;
+            let total = quizItems.length;
+
+            quizItems.forEach((item, index) => {
+                const correctVal = item.getAttribute('data-correct');
+                const selected = item.querySelector(`input[name="q${index + 1}"]:checked`);
+                
+                // Reset style
+                item.style.backgroundColor = "transparent";
+                item.style.padding = "0";
+
+                if (selected) {
+                    if (selected.value === correctVal) {
+                        score++;
+                        item.style.borderLeft = "4px solid green";
+                    } else {
+                        item.style.borderLeft = "4px solid red";
+                    }
+                } else {
+                    item.style.borderLeft = "4px solid gray";
+                }
+            });
+
+            const resultDiv = document.getElementById('quiz-result');
+            resultDiv.innerText = `Kết quả: ${score}/${total} câu đúng.`;
+            
+            if (score === total) {
+                resultDiv.style.color = "green";
+                resultDiv.innerText += " Xuất sắc! Bạn đã nắm vững bài học.";
+            } else {
+                resultDiv.style.color = "red";
+                resultDiv.innerText += " Hãy kiểm tra lại các câu sai nhé.";
+            }
+        }
+    </script>
+</body>
+</html>
