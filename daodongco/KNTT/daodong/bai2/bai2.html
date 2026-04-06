@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bài 2: Mô tả dao động điều hòa</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <style>
+        body {
+            background-color: #f4f7f9;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #333;
+        }
+        .header-bg {
+            background-color: #454545;
+        }
+        .rounded-12 {
+            border-radius: 12px;
+        }
+        .section-header {
+            border-bottom: 4px solid #454545;
+            display: inline-block;
+            margin-bottom: 1rem;
+            padding-bottom: 4px;
+        }
+        .answer-box {
+            display: none;
+            background-color: #f0fff4;
+            border-left: 4px solid #48bb78;
+        }
+        .question-box {
+            background-color: #edf2f7;
+            border-left: 4px solid #4299e1;
+        }
+        .intro-box {
+            border: 1px solid #454545;
+            background-color: #ffffff;
+        }
+        .note-box {
+            background-color: #fffaf0;
+            border: 1px solid #feebc8;
+        }
+        .can-do-box {
+            background-color: #ebf8ff;
+            border: 1px solid #bee3f8;
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+
+    <div class="max-w-4xl mx-auto">
+        <!-- Header -->
+        <header class="header-bg text-white p-6 rounded-12 shadow-lg mb-8 text-center">
+            <p class="text-sm uppercase tracking-widest mb-2">Chương 1 - Dao động điều hòa</p>
+            <hr>
+            <h1 class="text-3xl font-bold uppercase">Bài 2: Mô tả dao động điều hòa</h1>
+        </header>
+
+        <!-- Intro Box -->
+        <div class="intro-box p-4 rounded-12 mb-8 shadow-sm">
+            <p class="italic text-gray-700">Để vẽ đồ thị hoặc viết phương trình của một dao động điều hoà cần biết những đại lượng vật lí nào?</p>
+        </div>
+
+        <!-- Section I -->
+        <section class="bg-white p-6 rounded-12 shadow-md mb-8">
+            <h2 class="section-header text-xl font-bold uppercase">I. Các đại lượng đặc trưng của dao động điều hòa</h2>
+            <p class="mb-4">Từ đồ thị và phương trình của dao động điều hoà, ta có thể xác định được các đại lượng dùng để mô tả dao động điều hoà.</p>
+            
+            <ul class="list-disc pl-6 space-y-2 mb-6">
+                <li><strong>Li độ (x):</strong> Là độ dịch chuyển từ vị trí cân bằng đến vị trí của vật tại thời điểm t.</li>
+                <li><strong>Biên độ (A):</strong> Là độ dịch chuyển cực đại của vật tính từ vị trí cân bằng.</li>
+                <li><strong>Chu kì (T):</strong> Là khoảng thời gian để vật thực hiện được một dao động. Đơn vị: giây (s).</li>
+                <li><strong>Tần số (f):</strong> Là số dao động mà vật thực hiện được trong một giây. Kí hiệu là f. \( f = \frac{1}{T} \). Đơn vị: Héc (Hz).</li>
+                <li><strong>Tần số góc (\(\omega\)):</strong> Đại lượng được xác định bởi: \( \omega = \frac{2\pi}{T} = 2\pi f \). Đơn vị: rad/s.</li>
+            </ul>
+
+            <!-- Question 1 -->
+            <div class="question-box p-4 rounded-lg mb-4">
+                <p class="font-bold mb-2">? Hình 2.1 là đồ thị dao động điều hoà của một vật. Hãy xác định:</p>
+                <ul class="list-decimal pl-6 mb-4">
+                    <li>Biên độ, chu kì, tần số của dao động.</li>
+                    <li>Nêu thời điểm mà vật có li độ \(x = 0\); \(x = 0,1\) m.</li>
+                </ul>
+                <div class="flex justify-center mb-4 bg-gray-100 p-4 rounded">
+                    <div class="w-full h-48 flex items-center justify-center border-2 border-dashed border-gray-400">
+			<img src="h1.png" class="max-h-full max-w-full object-contain"></img>
+                    </div>
+                </div>
+                <button onclick="toggleAnswer('ans1')" class="bg-[#454545] text-white px-4 py-2 rounded hover:opacity-90 transition">Xem lời giải</button>
+                <div id="ans1" class="answer-box p-4 mt-4 rounded-lg">
+                    <p>1. Từ đồ thị:</p>
+                    <ul class="list-disc pl-6">
+                        <li>Biên độ: \(A = 0,2\) m.</li>
+                        <li>Chu kì: Thời gian từ đỉnh này sang đỉnh kế tiếp là \(T = 0,4\) s.</li>
+                        <li>Tần số: \(f = \frac{1}{T} = \frac{1}{0,4} = 2,5\) Hz.</li>
+                    </ul>
+                    <p class="mt-2">2. Thời điểm:</p>
+                    <ul class="list-disc pl-6">
+                        <li>Vật có li độ \(x = 0\) (vị trí cân bằng): \(t = 0,1s; 0,3s; 0,5s...\)</li>
+                        <li>Vật có li độ \(x = 0,1\) m: Dựa vào đồ thị tại các thời điểm tương ứng trên trục t.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Question 2 -->
+            <div class="question-box p-4 rounded-lg">
+                <p class="font-bold mb-2">? Từ Hình 2.1 hãy xác định tần số góc của dao động của vật.</p>
+                <button onclick="toggleAnswer('ans2')" class="bg-[#454545] text-white px-4 py-2 rounded hover:opacity-90 transition">Xem lời giải</button>
+                <div id="ans2" class="answer-box p-4 mt-4 rounded-lg">
+                    <p>Tần số góc được tính theo công thức: \( \omega = \frac{2\pi}{T} \)</p>
+                    <p>Với \(T = 0,4\) s, ta có: \( \omega = \frac{2\pi}{0,4} = 5\pi \) (rad/s).</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section II -->
+        <section class="bg-white p-6 rounded-12 shadow-md mb-8">
+            <h2 class="section-header text-xl font-bold uppercase">II. Pha ban đầu. Độ lệch pha</h2>
+            <h3 class="font-bold text-lg mb-2">1. Pha ban đầu</h3>
+            <p class="mb-4">Pha ban đầu \(\varphi\) cho biết tại thời điểm bắt đầu quan sát vật dao động điều hoà ở đâu và sẽ đi về phía nào. Nó có giá trị nằm trong khoảng từ \(-\pi\) đến \(\pi\) (rad).</p>
+            
+            <div class="flex justify-center mb-6">
+                <div class="w-full h-48 flex items-center justify-center border-2 border-dashed border-gray-400 bg-gray-50">
+			<img src="h2.png" class="max-h-full max-w-full object-contain"></img>
+                </div>
+            </div>
+
+            <h3 class="font-bold text-lg mb-2">2. Độ lệch pha giữa hai dao động cùng chu kì</h3>
+            <p class="mb-4">Trong khoa học và kĩ thuật, độ lệch pha quan trọng hơn pha vì nó là đại lượng không đổi. Công thức tính độ lệch pha: \( \Delta\varphi = \varphi_1 - \varphi_2 \).</p>
+            
+            <ul class="list-disc pl-6 space-y-2 mb-6">
+                <li>Nếu \(\varphi_1 > \varphi_2\): Dao động 1 sớm pha hơn dao động 2.</li>
+                <li>Nếu \(\varphi_1 < \varphi_2\): Dao động 1 trễ pha hơn dao động 2.</li>
+                <li>Nếu \(\varphi_1 = \varphi_2\): Hai dao động cùng pha.</li>
+                <li>Nếu \(\varphi_1 = \varphi_2 \pm \pi\): Hai dao động ngược pha.</li>
+            </ul>
+
+            <!-- Question 3 -->
+            <div class="question-box p-4 rounded-lg mb-6">
+                <p class="font-bold mb-2">? Hình 2.3 là đồ thị dao động điều hoà của một con lắc. Hãy cho biết:</p>
+                <ul class="list-decimal pl-6 mb-4">
+                    <li>Vị trí và hướng dịch chuyển của con lắc tại thời điểm ban đầu.</li>
+                    <li>Pha ban đầu của dao động.</li>
+                </ul>
+                <div class="flex justify-center mb-4">
+                    <div class="w-full h-40 flex items-center justify-center border-2 border-dashed border-gray-400">
+			<img src="h3.png" class="max-h-full max-w-full object-contain"></img>
+                    </div>
+                </div>
+                <button onclick="toggleAnswer('ans3')" class="bg-[#454545] text-white px-4 py-2 rounded hover:opacity-90 transition">Xem lời giải</button>
+                <div id="ans3" class="answer-box p-4 mt-4 rounded-lg">
+                    <p>1. Tại thời điểm ban đầu \(t=0\), vật đang ở vị trí biên âm \(x = -A\) và bắt đầu đi về vị trí cân bằng (hướng dương).</p>
+                    <p>2. Khi \(t=0\), \(x = A \cos(\varphi) = -A \Rightarrow \cos(\varphi) = -1 \Rightarrow \varphi = \pi\) (rad).</p>
+                </div>
+            </div>
+
+            <!-- Activity -->
+            <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded mb-4">
+                <p class="font-bold flex items-center mb-2">
+                    <span class="mr-2">✋</span> Hoạt động: Chứng minh độ lệch pha
+                </p>
+                <p class="mb-4">Hãy chứng minh rằng độ lệch pha giữa hai dao động cùng chu kì bằng độ lệch pha ban đầu.</p>
+                <button onclick="toggleAnswer('act1')" class="bg-[#454545] text-white px-4 py-2 rounded hover:opacity-90 transition text-sm">Xem hướng giải quyết</button>
+                <div id="act1" class="answer-box p-4 mt-4 rounded-lg">
+                    <p>Xét hai dao động: \(x_1 = A_1 \cos(\omega t + \varphi_1)\) và \(x_2 = A_2 \cos(\omega t + \varphi_2)\).</p>
+                    <p>Pha tại thời điểm \(t\) của dao động 1 là \(\Phi_1 = \omega t + \varphi_1\).</p>
+                    <p>Pha tại thời điểm \(t\) của dao động 2 là \(\Phi_2 = \omega t + \varphi_2\).</p>
+                    <p>Độ lệch pha tại thời điểm \(t\): \( \Delta\Phi = \Phi_1 - \Phi_2 = (\omega t + \varphi_1) - (\omega t + \varphi_2) = \varphi_1 - \varphi_2 \).</p>
+                    <p>Kết quả này không phụ thuộc vào thời gian \(t\), do đó độ lệch pha luôn bằng độ lệch pha ban đầu.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section III -->
+        <section class="bg-white p-6 rounded-12 shadow-md mb-8">
+            <h2 class="section-header text-xl font-bold uppercase">III. Bài tập ví dụ</h2>
+            
+            <div class="mb-6">
+                <p class="font-bold text-blue-800">Ví dụ 1: (Trích SGK Trang 12)</p>
+                <p>Đồ thị li độ - thời gian mô tả trên Hình 2.6. Biên độ \(A = 20\) cm; chu kì \(T = 2,0\) s. Xác định phương trình dao động.</p>
+			<center><img src="h4.png" class="max-h-full max-w-full object-contain"></img></center>
+                <button onclick="toggleAnswer('ex1')" class="mt-2 text-sm text-blue-600 underline">Xem giải chi tiết</button>
+                <div id="ex1" class="answer-box p-4 mt-2 rounded-lg text-sm">
+                    <p>\(A = 20\) cm; \(T = 2,0\) s \(\Rightarrow \omega = \frac{2\pi}{2,0} = \pi\) (rad/s).</p>
+                    <p>Tại \(t=0\), \(x=20\) \(\Rightarrow 20 = 20 \cos(\varphi) \Rightarrow \varphi = 0\).</p>
+                    <p>Phương trình: \(x = 20 \cos(\pi t)\) (cm).</p>
+                </div>
+            </div>
+
+            <div class="mb-6">
+                <p class="font-bold text-blue-800">Ví dụ 2: Hai vật dao động điều hoà A và B có cùng tần số nhưng lệch pha nhau được mô tả trên hình</p>
+			<center><img src="h5.png" class="max-h-full max-w-full object-contain"></img></center>
+			<p>a) Xác định li độ của B khi A có li độ cực đại.</p>
+			<p>b) Xác định li độ của A khi B có li độ cực đại.</p>
+			<p>c) Hãy cho biết A hay B đạt tới li độ cực đại trước (không kể thời điểm t=0).</p>
+			<p>d) Xác định độ lệch pha của dao động A so với dao động B.</p>
+                <button onclick="toggleAnswer('ex2')" class="mt-2 text-sm text-blue-600 underline">Xem giải chi tiết</button>
+                <div id="ex2" class="answer-box p-4 mt-2 rounded-lg text-sm">
+                    <p>Từ đồ thị, khi A chậm pha hơn B \(\pi/2\), khi A biên dương thì B ở B qua vị trí cân bằng đi theo chiều âm</p>
+		    <p> Khi B cực đại thì A qua VTCB theo chiều dương.</p>
+                    <p> Do B nhanh pha hơn nên B đến biên A trước </P>
+		    <p> Độ lệch pha là \(\pi/2\). Dao động A chậm pha \(\pi/2\) so với dao động B.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Em Đã Học / Em Có Thể Box -->
+        <div class="note-box p-6 rounded-12 mb-4">
+            <h3 class="font-bold text-[#454545] mb-2 uppercase">EM ĐÃ HỌC</h3>
+            <ul class="list-disc pl-6 space-y-1">
+                <li>Công thức liên hệ: \( \omega = \frac{2\pi}{T} = 2\pi f \).</li>
+                <li>Độ lệch pha giữa hai dao động cùng chu kì không đổi theo thời gian.</li>
+            </ul>
+        </div>
+
+        <div class="can-do-box p-6 rounded-12 mb-8">
+            <h3 class="font-bold text-blue-800 mb-2 uppercase">EM CÓ THỂ</h3>
+            <ul class="list-disc pl-6 space-y-1">
+                <li>Dùng đồ thị li độ - thời gian để xác định các đại lượng đặc trưng của dao động.</li>
+                <li>Biết cách xác định độ lệch pha giữa hai dao động cùng chu kì.</li>
+            </ul>
+        </div>
+
+        <!-- Quiz Section -->
+        <section class="bg-white p-6 rounded-12 shadow-md mb-8 border-t-8 border-[#454545]">
+            <h2 class="text-2xl font-bold mb-6 text-center uppercase">Bài tập củng cố</h2>
+            
+            <div id="quiz-container" class="space-y-6">
+                <!-- Câu 1 -->
+                <div class="quiz-item">
+                    <p class="font-bold">Câu 1: Đại lượng nào đặc trưng cho độ lệch về thời gian giữa hai dao động điều hòa cùng chu kì?</p>
+                    <div class="mt-2 space-y-2">
+                        <label class="block"><input type="radio" name="q1" value="A"> A. Li độ</label>
+                        <label class="block"><input type="radio" name="q1" value="B"> B. Pha</label>
+                        <label class="block"><input type="radio" name="q1" value="C"> C. Pha ban đầu</label>
+                        <label class="block"><input type="radio" name="q1" value="D"> D. Độ lệch pha</label>
+                    </div>
+                </div>
+
+                <!-- Câu 2 -->
+                <div class="quiz-item">
+                    <p class="font-bold">Câu 2: Một vật dao động với chu kì 2s. Tần số góc của vật là:</p>
+                    <div class="mt-2 space-y-2">
+                        <label class="block"><input type="radio" name="q2" value="A"> A. \(\pi\) rad/s</label>
+                        <label class="block"><input type="radio" name="q2" value="B"> B. \(2\pi\) rad/s</label>
+                        <label class="block"><input type="radio" name="q2" value="C"> C. \(0,5\pi\) rad/s</label>
+                        <label class="block"><input type="radio" name="q2" value="D"> D. \(4\pi\) rad/s</label>
+                    </div>
+                </div>
+
+                <!-- Câu 3 -->
+                <div class="quiz-item">
+                    <p class="font-bold">Câu 3: Đơn vị của tần số là:</p>
+                    <div class="mt-2 space-y-2">
+                        <label class="block"><input type="radio" name="q3" value="A"> A. Giây (s)</label>
+                        <label class="block"><input type="radio" name="q3" value="B"> B. Héc (Hz)</label>
+                        <label class="block"><input type="radio" name="q3" value="C"> C. Radian (rad)</label>
+                        <label class="block"><input type="radio" name="q3" value="D"> D. rad/s</label>
+                    </div>
+                </div>
+
+                <!-- Câu 4 -->
+                <div class="quiz-item">
+                    <p class="font-bold">Câu 4: Hai dao động cùng pha khi độ lệch pha bằng:</p>
+                    <div class="mt-2 space-y-2">
+                        <label class="block"><input type="radio" name="q4" value="A"> A. \(\pi\)</label>
+                        <label class="block"><input type="radio" name="q4" value="B"> B. \(\pi/2\)</label>
+                        <label class="block"><input type="radio" name="q4" value="C"> C. \(0\)</label>
+                        <label class="block"><input type="radio" name="q4" value="D"> D. \(-\pi/2\)</label>
+                    </div>
+                </div>
+
+                <!-- Câu 5 -->
+                <div class="quiz-item">
+                    <p class="font-bold">Câu 5: Pha ban đầu cho biết điều gì?</p>
+                    <div class="mt-2 space-y-2">
+                        <label class="block"><input type="radio" name="q5" value="A"> A. Tốc độ dao động</label>
+                        <label class="block"><input type="radio" name="q5" value="B"> B. Trạng thái dao động tại t=0</label>
+                        <label class="block"><input type="radio" name="q5" value="C"> C. Số dao động trong 1s</label>
+                        <label class="block"><input type="radio" name="q5" value="D"> D. Quãng đường đi được</label>
+                    </div>
+                </div>
+            </div>
+
+            <button onclick="checkQuiz()" class="mt-8 w-full bg-[#454545] text-white font-bold py-3 rounded-lg hover:opacity-90 transition">NỘP BÀI</button>
+            <div id="quiz-result" class="mt-4 text-center font-bold text-lg"></div>
+        </section>
+
+        <!-- Application Exercises -->
+        <section class="bg-white p-6 rounded-12 shadow-md mb-12">
+            <h2 class="text-xl font-bold mb-4 uppercase text-[#454545]">Bài tập vận dụng</h2>
+            
+            <div class="space-y-6">
+                <div class="p-4 border border-gray-200 rounded">
+                    <p><strong>Bài 1:</strong> Một vật dao động điều hoà có biên độ 10 cm, tần số 5 Hz. Tại \(t=0\) vật có li độ cực đại dương. Viết phương trình dao động.</p>
+                    <button onclick="toggleAnswer('app1')" class="mt-2 text-sm bg-gray-100 px-3 py-1 rounded">Giải chi tiết</button>
+                    <div id="app1" class="answer-box p-4 mt-2 rounded">
+                        <p>\(A = 10\) cm; \(f = 5\) Hz \(\Rightarrow \omega = 2\pi f = 10\pi\) (rad/s).</p>
+                        <p>Tại \(t=0\), \(x=10\) cm \(\Rightarrow 10 = 10 \cos(\varphi) \Rightarrow \varphi = 0\).</p>
+                        <p>PT: \(x = 10 \cos(10\pi t)\) (cm).</p>
+                    </div>
+                </div>
+
+                <div class="p-4 border border-gray-200 rounded">
+                    <p><strong>Bài 2:</strong> Con lắc 1 có \(x_1 = 20 \cos(20\pi t + \pi/2)\). Con lắc 2 cùng \(A, f\) nhưng trễ pha \(T/4\) so với con lắc 1. Viết phương trình con lắc 2.</p>
+                    <button onclick="toggleAnswer('app2')" class="mt-2 text-sm bg-gray-100 px-3 py-1 rounded">Giải chi tiết</button>
+                    <div id="app2" class="answer-box p-4 mt-2 rounded">
+                        <p>Trễ pha \(T/4\) tương ứng với độ lệch pha là \(\Delta\varphi = \frac{2\pi}{T} \cdot \frac{T}{4} = \frac{\pi}{2}\).</p>
+                        <p>Pha ban đầu con lắc 2: \(\varphi_2 = \varphi_1 - \pi/2 = \pi/2 - \pi/2 = 0\).</p>
+                        <p>PT: \(x_2 = 20 \cos(20\pi t)\) (cm).</p>
+                    </div>
+                </div>
+
+                <div class="p-4 border border-gray-200 rounded">
+                    <p><strong>Bài 3:</strong> Xác định chu kì và tần số của dao động \(x = 5 \cos(4\pi t + \pi/3)\).</p>
+                    <button onclick="toggleAnswer('app3')" class="mt-2 text-sm bg-gray-100 px-3 py-1 rounded">Giải chi tiết</button>
+                    <div id="app3" class="answer-box p-4 mt-2 rounded">
+                        <p>\(\omega = 4\pi\) (rad/s).</p>
+                        <p>Chu kì: \(T = \frac{2\pi}{\omega} = \frac{2\pi}{4\pi} = 0,5\) (s).</p>
+                        <p>Tần số: \(f = \frac{1}{T} = 2\) (Hz).</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        function toggleAnswer(id) {
+            const el = document.getElementById(id);
+            if (el.style.display === 'block') {
+                el.style.display = 'none';
+            } else {
+                el.style.display = 'block';
+            }
+        }
+
+        function checkQuiz() {
+            const answers = {
+                q1: 'D',
+                q2: 'A',
+                q3: 'B',
+                q4: 'C',
+                q5: 'B'
+            };
+            let score = 0;
+            let total = 5;
+            
+            for (let i = 1; i <= total; i++) {
+                const selected = document.querySelector(`input[name="q${i}"]:checked`);
+                if (selected && selected.value === answers[`q${i}`]) {
+                    score++;
+                }
+            }
+
+            const resultDiv = document.getElementById('quiz-result');
+            resultDiv.innerText = `Bạn đã đúng ${score}/${total} câu.`;
+            
+            if (score === total) {
+                resultDiv.className = "mt-4 text-center font-bold text-lg text-green-600";
+            } else {
+                resultDiv.className = "mt-4 text-center font-bold text-lg text-red-600";
+            }
+        }
+    </script>
+</body>
+</html>
