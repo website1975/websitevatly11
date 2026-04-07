@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bài 6: Dao động tắt dần - Dao động cưỡng bức - Cộng hưởng</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- MathJax for Math Formulas -->
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f7f9;
+            color: #333;
+        }
+        
+        .main-color-bg { background-color: #454545; }
+        .main-color-text { color: #454545; }
+        
+        .content-box {
+            background-color: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .section-header {
+            text-transform: uppercase;
+            font-weight: bold;
+            border-bottom: 4px solid #1e3a8a;
+            padding-bottom: 0.5rem;
+            margin-bottom: 1rem;
+            color: #454545;
+        }
+
+        .question-box {
+            background-color: #edf2f7;
+            border-left: 4px solid #1e3a8a;
+            padding: 1rem;
+            border-top-right-radius: 0.375rem;
+            border-bottom-right-radius: 0.375rem;
+        }
+
+        .answer-box {
+            background-color: #f0fff4; /* xanh lá nhạt */
+            border: 1px solid #c6f6d5;
+            padding: 1rem;
+            border-radius: 0.375rem;
+            margin-top: 0.5rem;
+            display: none; /* Ẩn mặc định */
+        }
+
+        .img-placeholder {
+            width: 100%;
+            height: 250px;
+            background-color: #e2e8f0;
+            border: 2px dashed #a0aec0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #718096;
+            font-weight: bold;
+            border-radius: 0.5rem;
+            margin: 1rem 0;
+        }
+
+        /* Styling for tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 1rem;
+        }
+        table, th, td {
+            border: 1px solid #cbd5e0;
+        }
+        th {
+            background-color: #e2e8f0;
+            padding: 0.75rem;
+            text-align: center;
+        }
+        td {
+            padding: 0.75rem;
+            text-align: center;
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+
+    <div class="max-w-5xl mx-auto">
+
+        <!-- HEADER -->
+        <div class="main-color-bg text-white p-6 rounded-[12px] shadow-md mb-6 text-center">
+            <h2 class="text-lg opacity-90 tracking-wider">CHƯƠNG 1 - DAO ĐỘNG ĐIỀU HOÀ</h2><hr>
+            <h1 class="text-2xl md:text-3xl font-bold uppercase mt-2">BÀI 6: DAO ĐỘNG TẮT DẦN. DAO ĐỘNG CƯỠNG BỨC. HIỆN TƯỢNG CỘNG HƯỞNG</h1>
+        </div>
+
+        <!-- INTRO BOX -->
+        <div class="bg-white border border-black p-5 rounded-[12px] shadow-md mb-6 italic text-gray-700 text-lg">
+            Một em bé đang chơi xích đu trong sân. Tại sao để xích đu tiếp tục dao động, người mẹ thỉnh thoảng lại đẩy nhẹ vào em bé?
+        </div>
+
+        <!-- SECTION I -->
+        <div class="content-box">
+            <h2 class="section-header text-xl">I. DAO ĐỘNG TẮT DẦN</h2>
+            
+            <h3 class="font-bold text-lg mb-2 text-[#454545]">1. Thí nghiệm dao động tắt dần</h3>
+            <p class="mb-3">Trong các bài trước, ta đã giả thiết không có ma sát tác dụng vào con lắc. Con lắc dao động với biên độ và tần số riêng (kí hiệu là \(f_{0}\)) không đổi.</p>
+            <p class="mb-4">Trong thực tế, khi kéo con lắc ra khỏi vị trí cân bằng rồi thả cho nó dao động thì biên độ của nó giảm dần (Hình 6.1). Dao động như vậy gọi là dao động tắt dần.</p>
+
+            <!-- Question 1 -->
+            <div class="mb-6">
+                <div class="question-box">
+                    <p class="font-bold text-[#454545] mb-2"><span class="text-red-500 mr-1">❓</span>Câu hỏi:</p>
+                    <p>Hãy giải thích tại sao dao động của em bé chơi xích đu trong ví dụ ở đầu bài lại tắt dần nếu không có người mẹ thỉnh thoảng đẩy nhẹ vào em bé.</p>
+                    <button onclick="toggleAnswer('ans-1')" class="mt-3 main-color-bg text-white px-4 py-2 rounded font-semibold hover:bg-opacity-90 transition">Xem lời giải</button>
+                </div>
+                <div id="ans-1" class="answer-box">
+                    <p><span class="font-bold text-green-700">💡 Lời giải:</span></p>
+                    <p>Do trong quá trình xích đu dao động, luôn có lực cản của không khí và lực ma sát tại trục quay của xích đu. Các lực này sinh công âm làm tiêu hao cơ năng của hệ (chuyển hoá dần cơ năng thành nhiệt năng), khiến biên độ dao động giảm dần theo thời gian, cuối cùng xích đu dừng lại.</p>
+                </div>
+            </div>
+
+            <div class="bg-gray-50 p-4 border rounded-md mb-4">
+                <h4 class="font-bold text-[#454545] mb-2">Thí nghiệm</h4>
+                <p><strong>Chuẩn bị:</strong> Con lắc có quả nặng gắn bút dạ; tấm nhựa để ghi đồ thị của dao động; bộ phận tạo chuyển động đều cho tấm nhựa.</p>
+                <p><strong>Tiến hành:</strong></p>
+                <ul class="list-disc pl-6 mb-2">
+                    <li>Bố trí thí nghiệm như Hình 6.1b.</li>
+                    <li>Cho con lắc dao động ổn định và tấm nhựa chuyển động đều, bút dạ gắn ở vật nặng luôn tiếp xúc với tấm ghi đồ thị. Khi con lắc dao động, bút dạ gắn trên quả nặng sẽ ghi lại biên độ dao động của con lắc đơn theo thời gian như Hình 6.1a.</li>
+                </ul>
+                <div class="img-placeholder" title="Nhập đường dẫn ảnh Hình 6.1 tại đây"><img src="h1.png" class="max-h-full max-w-full object-contain"></img> </div>
+            </div>
+
+            <!-- Activity 1 -->
+            <div class="mb-6">
+                <div class="question-box">
+                    <p class="font-bold text-[#454545] mb-2"><span class="text-blue-600 mr-1">✋</span>Hoạt động:</p>
+                    <p>Hãy nhận xét về biên độ và chu kì (hay tần số) dao động của con lắc trong thí nghiệm.</p>
+                    <button onclick="toggleAnswer('ans-2')" class="mt-3 main-color-bg text-white px-4 py-2 rounded font-semibold hover:bg-opacity-90 transition">Xem hướng giải quyết</button>
+                </div>
+                <div id="ans-2" class="answer-box">
+                    <p><span class="font-bold text-green-700">💡 Hướng giải quyết:</span></p>
+                    <p>- <strong>Biên độ:</strong> Giảm dần theo thời gian (thể hiện qua đường cong bao ngoài đồ thị nhỏ dần lại).</p>
+                    <p>- <strong>Chu kì/Tần số:</strong> Không thay đổi theo thời gian. Ma sát nhỏ không làm thay đổi đáng kể chu kì dao động riêng của hệ.</p>
+                </div>
+            </div>
+
+            <p class="font-bold mt-4 text-[#454545]">Kết quả thí nghiệm:</p>
+            <p class="mb-4">Trong phần 1, khi con lắc dao động, nó chịu lực ma sát ở chỗ treo và ở chỗ tiếp xúc giữa bút dạ với tấm nhựa. Ngoài ra, nó còn chịu lực cản của không khí. Lực ma sát và lực cản của không khí đều làm tiêu hao cơ năng của con lắc, chuyển hoá dần cơ năng thành nhiệt năng. Vì thế, biên độ dao động của con lắc giảm dần và cuối cùng con lắc dừng lại. Nguyên nhân làm dao động của vật tắt dần là do lực ma sát và lực cản của môi trường.</p>
+
+            <h3 class="font-bold text-lg mt-6 mb-2 text-[#454545]">2. Ứng dụng</h3>
+            <p class="mb-2">Bộ phận giảm xóc của xe máy Hình 6.2 là ứng dụng của dao động tắt dần.</p>
+            <div class="img-placeholder" title="Hình 6.2"><img src="h2.png" class="max-h-full max-w-full object-contain"></img>
+                            </div>
+            <p class="mb-4">Khi xe máy đi qua chỗ mấp mô, xe bị nảy lên và dao động. Nếu dao động kéo dài làm người ngồi trên xe khó chịu. Vì thế, người ta lắp thêm một bộ phận giảm xóc để làm tắt dao động của khung xe.</p>
+
+            <!-- Question 2 -->
+            <div class="mb-6">
+                <div class="question-box">
+                    <p class="font-bold text-[#454545] mb-2"><span class="text-red-500 mr-1">❓</span>Câu hỏi:</p>
+                    <p>Hãy tìm trong thực tế ví dụ về dao động tắt dần và cho biết trong mỗi trường hợp thì dao động tắt dần là có lợi hay có hại.</p>
+                    <button onclick="toggleAnswer('ans-3')" class="mt-3 main-color-bg text-white px-4 py-2 rounded font-semibold hover:bg-opacity-90 transition">Xem lời giải</button>
+                </div>
+                <div id="ans-3" class="answer-box">
+                    <p><span class="font-bold text-green-700">💡 Lời giải:</span></p>
+                    <ul class="list-disc pl-5">
+                        <li><strong>Có lợi:</strong> Thiết bị đóng cửa tự động, giảm xóc ô tô/xe máy/xe đạp. Dao động tắt dần giúp hệ nhanh chóng trở về trạng thái cân bằng.</li>
+                        <li><strong>Có hại:</strong> Sự tắt dần của con lắc đồng hồ (làm đồng hồ ngừng chạy), em bé đang chơi xích đu bị dừng lại (giảm sự thích thú). Cần phải có thiết bị bù đắp năng lượng.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION II -->
+        <div class="content-box">
+            <h2 class="section-header text-xl">II. DAO ĐỘNG CƯỠNG BỨC</h2>
+            
+            <h3 class="font-bold text-lg mb-2 text-[#454545]">1. Khái niệm dao động cưỡng bức</h3>
+            <p class="mb-2">Dao động cưỡng bức là dao động xảy ra dưới tác dụng của ngoại lực tuần hoàn có tần số \(f\) bất kì. Khi dao động ổn định tần số dao động cưỡng bức bằng tần số của ngoại lực.</p>
+            <p class="mb-4"><strong>Ví dụ:</strong> Khi đến bến xe buýt, xe chỉ tạm dừng nên không tắt máy, thân xe vẫn dao động. Dao động đó là dao động cưỡng bức dưới tác dụng của lực cưỡng bức tuần hoàn gây ra bởi chuyển động của pít-tông trong xi lanh của máy nổ.</p>
+
+            <h3 class="font-bold text-lg mb-2 text-[#454545]">2. Đặc điểm</h3>
+            <p class="mb-2">Dao động cưỡng bức khi ổn định có những đặc điểm sau đây:</p>
+            <ul class="list-disc pl-6 mb-4">
+                <li>Dao động cưỡng bức có biên độ không đổi và có tần số bằng tần số của lực cưỡng bức.</li>
+                <li>Biên độ của dao động cưỡng bức không chỉ phụ thuộc vào biên độ của lực cưỡng bức mà còn phụ thuộc cả vào độ chênh lệch giữa tần số của lực cưỡng bức và tần số riêng của hệ dao động. Khi tần số của lực cưỡng bức càng gần tần số riêng thì biên độ dao động của hệ càng lớn.</li>
+            </ul>
+
+            <!-- Question 3 -->
+            <div class="mb-6">
+                <div class="question-box">
+                    <p class="font-bold text-[#454545] mb-2"><span class="text-red-500 mr-1">❓</span>Câu hỏi:</p>
+                    <p>Tìm thêm ví dụ về dao động cưỡng bức.</p>
+                    <button onclick="toggleAnswer('ans-4')" class="mt-3 main-color-bg text-white px-4 py-2 rounded font-semibold hover:bg-opacity-90 transition">Xem lời giải</button>
+                </div>
+                <div id="ans-4" class="answer-box">
+                    <p><span class="font-bold text-green-700">💡 Lời giải:</span></p>
+                    <p>- Dao động của mặt trống khi người nhạc công gõ liên tục thành nhịp.</p>
+                    <p>- Căn nhà rung lên bần bật (dao động cưỡng bức) mỗi khi có xe tải siêu trọng chạy qua (ngoại lực cưỡng bức).</p>
+                    <p>- Dao động của khung xe ô tô khi xe chạy trên đường lát gạch nhấp nhô đều.</p>
+                </div>
+            </div>
+
+            <div class="bg-gray-50 p-4 border rounded-md mb-4">
+                <h4 class="font-bold text-[#454545] mb-2">Thí nghiệm</h4>
+                <p><strong>Chuẩn bị:</strong> Một thanh cứng hình trụ hai đầu thanh được gắn vào hai ổ trục để thanh có thể xoay dễ dàng quanh trục của nó. Một con lắc điều khiển Đ, ba con lắc thử 1, 2 và 3 được treo vào thanh cứng hình trụ.</p>
+                <div class="img-placeholder" title="Hình 6.3 tại đây"><img src="h3.png" class="max-h-full max-w-full object-contain"></img>
+                                    </div>
+                <p><strong>Tiến hành:</strong> Bố trí thí nghiệm như Hình 6.3.</p>
+            </div>
+
+            <!-- Activity 2 -->
+            <div class="mb-6">
+                <div class="question-box">
+                    <p class="font-bold text-[#454545] mb-2"><span class="text-blue-600 mr-1">✋</span>Hoạt động:</p>
+                    <p>Hãy dự đoán xem, trong thí nghiệm Hình 6.3, nếu con lắc điều khiển Đ được kéo sang một bên theo phương vuông góc với thanh rồi thả ra cho dao động thì các con lắc khác có dao động không? Con lắc nào dao động mạnh nhất? Tại sao? Làm thí nghiệm để kiểm tra. So sánh kết quả quan sát được với dự đoán.</p>
+                    <button onclick="toggleAnswer('ans-5')" class="mt-3 main-color-bg text-white px-4 py-2 rounded font-semibold hover:bg-opacity-90 transition">Xem hướng giải quyết</button>
+                </div>
+                <div id="ans-5" class="answer-box">
+                    <p><span class="font-bold text-green-700">💡 Hướng giải quyết:</span></p>
+                    <p><strong>- Dự đoán:</strong> Các con lắc 1, 2, 3 đều sẽ dao động vì dao động của con lắc Đ truyền qua thanh ngang tạo thành lực cưỡng bức tác dụng lên 1, 2, 3.</p>
+                    <p><strong>- Con lắc dao động mạnh nhất:</strong> Con lắc nào có chiều dài gần bằng chiều dài của con lắc Đ nhất sẽ dao động với biên độ mạnh nhất (vì chu kì \(T \approx T_Đ\), dẫn đến cộng hưởng).</p>
+                    <p><strong>- Kết quả quan sát:</strong> Trùng khớp với dự đoán. Con lắc có cùng chiều dài với Đ dao động biên độ cực đại.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION III -->
+        <div class="content-box">
+            <h2 class="section-header text-xl">III. HIỆN TƯỢNG CỘNG HƯỞNG</h2>
+            
+            <h3 class="font-bold text-lg mb-2 text-[#454545]">1. Định nghĩa</h3>
+            <p class="mb-2">Từ kết quả thí nghiệm trên, ta có thể rút ra điều kiện để xảy ra hiện tượng cộng hưởng.</p>
+            <p class="mb-4">Hiện tượng biên độ dao động cưỡng bức tăng đến giá trị cực đại khi tần số \(f\) của lực cưỡng bức tiến đến bằng tần số riêng \(f_0\) của hệ dao động gọi là hiện tượng cộng hưởng.</p>
+            
+            <div class="img-placeholder" title="Hình 6.4 tại đây"><img src="h4.png" class="max-h-full max-w-full object-contain"></img>
+                            </div>
+            
+            <p class="mb-2">Đường cong trên đồ thị Hình 6.4 gọi là đồ thị cộng hưởng. Đồ thị càng nhọn khi lực cản của môi trường càng nhỏ (điểm A).</p>
+            <p class="mb-4">Điều kiện \(f = f_0\) gọi là điều kiện cộng hưởng.</p>
+
+            <h3 class="font-bold text-lg mb-2 text-[#454545]">2. Giải thích</h3>
+            <p class="mb-4">Khi tần số của lực cưỡng bức bằng tần số riêng của hệ dao động thì hệ được cung cấp năng lượng một cách nhịp nhàng, đúng lúc, do đó biên độ dao động của hệ tăng dần lên. Biên độ dao động đạt tới giá trị cực đại khi tốc độ tiêu hao năng lượng do ma sát bằng tốc độ cung cấp năng lượng cho hệ.</p>
+            <p class="mb-4">Trong trò chơi đu, người đu phải tác dụng lực vào đu bằng cách nhún người khi đu bắt đầu đổi chiều ở vị trí cao nhất. Trong trò chơi này, người chơi và đu đóng vai trò là một con lắc, lực nhún của người chơi đóng vai trò là ngoại lực. Vì ngoại lực luôn tác dụng vào con lắc tại những thời điểm nhất định (có cùng tần số với tần số dao động của đu) nên mặc dù người chơi chỉ cần nhún nhẹ nhàng cũng có thể đưa được đu lên rất cao.</p>
+
+            <h3 class="font-bold text-lg mb-2 text-[#454545]">3. Hiện tượng cộng hưởng trong đời sống</h3>
+            <p class="mb-2">Cộng hưởng là một hiện tượng vật lí quan trọng có thể xuất hiện trong nhiều tình huống khác nhau. Trong một số trường hợp, hiện tượng cộng hưởng có lợi; như:</p>
+            <ul class="list-disc pl-6 mb-4">
+                <li>Hộp đàn của các đàn ghi ta, violon,... là những hộp cộng hưởng được cấu tạo sao cho không khí trong hộp có thể dao động cộng hưởng với nhiều tần số dao động khác nhau của dây đàn.</li>
+                <li>Nguyên tắc hoạt động của lò vi sóng dựa trên cộng hưởng. Ở các lò vi sóng này, sóng được sử dụng có tần số phù hợp với tần số dao động riêng của các phân tử nước trong thực phẩm. Các phân tử nước đóng vai trò là hệ cộng hưởng cũng dao động cưỡng bức, nên hấp thụ năng lượng của sóng được sử dụng và nóng lên.</li>
+            </ul>
+            <p class="mb-4">Tuy nhiên, trong một số trường hợp khác hiện tượng cộng hưởng lại có hại.</p>
+            <p class="mb-4">Nhiều hệ dao động như toà nhà, cầu, bệ máy, khung xe,... đều có một hay nhiều tần số riêng. Do vậy khi thiết kế cần tránh không để cho các hệ ấy chịu tác dụng của những lực cưỡng bức mạnh có tần số bằng tần số riêng ấy. Nếu không chúng sẽ làm cho các hệ dao động mạnh dẫn đến đổ hoặc gãy. Câu chuyện về một cái cầu bắc ngang qua sông Fontanka ở Saint Petersburg ở nước Nga được thiết kế đủ vững chắc cho 300 người đi qua. Nhưng nó đã bị sập khi một trung đội bộ binh gồm 36 người đi đều qua vào năm 1960. Hay câu chuyện về một cây cầu khác được xây dựng năm 1940 qua eo biển Tacoma ở nước Mỹ có thể chịu nhiều ô tô có tải trọng lớn đi qua nhưng cũng đã bị đổ sập dưới tác dụng của gió.</p>
+
+            <!-- Activity 3 (Kết nối tri thức) -->
+            <div class="mb-6">
+                <div class="question-box">
+                    <p class="font-bold text-[#454545] mb-2"><span class="text-blue-600 mr-1">✋</span>Hoạt động (Kết nối tri thức):</p>
+                    <p>Đánh giá được sự có lợi hay có hại của cộng hưởng trong các ví dụ nêu trên.</p>
+                    <button onclick="toggleAnswer('ans-6')" class="mt-3 main-color-bg text-white px-4 py-2 rounded font-semibold hover:bg-opacity-90 transition">Xem hướng giải quyết</button>
+                </div>
+                <div id="ans-6" class="answer-box">
+                    <p><span class="font-bold text-green-700">💡 Hướng giải quyết:</span></p>
+                    <ul class="list-disc pl-5">
+                        <li><strong>Có lợi:</strong> Chế tạo hộp đàn guitar, violin (giúp âm thanh to, rõ nét và vang xa hơn nhờ cộng hưởng âm thanh), chế tạo lò vi sóng (giúp làm nóng thức ăn nhanh chóng bằng cộng hưởng phân tử nước).</li>
+                        <li><strong>Có hại:</strong> Gây sập cầu, đổ toà nhà, vỡ kính, hỏng bệ máy... khi các cấu trúc này bị cộng hưởng với ngoại lực như gió bão, bước đi đều, động cơ máy móc hoạt động.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- EM ĐÃ HỌC -->
+        <div class="bg-blue-50 border-l-[6px] border-blue-500 rounded-[12px] shadow-sm p-6 mb-6">
+            <h2 class="text-lg font-bold text-blue-800 uppercase mb-3 border-b border-blue-200 pb-2">📚 EM ĐÃ HỌC</h2>
+            <ul class="list-disc pl-6 space-y-2 text-gray-800">
+                <li>Dao động có biên độ giảm dần theo thời gian gọi là dao động tắt dần.</li>
+                <li>Nguyên nhân làm dao động tất dần là do lực ma sát và lực cản của môi trường.</li>
+                <li>Dao động chịu tác dụng của một ngoại lực cưỡng bức tuần hoàn gọi là dao động cưỡng bức. Dao động cưỡng bức có biên độ không đổi và có tần số bằng tần số của lực cưỡng bức.</li>
+                <li>Hiện tượng biên độ dao động cưỡng bức tăng đến giá trị cực đại khi tần số \(f\) của lực cưỡng bức tiến đến bằng tần số riêng \(f_0\) của hệ dao động gọi là hiện tượng cộng hưởng.</li>
+                <li>Tuỳ từng trường hợp mà hiện tượng cộng hưởng có thể có lợi hoặc có thể có hại.</li>
+            </ul>
+        </div>
+
+        <!-- EM CÓ THỂ -->
+        <div class="bg-yellow-50 border-l-[6px] border-yellow-500 rounded-[12px] shadow-sm p-6 mb-8">
+            <h2 class="text-lg font-bold text-yellow-800 uppercase mb-3 border-b border-yellow-200 pb-2">🎯 EM CÓ THỂ</h2>
+            <ul class="list-disc pl-6 space-y-2 text-gray-800">
+                <li>Lấy được ví dụ thực tế về dao động tắt dần, dao động cưỡng bức và hiện tượng cộng hưởng.</li>
+                <li>Nhận biết được sự có lợi hay có hại của cộng hưởng và vận dụng nó vào cuộc sống.</li>
+            </ul>
+        </div>
+
+        <!-- PHẦN BÀI TẬP VÀ TRẮC NGHIỆM -->
+        <div class="content-box border-t-8 border-[#454545]">
+            <h2 class="section-header text-xl text-center">ĐÁNH GIÁ NĂNG LỰC & CỦNG CỐ KIẾN THỨC</h2>
+            
+            <!-- Trắc nghiệm -->
+            <div class="mb-8">
+                <h3 class="font-bold text-lg mb-4 text-[#1e3a8a]">A. BÀI TẬP TRẮC NGHIỆM (5 Câu)</h3>
+                <form id="quizForm" class="space-y-6">
+                    <!-- Câu 1 -->
+                    <div class="bg-gray-50 p-4 rounded-md border">
+                        <p class="font-bold mb-2">Câu 1: Dao động tắt dần là dao động có:</p>
+                        <label class="block mb-1"><input type="radio" name="q1" value="A"> A. Biên độ giảm dần theo thời gian.</label>
+                        <label class="block mb-1"><input type="radio" name="q1" value="B"> B. Chu kì giảm dần theo thời gian.</label>
+                        <label class="block mb-1"><input type="radio" name="q1" value="C"> C. Tần số giảm dần theo thời gian.</label>
+                        <label class="block mb-1"><input type="radio" name="q1" value="D"> D. Biên độ không đổi theo thời gian.</label>
+                        <p id="sol-q1" class="hidden text-sm mt-2 font-medium"></p>
+                    </div>
+
+                    <!-- Câu 2 -->
+                    <div class="bg-gray-50 p-4 rounded-md border">
+                        <p class="font-bold mb-2">Câu 2: Nguyên nhân chính gây ra dao động tắt dần của con lắc đơn trong không khí là do:</p>
+                        <label class="block mb-1"><input type="radio" name="q2" value="A"> A. Trọng lực tác dụng lên vật.</label>
+                        <label class="block mb-1"><input type="radio" name="q2" value="B"> B. Lực căng của dây treo.</label>
+                        <label class="block mb-1"><input type="radio" name="q2" value="C"> C. Lực cản của không khí.</label>
+                        <label class="block mb-1"><input type="radio" name="q2" value="D"> D. Lực quán tính.</label>
+                        <p id="sol-q2" class="hidden text-sm mt-2 font-medium"></p>
+                    </div>
+
+                    <!-- Câu 3 -->
+                    <div class="bg-gray-50 p-4 rounded-md border">
+                        <p class="font-bold mb-2">Câu 3: Phát biểu nào sau đây đúng khi nói về dao động cưỡng bức khi đã ổn định?</p>
+                        <label class="block mb-1"><input type="radio" name="q3" value="A"> A. Có tần số bằng tần số riêng của hệ dao động.</label>
+                        <label class="block mb-1"><input type="radio" name="q3" value="B"> B. Có tần số bằng tần số của ngoại lực cưỡng bức tuần hoàn.</label>
+                        <label class="block mb-1"><input type="radio" name="q3" value="C"> C. Có biên độ thay đổi theo thời gian.</label>
+                        <label class="block mb-1"><input type="radio" name="q3" value="D"> D. Chỉ xảy ra dưới tác dụng của lực ma sát.</label>
+                        <p id="sol-q3" class="hidden text-sm mt-2 font-medium"></p>
+                    </div>
+
+                    <!-- Câu 4 -->
+                    <div class="bg-gray-50 p-4 rounded-md border">
+                        <p class="font-bold mb-2">Câu 4: Điều kiện để xảy ra hiện tượng cộng hưởng cơ là:</p>
+                        <label class="block mb-1"><input type="radio" name="q4" value="A"> A. Biên độ ngoại lực cưỡng bức lớn nhất.</label>
+                        <label class="block mb-1"><input type="radio" name="q4" value="B"> B. Tần số ngoại lực bằng chu kì dao động riêng.</label>
+                        <label class="block mb-1"><input type="radio" name="q4" value="C"> C. Tần số ngoại lực cưỡng bức bằng tần số dao động riêng của hệ.</label>
+                        <label class="block mb-1"><input type="radio" name="q4" value="D"> D. Lực cản của môi trường bằng không.</label>
+                        <p id="sol-q4" class="hidden text-sm mt-2 font-medium"></p>
+                    </div>
+
+                    <!-- Câu 5 -->
+                    <div class="bg-gray-50 p-4 rounded-md border">
+                        <p class="font-bold mb-2">Câu 5: Trong các thiết bị sau, thiết bị nào có ứng dụng hiện tượng cộng hưởng?</p>
+                        <label class="block mb-1"><input type="radio" name="q5" value="A"> A. Cửa đóng tự động.</label>
+                        <label class="block mb-1"><input type="radio" name="q5" value="B"> B. Giảm xóc xe máy.</label>
+                        <label class="block mb-1"><input type="radio" name="q5" value="C"> C. Con lắc đồng hồ.</label>
+                        <label class="block mb-1"><input type="radio" name="q5" value="D"> D. Hộp đàn ghi ta.</label>
+                        <p id="sol-q5" class="hidden text-sm mt-2 font-medium"></p>
+                    </div>
+
+                    <div class="text-center">
+                        <button type="button" onclick="checkQuiz()" class="main-color-bg text-white px-8 py-3 rounded-md font-bold text-lg shadow hover:bg-gray-700 transition">NỘP BÀI TRẮC NGHIỆM</button>
+                    </div>
+                    <div id="quiz-result" class="text-center font-bold text-xl mt-4 hidden"></div>
+                </form>
+            </div>
+
+            <!-- Bài tập tự luận vận dụng -->
+            <div>
+                <h3 class="font-bold text-lg mb-4 text-[#1e3a8a] mt-10 border-t pt-6">B. BÀI TẬP VẬN DỤNG TÍNH TOÁN (3 Bài)</h3>
+                
+                <!-- Bài 1 -->
+                <div class="mb-6">
+                    <div class="question-box">
+                        <p class="font-bold text-[#454545] mb-2"><span class="text-red-500 mr-1">📝</span>Bài 1:</p>
+                        <p>Một con lắc lò xo gồm lò xo nhẹ có độ cứng \(k = 100 \text{ N/m}\) và vật nhỏ khối lượng \(m = 100 \text{ g}\) dao động tắt dần trên mặt phẳng ngang. Hệ số ma sát giữa vật và mặt phẳng ngang là \(\mu = 0,01\). Lấy \(g = 10 \text{ m/s}^2\). Tính độ giảm biên độ của con lắc sau mỗi chu kì dao động.</p>
+                        <button onclick="toggleAnswer('tl-1')" class="mt-3 main-color-bg text-white px-4 py-2 rounded font-semibold hover:bg-opacity-90 transition">Xem lời giải chi tiết</button>
+                    </div>
+                    <div id="tl-1" class="answer-box">
+                        <p><span class="font-bold text-green-700">💡 Lời giải chi tiết:</span></p>
+                        <p>Lực ma sát tác dụng lên vật: \(F_{ms} = \mu N = \mu mg\)</p>
+                        <p>Độ giảm biên độ sau nửa chu kì là: \(\Delta A_{1/2} = \frac{2F_{ms}}{k} = \frac{2\mu mg}{k}\)</p>
+                        <p>Độ giảm biên độ sau một chu kì là: \(\Delta A = 2 \cdot \Delta A_{1/2} = \frac{4\mu mg}{k}\)</p>
+                        <p>Thay số vào công thức:</p>
+                        <p>\[\Delta A = \frac{4 \cdot 0,01 \cdot 0,1 \cdot 10}{100} = 0,0004 \text{ m} = 0,4 \text{ mm}\]</p>
+                        <p><strong>Đáp án:</strong> Biên độ giảm 0,4 mm sau mỗi chu kì.</p>
+                    </div>
+                </div>
+
+                <!-- Bài 2 -->
+                <div class="mb-6">
+                    <div class="question-box">
+                        <p class="font-bold text-[#454545] mb-2"><span class="text-red-500 mr-1">📝</span>Bài 2:</p>
+                        <p>Một xe lửa chạy trên đường ray thẳng. Khoảng cách giữa hai chỗ nối của các thanh ray là \(L = 12,5 \text{ m}\). Con lắc lò xo treo trong toa tàu có chu kì dao động riêng là \(T_0 = 0,5 \text{ s}\). Hỏi xe lửa chạy với tốc độ bao nhiêu thì con lắc sẽ dao động mạnh nhất?</p>
+                        <button onclick="toggleAnswer('tl-2')" class="mt-3 main-color-bg text-white px-4 py-2 rounded font-semibold hover:bg-opacity-90 transition">Xem lời giải chi tiết</button>
+                    </div>
+                    <div id="tl-2" class="answer-box">
+                        <p><span class="font-bold text-green-700">💡 Lời giải chi tiết:</span></p>
+                        <p>Mỗi khi bánh xe đi qua chỗ nối giữa hai thanh ray, toa tàu chịu một lực xóc (ngoại lực cưỡng bức). Thời gian giữa hai lần xóc liên tiếp (chu kì của ngoại lực cưỡng bức) là thời gian tàu đi hết chiều dài 1 thanh ray.</p>
+                        <p>Chu kì ngoại lực: \(T = \frac{L}{v}\)</p>
+                        <p>Để con lắc dao động mạnh nhất, hiện tượng cộng hưởng phải xảy ra, tức là chu kì ngoại lực cưỡng bức bằng chu kì dao động riêng của con lắc:</p>
+                        <p>\[T = T_0 \Rightarrow \frac{L}{v} = T_0\]</p>
+                        <p>Suy ra tốc độ của xe lửa: \(v = \frac{L}{T_0} = \frac{12,5}{0,5} = 25 \text{ m/s}\)</p>
+                        <p>Đổi sang km/h: \(v = 25 \cdot 3,6 = 90 \text{ km/h}\).</p>
+                        <p><strong>Đáp án:</strong> Tốc độ của tàu là 25 m/s (hoặc 90 km/h).</p>
+                    </div>
+                </div>
+
+                <!-- Bài 3 -->
+                <div class="mb-2">
+                    <div class="question-box">
+                        <p class="font-bold text-[#454545] mb-2"><span class="text-red-500 mr-1">📝</span>Bài 3:</p>
+                        <p>Một con lắc đơn có chiều dài \(l = 1 \text{ m}\) được treo vào gầm một chiếc xe ô tô. Ô tô đi qua một con đường gồ ghề, các mô đất cách đều nhau một khoảng \(d = 8 \text{ m}\). Lấy \(g = \pi^2 \approx 10 \text{ m/s}^2\). Hỏi vận tốc của ô tô là bao nhiêu thì con lắc dao động với biên độ lớn nhất?</p>
+                        <button onclick="toggleAnswer('tl-3')" class="mt-3 main-color-bg text-white px-4 py-2 rounded font-semibold hover:bg-opacity-90 transition">Xem lời giải chi tiết</button>
+                    </div>
+                    <div id="tl-3" class="answer-box">
+                        <p><span class="font-bold text-green-700">💡 Lời giải chi tiết:</span></p>
+                        <p>Chu kì dao động riêng của con lắc đơn: \[T_0 = 2\pi\sqrt{\frac{l}{g}} = 2\pi\sqrt{\frac{1}{\pi^2}} = 2 \text{ s}\]</p>
+                        <p>Ngoại lực cưỡng bức tác dụng lên con lắc do xe đi qua các mô đất. Thời gian giữa 2 lần vấp liên tiếp là chu kì ngoại lực: \(T = \frac{d}{v}\).</p>
+                        <p>Để con lắc dao động với biên độ lớn nhất thì phải xảy ra hiện tượng cộng hưởng cơ:</p>
+                        <p>\[T = T_0 \Leftrightarrow \frac{d}{v} = T_0\]</p>
+                        <p>Vận tốc của ô tô là: \[v = \frac{d}{T_0} = \frac{8}{2} = 4 \text{ m/s}\]</p>
+                        <p>Đổi sang km/h: \(v = 4 \cdot 3,6 = 14,4 \text{ km/h}\).</p>
+                        <p><strong>Đáp án:</strong> Vận tốc ô tô là 4 m/s (hay 14.4 km/h).</p>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- JavaScript Scripts -->
+    <script>
+        // Hàm hiển thị / ẩn lời giải
+        function toggleAnswer(id) {
+            const el = document.getElementById(id);
+            if (el.style.display === "block") {
+                el.style.display = "none";
+            } else {
+                el.style.display = "block";
+            }
+        }
+
+        // Hàm kiểm tra bài trắc nghiệm
+        function checkQuiz() {
+            const answers = {
+                q1: 'A',
+                q2: 'C',
+                q3: 'B',
+                q4: 'C',
+                q5: 'D'
+            };
+
+            const solutions = {
+                q1: 'Giải thích: Dao động tắt dần có đặc điểm là biên độ (và cơ năng) giảm dần theo thời gian do có ma sát.',
+                q2: 'Giải thích: Trong môi trường không khí, ma sát/lực cản không khí là nguyên nhân chính làm tiêu hao cơ năng khiến dao động tắt dần.',
+                q3: 'Giải thích: Khi ổn định, hệ dao động cưỡng bức bị "ép" phải dao động với tần số của lực cưỡng bức.',
+                q4: 'Giải thích: Cộng hưởng xảy ra khi tần số lực cưỡng bức tiến đến bằng tần số dao động riêng của hệ (f = f0).',
+                q5: 'Giải thích: Hộp đàn ghi ta, hộp đàn violon là các hộp cộng hưởng âm, giúp khuyếch đại âm thanh.'
+            };
+
+            let score = 0;
+            let total = Object.keys(answers).length;
+
+            for (let i = 1; i <= total; i++) {
+                let qName = 'q' + i;
+                let selected = document.querySelector(`input[name="${qName}"]:checked`);
+                let solEl = document.getElementById(`sol-${qName}`);
+                
+                solEl.style.display = "block"; // Hiện dòng giải thích
+
+                if (selected) {
+                    if (selected.value === answers[qName]) {
+                        score++;
+                        solEl.innerHTML = `✅ <span class="text-green-600">Bạn đã chọn đúng!</span><br/> <span class="text-gray-600 italic">${solutions[qName]}</span>`;
+                    } else {
+                        solEl.innerHTML = `❌ <span class="text-red-600">Sai. Đáp án đúng là ${answers[qName]}.</span><br/> <span class="text-gray-600 italic">${solutions[qName]}</span>`;
+                    }
+                } else {
+                    solEl.innerHTML = `⚠️ <span class="text-yellow-600">Bạn chưa chọn đáp án. Đáp án đúng là ${answers[qName]}.</span><br/> <span class="text-gray-600 italic">${solutions[qName]}</span>`;
+                }
+            }
+
+            const resultDiv = document.getElementById('quiz-result');
+            resultDiv.style.display = 'block';
+            
+            if (score === total) {
+                resultDiv.className = "text-center font-bold text-2xl mt-6 text-green-600";
+                resultDiv.innerHTML = `Xuất sắc! Bạn trả lời đúng ${score}/${total} câu. 🎉`;
+            } else {
+                resultDiv.className = "text-center font-bold text-2xl mt-6 text-red-500";
+                resultDiv.innerHTML = `Bạn trả lời đúng ${score}/${total} câu. Hãy xem lại phần giải thích nhé!`;
+            }
+        }
+    </script>
+</body>
+</html>
