@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bài 5: Động năng. Thế năng. Cơ năng</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Cấu hình Tailwind -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        mainBg: '#f4f7f9',
+                        primary: '#454545',
+                        tableBorder: '#cbd5e0',
+                        tableHeader: '#e2e8f0',
+                    },
+                    fontFamily: {
+                        sans: ['Segoe UI', 'Roboto', 'Helvetica', 'Arial', 'sans-serif'],
+                    },
+                    borderRadius: {
+                        '12px': '12px',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- MathJax -->
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <style>
+        body { background-color: #f4f7f9; }
+        table { width: 100%; border-collapse: collapse; }
+        table, th, td { border: 1px solid #cbd5e0; }
+        th { background-color: #e2e8f0; padding: 10px; text-align: center; }
+        td { padding: 10px; text-align: center; }
+        
+        /* Utility styles for specific headers */
+        .section-title {
+            display: inline-block;
+            text-transform: uppercase;
+            font-weight: bold;
+            color: #454545;
+            border-bottom: 4px solid #454545;
+            padding-bottom: 4px;
+            margin-bottom: 1.5rem;
+            font-size: 1.25rem;
+        }
+    </style>
+</head>
+<body class="text-gray-800 p-4 md:p-8">
+
+    <div class="max-w-5xl mx-auto space-y-8">
+
+        <!-- Header -->
+        <div class="bg-primary text-white rounded-12px p-6 shadow-md text-center">
+            <p class="text-sm md:text-lg font-semibold text-gray-300">CHƯƠNG 1 - DAO ĐỘNG ĐIỀU HOÀ</p>
+            <hr>
+            <h1 class="text-2xl md:text-3xl font-bold mt-2 uppercase">Bài 5: Động năng. Thế năng. <br/> Sự chuyển hoá năng lượng trong dao động điều hoà</h1>
+        </div>
+
+        <!-- Intro Box -->
+        <div class="bg-white border border-gray-400 rounded-12px p-5 shadow-md italic text-gray-700 text-lg">
+            Ở lớp 10, khi học về chuyển động của vật, ta đã biết có sự chuyển hoá giữa động năng và thế năng của vật. Vậy trong dao động điều hoà có sự chuyển hoá tương tự không?
+        </div>
+
+        <!-- I. ĐỘNG NĂNG -->
+        <div class="bg-white rounded-12px p-6 shadow-md">
+            <h2 class="section-title">I. ĐỘNG NĂNG</h2>
+            <p class="mb-4">Động năng của vật dao động điều hoà được xác định bởi biểu thức:</p>
+            <div class="text-center my-4 text-lg">
+                \( W_{đ}=\frac{1}{2}mv^{2} \)
+            </div>
+            <p class="mb-4">Thay \( v=-\omega A\sin(\omega t+\varphi) \) vào, ta được:</p>
+            <div class="text-center my-4 space-y-2 text-lg">
+                <p>\( W_{đ}=\frac{1}{2}m\omega^{2}A^{2}\sin^{2}(\omega t+\varphi) \)</p>
+                <p>\( W_{đ}=\frac{1}{2}m\omega^{2}A^{2}[1-\cos^{2}(\omega t+\varphi)] \)</p>
+            </div>
+            <p class="mb-4">Thay \( x=A\cos(\omega t+\varphi) \) vào ta được:</p>
+            <div class="flex justify-between items-center my-4 font-bold text-lg bg-gray-50 p-4 rounded border border-gray-200">
+                <span class="mx-auto">\( W_{đ}=\frac{1}{2}m\omega^{2}(A^{2}-x^{2}) \)</span>
+                <span>(5.1)</span>
+            </div>
+            <p class="mb-4 italic">Công thức (5.1) cho biết sự biến thiên của động năng theo li độ x.</p>
+
+            <!-- Image Placeholder -->
+            <div class="w-full max-w-md mx-auto h-64 bg-gray-100 border-2 border-dashed border-gray-400 flex flex-col items-center justify-center text-gray-500 my-6 rounded">
+			<img src="h1.png" class="max-h-full max-w-full object-contain"></img>
+            </div>
+
+            <p class="mb-4">Hình 5.1 là đồ thị chỉ sự biến thiên của động năng theo li độ x. Đó là một đường parabol có bề lõm hướng xuống và có giá trị cực đại: \( W_{đmax}=\frac{1}{2}m\omega^{2}A^{2} \).</p>
+            <p class="mb-4">Đồ thị cho thấy, khi vật đi từ vị trí cân bằng tới vị trí biên thì động năng của vật đang từ cực đại giảm đến 0.</p>
+            <p class="mb-4">Khi vật đi từ vị trí biên về vị trí cân bằng thì động năng của vật tăng từ 0 đến giá trị cực đại.</p>
+        </div>
+
+        <!-- II. THẾ NĂNG -->
+        <div class="bg-white rounded-12px p-6 shadow-md">
+            <h2 class="section-title">II. THẾ NĂNG</h2>
+            <p class="mb-4">Theo định luật bảo toàn năng lượng, nếu bỏ qua ma sát thì động năng của vật không mất đi mà chuyển dần thành thế năng của vật và ngược lại. Vì thế ta có thể viết:</p>
+            <div class="text-center my-4 space-y-2 text-lg">
+                <p>\( W_{t}=\frac{1}{2}W_{đmax}-W_{đ(x)} \)</p>
+                <p>\( =\frac{1}{2}m\omega^{2}A^{2}-[\frac{1}{2}m\omega^{2}A^{2}-\frac{1}{2}m\omega^{2}x^{2}] \)</p>
+            </div>
+            
+            <div class="flex justify-between items-center my-4 font-bold text-lg bg-gray-50 p-4 rounded border border-gray-200">
+                <span class="mx-auto">\( W_{t}=\frac{1}{2}m\omega^{2}x^{2} \)</span>
+                <span>(5.2)</span>
+            </div>
+
+            <p class="mb-4 italic">Công thức (5.2) cho biết sự biến thiên của thế năng theo li độ.</p>
+
+            <!-- Image Placeholder -->
+            <div class="w-full max-w-md mx-auto h-64 bg-gray-100 border-2 border-dashed border-gray-400 flex flex-col items-center justify-center text-gray-500 my-6 rounded">
+                <img src="h2.png" class="max-h-full max-w-full object-contain"></img>
+            </div>
+
+            <p class="mb-4">Đồ thị biến thiên của thế năng theo li độ x cũng là một đường parabol nhưng bề lõm hướng lên như Hình 5.2 và có giá trị cực đại: \( W_{tmax}=W_{đmax}=\frac{1}{2}m\omega^{2}A^{2} \).</p>
+        </div>
+
+        <!-- III. CƠ NĂNG -->
+        <div class="bg-white rounded-12px p-6 shadow-md">
+            <h2 class="section-title">III. CƠ NĂNG</h2>
+            <p class="mb-4">Trong dao động điều hoà, có sự chuyển hoá qua lại giữa động năng và thế năng của vật, còn cơ năng, tức tổng động năng và thế năng thì được bảo toàn.</p>
+            
+            <div class="flex justify-between items-center my-4 font-bold text-lg bg-gray-50 p-4 rounded border border-gray-200">
+                <span class="mx-auto">\( W=W_{đ}+W_{t}=\frac{1}{2}m\omega^{2}A^{2} \)</span>
+                <span>(5.3)</span>
+            </div>
+
+            <!-- Question Box 1 -->
+            <div class="bg-[#edf2f7] border-l-4 border-blue-800 p-5 rounded-r-md my-6">
+                <div class="flex items-center mb-3 text-blue-900 font-bold text-lg">
+                    <svg class="w-6 h-6 mr-2" fill="currentColor" viewBox="0 0 20 20"><path d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" fill-rule="evenodd"></path></svg>
+                    Hoạt động 1
+                </div>
+                <div class="w-full max-w-sm mx-auto h-48 bg-white border border-gray-300 flex items-center justify-center text-gray-500 mb-4 rounded">
+                    <img src="h3.png" class="max-h-full max-w-full object-contain"></img>
+                </div>
+                <p class="mb-3">1. Hình 5.3 là đồ thị động năng và thế năng của một vật dao động điều hoà theo li độ. Hãy phân tích sự chuyển hoá giữa động năng và thế năng bằng đồ thị.</p>
+                <button onclick="toggleAnswer('ans_hd1')" class="bg-primary text-white px-5 py-2 rounded font-medium hover:bg-gray-800 transition shadow-sm">Xem lời giải</button>
+                
+                <div id="ans_hd1" class="hidden mt-4 bg-green-100 border-l-4 border-green-500 p-4 rounded text-green-900">
+                    <p><strong>Lời giải:</strong></p>
+                    <ul class="list-disc ml-5 space-y-1">
+                        <li>Khi vật đi từ VTCB (\( x=0 \)) ra biên (\( x=A \) hoặc \( x=-A \)): Đồ thị cho thấy Động năng (\( W_{đ} \)) giảm từ cực đại về 0, trong khi Thế năng (\( W_{t} \)) tăng từ 0 lên cực đại. Nghĩa là động năng đã chuyển hoá thành thế năng.</li>
+                        <li>Khi vật đi từ biên về VTCB: Thế năng giảm dần về 0, động năng tăng dần đến cực đại. Nghĩa là thế năng đã chuyển hoá thành động năng.</li>
+                        <li>Tại mọi vị trí, tổng tung độ của hai đồ thị (cơ năng) luôn là một hằng số.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Question Box 2 -->
+            <div class="bg-[#edf2f7] border-l-4 border-blue-800 p-5 rounded-r-md my-6">
+                <div class="flex items-center mb-3 text-blue-900 font-bold text-lg">
+                    <svg class="w-6 h-6 mr-2" fill="currentColor" viewBox="0 0 20 20"><path d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" fill-rule="evenodd"></path></svg>
+                    Hoạt động 2
+                </div>
+                <div class="w-full max-w-md mx-auto h-48 bg-white border border-gray-300 flex items-center justify-center text-gray-500 mb-4 rounded">
+                    <img src="h4.png" class="max-h-full max-w-full object-contain"></img>
+                </div>
+                <p class="mb-3">2. Hình 5.4 là đồ thị động năng và thế năng của một vật dao động điều hoà theo thời gian.</p>
+                <p class="mb-1">a) Động năng và thế năng của vật thay đổi như thế nào trong các khoảng thời gian: từ 0 đến \( \frac{T}{4} \), từ \( \frac{T}{4} \) đến \( \frac{T}{2} \), từ \( \frac{T}{2} \) đến \( \frac{3T}{4} \), từ \( \frac{3T}{4} \) đến T.</p>
+                <p class="mb-3">b) Tại các thời điểm: \( t=0; t=\frac{T}{8}; t=\frac{T}{4}; t=\frac{3T}{8} \) động năng và thế năng của vật có giá trị như thế nào (tính theo W). Nghiệm lại để thấy ở mỗi thời điểm đó \( W_{đ}+W_{t}=W \).</p>
+                
+                <button onclick="toggleAnswer('ans_hd2')" class="bg-primary text-white px-5 py-2 rounded font-medium hover:bg-gray-800 transition shadow-sm">Xem lời giải</button>
+                
+                <div id="ans_hd2" class="hidden mt-4 bg-green-100 border-l-4 border-green-500 p-4 rounded text-green-900">
+                    <p><strong>Lời giải:</strong></p>
+                    <p class="font-bold mt-2">Câu a:</p>
+                    <ul class="list-disc ml-5 space-y-1">
+                        <li>\( 0 \rightarrow T/4 \): \( W_{t} \) tăng từ 0 đến W; \( W_{đ} \) giảm từ W về 0.</li>
+                        <li>\( T/4 \rightarrow T/2 \): \( W_{t} \) giảm từ W về 0; \( W_{đ} \) tăng từ 0 đến W.</li>
+                        <li>\( T/2 \rightarrow 3T/4 \): \( W_{t} \) tăng từ 0 đến W; \( W_{đ} \) giảm từ W về 0.</li>
+                        <li>\( 3T/4 \rightarrow T \): \( W_{t} \) giảm từ W về 0; \( W_{đ} \) tăng từ 0 đến W.</li>
+                    </ul>
+                    <p class="font-bold mt-2">Câu b:</p>
+                    <ul class="list-disc ml-5 space-y-1">
+                        <li>Tại \( t=0 \): \( W_{đ} = W \), \( W_{t} = 0 \) \(\Rightarrow W_{đ} + W_{t} = W \).</li>
+                        <li>Tại \( t=T/8 \): Đồ thị cắt nhau \( \Rightarrow W_{đ} = W_{t} = W/2 \Rightarrow W_{đ} + W_{t} = W \).</li>
+                        <li>Tại \( t=T/4 \): \( W_{đ} = 0 \), \( W_{t} = W \) \(\Rightarrow W_{đ} + W_{t} = W \).</li>
+                        <li>Tại \( t=3T/8 \): Đồ thị lại cắt nhau \( \Rightarrow W_{đ} = W_{t} = W/2 \Rightarrow W_{đ} + W_{t} = W \).</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- IV. CƠ NĂNG CỦA CON LẮC ĐƠN VÀ CON LẮC LÒ XO -->
+        <div class="bg-white rounded-12px p-6 shadow-md">
+            <h2 class="section-title">IV. CƠ NĂNG CỦA CON LẮC ĐƠN VÀ CON LẮC LÒ XO</h2>
+            
+            <h3 class="text-lg font-bold text-gray-800 mb-2 mt-4">1. Con lắc lò xo</h3>
+            <p class="mb-4">Ta biết nếu bỏ qua ma sát thì dao động của con lắc lò xo là dao động điều hoà. Thế năng của con lắc lò xo là thế năng đàn hồi của lò xo khi bị biến dạng.</p>
+            <p class="mb-4">Người ta đã chứng minh được rằng, nếu chọn mốc thế năng ở vị trí cân bằng thì thế năng của con lắc lò xo khi vật ở li độ x là:</p>
+            <div class="flex justify-between items-center my-4 font-bold text-lg bg-gray-50 p-4 rounded border border-gray-200">
+                <span class="mx-auto">\( W_{t}=\frac{1}{2}kx^{2} \)</span>
+                <span>(5.4)</span>
+            </div>
+            <p class="mb-4">với \( k \) là độ cứng của lò xo.</p>
+            <p class="mb-4">So sánh (5.4) với (5.2) ta suy ra \( \omega=\sqrt{\frac{k}{m}} \) và chu kì của con lắc lò xo là:</p>
+            <div class="flex justify-between items-center my-4 font-bold text-lg bg-gray-50 p-4 rounded border border-gray-200">
+                <span class="mx-auto">\( T=2\pi\sqrt{\frac{m}{k}} \)</span>
+                <span>(5.5)</span>
+            </div>
+            <div class="w-full max-w-xs mx-auto h-40 bg-gray-100 border border-gray-300 flex items-center justify-center text-gray-500 mb-4 rounded">
+                <img src="h5.png" class="max-h-full max-w-full object-contain"></img>
+            </div>
+
+            <p class="mb-2 mt-6">Cơ năng của con lắc lò xo là:</p>
+            <div class="text-center my-4 space-y-2 text-lg">
+                <p>\( W=W_{đ}+W_{t}=\frac{1}{2}mv^{2}+\frac{1}{2}kx^{2} \)</p>
+                <p>\( W=\frac{1}{2}m\omega^{2}A^{2}\sin^{2}(\omega t+\varphi)+\frac{1}{2}m\omega^{2}A^{2}\cos^{2}(\omega t+\varphi) \)</p>
+                <p>\( =\frac{1}{2}m\omega^{2}A^{2}[\sin^{2}(\omega t+\varphi)+\cos^{2}(\omega t+\varphi)] \)</p>
+            </div>
+            <div class="flex justify-between items-center my-4 font-bold text-lg bg-gray-50 p-4 rounded border border-gray-200">
+                <span class="mx-auto">\( =\frac{1}{2}m\omega^{2}A^{2}=\text{hằng số}. \)</span>
+                <span>(5.6)</span>
+            </div>
+
+            <!-- Thực hành box -->
+            <div class="bg-[#edf2f7] border-l-4 border-yellow-500 p-5 rounded-r-md my-6">
+                <div class="flex items-center mb-3 text-yellow-700 font-bold text-lg">
+                    <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 11.5V14m0-2.5v-6a1.5 1.5 0 113 0m-3 6a1.5 1.5 0 00-3 0v2a7.5 7.5 0 0015 0v-5a1.5 1.5 0 00-3 0m-6-3V11m0-5.5v-1a1.5 1.5 0 013 0v1m0 0V11m0-5.5a1.5 1.5 0 013 0v3m0 0V11"></path></svg>
+                    Hoạt động Thực hành
+                </div>
+                <p class="mb-3">Một con lắc lò xo có độ cứng k và vật nặng có khối lượng m.</p>
+                <p class="mb-1">1. Tính chu kì T.</p>
+                <p class="mb-3">2. Đo chu kì T bằng đồng hồ. So sánh hai kết quả thu được với kết quả tính ở Câu 1.</p>
+                <button onclick="toggleAnswer('ans_th1')" class="bg-primary text-white px-5 py-2 rounded font-medium hover:bg-gray-800 transition shadow-sm">Xem hướng giải quyết</button>
+                <div id="ans_th1" class="hidden mt-4 bg-green-100 border-l-4 border-green-500 p-4 rounded text-green-900">
+                    <p><strong>Hướng dẫn:</strong></p>
+                    <ul class="list-disc ml-5 space-y-1">
+                        <li><strong>Bước 1:</strong> Dùng công thức \( T=2\pi\sqrt{\frac{m}{k}} \) để tính chu kì lí thuyết (với m đo bằng cân, k đo bằng lực kế hoặc phương pháp tĩnh).</li>
+                        <li><strong>Bước 2:</strong> Kích thích cho con lắc dao động. Dùng đồng hồ bấm giây đo thời gian t của N dao động toàn phần (ví dụ N=10). Suy ra chu kì đo được \( T_{đo} = t/N \).</li>
+                        <li><strong>Bước 3:</strong> So sánh 2 kết quả. Thường có sai số nhỏ do ma sát, khối lượng lò xo và sai số thiết bị đo.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <hr class="my-6 border-gray-300">
+
+            <h3 class="text-lg font-bold text-gray-800 mb-2 mt-4">2. Con lắc đơn</h3>
+            <p class="mb-4">Vị trí của con lắc đơn được xác định bằng li độ dài s hay li độ góc \( \alpha \) (Hình 5.6).</p>
+            
+            <div class="w-full max-w-xs mx-auto h-64 bg-gray-100 border border-gray-300 flex items-center justify-center text-gray-500 mb-4 rounded">
+		<img src="h6.png" class="max-h-full max-w-full object-contain"></img>
+            </div>
+
+            <p class="mb-4">Thế năng của con lắc đơn là thế năng trọng trường. Chọn mốc thế năng ở vị trí cân bằng thì thế năng của con lắc ở li độ góc \( \alpha \) là :</p>
+            <div class="text-center my-4 text-lg font-bold">
+                \( W_{t}=mgl(1-\cos\alpha) \)
+            </div>
+            
+            <p class="mb-2">Ta có: \( (1-\cos\alpha)=2\sin^{2}\frac{\alpha}{2} \)</p>
+            <p class="mb-4">Với \( \alpha \) nhỏ: \( \sin\frac{\alpha}{2}\approx\frac{\alpha}{2} \) (\( \alpha \) tính theo rad)</p>
+            <p class="mb-4">Khi đó \( W_{t}=mgl\frac{\alpha^{2}}{2} \) , với \( \alpha=\frac{s}{l} \)</p>
+            
+            <div class="flex justify-between items-center my-4 font-bold text-lg bg-gray-50 p-4 rounded border border-gray-200">
+                <span class="mx-auto">\( \text{Suy ra: } W_{t}=mgl\frac{s^{2}}{2l^{2}}=\frac{1}{2}m\frac{g}{l}s^{2} \)</span>
+                <span>(5.7)</span>
+            </div>
+
+            <p class="mb-4">Tại vị trí biên, li độ dài s của con lắc cực đại bằng A. Khi đó, động năng của con lắc bằng 0, do đó thế năng của con lắc bằng cơ năng.</p>
+            
+            <div class="flex justify-between items-center my-4 font-bold text-lg bg-gray-50 p-4 rounded border border-gray-200">
+                <span class="mx-auto">\( \text{So sánh biểu thức (5.8) và (5.3), ta suy ra } \omega=\sqrt{\frac{g}{l}}. \)</span>
+                <span>(5.8)</span>
+            </div>
+
+            <p class="mb-4">Biểu thức (5.8) được viết: \( W_{t}=\frac{1}{2}m\omega^{2}A^{2}\cos^{2}(\omega t+\varphi) \)</p>
+            <p class="mb-4">Động năng của con lắc ở li độ góc \( \alpha \) là động năng của vật m:</p>
+            <div class="flex justify-between items-center my-4 font-bold text-lg bg-gray-50 p-4 rounded border border-gray-200">
+                <span class="mx-auto">\( W_{đ}=\frac{1}{2}mv^{2}=\frac{1}{2}m\omega^{2}A^{2}\sin^{2}(\omega t+\varphi) \)</span>
+                <span>(5.9)</span>
+            </div>
+            <p class="mb-4">Tương tự với con lắc lò xo ta có: \( W=\frac{1}{2}m\omega^{2}A^{2}=\text{hằng số}. \)</p>
+
+            <!-- Thí nghiệm con lắc đơn -->
+            <div class="bg-[#edf2f7] border-l-4 border-yellow-500 p-5 rounded-r-md my-6">
+                <div class="flex items-center mb-3 text-yellow-700 font-bold text-lg">
+                    <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 11.5V14m0-2.5v-6a1.5 1.5 0 113 0m-3 6a1.5 1.5 0 00-3 0v2a7.5 7.5 0 0015 0v-5a1.5 1.5 0 00-3 0m-6-3V11m0-5.5v-1a1.5 1.5 0 013 0v1m0 0V11m0-5.5a1.5 1.5 0 013 0v3m0 0V11"></path></svg>
+                    Hoạt động
+                </div>
+                <p class="mb-3">Làm thí nghiệm để xác nhận rằng khi góc lệch \( \alpha_{0}\le10^{\circ} \) thì chu kì của con lắc đơn gần như không phụ thuộc vào biên độ dao động.</p>
+                <button onclick="toggleAnswer('ans_hd3')" class="bg-primary text-white px-5 py-2 rounded font-medium hover:bg-gray-800 transition shadow-sm">Xem hướng giải quyết</button>
+                <div id="ans_hd3" class="hidden mt-4 bg-green-100 border-l-4 border-green-500 p-4 rounded text-green-900">
+                    <p><strong>Hướng dẫn:</strong></p>
+                    <p>Chuẩn bị một con lắc đơn chiều dài \( l \) cố định. Lần lượt kéo vật ra các góc nhỏ khác nhau (ví dụ 3 độ, 6 độ, 9 độ) rồi buông nhẹ. Dùng đồng hồ đo thời gian của 10 dao động cho mỗi lần. Tính chu kì T. Kết quả thu được sẽ thấy T gần như bằng nhau trong cả 3 trường hợp, chứng minh khi \( \alpha_0 \le 10^{\circ} \) chu kì không phụ thuộc biên độ.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- BÀI TẬP VẬN DỤNG TỪ PDF -->
+        <div class="bg-white rounded-12px p-6 shadow-md border-t-8 border-primary">
+            <h2 class="text-xl font-bold text-gray-800 uppercase mb-6 flex items-center">
+                <svg class="w-6 h-6 mr-2 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                Câu Hỏi / Bài Tập
+            </h2>
+
+            <!-- Bài 1 -->
+            <div class="bg-[#edf2f7] border-l-4 border-blue-800 p-5 rounded-r-md mb-6">
+                <p class="font-bold mb-3">1. Một con lắc lò xo có vật nặng khối lượng 0,4 kg, dao động điều hoà. Đồ thị vận tốc v theo thời gian t như Hình 5.7.</p>
+                <div class="w-full max-w-lg mx-auto h-48 bg-white border border-gray-300 flex items-center justify-center text-gray-500 mb-4 rounded">
+                    <img src="h7.png" class="max-h-full max-w-full object-contain"></img>
+                </div>
+                <p class="mb-2">Tính:</p>
+                <p class="mb-1 pl-4">a) Vận tốc cực đại của vật;</p>
+                <p class="mb-1 pl-4">b) Động năng cực đại của vật;</p>
+                <p class="mb-1 pl-4">c) Thế năng cực đại của con lắc;</p>
+                <p class="mb-3 pl-4">d) Độ cứng k của lò xo.</p>
+                <button onclick="toggleAnswer('ans_bt1')" class="bg-primary text-white px-5 py-2 rounded font-medium hover:bg-gray-800 transition shadow-sm">Xem lời giải</button>
+                <div id="ans_bt1" class="hidden mt-4 bg-green-100 border-l-4 border-green-500 p-4 rounded text-green-900 space-y-2">
+                    <p><strong>Lời giải:</strong> (Dựa trên dữ kiện đọc từ đồ thị Hình 5.7 trong sách)</p>
+                    <p>a) Từ đồ thị, vận tốc cực đại \( v_{max} = 0,3 \text{ cm/s} = 0,003 \text{ m/s} \) (hoặc 0,3 m/s tùy đơn vị trục tung, giả sử trục tung ghi cm/s).</p>
+                    <p>b) Động năng cực đại: \( W_{đmax} = \frac{1}{2}m v_{max}^2 = \frac{1}{2} \cdot 0,4 \cdot (0,003)^2 = 1,8 \cdot 10^{-6} \text{ J} \).</p>
+                    <p>c) Thế năng cực đại = Cơ năng = Động năng cực đại \( \Rightarrow W_{tmax} = 1,8 \cdot 10^{-6} \text{ J} \).</p>
+                    <p>d) Từ đồ thị, chu kì \( T = 1,2 \text{ s} \). Ta có \( T = 2\pi\sqrt{\frac{m}{k}} \Rightarrow k = \frac{4\pi^2 m}{T^2} \approx \frac{4 \cdot 10 \cdot 0,4}{1,2^2} \approx 11,1 \text{ N/m} \).</p>
+                </div>
+            </div>
+
+            <!-- Bài 2 -->
+            <div class="bg-[#edf2f7] border-l-4 border-blue-800 p-5 rounded-r-md">
+                <p class="font-bold mb-3">2. Một con lắc lò xo gồm lò xo có độ cứng \( k=100\text{ N/m} \), vật nặng có khối lượng \( m=200\text{ g} \), dao động điều hoà với biên độ \( A=5\text{ cm} \).</p>
+                <p class="mb-1 pl-4">a) Xác định li độ của vật tại thời điểm động năng của vật bằng 3 lần thế năng của con lắc.</p>
+                <p class="mb-1 pl-4">b) Xác định tốc độ của vật khi vật qua vị trí cân bằng.</p>
+                <p class="mb-3 pl-4">c) Xác định thế năng của con lắc khi vật có li độ \( x=-2,5\text{ cm} \).</p>
+                <button onclick="toggleAnswer('ans_bt2')" class="bg-primary text-white px-5 py-2 rounded font-medium hover:bg-gray-800 transition shadow-sm">Xem lời giải</button>
+                <div id="ans_bt2" class="hidden mt-4 bg-green-100 border-l-4 border-green-500 p-4 rounded text-green-900 space-y-2">
+                    <p><strong>Lời giải:</strong> Đổi \( m = 0,2 \text{ kg}, A = 0,05 \text{ m} \).</p>
+                    <p>a) Ta có \( W = W_đ + W_t \). Vì \( W_đ = 3W_t \Rightarrow W = 4W_t \Rightarrow \frac{1}{2}kA^2 = 4 \cdot \frac{1}{2}kx^2 \Rightarrow x^2 = \frac{A^2}{4} \Rightarrow x = \pm\frac{A}{2} = \pm 2,5 \text{ cm} \).</p>
+                    <p>b) Tại VTCB (\( x=0 \)), tốc độ đạt cực đại \( v_{max} = \omega A \).<br>
+                    Tần số góc \( \omega = \sqrt{\frac{k}{m}} = \sqrt{\frac{100}{0,2}} = \sqrt{500} = 10\sqrt{5} \text{ rad/s} \).<br>
+                    \( \Rightarrow v_{max} = 10\sqrt{5} \cdot 5 = 50\sqrt{5} \text{ cm/s} \approx 111,8 \text{ cm/s} \).</p>
+                    <p>c) Thế năng tại \( x = -2,5 \text{ cm} = -0,025 \text{ m} \):<br>
+                    \( W_t = \frac{1}{2}kx^2 = \frac{1}{2} \cdot 100 \cdot (-0,025)^2 = 0,03125 \text{ J} \).</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- EM ĐÃ HỌC & EM CÓ THỂ -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="bg-yellow-50 border-t-4 border-yellow-500 rounded p-6 shadow-md">
+                <h3 class="text-lg font-bold text-yellow-800 mb-4 uppercase">Em Đã Học</h3>
+                <p class="mb-2">Một vật có khối lượng m dao động điều hoà với tần số góc \( \omega \) và biên độ A. Tại li độ x:</p>
+                <ul class="list-disc ml-5 space-y-2 text-gray-700">
+                    <li>Động năng của vật là: \( W_{đ}=\frac{1}{2}mv^{2} \)</li>
+                    <li>Thế năng của con lắc là: \( W_{t}=\frac{1}{2}m\omega^{2}x^{2} \)</li>
+                    <li>Cơ năng của con lắc là: \( W=\frac{1}{2}mv^{2}+\frac{1}{2}m\omega^{2}x^{2}=\frac{1}{2}m\omega^{2}A^{2}=\text{hằng số} \)</li>
+                </ul>
+            </div>
+
+            <div class="bg-purple-50 border-t-4 border-purple-500 rounded p-6 shadow-md">
+                <h3 class="text-lg font-bold text-purple-800 mb-4 uppercase">Em Có Thể</h3>
+                <p class="text-gray-700 leading-relaxed">Phân tích sự chuyển hoá giữa động năng và thế năng trong dao động điều hoà ở một số ví dụ trong đời sống.</p>
+                <p class="mt-4 italic text-sm text-gray-500">(Gợi ý: Trò chơi xích đu, nhíp xe ô tô, đồng hồ quả lắc...)</p>
+            </div>
+        </div>
+
+        <!-- ========================================================================= -->
+        <!-- PHẦN MỞ RỘNG: BÀI TẬP CỦNG CỐ -->
+        <!-- ========================================================================= -->
+        
+        <div class="bg-white rounded-12px p-6 shadow-md mt-10 border-t-8 border-green-600">
+            <h2 class="text-2xl font-bold text-center text-[#454545] mb-6">BÀI TẬP CỦNG CỐ VÀ VẬN DỤNG</h2>
+
+            <!-- TRẮC NGHIỆM -->
+            <div class="mb-8">
+                <h3 class="text-lg font-bold text-white bg-green-600 inline-block px-4 py-2 rounded-t-md mb-4 uppercase">A. Trắc nghiệm nhanh (5 Câu)</h3>
+                <div class="space-y-6">
+                    <!-- Q1 -->
+                    <div class="border-b pb-4">
+                        <p class="font-bold mb-2">Câu 1: Trong dao động điều hoà của con lắc lò xo, nếu bỏ qua ma sát thì đại lượng nào sau đây được bảo toàn?</p>
+                        <div class="space-y-1 ml-4">
+                            <label class="block"><input type="radio" name="q1" value="A" class="mr-2">A. Động năng</label>
+                            <label class="block"><input type="radio" name="q1" value="B" class="mr-2">B. Thế năng</label>
+                            <label class="block"><input type="radio" name="q1" value="C" class="mr-2">C. Cơ năng</label>
+                            <label class="block"><input type="radio" name="q1" value="D" class="mr-2">D. Vận tốc</label>
+                        </div>
+                    </div>
+                    <!-- Q2 -->
+                    <div class="border-b pb-4">
+                        <p class="font-bold mb-2">Câu 2: Công thức tính thế năng của con lắc lò xo ở li độ \( x \) là:</p>
+                        <div class="space-y-1 ml-4">
+                            <label class="block"><input type="radio" name="q2" value="A" class="mr-2">A. \( W_t = \frac{1}{2}kx \)</label>
+                            <label class="block"><input type="radio" name="q2" value="B" class="mr-2">B. \( W_t = \frac{1}{2}kx^2 \)</label>
+                            <label class="block"><input type="radio" name="q2" value="C" class="mr-2">C. \( W_t = kx^2 \)</label>
+                            <label class="block"><input type="radio" name="q2" value="D" class="mr-2">D. \( W_t = \frac{1}{2}mv^2 \)</label>
+                        </div>
+                    </div>
+                    <!-- Q3 -->
+                    <div class="border-b pb-4">
+                        <p class="font-bold mb-2">Câu 3: Khi vật dao động điều hoà đi qua vị trí cân bằng thì:</p>
+                        <div class="space-y-1 ml-4">
+                            <label class="block"><input type="radio" name="q3" value="A" class="mr-2">A. Động năng đạt cực đại.</label>
+                            <label class="block"><input type="radio" name="q3" value="B" class="mr-2">B. Thế năng đạt cực đại.</label>
+                            <label class="block"><input type="radio" name="q3" value="C" class="mr-2">C. Cơ năng bằng 0.</label>
+                            <label class="block"><input type="radio" name="q3" value="D" class="mr-2">D. Động năng bằng 0.</label>
+                        </div>
+                    </div>
+                    <!-- Q4 -->
+                    <div class="border-b pb-4">
+                        <p class="font-bold mb-2">Câu 4: Tần số góc của con lắc đơn chiều dài \( l \), dao động tại nơi có gia tốc trọng trường \( g \) là:</p>
+                        <div class="space-y-1 ml-4">
+                            <label class="block"><input type="radio" name="q4" value="A" class="mr-2">A. \( \omega = 2\pi\sqrt{\frac{g}{l}} \)</label>
+                            <label class="block"><input type="radio" name="q4" value="B" class="mr-2">B. \( \omega = \sqrt{\frac{l}{g}} \)</label>
+                            <label class="block"><input type="radio" name="q4" value="C" class="mr-2">C. \( \omega = \sqrt{\frac{g}{l}} \)</label>
+                            <label class="block"><input type="radio" name="q4" value="D" class="mr-2">D. \( \omega = 2\pi\sqrt{\frac{l}{g}} \)</label>
+                        </div>
+                    </div>
+                    <!-- Q5 -->
+                    <div class="border-b pb-4">
+                        <p class="font-bold mb-2">Câu 5: Tại vị trí li độ \( x = \frac{A}{\sqrt{2}} \), tỉ số giữa động năng và thế năng (\( W_đ / W_t \)) là bao nhiêu?</p>
+                        <div class="space-y-1 ml-4">
+                            <label class="block"><input type="radio" name="q5" value="A" class="mr-2">A. 2</label>
+                            <label class="block"><input type="radio" name="q5" value="B" class="mr-2">B. 1</label>
+                            <label class="block"><input type="radio" name="q5" value="C" class="mr-2">C. 3</label>
+                            <label class="block"><input type="radio" name="q5" value="D" class="mr-2">D. 1/2</label>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-6 text-center">
+                    <button onclick="checkQuiz()" class="bg-primary text-white px-8 py-3 rounded-full font-bold text-lg hover:bg-gray-800 transition shadow-md">NỘP BÀI TRẮC NGHIỆM</button>
+                    <p id="quiz-result" class="mt-4 font-bold text-xl"></p>
+                </div>
+            </div>
+
+            <!-- TỰ LUẬN TÍNH TOÁN -->
+            <div>
+                <h3 class="text-lg font-bold text-white bg-blue-600 inline-block px-4 py-2 rounded-t-md mb-4 uppercase">B. Bài tập tính toán (3 Câu)</h3>
+                
+                <!-- BT 1 -->
+                <div class="bg-gray-50 border border-gray-200 p-4 rounded mb-4">
+                    <p class="font-bold">Bài 1:</p>
+                    <p>Một con lắc lò xo có độ cứng \( k = 40 \text{ N/m} \) dao động điều hoà với biên độ \( A = 4 \text{ cm} \). Tính cơ năng của con lắc.</p>
+                    <button onclick="toggleAnswer('ans_calc1')" class="mt-3 bg-gray-600 text-white px-4 py-1.5 text-sm rounded hover:bg-gray-700 transition">Xem lời giải chi tiết</button>
+                    <div id="ans_calc1" class="hidden mt-3 bg-white border-l-4 border-blue-500 p-3 text-gray-800 shadow-sm">
+                        <p>Đổi: \( A = 4 \text{ cm} = 0,04 \text{ m} \).</p>
+                        <p>Cơ năng của con lắc: \( W = \frac{1}{2}kA^2 = \frac{1}{2} \cdot 40 \cdot (0,04)^2 = 0,032 \text{ J} \).</p>
+                    </div>
+                </div>
+
+                <!-- BT 2 -->
+                <div class="bg-gray-50 border border-gray-200 p-4 rounded mb-4">
+                    <p class="font-bold">Bài 2:</p>
+                    <p>Con lắc lò xo dao động với biên độ A. Tại vị trí nào (tính theo A) thì động năng bằng thế năng?</p>
+                    <button onclick="toggleAnswer('ans_calc2')" class="mt-3 bg-gray-600 text-white px-4 py-1.5 text-sm rounded hover:bg-gray-700 transition">Xem lời giải chi tiết</button>
+                    <div id="ans_calc2" class="hidden mt-3 bg-white border-l-4 border-blue-500 p-3 text-gray-800 shadow-sm">
+                        <p>Theo đề: \( W_đ = W_t \).</p>
+                        <p>Mà cơ năng \( W = W_đ + W_t \Rightarrow W = 2W_t \).</p>
+                        <p>\( \Leftrightarrow \frac{1}{2}kA^2 = 2 \cdot \frac{1}{2}kx^2 \Rightarrow A^2 = 2x^2 \)</p>
+                        <p>\( \Rightarrow x = \pm\frac{A}{\sqrt{2}} \) (hay \( \pm\frac{A\sqrt{2}}{2} \)).</p>
+                    </div>
+                </div>
+
+                <!-- BT 3 -->
+                <div class="bg-gray-50 border border-gray-200 p-4 rounded mb-4">
+                    <p class="font-bold">Bài 3:</p>
+                    <p>Một con lắc đơn có chiều dài \( l = 1 \text{ m} \) dao động tại nơi có \( g = 10 \text{ m/s}^2 \) với biên độ góc \( \alpha_0 = 0,1 \text{ rad} \). Tính tốc độ cực đại của vật nhỏ.</p>
+                    <button onclick="toggleAnswer('ans_calc3')" class="mt-3 bg-gray-600 text-white px-4 py-1.5 text-sm rounded hover:bg-gray-700 transition">Xem lời giải chi tiết</button>
+                    <div id="ans_calc3" class="hidden mt-3 bg-white border-l-4 border-blue-500 p-3 text-gray-800 shadow-sm">
+                        <p>Tần số góc: \( \omega = \sqrt{\frac{g}{l}} = \sqrt{\frac{10}{1}} = \sqrt{10} \text{ rad/s} \).</p>
+                        <p>Biên độ dài: \( S_0 = l \cdot \alpha_0 = 1 \cdot 0,1 = 0,1 \text{ m} \).</p>
+                        <p>Tốc độ cực đại đạt được khi qua VTCB: \( v_{max} = \omega S_0 = \sqrt{10} \cdot 0,1 \approx 0,316 \text{ m/s} \).</p>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+
+    <!-- JavaScript Functions -->
+    <script>
+        // Toggle Answer Function
+        function toggleAnswer(id) {
+            const el = document.getElementById(id);
+            if (el.classList.contains('hidden')) {
+                el.classList.remove('hidden');
+            } else {
+                el.classList.add('hidden');
+            }
+        }
+
+        // Quiz Evaluation Function
+        function checkQuiz() {
+            const answers = {
+                q1: 'C',
+                q2: 'B',
+                q3: 'A',
+                q4: 'C',
+                q5: 'B'  // x = A/√2 -> Wt = W/2 -> Wđ = W/2 -> Wđ/Wt = 1
+            };
+            
+            let score = 0;
+            let total = 5;
+
+            for (let q in answers) {
+                const options = document.getElementsByName(q);
+                let answered = false;
+                for (let opt of options) {
+                    if (opt.checked) {
+                        answered = true;
+                        if (opt.value === answers[q]) {
+                            score++;
+                        }
+                    }
+                }
+            }
+
+            const resultEl = document.getElementById('quiz-result');
+            if (score === total) {
+                resultEl.innerHTML = `Tuyệt vời! Bạn đã trả lời đúng ${score}/${total} câu. 🎉`;
+                resultEl.className = "mt-4 font-bold text-xl text-green-600";
+            } else {
+                resultEl.innerHTML = `Bạn trả lời đúng ${score}/${total} câu. Hãy ôn lại bài và thử lại nhé!`;
+                resultEl.className = "mt-4 font-bold text-xl text-red-600";
+            }
+        }
+    </script>
+</body>
+</html>
