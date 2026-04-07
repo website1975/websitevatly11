@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bài 3: Vận tốc, Gia tốc trong Dao động điều hòa</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <style>
+        /* Tùy chỉnh bo góc chính xác 12px theo yêu cầu */
+        .rounded-12px {
+            border-radius: 12px;
+        }
+        /* Style cho bảng */
+        table, th, td {
+            border: 1px solid #cbd5e0;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 12px;
+            text-align: center;
+        }
+        th {
+            background-color: #e2e8f0;
+        }
+    </style>
+</head>
+<body class="bg-[#f4f7f9] text-gray-800 font-sans p-4 md:p-8">
+
+    <div class="max-w-5xl mx-auto space-y-6">
+
+        <div class="bg-[#454545] text-white p-6 rounded-12px shadow-md text-center">
+            <h2 class="text-lg font-semibold tracking-wider">CHƯƠNG 1 - DAO ĐỘNG ĐIỀU HOÀ</h2><hr>
+            <h1 class="text-3xl font-bold uppercase mt-2">BÀI 3: VẬN TỐC, GIA TỐC TRONG DAO ĐỘNG ĐIỀU HOÀ</h1>
+        </div>
+
+        <div class="border border-black bg-white italic p-4 rounded-12px shadow-md">
+            Ta có thể dựa vào đồ thị \( (x-t) \) của dao động điều hoà để xác định vận tốc và gia tốc của vật được không?
+        </div>
+
+        <div class="bg-white rounded-12px shadow-md p-6">
+            <h2 class="text-2xl font-bold uppercase border-b-4 border-[#1a202c] mb-4 pb-2 text-[#454545]">I. VẬN TỐC CỦA VẬT DAO ĐỘNG ĐIỀU HOÀ</h2>
+            
+            <p class="mb-4">Như đã biết, vận tốc tức thời của một vật được xác định bằng công thức: \( v = \frac{\Delta x}{\Delta t} \) (với \(\Delta t\) rất nhỏ), tức là bằng độ dốc của đồ thị \( (x-t) \) tại điểm đang xét.</p>
+            <p class="mb-4">Để đơn giản, ta hãy xét một vật dao động điều hoà có đồ thị \( (x-t) \) được chỉ trên Hình 3.1. Ta nhận thấy độ dốc của đồ thị, tức vận tốc của vật, có giá trị cực đại khi ở vị trí cân bằng rồi giảm dần đến 0 khi vật ra đến vị trí biên. Sau đó độ dốc của đồ thị lại tăng dần đến giá trị cực đại khi vật về đến vị trí cân bằng.</p>
+
+            <div class="w-full h-64 bg-gray-200 flex items-center justify-center border-dashed border-2 border-gray-400 rounded-12px mb-4 text-gray-500 font-medium">
+                <img src="h1.png" class="max-h-full max-w-full object-contain"></img>
+            </div>
+
+            <h3 class="text-xl font-bold mt-6 mb-3">1. Phương trình của vận tốc</h3>
+            <p class="mb-2">Khi học phép tính đạo hàm chúng ta sẽ biết \( v = \frac{\Delta x}{\Delta t} \) (với \(\Delta t\) rất nhỏ) chính là đạo hàm của li độ \( x \) theo thời gian, kí hiệu là \( x' \).</p>
+            <p class="mb-2 text-center text-lg font-semibold bg-gray-50 py-2 rounded">
+                \( x = A \cos(\omega t + \varphi) \) <br><br>
+                \( v = x' = -\omega A \sin(\omega t + \varphi) \) (3.1)
+            </p>
+            <p class="mb-2 mt-4">Công thức (3.1) là phương trình của vận tốc, có thể biến đổi như sau:</p>
+            <p class="mb-2 text-center font-semibold">\( v = \pm \omega \sqrt{A^2 - x^2} \) (3.2)</p>
+            <ul class="list-disc ml-6 mb-4 font-medium">
+                <li>Khi vật ở vị trí cân bằng thì \( v = \pm \omega A \)</li>
+                <li>Khi vật ở vị trí biên thì \( v = 0 \).</li>
+            </ul>
+
+            <h3 class="text-xl font-bold mt-6 mb-3">2. Đồ thị của vận tốc</h3>
+            <p class="mb-4">Hình 3.2 là đồ thị của vận tốc của một dao động điều hoà với \( \varphi=0 \). Nó cũng là một đường hình sin.</p>
+            
+            <div class="w-full h-64 bg-gray-200 flex items-center justify-center border-dashed border-2 border-gray-400 rounded-12px mb-4 text-gray-500 font-medium">
+                <img src="h2.png" class="max-h-full max-w-full object-contain"></img>
+            </div>
+
+            <div class="bg-[#edf2f7] border-l-4 border-blue-800 p-4 rounded-r-xl mb-4">
+                <div class="font-bold flex items-center mb-2">
+                    <span class="mr-2">✋</span> HOẠT ĐỘNG
+                </div>
+                <p>Đặt một thước kẻ (loại 20 cm) cho mép của thước tiếp xúc với đồ thị li độ - thời gian (Hình 3.1) ở một số điểm C, D, E, G, H. Từ độ dốc của thước hãy so sánh độ lớn vận tốc của vật tại các điểm C, E, H.</p>
+                <button onclick="toggleAnswer('act1')" class="bg-[#454545] text-white px-4 py-2 rounded mt-3 hover:bg-gray-700 transition">Xem hướng giải quyết</button>
+                <div id="act1" class="bg-green-100 hidden p-4 mt-3 rounded border border-green-300">
+                    <strong>Hướng dẫn:</strong><br>
+                    - Điểm C: Thước có độ dốc âm, độ lớn vận tốc vừa.<br>
+                    - Điểm E: Vị trí biên âm, đồ thị đi ngang, độ dốc bằng 0 \( \Rightarrow \) Vận tốc bằng 0.<br>
+                    - Điểm H: Vị trí biên dương, đồ thị đi ngang, độ dốc bằng 0 \( \Rightarrow \) Vận tốc bằng 0.<br>
+                    \( \Rightarrow \) Độ lớn vận tốc tại C lớn hơn tại E và H.
+                </div>
+            </div>
+
+            <div class="bg-[#edf2f7] border-l-4 border-blue-800 p-4 rounded-r-xl mb-4">
+                <div class="font-bold flex items-center text-xl mb-2 text-blue-900">?</div>
+                <p>1. So sánh đồ thị của vận tốc (Hình 3.2) với đồ thị của li độ (Hình 3.1), hãy cho biết vận tốc sớm pha hay trễ pha bao nhiêu so với li độ.</p>
+                <p>2. Trong các khoảng thời gian từ \( 0 \) đến \( \frac{T}{4} \), từ \( \frac{T}{4} \) đến \( \frac{T}{2} \), từ \( \frac{T}{2} \) đến \( \frac{3T}{4} \), từ \( \frac{3T}{4} \) đến \( T \), vận tốc của dao động điều hoà thay đổi như thế nào?</p>
+                <button onclick="toggleAnswer('q1')" class="bg-[#454545] text-white px-4 py-2 rounded mt-3 hover:bg-gray-700 transition">Xem lời giải</button>
+                <div id="q1" class="bg-green-100 hidden p-4 mt-3 rounded border border-green-300">
+                    <strong>Lời giải:</strong><br>
+                    1. Từ phương trình \( v = -\omega A \sin(\omega t + \varphi) = \omega A \cos(\omega t + \varphi + \frac{\pi}{2}) \). Ta thấy vận tốc <strong>sớm pha \( \frac{\pi}{2} \)</strong> so với li độ.<br>
+                    2. Sự thay đổi vận tốc:<br>
+                    - \( 0 \rightarrow \frac{T}{4} \): Vật đi từ VTCB ra biên dương, độ lớn vận tốc giảm từ cực đại về 0 (vận tốc mang dấu âm, giảm từ 0 đến \(-\omega A\)).<br>
+                    - \( \frac{T}{4} \rightarrow \frac{T}{2} \): Vật đi từ biên dương về VTCB, độ lớn vận tốc tăng từ 0 đến cực đại (vận tốc mang dấu âm, tăng từ \(-\omega A\) về 0).<br>
+                    - \( \frac{T}{2} \rightarrow \frac{3T}{4} \): Vật đi từ VTCB ra biên âm, độ lớn vận tốc giảm từ cực đại về 0 (vận tốc mang dấu dương, tăng từ 0 lên \(\omega A\)).<br>
+                    - \( \frac{3T}{4} \rightarrow T \): Vật đi từ biên âm về VTCB, độ lớn vận tốc tăng từ 0 đến cực đại (vận tốc mang dấu dương, giảm từ \(\omega A\) về 0).
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-12px shadow-md p-6">
+            <h2 class="text-2xl font-bold uppercase border-b-4 border-[#1a202c] mb-4 pb-2 text-[#454545]">II. GIA TỐC CỦA VẬT DAO ĐỘNG ĐIỀU HOÀ</h2>
+            
+            <p class="mb-4">Tương tự như vận tốc, gia tốc tức thời của một vật được xác định bằng công thức: \( a = \frac{\Delta v}{\Delta t} \) (với \(\Delta t\) rất nhỏ), tức là bằng độ dốc của đồ thị vận tốc tại điểm đang xét.</p>
+            <p class="mb-4">Ta nhận thấy độ dốc của đồ thị Hình 3.2, hay gia tốc của vật, có giá trị bằng 0 khi vật ở vị trí cân bằng, rồi tăng đến giá trị cực đại khi vật ở vị trí biên.</p>
+
+            <h3 class="text-xl font-bold mt-6 mb-3">1. Phương trình của gia tốc</h3>
+            <p class="mb-2">Như vậy, gia tốc tức thời của một vật là đạo hàm của vận tốc theo thời gian, kí hiệu là \( v' \).</p>
+            <p class="mb-2 text-center text-lg font-semibold bg-gray-50 py-2 rounded">
+                \( a = v' = -\omega^2 A \cos(\omega t + \varphi) \) (3.3)
+            </p>
+            <p class="mb-2 mt-4">Thay \( x = A \cos(\omega t + \varphi) \) vào (3.3) ta được:</p>
+            <p class="mb-2 text-center font-semibold text-lg text-red-600">\( a = -\omega^2 x \) (3.4)</p>
+            <ul class="list-disc ml-6 mb-4 font-medium">
+                <li>Khi vật ở vị trí cân bằng \( a = 0 \).</li>
+                <li>Khi vật ở vị trí biên gia tốc có giá trị cực đại \( a = \pm \omega^2 A \).</li>
+            </ul>
+
+            <h3 class="text-xl font-bold mt-6 mb-3">2. Đồ thị của gia tốc</h3>
+            <p class="mb-4">Hình 3.3 là đồ thị của gia tốc (với \( \varphi=0 \)), nó cũng là một đường hình sin như li độ và vận tốc.</p>
+            
+            <div class="w-full h-64 bg-gray-200 flex items-center justify-center border-dashed border-2 border-gray-400 rounded-12px mb-4 text-gray-500 font-medium">
+                <img src="h3.png" class="max-h-full max-w-full object-contain"></img>
+            </div>
+
+            <div class="bg-[#edf2f7] border-l-4 border-blue-800 p-4 rounded-r-xl mb-4">
+                <div class="font-bold flex items-center mb-2">
+                    <span class="mr-2">✋</span> HOẠT ĐỘNG
+                </div>
+                <p>1. Dùng thước kẻ (loại 20 cm) để xác định xem trên đồ thị \( (v-t) \) Hình 3.2, tại thời điểm nào độ dốc của đồ thị bằng 0 và tại thời điểm nào độ dốc của đồ thị cực đại. Từ đó, so sánh độ lớn của gia tốc trên đồ thị \( (a-t) \) Hình 3.3 ở các thời điểm tương ứng.</p>
+                <p>2. Phương trình dao động của một vật là \( x = 5\cos(4\pi t) \) (cm). Hãy viết phương trình vận tốc, gia tốc và vẽ đồ thị li độ, vận tốc, gia tốc theo thời gian của vật.</p>
+                <button onclick="toggleAnswer('act2')" class="bg-[#454545] text-white px-4 py-2 rounded mt-3 hover:bg-gray-700 transition">Xem hướng giải quyết</button>
+                <div id="act2" class="bg-green-100 hidden p-4 mt-3 rounded border border-green-300">
+                    <strong>Hướng dẫn:</strong><br>
+                    1. <br>
+                    - Độ dốc đồ thị \( (v-t) \) bằng 0 tại các đỉnh (vận tốc cực đại), tương ứng gia tốc \( a = 0 \) trên đồ thị \( (a-t) \).<br>
+                    - Độ dốc đồ thị \( (v-t) \) cực đại tại các điểm cắt trục hoành (vận tốc bằng 0), tương ứng độ lớn gia tốc đạt cực đại trên đồ thị \( (a-t) \).<br>
+                    2. <br>
+                    - Phương trình li độ: \( x = 5\cos(4\pi t) \) (cm)<br>
+                    - Phương trình vận tốc: \( v = x' = -20\pi \sin(4\pi t) \) (cm/s)<br>
+                    - Phương trình gia tốc: \( a = v' = -80\pi^2 \cos(4\pi t) \) (cm/s²)
+                </div>
+            </div>
+
+            <div class="bg-[#edf2f7] border-l-4 border-blue-800 p-4 rounded-r-xl mb-4">
+                <div class="font-bold flex items-center text-xl mb-2 text-blue-900">?</div>
+                <p>1. So sánh đồ thị Hình 3.3 và Hình 3.1 ta có nhận xét gì về pha của li độ và gia tốc của một dao động.</p>
+                <p>2. Trong các khoảng thời gian từ \( 0 \) đến \( \frac{T}{4} \), từ \( \frac{T}{4} \) đến \( \frac{T}{2} \), từ \( \frac{T}{2} \) đến \( \frac{3T}{4} \), từ \( \frac{3T}{4} \) đến \( T \), gia tốc của dao động thay đổi như thế nào?</p>
+                <button onclick="toggleAnswer('q2')" class="bg-[#454545] text-white px-4 py-2 rounded mt-3 hover:bg-gray-700 transition">Xem lời giải</button>
+                <div id="q2" class="bg-green-100 hidden p-4 mt-3 rounded border border-green-300">
+                    <strong>Lời giải:</strong><br>
+                    1. Từ \( a = -\omega^2 x \), ta thấy gia tốc <strong>ngược pha</strong> so với li độ (lệch pha \(\pi\)). Trên đồ thị, khi \( x \) cực đại dương thì \( a \) cực đại âm và ngược lại.<br>
+                    2. Sự thay đổi gia tốc:<br>
+                    - \( 0 \rightarrow \frac{T}{4} \): Vật đi từ biên dương về VTCB, độ lớn gia tốc giảm từ cực đại về 0.<br>
+                    - \( \frac{T}{4} \rightarrow \frac{T}{2} \): Vật đi từ VTCB ra biên âm, độ lớn gia tốc tăng từ 0 đến cực đại.<br>
+                    - \( \frac{T}{2} \rightarrow \frac{3T}{4} \): Vật đi từ biên âm về VTCB, độ lớn gia tốc giảm từ cực đại về 0.<br>
+                    - \( \frac{3T}{4} \rightarrow T \): Vật đi từ VTCB ra biên dương, độ lớn gia tốc tăng từ 0 đến cực đại.
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-12px shadow-md p-6">
+            <h2 class="text-2xl font-bold uppercase border-b-4 border-[#1a202c] mb-4 pb-2 text-[#454545]">CÂU HỎI & BÀI TẬP</h2>
+            
+            <div class="bg-[#edf2f7] border-l-4 border-blue-800 p-4 rounded-r-xl mb-4">
+                <div class="font-bold flex items-center text-xl mb-2 text-blue-900">?</div>
+                <p>1. Một vật dao động điều hoà trên trục Ox. Khi vật qua vị trí cân bằng thì tốc độ của nó là \( 20 \text{ cm/s} \). Khi vật có tốc độ là \( 10 \text{ cm/s} \) thì gia tốc của nó có độ lớn là \( 40\sqrt{3} \text{ cm/s}^2 \). Tính biên độ dao động của vật.</p>
+                
+                <p class="mt-4">2. Hình 3.4 là đồ thị li độ – thời gian của một vật dao động điều hoà. Sử dụng đồ thị để tính các đại lượng sau:<br>
+                a) Tốc độ của vật ở thời điểm \( t = 0 \text{ s} \).<br>
+                b) Tốc độ cực đại của vật.<br>
+                c) Gia tốc của vật tại thời điểm \( t = 1,0 \text{ s} \).</p>
+                
+                <div class="w-full h-64 bg-gray-200 flex items-center justify-center border-dashed border-2 border-gray-400 rounded-12px mb-4 mt-2 text-gray-500 font-medium">
+               <img src="h4.png" class="max-h-full max-w-full object-contain"></img>
+                </div>
+
+                <button onclick="toggleAnswer('q3')" class="bg-[#454545] text-white px-4 py-2 rounded mt-3 hover:bg-gray-700 transition">Xem lời giải chi tiết</button>
+                <div id="q3" class="bg-green-100 hidden p-4 mt-3 rounded border border-green-300">
+                    <strong>Lời giải:</strong><br>
+                    <strong>Bài 1:</strong><br>
+                    - Tốc độ cực đại: \( v_{max} = \omega A = 20 \) (1)<br>
+                    - Áp dụng hệ thức độc lập với thời gian cho \( v \) và \( a \):<br>
+                    \( \left(\frac{v}{\omega A}\right)^2 + \left(\frac{a}{\omega^2 A}\right)^2 = 1 \)<br>
+                    \( \Rightarrow \left(\frac{10}{20}\right)^2 + \left(\frac{40\sqrt{3}}{a_{max}}\right)^2 = 1 \)<br>
+                    \( \Rightarrow \frac{1}{4} + \frac{4800}{a_{max}^2} = 1 \Rightarrow \frac{4800}{a_{max}^2} = \frac{3}{4} \Rightarrow a_{max}^2 = 6400 \Rightarrow a_{max} = 80 \text{ cm/s}^2 \)<br>
+                    Ta có \( a_{max} = \omega^2 A = \omega(\omega A) \Rightarrow 80 = \omega.20 \Rightarrow \omega = 4 \text{ rad/s} \).<br>
+                    Từ (1) suy ra Biên độ: \( A = \frac{20}{4} = 5 \text{ cm} \).<br><br>
+                    
+                    <strong>Bài 2:</strong><br>
+                    Từ đồ thị Hình 3.4, ta xác định được: Biên độ \( A = 40 \text{ cm} \). Chu kì \( T = 4 \text{ s} \Rightarrow \omega = \frac{2\pi}{T} = \frac{\pi}{2} \text{ rad/s} \).<br>
+                    a) Tại \( t = 0 \text{ s} \), vật đang ở vị trí biên dương (\( x = 40 \text{ cm} \)), do đó tốc độ của vật \( v = 0 \).<br>
+                    b) Tốc độ cực đại: \( v_{max} = \omega A = \frac{\pi}{2} \times 40 = 20\pi \approx 62,8 \text{ cm/s} \).<br>
+                    c) Tại \( t = 1,0 \text{ s} \), vật đi qua vị trí cân bằng (\( x = 0 \)), do đó gia tốc của vật \( a = -\omega^2 x = 0 \).
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-yellow-50 border border-yellow-300 rounded-12px shadow-md p-6">
+            <h3 class="text-xl font-bold text-yellow-800 mb-3 uppercase">💡 Em Đã Học</h3>
+            <ul class="list-disc ml-6 space-y-2 text-gray-800">
+                <li>Phương trình của vận tốc và gia tốc của một vật dao động điều hoà có li độ là \( x = A\cos(\omega t + \varphi) \):
+                    <br>\( v = -\omega A \sin(\omega t + \varphi) \)
+                    <br>\( a = -\omega^2 A \cos(\omega t + \varphi) \)
+                </li>
+                <li>Đồ thị của vận tốc, gia tốc theo thời gian là đường hình sin. Vận tốc của vật dao động sớm pha \( \frac{\pi}{2} \) so với li độ, còn gia tốc của vật dao động ngược pha so với li độ.</li>
+                <li>Vectơ gia tốc luôn hướng về vị trí cân bằng và có độ lớn tỉ lệ với độ lớn của li độ.</li>
+                <li>Tại vị trí biên, vận tốc của vật bằng 0, còn gia tốc của vật có độ lớn cực đại. Tại vị trí cân bằng, gia tốc của vật bằng 0 còn vận tốc của vật có độ lớn cực đại.</li>
+            </ul>
+        </div>
+
+        <div class="bg-blue-50 border border-blue-300 rounded-12px shadow-md p-6">
+            <h3 class="text-xl font-bold text-blue-800 mb-3 uppercase">🌟 Em Có Thể</h3>
+            <p class="text-gray-800">Sử dụng được đồ thị mô tả dao động điều hoà thu được trên dao động kí có thể suy ra các đại lượng vận tốc, gia tốc của vật trong dao động điều hoà.</p>
+        </div>
+
+        <div class="bg-white rounded-12px shadow-md p-6 mt-8">
+            <h2 class="text-2xl font-bold uppercase border-b-4 border-[#1a202c] mb-4 pb-2 text-[#454545]">BÀI TẬP TRẮC NGHIỆM CỦNG CỐ</h2>
+            <form id="quizForm" class="space-y-6">
+                <div>
+                    <p class="font-bold mb-2">Câu 1: Khi một vật dao động điều hòa qua vị trí cân bằng thì:</p>
+                    <label class="block"><input type="radio" name="q1" value="A"> A. Vận tốc cực đại, gia tốc cực đại.</label>
+                    <label class="block"><input type="radio" name="q1" value="B"> B. Vận tốc bằng 0, gia tốc cực đại.</label>
+                    <label class="block"><input type="radio" name="q1" value="C"> C. Độ lớn vận tốc cực đại, gia tốc bằng 0.</label>
+                    <label class="block"><input type="radio" name="q1" value="D"> D. Vận tốc bằng 0, gia tốc bằng 0.</label>
+                </div>
+                <div>
+                    <p class="font-bold mb-2">Câu 2: Gia tốc của vật dao động điều hòa luôn luôn:</p>
+                    <label class="block"><input type="radio" name="q2" value="A"> A. Hướng về vị trí biên.</label>
+                    <label class="block"><input type="radio" name="q2" value="B"> B. Hướng về vị trí cân bằng và tỉ lệ với li độ.</label>
+                    <label class="block"><input type="radio" name="q2" value="C"> C. Cùng chiều với hướng chuyển động của vật.</label>
+                    <label class="block"><input type="radio" name="q2" value="D"> D. Có giá trị không đổi theo thời gian.</label>
+                </div>
+                <div>
+                    <p class="font-bold mb-2">Câu 3: Pha của vận tốc so với li độ trong dao động điều hòa là:</p>
+                    <label class="block"><input type="radio" name="q3" value="A"> A. Cùng pha.</label>
+                    <label class="block"><input type="radio" name="q3" value="B"> B. Ngược pha.</label>
+                    <label class="block"><input type="radio" name="q3" value="C"> C. Sớm pha \( \frac{\pi}{2} \).</label>
+                    <label class="block"><input type="radio" name="q3" value="D"> D. Trễ pha \( \frac{\pi}{2} \).</label>
+                </div>
+                <div>
+                    <p class="font-bold mb-2">Câu 4: Công thức tính gia tốc cực đại của vật dao động điều hòa là:</p>
+                    <label class="block"><input type="radio" name="q4" value="A"> A. \( a_{max} = \omega A \)</label>
+                    <label class="block"><input type="radio" name="q4" value="B"> B. \( a_{max} = \omega^2 A \)</label>
+                    <label class="block"><input type="radio" name="q4" value="C"> C. \( a_{max} = \omega A^2 \)</label>
+                    <label class="block"><input type="radio" name="q4" value="D"> D. \( a_{max} = \omega^2 x \)</label>
+                </div>
+                <div>
+                    <p class="font-bold mb-2">Câu 5: Công thức độc lập với thời gian liên hệ giữa li độ \( x \), biên độ \( A \) và vận tốc \( v \) là:</p>
+                    <label class="block"><input type="radio" name="q5" value="A"> A. \( A^2 = x^2 + \left(\frac{v}{\omega}\right)^2 \)</label>
+                    <label class="block"><input type="radio" name="q5" value="B"> B. \( A^2 = x^2 + (v\omega)^2 \)</label>
+                    <label class="block"><input type="radio" name="q5" value="C"> C. \( A = x + \frac{v}{\omega} \)</label>
+                    <label class="block"><input type="radio" name="q5" value="D"> D. \( A^2 = v^2 + \left(\frac{x}{\omega}\right)^2 \)</label>
+                </div>
+
+                <button type="button" onclick="checkQuiz()" class="bg-[#1a202c] text-white px-6 py-3 rounded-lg font-bold hover:bg-gray-800 transition w-full md:w-auto">NỘP BÀI</button>
+                <div id="quizResult" class="font-bold text-lg mt-4"></div>
+            </form>
+        </div>
+
+        <div class="bg-white rounded-12px shadow-md p-6 mt-8">
+            <h2 class="text-2xl font-bold uppercase border-b-4 border-[#1a202c] mb-4 pb-2 text-[#454545]">BÀI TẬP VẬN DỤNG</h2>
+            
+            <div class="mb-6">
+                <p class="font-bold">Bài 1: Một vật dao động điều hòa với phương trình \( x = 4\cos(10\pi t) \) (cm). Tính tốc độ cực đại và gia tốc cực đại của vật.</p>
+                <button onclick="toggleAnswer('vd1')" class="bg-[#454545] text-white px-4 py-2 rounded mt-2 hover:bg-gray-700 transition">Xem lời giải</button>
+                <div id="vd1" class="bg-green-100 hidden p-4 mt-2 rounded border border-green-300">
+                    <strong>Lời giải:</strong><br>
+                    Từ phương trình ta có: \( A = 4 \text{ cm} \), \( \omega = 10\pi \text{ rad/s} \).<br>
+                    - Tốc độ cực đại: \( v_{max} = \omega A = 10\pi \times 4 = 40\pi \text{ cm/s} \).<br>
+                    - Gia tốc cực đại: \( a_{max} = \omega^2 A = (10\pi)^2 \times 4 = 400\pi^2 \approx 3948 \text{ cm/s}^2 \).
+                </div>
+            </div>
+
+            <div class="mb-6">
+                <p class="font-bold">Bài 2: Tại vị trí cân bằng, tốc độ của vật là \( 31,4 \text{ cm/s} \). Khi ra đến biên, độ lớn gia tốc là \( 314 \text{ cm/s}^2 \). Tính biên độ dao động. Lấy \( \pi = 3,14 \).</p>
+                <button onclick="toggleAnswer('vd2')" class="bg-[#454545] text-white px-4 py-2 rounded mt-2 hover:bg-gray-700 transition">Xem lời giải</button>
+                <div id="vd2" class="bg-green-100 hidden p-4 mt-2 rounded border border-green-300">
+                    <strong>Lời giải:</strong><br>
+                    Tại VTCB: \( v_{max} = \omega A = 31,4 \text{ cm/s} = 10\pi \text{ cm/s} \) (1)<br>
+                    Tại biên: \( a_{max} = \omega^2 A = 314 \text{ cm/s}^2 = 100\pi \text{ cm/s}^2 \) (do \( \pi \approx 3,14 \)) (2)<br>
+                    Lấy (2) chia (1) ta được: \( \frac{\omega^2 A}{\omega A} = \frac{100\pi}{10\pi} \Rightarrow \omega = 10 \text{ rad/s} \).<br>
+                    Thay \(\omega\) vào (1): \( 10.A = 31,4 \Rightarrow A = 3,14 \text{ cm} \).
+                </div>
+            </div>
+
+            <div class="mb-6">
+                <p class="font-bold">Bài 3: Một vật dao động điều hoà có tần số góc \( \omega = 2\pi \text{ rad/s} \). Tại thời điểm vật có li độ \( x = 5 \text{ cm} \) thì tốc độ của vật là \( 10\pi\sqrt{3} \text{ cm/s} \). Tính biên độ dao động.</p>
+                <button onclick="toggleAnswer('vd3')" class="bg-[#454545] text-white px-4 py-2 rounded mt-2 hover:bg-gray-700 transition">Xem lời giải</button>
+                <div id="vd3" class="bg-green-100 hidden p-4 mt-2 rounded border border-green-300">
+                    <strong>Lời giải:</strong><br>
+                    Áp dụng hệ thức độc lập với thời gian:<br>
+                    \( A^2 = x^2 + \left(\frac{v}{\omega}\right)^2 \)<br>
+                    \( A^2 = 5^2 + \left(\frac{10\pi\sqrt{3}}{2\pi}\right)^2 \)<br>
+                    \( A^2 = 25 + (5\sqrt{3})^2 = 25 + 75 = 100 \)<br>
+                    \( \Rightarrow A = 10 \text{ cm} \).
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // Hàm Ẩn/Hiện đáp án
+        function toggleAnswer(id) {
+            const el = document.getElementById(id);
+            if (el.classList.contains('hidden')) {
+                el.classList.remove('hidden');
+            } else {
+                el.classList.add('hidden');
+            }
+        }
+
+        // Hàm kiểm tra Trắc nghiệm
+        function checkQuiz() {
+            const answers = {
+                q1: 'C',
+                q2: 'B',
+                q3: 'C',
+                q4: 'B',
+                q5: 'A'
+            };
+            
+            let score = 0;
+            const form = document.getElementById('quizForm');
+            
+            for (let [question, correctAnswer] of Object.entries(answers)) {
+                const selected = form.querySelector(`input[name="${question}"]:checked`);
+                if (selected && selected.value === correctAnswer) {
+                    score++;
+                }
+            }
+
+            const resultDiv = document.getElementById('quizResult');
+            resultDiv.innerText = `Kết quả: Bạn làm đúng ${score}/5 câu.`;
+            
+            if (score === 5) {
+                resultDiv.className = "font-bold text-xl mt-4 text-green-600";
+                resultDiv.innerText += " Xuất sắc!";
+            } else {
+                resultDiv.className = "font-bold text-xl mt-4 text-red-600";
+                resultDiv.innerText += " Hãy xem lại bài giảng để nắm vững hơn nhé!";
+            }
+        }
+    </script>
+</body>
+</html>
