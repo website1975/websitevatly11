@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from 'https://esm.sh/react@^19.2.3';
 import { Routes, Route, useNavigate, Navigate } from 'https://esm.sh/react-router-dom@^6.22.3';
-import { Book, Plus, Maximize2, Loader2, BrainCircuit, GraduationCap, ShieldCheck, Search, LogOut, Folder, Globe, Zap, Image as ImageIcon, Settings, ArrowLeft } from 'https://esm.sh/lucide-react@^0.562.0';
+import { Book, Plus, Maximize2, Loader2, BrainCircuit, GraduationCap, ShieldCheck, Search, LogOut, Folder, Globe, Zap, Image as ImageIcon, Settings, ArrowLeft, Upload } from 'https://esm.sh/lucide-react@^0.562.0';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { AppData, ResourceLink, BookNode, NodeType } from './types';
 import { INITIAL_DATA } from './constants';
@@ -311,6 +311,48 @@ const MainView: React.FC<{ isAdmin: boolean; data: AppData; updateData: (d: AppD
 
   const [showResModal, setShowResModal] = useState(false);
   const [resModalData, setResModalData] = useState<{id?: string, title: string, url: string, isGlobal: boolean}>({title: '', url: '', isGlobal: false});
+  const [isUploading, setIsUploading] = useState(false);
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, target: 'node' | 'resource') => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Limit 50MB
+    if (file.size > 50 * 1024 * 1024) {
+      alert("File quá lớn! Giới hạn 50MB.");
+      return;
+    }
+
+    setIsUploading(true);
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+      const filePath = `uploads/${fileName}`;
+
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('resources')
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('resources')
+        .getPublicUrl(filePath);
+
+      if (target === 'node') {
+        setNodeModalData({ ...nodeModalData, url: publicUrl });
+      } else {
+        setResModalData({ ...resModalData, url: publicUrl });
+      }
+      
+      alert("Tải file lên thành công!");
+    } catch (error) {
+      console.error("Upload error:", error);
+      alert("Lỗi khi tải file lên. Hãy đảm bảo bạn đã tạo bucket 'resources' ở chế độ Public trên Supabase.");
+    } finally {
+      setIsUploading(false);
+    }
+  };
   
   const [showHomeConfig, setShowHomeConfig] = useState(false);
   const [tempHomeUrl, setTempHomeUrl] = useState(data.homeUrl || '');
@@ -623,7 +665,13 @@ const MainView: React.FC<{ isAdmin: boolean; data: AppData; updateData: (d: AppD
             {nodeModalData.type === 'lesson' && (
               <>
                 <div className="space-y-1">
-                  <label className="text-[9px] font-bold text-slate-400 uppercase ml-1 tracking-widest">Link tài liệu (Iframe)</label>
+                  <label className="text-[9px] font-bold text-slate-400 uppercase ml-1 tracking-widest flex justify-between items-center">
+                    <span>Link tài liệu (Iframe)</span>
+                    <label className="cursor-pointer text-indigo-600 hover:text-indigo-800 flex items-center gap-1">
+                      <Upload size={10}/> {isUploading ? 'Đang tải...' : 'Tải file lên'}
+                      <input type="file" className="hidden" onChange={(e) => handleFileUpload(e, 'node')} disabled={isUploading}/>
+                    </label>
+                  </label>
                   <input value={nodeModalData.url} onChange={e=>setNodeModalData({...nodeModalData, url:e.target.value})} className={`w-full px-4 py-3 text-[11px] outline-none bg-slate-50 border border-slate-100 rounded-xl focus:border-${themeColor}-400 transition-all`} placeholder="https://..."/>
                 </div>
                 <div className="space-y-1">
@@ -650,7 +698,13 @@ const MainView: React.FC<{ isAdmin: boolean; data: AppData; updateData: (d: AppD
               <input autoFocus value={resModalData.title} onChange={e=>setResModalData({...resModalData, title:e.target.value})} className={`w-full px-4 py-3 text-sm font-medium outline-none bg-slate-50 border border-slate-100 rounded-xl focus:border-${themeColor}-400 transition-all`} placeholder="Ví dụ: Video thí nghiệm..."/>
             </div>
             <div className="space-y-1">
-              <label className="text-[9px] font-bold text-slate-400 uppercase ml-1 tracking-widest">Đường dẫn (URL)</label>
+              <label className="text-[9px] font-bold text-slate-400 uppercase ml-1 tracking-widest flex justify-between items-center">
+                <span>Đường dẫn (URL)</span>
+                <label className="cursor-pointer text-indigo-600 hover:text-indigo-800 flex items-center gap-1">
+                  <Upload size={10}/> {isUploading ? 'Đang tải...' : 'Tải file lên'}
+                  <input type="file" className="hidden" onChange={(e) => handleFileUpload(e, 'resource')} disabled={isUploading}/>
+                </label>
+              </label>
               <input value={resModalData.url} onChange={e=>setResModalData({...resModalData, url:e.target.value})} className={`w-full px-4 py-3 text-[11px] outline-none bg-slate-50 border border-slate-100 rounded-xl focus:border-${themeColor}-400 transition-all`} placeholder="https://drive.google.com/..."/>
             </div>
             <div className="flex gap-4 pt-2">
