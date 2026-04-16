@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bài 8: Mô Tả Sóng</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brandRed: '#EE0000',
+                        bgLight: '#f4f7f9',
+                        boxBorder: '#cbd5e0',
+                        thBg: '#e2e8f0',
+                        qBg: '#edf2f7',
+                        qBorder: '#1e3a8a',
+                        ansBg: '#d1fae5',
+                        ansBorder: '#34d399'
+                    },
+                    borderRadius: {
+                        '12px': '12px'
+                    },
+                    fontFamily: {
+                        sans: ['"Segoe UI"', 'Roboto', 'Helvetica', 'Arial', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- MathJax -->
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <style>
+        body {
+            background-color: #f4f7f9;
+        }
+        /* Custom styles for tables as requested */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+        }
+        th, td {
+            border: 1px solid #cbd5e0;
+            padding: 0.75rem;
+            text-align: center;
+        }
+        th {
+            background-color: #e2e8f0;
+            font-weight: 600;
+        }
+        .content-box {
+            background-color: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .section-header {
+            text-transform: uppercase;
+            font-weight: bold;
+            font-size: 1.25rem;
+            color: #1a202c;
+            border-bottom: 4px solid #1e3a8a;
+            padding-bottom: 0.5rem;
+            margin-bottom: 1rem;
+            margin-top: 1rem;
+        }
+    </style>
+</head>
+<body class="text-gray-800 leading-relaxed font-sans pb-10">
+
+    <div class="max-w-4xl mx-auto pt-8 px-4 sm:px-6">
+
+        <!-- HEADER -->
+        <div class="bg-brandRed text-white rounded-12px shadow-md p-6 mb-6 text-center">
+            <h2 class="text-lg font-semibold tracking-wide opacity-90">CHƯƠNG II - SÓNG</h2><hr>
+            <h1 class="text-3xl sm:text-4xl font-extrabold mt-2 uppercase">BÀI 8: MÔ TẢ SÓNG</h1>
+        </div>
+
+        <!-- INTRO BOX -->
+        <div class="bg-white border border-gray-800 rounded-12px shadow-md p-5 mb-8">
+            <p class="italic text-gray-700 text-lg">
+                Trong cuộc sống hằng ngày, chúng ta thường gặp hay nghe đến nhiều loại sóng như: sóng nước, sóng âm, sóng vô tuyến, sóng biển, sóng địa chấn,... Vậy sóng được hình thành như thế nào và có những đặc điểm gì?
+            </p>
+        </div>
+
+        <!-- MỤC I -->
+        <div class="content-box">
+            <h2 class="section-header">I. THÍ NGHIỆM TẠO SÓNG MẶT NƯỚC</h2>
+            
+            <div class="space-y-4">
+                <p><strong>Chuẩn bị:</strong> Thiết bị tạo sóng mặt nước bằng kênh tạo sóng (Hình 8.1). Đề xuất cách đo các đại lượng đặc trưng như: biên độ sóng, bước sóng, chu kì của sóng và tốc độ truyền sóng trên mặt nước.</p>
+                <p><strong>Tiến hành:</strong> Đặt một miếng xốp nhỏ C trên mặt nước. Khi quay đĩa D làm cho vật tạo sóng O dao động lên xuống, thì dao động đó được truyền cho các phần tử nước từ gần ra xa.</p>
+                <p><strong>Kết quả:</strong> Quan sát qua thành kênh thẳng đứng, ta thấy mặt cắt của nước có dạng hình sin. Miếng xốp C dao động lên xuống tại chỗ, còn những biến dạng của mặt nước lan truyền đi từ nguồn sóng ra xa cho ta hình ảnh về sóng có trên mặt nước. O là nguồn sóng, nước là môi trường truyền sóng, đường thẳng OC là phương truyền sóng.</p>
+                <p>Đồ thị sóng được mô tả như trên Hình 8.2.</p>
+            </div>
+
+            <!-- Khung hình 8.1 -->
+            <div class="my-6 border-2 border-dashed border-gray-400 bg-gray-50 rounded-lg p-4 text-center">
+                <img src="h1.png" alt="[Điền đường dẫn Hình 8.1 vào đây]" class="mx-auto max-w-full h-auto max-h-64 object-contain">
+                <p class="text-sm text-gray-600 mt-2 font-medium">Hình 8.1: Thiết bị tạo sóng mặt nước</p>
+            </div>
+
+            <!-- Khung hình 8.2 -->
+            <div class="my-6 border-2 border-dashed border-gray-400 bg-gray-50 rounded-lg p-4 text-center">
+                <img src="h2.png" alt="[Điền đường dẫn Hình 8.2 vào đây]" class="mx-auto max-w-full h-auto max-h-64 object-contain">
+                <p class="text-sm text-gray-600 mt-2 font-medium">Hình 8.2: Đồ thị \( (u-x) \) của một sóng hình sin</p>
+            </div>
+        </div>
+
+        <!-- MỤC II -->
+        <div class="content-box">
+            <h2 class="section-header">II. GIẢI THÍCH SỰ TẠO THÀNH SÓNG</h2>
+            
+            <p class="mb-4">Trong thí nghiệm Hình 8.1 các phần tử nước sát nguồn O dao động theo phương thẳng đứng. Nhờ có lực liên kết giữa các phần tử nước mà các phần tử nước ở điểm M lân cận điểm O dao động theo. Đến lượt các phần tử nước ở điểm N lân cận điểm M dao động. Ta nói có sự truyền dao động từ điểm này sang điểm khác tạo nên sóng mặt nước.</p>
+            
+            <p class="mb-6">Như vậy, có hai nguyên nhân tạo nên sóng truyền trong một môi trường. Đó là nguồn dao động từ bên ngoài tác dụng lên môi trường tại điểm O và có lực liên kết giữa các phần tử của môi trường.</p>
+
+            <!-- Hoạt động / Câu hỏi 1 -->
+            <div class="mb-6">
+                <div class="bg-qBg border-l-4 border-qBorder p-4 rounded-r-lg shadow-sm">
+                    <div class="flex items-start">
+                        <span class="text-2xl mr-2">❓</span>
+                        <p class="font-medium">Hãy quan sát chuyển động của miếng xốp trong thí nghiệm Hình 8.1 và cho biết miếng xốp có chuyển động ra xa nguồn cùng với sóng không?</p>
+                    </div>
+                    <button onclick="toggleAnswer('ans1')" class="mt-4 bg-brandRed text-white px-5 py-2 rounded-md hover:bg-red-700 transition font-medium text-sm">Xem câu trả lời</button>
+                </div>
+                <div id="ans1" class="hidden bg-ansBg border-l-4 border-ansBorder p-4 rounded-r-lg mt-2 shadow-sm text-green-900">
+                    <p><strong>Trả lời:</strong> Miếng xốp <strong>không</strong> chuyển động ra xa nguồn cùng với sóng. Nó chỉ dao động lên xuống quanh một vị trí cân bằng cố định. Điều này chứng tỏ các phần tử môi trường chỉ dao động trong một phạm vi không gian rất hẹp, trong khi trạng thái dao động (sóng) được truyền đi rất xa.</p>
+                </div>
+            </div>
+
+            <!-- Box Em có biết -->
+            <div class="bg-yellow-50 border border-yellow-300 rounded-lg p-5 mb-6 shadow-sm">
+                <h3 class="text-yellow-800 font-bold mb-2 flex items-center">
+                    <span class="mr-2">💡</span> EM CÓ BIẾT
+                </h3>
+                <p class="text-yellow-900">Tốc độ truyền sóng chỉ phụ thuộc vào tính chất của môi trường truyền sóng không phụ thuộc vào tần số dao động của nguồn hay của các phần tử của môi trường có sóng truyền qua.</p>
+            </div>
+
+            <h3 class="font-bold text-lg text-blue-900 mb-3 mt-6">Sự lệch pha của các phần tử môi trường trên phương truyền sóng</h3>
+	    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+		<div>
+            <p class="mb-3">Giả sử có một sóng mặt nước hình sin lan truyền từ nguồn O theo phương Ox (Hình 8.3).</p>
+            <ul class="list-disc pl-6 space-y-2 mb-4">
+                <li>Tại thời điểm bắt đầu quan sát \( (t=0) \) phần tử nước tại O bắt đầu đi lên, còn các điểm khác chưa dao động.</li>
+                <li>Tại \( t = \frac{T}{4} \), phần tử nước tại O đi lên đến vị trí biên, trong khi đó sóng truyền đến điểm M cách O một đoạn \( d = v \cdot \frac{T}{4} = \frac{\lambda}{4} \). Phần tử nước tại M trễ pha hơn phần tử nước tại O là \( \frac{\pi}{2} \). Hình 8.3a cho biết hình dạng của sóng tại \( t = \frac{T}{4} \).</li>
+                <li>Tại \( t = \frac{T}{2} \), phần tử nước tại O về đến vị trí cân bằng, phần tử nước tại M đi lên đến vị trí biên, còn sóng lan đến điểm N cách M một khoảng bằng \( \frac{\lambda}{4} \). Điểm N trễ pha hơn điểm M là \( \frac{\pi}{2} \) hay trễ pha hơn phần tử nước tại O là \( \pi \). Hình dạng sóng được mô tả ở Hình 8.3b.</li>
+                <li>Tại \( t = \frac{3T}{4} \), \( t = T \), hình dạng của sóng được chỉ trên Hình 8.3 c, d.</li>
+            </ul>
+		</div>
+
+            <!-- Khung hình 8.3 -->
+            <div class="my-6 border-2 border-dashed border-gray-400 bg-gray-50 rounded-lg p-4 text-center">
+                <img src="h3.png" alt="[Điền đường dẫn Hình 8.3 vào đây]" class="mx-auto max-w-full h-auto max-h-80 object-contain">
+                <p class="text-sm text-gray-600 mt-2 font-medium">Hình 8.3: Mô tả sự truyền sóng trên dây</p>
+            </div>
+            </div>
+            <!-- Hoạt động / Câu hỏi 2 -->
+            <div class="mb-6">
+                <div class="bg-qBg border-l-4 border-qBorder p-4 rounded-r-lg shadow-sm">
+                    <div class="flex items-start">
+                        <span class="text-2xl mr-2">❓</span>
+                        <p class="font-medium">Trong đồ thị của sóng Hình 8.3d, các điểm nào trong các điểm M, N, P trên phương Ox dao động lệch pha \( \frac{\pi}{2} \), ngược pha, đồng pha với nhau?</p>
+                    </div>
+                    <button onclick="toggleAnswer('ans2')" class="mt-4 bg-brandRed text-white px-5 py-2 rounded-md hover:bg-red-700 transition font-medium text-sm">Xem câu trả lời</button>
+                </div>
+                <div id="ans2" class="hidden bg-ansBg border-l-4 border-ansBorder p-4 rounded-r-lg mt-2 shadow-sm text-green-900">
+                    <p><strong>Trả lời:</strong> Dựa vào khoảng cách và hình dạng đồ thị ở thời điểm \( t = T \) (Hình 8.3d):</p>
+                    <ul class="list-disc pl-5 mt-2 space-y-1">
+                        <li><strong>Vuông pha (\( \frac{\pi}{2} \)):</strong> Các cặp điểm cách nhau \( \frac{\lambda}{4} \), \( \frac{3\lambda}{4} \)... Ví dụ: (O và M), (M và N), (N và P).</li>
+                        <li><strong>Ngược pha (\( \pi \)):</strong> Các cặp điểm cách nhau \( \frac{\lambda}{2} \). Ví dụ: (O và N), (M và P).</li>
+                        <li><strong>Đồng pha (\( 2\pi \)):</strong> Các cặp điểm cách nhau \( \lambda \). Ví dụ: (O và P).</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- MỤC III -->
+        <div class="content-box">
+            <h2 class="section-header">III. CÁC ĐẠI LƯỢNG ĐẶC TRƯNG CỦA SÓNG</h2>
+            
+            <ul class="space-y-3 mb-6">
+                <li><strong>Biên độ sóng (\( A \)):</strong> là độ lệch lớn nhất của phần tử sóng khỏi vị trí cân bằng. Sóng có biên độ càng lớn thì phần tử sóng dao động càng mạnh.</li>
+                <li><strong>Bước sóng (\( \lambda \)):</strong> là khoảng cách từ một phần tử môi trường bất kì trên phương truyền sóng đến phần tử gần nhất có trạng thái dao động hoàn toàn tương tự. Bước sóng được kí hiệu là \( \lambda \), đơn vị là mét.</li>
+                <li><strong>Chu kì sóng (\( T \)):</strong> chính bằng chu kì dao động của phần tử sóng. Chu kì kí hiệu là \( T \), đơn vị là giây.</li>
+                <li><strong>Tần số sóng (\( f \)):</strong> đại lượng \( f = \frac{1}{T} \) được gọi là tần số sóng.</li>
+                <li><strong>Tốc độ truyền sóng (\( v \)):</strong> là tốc độ lan truyền dao động trong không gian.</li>
+                <li><strong>Cường độ sóng (\( I \)):</strong> được định nghĩa là năng lượng sóng được truyền qua một đơn vị diện tích vuông góc với phương truyền sóng trong một đơn vị thời gian. Đơn vị cường độ sóng là \( W/m^2 \).</li>
+            </ul>
+
+            <div class="bg-blue-50 border border-blue-200 rounded p-4 mb-6 text-center shadow-sm">
+                <p class="font-medium text-blue-900 mb-2">Giữa các đại lượng \( \lambda \), \( T \) (hay \( f \)) có mối liên hệ sau đây:</p>
+                <div class="text-2xl font-bold text-brandRed">
+                    \( \lambda = v \cdot T = \frac{v}{f} \)
+                </div>
+            </div>
+
+            <h3 class="font-bold text-lg text-blue-900 mb-4 border-b pb-2">Bài Tập Trong Sách</h3>
+
+            <!-- Bài tập 1 -->
+            <div class="mb-6">
+                <div class="bg-qBg border-l-4 border-qBorder p-4 rounded-r-lg shadow-sm">
+                    <p class="font-medium"><strong>Bài 1:</strong> Trên mặt hồ yên lặng, một người làm cho con thuyền dao động tạo ra sóng trên mặt nước. Thuyền thực hiện được 24 dao động trong 40 s, mỗi dao động tạo ra một ngọn sóng cao 12 cm so với mặt hồ yên lặng và ngọn sóng tới bờ cách thuyền 10 m sau 5 s. Với số liệu này, hãy xác định:</p>
+                    <ol class="list-[lower-alpha] pl-6 mt-2 font-medium">
+                        <li>Chu kì dao động của thuyền.</li>
+                        <li>Tốc độ lan truyền của sóng.</li>
+                        <li>Bước sóng.</li>
+                        <li>Biên độ sóng.</li>
+                    </ol>
+                    <button onclick="toggleAnswer('bt1')" class="mt-4 bg-brandRed text-white px-5 py-2 rounded-md hover:bg-red-700 transition font-medium text-sm">Xem giải chi tiết</button>
+                </div>
+                <div id="bt1" class="hidden bg-ansBg border-l-4 border-ansBorder p-4 rounded-r-lg mt-2 shadow-sm text-green-900">
+                    <p class="font-bold mb-2">Giải chi tiết:</p>
+                    <ol class="list-[lower-alpha] pl-6 space-y-2">
+                        <li><strong>Chu kì dao động:</strong> \( T = \frac{t}{N} = \frac{40}{24} \approx 1,67 \text{ (s)} \)</li>
+                        <li><strong>Tốc độ lan truyền:</strong> \( v = \frac{S}{t'} = \frac{10}{5} = 2 \text{ (m/s)} \)</li>
+                        <li><strong>Bước sóng:</strong> \( \lambda = v \cdot T = 2 \cdot \frac{40}{24} \approx 3,33 \text{ (m)} \)</li>
+                        <li><strong>Biên độ sóng:</strong> Đỉnh ngọn sóng cao 12cm so với mặt hồ yên lặng (vị trí cân bằng), nên \( A = 12 \text{ (cm)} \)</li>
+                    </ol>
+                </div>
+            </div>
+
+            <!-- Bài tập 2 -->
+            <div class="mb-6">
+                <div class="bg-qBg border-l-4 border-qBorder p-4 rounded-r-lg shadow-sm">
+                    <p class="font-medium"><strong>Bài 2:</strong> Hình 8.4 là đồ thị \( (u-t) \) của một sóng âm trên màn hình của một dao động kí. Biết mỗi cạnh của ô vuông theo phương ngang trên hình tương ứng với 1 ms. Tính tần số của sóng.</p>
+                    <div class="my-4 border-2 border-dashed border-gray-400 bg-white rounded p-2 text-center">
+                        <img src="h4.png" alt="[Điền đường dẫn Hình 8.4 vào đây]" class="mx-auto max-w-full h-auto max-h-48 object-contain">
+                        <p class="text-xs text-gray-500 mt-1">Hình 8.4</p>
+                    </div>
+                    <button onclick="toggleAnswer('bt2')" class="mt-2 bg-brandRed text-white px-5 py-2 rounded-md hover:bg-red-700 transition font-medium text-sm">Xem giải chi tiết</button>
+                </div>
+                <div id="bt2" class="hidden bg-ansBg border-l-4 border-ansBorder p-4 rounded-r-lg mt-2 shadow-sm text-green-900">
+                    <p class="font-bold mb-2">Giải chi tiết:</p>
+                    <p>Quan sát đồ thị \( (u-t) \), ta thấy một chu kì hoàn chỉnh (từ lúc bắt đầu đến khi lặp lại trạng thái cũ) chiếm khoảng không gian là <strong>4 ô vuông</strong> theo phương ngang.</p>
+                    <p>Thời gian của một chu kì: \( T = 4 \times 1 \text{ ms} = 4 \text{ ms} = 4 \cdot 10^{-3} \text{ s} \).</p>
+                    <p>Tần số của sóng là: \( f = \frac{1}{T} = \frac{1}{4 \cdot 10^{-3}} = 250 \text{ (Hz)} \).</p>
+                </div>
+            </div>
+
+            <!-- Bài tập 3 -->
+            <div class="mb-2">
+                <div class="bg-qBg border-l-4 border-qBorder p-4 rounded-r-lg shadow-sm">
+                    <p class="font-medium"><strong>Bài 3:</strong> Trong thí nghiệm ở Hình 8.1, nếu ta thay đổi tần số dao động của nguồn sóng thì đại lượng nào sau đây không thay đổi?</p>
+                    <ul class="list-none mt-2 space-y-1 font-medium">
+                        <li>A. Chu kì sóng.</li>
+                        <li>B. Bước sóng.</li>
+                        <li>C. Tần số sóng.</li>
+                        <li>D. Tốc độ truyền sóng.</li>
+                    </ul>
+                    <button onclick="toggleAnswer('bt3')" class="mt-4 bg-brandRed text-white px-5 py-2 rounded-md hover:bg-red-700 transition font-medium text-sm">Xem đáp án</button>
+                </div>
+                <div id="bt3" class="hidden bg-ansBg border-l-4 border-ansBorder p-4 rounded-r-lg mt-2 shadow-sm text-green-900">
+                    <p><strong>Đáp án đúng: D. Tốc độ truyền sóng.</strong></p>
+                    <p class="mt-1 text-sm">Giải thích: Tốc độ truyền sóng chỉ phụ thuộc vào bản chất của môi trường truyền sóng (mật độ, nhiệt độ, tính đàn hồi,...), không phụ thuộc vào tần số hay chu kì của nguồn dao động.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- BOX EM ĐÃ HỌC -->
+        <div class="bg-purple-50 border border-purple-300 rounded-12px p-6 mb-6 shadow-sm">
+            <h3 class="text-purple-900 font-bold text-lg mb-3 uppercase flex items-center">
+                <span class="mr-2">📚</span> EM ĐÃ HỌC
+            </h3>
+            <ul class="list-disc pl-6 space-y-2 text-purple-900">
+                <li><strong>Sóng cơ</strong> là những biến dạng cơ lan truyền trong một môi trường đàn hồi.</li>
+                <li><strong>Biên độ sóng A</strong> là độ cao hay độ sâu của một ngọn sóng so với mức cân bằng. Biên độ sóng bằng biên độ dao động của nguồn sóng.</li>
+                <li><strong>Chu kì T</strong> của sóng là khoảng thời gian để hai ngọn sóng liên tiếp chạy qua một điểm đang xét. Chu kì của sóng bằng chu kì dao động của nguồn sóng.</li>
+                <li><strong>Tần số f</strong> của sóng là số các ngọn sóng đi qua một điểm đang xét trong một đơn vị thời gian. Tần số sóng bằng tần số dao động của nguồn sóng.</li>
+                <li><strong>Tốc độ truyền sóng v</strong> là tốc độ lan truyền biến dạng.</li>
+                <li><strong>Bước sóng \( \lambda \)</strong> là khoảng cách giữa hai ngọn sóng liên tiếp. Bước sóng bằng quãng đường mà sóng truyền được trong một chu kì.</li>
+                <li>Các đại lượng \( \lambda \), \( T \) (hay \( f \)) và \( v \) có mối liên hệ: \( \lambda = vT = \frac{v}{f} \).</li>
+                <li>Sự lệch pha giữa các phần tử dao động trên phương truyền sóng tạo nên hình ảnh của sóng.</li>
+            </ul>
+        </div>
+
+        <!-- BOX EM CÓ THỂ -->
+        <div class="bg-teal-50 border border-teal-300 rounded-12px p-6 mb-8 shadow-sm">
+            <h3 class="text-teal-900 font-bold text-lg mb-2 uppercase flex items-center">
+                <span class="mr-2">🚀</span> EM CÓ THỂ
+            </h3>
+            <p class="text-teal-900">Dùng đồ thị \( (u-x) \) của một sóng hình sin để nêu được các đại lượng đặc trưng của sóng.</p>
+        </div>
+
+        <!-- BÀI TẬP TRẮC NGHIỆM CỦNG CỐ -->
+        <div class="content-box">
+            <h2 class="section-header">BÀI TẬP TRẮC NGHIỆM CỦNG CỐ</h2>
+            <form id="quizForm" class="space-y-6">
+                
+                <!-- Câu 1 -->
+                <div class="quiz-item p-4 rounded bg-gray-50 border border-gray-200" data-answer="B">
+                    <p class="font-medium mb-2">Câu 1: Sóng cơ là gì?</p>
+                    <div class="space-y-1">
+                        <label class="block cursor-pointer hover:bg-gray-100 p-1 rounded"><input type="radio" name="q1" value="A" class="mr-2"> A. Sự truyền chuyển động của các phần tử môi trường.</label>
+                        <label class="block cursor-pointer hover:bg-gray-100 p-1 rounded"><input type="radio" name="q1" value="B" class="mr-2"> B. Những biến dạng cơ lan truyền trong một môi trường đàn hồi.</label>
+                        <label class="block cursor-pointer hover:bg-gray-100 p-1 rounded"><input type="radio" name="q1" value="C" class="mr-2"> C. Chuyển động tương đối của vật này so với vật khác.</label>
+                        <label class="block cursor-pointer hover:bg-gray-100 p-1 rounded"><input type="radio" name="q1" value="D" class="mr-2"> D. Sự co giãn của một lò xo.</label>
+                    </div>
+                    <div class="explanation hidden mt-3 p-3 bg-blue-100 text-blue-800 rounded text-sm">
+                        <strong>Giải thích:</strong> Theo định nghĩa đã học, sóng cơ là những biến dạng cơ lan truyền trong một môi trường đàn hồi.
+                    </div>
+                </div>
+
+                <!-- Câu 2 -->
+                <div class="quiz-item p-4 rounded bg-gray-50 border border-gray-200" data-answer="A">
+                    <p class="font-medium mb-2">Câu 2: Công thức liên hệ giữa bước sóng \( \lambda \), tốc độ truyền sóng \( v \) và chu kì \( T \) là:</p>
+                    <div class="space-y-1">
+                        <label class="block cursor-pointer hover:bg-gray-100 p-1 rounded"><input type="radio" name="q2" value="A" class="mr-2"> A. \( \lambda = v \cdot T \)</label>
+                        <label class="block cursor-pointer hover:bg-gray-100 p-1 rounded"><input type="radio" name="q2" value="B" class="mr-2"> B. \( \lambda = \frac{v}{T} \)</label>
+                        <label class="block cursor-pointer hover:bg-gray-100 p-1 rounded"><input type="radio" name="q2" value="C" class="mr-2"> C. \( \lambda = \frac{T}{v} \)</label>
+                        <label class="block cursor-pointer hover:bg-gray-100 p-1 rounded"><input type="radio" name="q2" value="D" class="mr-2"> D. \( v = \lambda \cdot T \)</label>
+                    </div>
+                    <div class="explanation hidden mt-3 p-3 bg-blue-100 text-blue-800 rounded text-sm">
+                        <strong>Giải thích:</strong> Bước sóng bằng quãng đường sóng truyền được trong một chu kì: \( \lambda = v \cdot T \).
+                    </div>
+                </div>
+
+                <!-- Câu 3 -->
+                <div class="quiz-item p-4 rounded bg-gray-50 border border-gray-200" data-answer="D">
+                    <p class="font-medium mb-2">Câu 3: Hai điểm gần nhau nhất trên cùng một phương truyền sóng dao động đồng pha với nhau thì cách nhau một khoảng là:</p>
+                    <div class="space-y-1">
+                        <label class="block cursor-pointer hover:bg-gray-100 p-1 rounded"><input type="radio" name="q3" value="A" class="mr-2"> A. Một phần tư bước sóng.</label>
+                        <label class="block cursor-pointer hover:bg-gray-100 p-1 rounded"><input type="radio" name="q3" value="B" class="mr-2"> B. Nửa bước sóng.</label>
+                        <label class="block cursor-pointer hover:bg-gray-100 p-1 rounded"><input type="radio" name="q3" value="C" class="mr-2"> C. Hai bước sóng.</label>
+                        <label class="block cursor-pointer hover:bg-gray-100 p-1 rounded"><input type="radio" name="q3" value="D" class="mr-2"> D. Một bước sóng.</label>
+                    </div>
+                    <div class="explanation hidden mt-3 p-3 bg-blue-100 text-blue-800 rounded text-sm">
+                        <strong>Giải thích:</strong> Bước sóng \( \lambda \) được định nghĩa là khoảng cách từ một phần tử đến phần tử gần nhất có trạng thái dao động tương tự (đồng pha).
+                    </div>
+                </div>
+
+                <!-- Câu 4 -->
+                <div class="quiz-item p-4 rounded bg-gray-50 border border-gray-200" data-answer="B">
+                    <p class="font-medium mb-2">Câu 4: Khi sóng lan truyền, đại lượng nào sau đây <strong>không</strong> được truyền đi?</p>
+                    <div class="space-y-1">
+                        <label class="block cursor-pointer hover:bg-gray-100 p-1 rounded"><input type="radio" name="q4" value="A" class="mr-2"> A. Năng lượng.</label>
+                        <label class="block cursor-pointer hover:bg-gray-100 p-1 rounded"><input type="radio" name="q4" value="B" class="mr-2"> B. Các phần tử vật chất.</label>
+                        <label class="block cursor-pointer hover:bg-gray-100 p-1 rounded"><input type="radio" name="q4" value="C" class="mr-2"> C. Trạng thái dao động.</label>
+                        <label class="block cursor-pointer hover:bg-gray-100 p-1 rounded"><input type="radio" name="q4" value="D" class="mr-2"> D. Pha dao động.</label>
+                    </div>
+                    <div class="explanation hidden mt-3 p-3 bg-blue-100 text-blue-800 rounded text-sm">
+                        <strong>Giải thích:</strong> Các phần tử môi trường chỉ dao động tại chỗ quanh vị trí cân bằng, không truyền đi theo sóng.
+                    </div>
+                </div>
+
+                <!-- Câu 5 -->
+                <div class="quiz-item p-4 rounded bg-gray-50 border border-gray-200" data-answer="C">
+                    <p class="font-medium mb-2">Câu 5: Một sóng có tần số 50 Hz truyền với tốc độ 20 m/s. Bước sóng là bao nhiêu?</p>
+                    <div class="space-y-1">
+                        <label class="block cursor-pointer hover:bg-gray-100 p-1 rounded"><input type="radio" name="q5" value="A" class="mr-2"> A. 1000 m.</label>
+                        <label class="block cursor-pointer hover:bg-gray-100 p-1 rounded"><input type="radio" name="q5" value="B" class="mr-2"> B. 2,5 m.</label>
+                        <label class="block cursor-pointer hover:bg-gray-100 p-1 rounded"><input type="radio" name="q5" value="C" class="mr-2"> C. 0,4 m.</label>
+                        <label class="block cursor-pointer hover:bg-gray-100 p-1 rounded"><input type="radio" name="q5" value="D" class="mr-2"> D. 0,2 m.</label>
+                    </div>
+                    <div class="explanation hidden mt-3 p-3 bg-blue-100 text-blue-800 rounded text-sm">
+                        <strong>Giải thích:</strong> Áp dụng công thức: \( \lambda = \frac{v}{f} = \frac{20}{50} = 0,4 \text{ (m)} \).
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-between mt-6">
+                    <button type="button" onclick="checkQuiz()" class="bg-[#1e3a8a] text-white font-bold py-3 px-8 rounded hover:bg-blue-800 transition">NỘP BÀI</button>
+                    <div id="quizResult" class="font-bold text-lg hidden"></div>
+                </div>
+            </form>
+        </div>
+
+        <!-- BÀI TẬP VẬN DỤNG TÍNH TOÁN -->
+        <div class="content-box">
+            <h2 class="section-header">BÀI TẬP VẬN DỤNG TÍNH TOÁN</h2>
+
+            <!-- Vận dụng 1 -->
+            <div class="mb-6">
+                <div class="bg-qBg border-l-4 border-qBorder p-4 rounded-r-lg shadow-sm">
+                    <p class="font-medium"><strong>Bài 1:</strong> Một người quan sát một chiếc phao trên mặt biển thấy nó nhô lên cao 10 lần trong 18 giây, khoảng cách giữa hai ngọn sóng kề nhau là 2 m. Tính tốc độ truyền sóng trên mặt biển.</p>
+                    <button onclick="toggleAnswer('vd1')" class="mt-4 bg-brandRed text-white px-5 py-2 rounded-md hover:bg-red-700 transition font-medium text-sm">Xem giải chi tiết</button>
+                </div>
+                <div id="vd1" class="hidden bg-ansBg border-l-4 border-ansBorder p-4 rounded-r-lg mt-2 shadow-sm text-green-900">
+                    <p><strong>Giải chi tiết:</strong></p>
+                    <ul class="list-disc pl-5 mt-2 space-y-2">
+                        <li>Phao nhô lên cao 10 lần tức là đã thực hiện \( (10 - 1) = 9 \) chu kì dao động toàn phần.</li>
+                        <li>Thời gian 9 chu kì là 18s \( \Rightarrow 9T = 18 \text{ s} \Rightarrow T = 2 \text{ s} \).</li>
+                        <li>Khoảng cách giữa hai ngọn sóng kề nhau chính là 1 bước sóng: \( \lambda = 2 \text{ m} \).</li>
+                        <li>Tốc độ truyền sóng: \( v = \frac{\lambda}{T} = \frac{2}{2} = 1 \text{ (m/s)} \).</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Vận dụng 2 -->
+            <div class="mb-6">
+                <div class="bg-qBg border-l-4 border-qBorder p-4 rounded-r-lg shadow-sm">
+                    <p class="font-medium"><strong>Bài 2:</strong> Một đầu O của một sợi dây đàn hồi dao động với phương trình \( u_0 = 5\cos(4\pi t) \) (cm). Vận tốc truyền sóng trên dây là 24 cm/s. Tính bước sóng và khoảng cách giữa hai điểm gần nhau nhất trên dây dao động ngược pha.</p>
+                    <button onclick="toggleAnswer('vd2')" class="mt-4 bg-brandRed text-white px-5 py-2 rounded-md hover:bg-red-700 transition font-medium text-sm">Xem giải chi tiết</button>
+                </div>
+                <div id="vd2" class="hidden bg-ansBg border-l-4 border-ansBorder p-4 rounded-r-lg mt-2 shadow-sm text-green-900">
+                    <p><strong>Giải chi tiết:</strong></p>
+                    <ul class="list-disc pl-5 mt-2 space-y-2">
+                        <li>Từ phương trình ta có tần số góc \( \omega = 4\pi \text{ (rad/s)} \).</li>
+                        <li>Chu kì sóng: \( T = \frac{2\pi}{\omega} = \frac{2\pi}{4\pi} = 0,5 \text{ (s)} \).</li>
+                        <li>Bước sóng: \( \lambda = v \cdot T = 24 \cdot 0,5 = 12 \text{ (cm)} \).</li>
+                        <li>Hai điểm gần nhau nhất dao động ngược pha cách nhau một khoảng là \( \frac{\lambda}{2} \).</li>
+                        <li>Khoảng cách đó là: \( d = \frac{12}{2} = 6 \text{ (cm)} \).</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Vận dụng 3 -->
+            <div class="mb-2">
+                <div class="bg-qBg border-l-4 border-qBorder p-4 rounded-r-lg shadow-sm">
+                    <p class="font-medium"><strong>Bài 3:</strong> Sóng vô tuyến truyền trong không trung với tốc độ \( c = 3 \cdot 10^8 \) m/s. Một đài phát thanh phát sóng với tần số 100 MHz. Tính bước sóng của dải sóng này.</p>
+                    <button onclick="toggleAnswer('vd3')" class="mt-4 bg-brandRed text-white px-5 py-2 rounded-md hover:bg-red-700 transition font-medium text-sm">Xem giải chi tiết</button>
+                </div>
+                <div id="vd3" class="hidden bg-ansBg border-l-4 border-ansBorder p-4 rounded-r-lg mt-2 shadow-sm text-green-900">
+                    <p><strong>Giải chi tiết:</strong></p>
+                    <ul class="list-disc pl-5 mt-2 space-y-2">
+                        <li>Đổi đơn vị tần số: \( f = 100 \text{ MHz} = 100 \cdot 10^6 \text{ Hz} = 10^8 \text{ Hz} \).</li>
+                        <li>Áp dụng công thức tính bước sóng: \( \lambda = \frac{v}{f} \).</li>
+                        <li>Thay số: \( \lambda = \frac{3 \cdot 10^8}{10^8} = 3 \text{ (m)} \).</li>
+                        <li>Vậy bước sóng của đài phát thanh là 3 mét.</li>
+                    </ul>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- JavaScript -->
+    <script>
+        // Hàm hiển thị / ẩn nội dung trả lời
+        function toggleAnswer(id) {
+            const el = document.getElementById(id);
+            if (el.classList.contains('hidden')) {
+                el.classList.remove('hidden');
+                el.classList.add('block');
+            } else {
+                el.classList.add('hidden');
+                el.classList.remove('block');
+            }
+        }
+
+        // Hàm kiểm tra bài tập trắc nghiệm
+        function checkQuiz() {
+            const questions = document.querySelectorAll('.quiz-item');
+            let score = 0;
+            const total = questions.length;
+
+            questions.forEach((q, index) => {
+                const correctAnswer = q.getAttribute('data-answer');
+                const radios = q.querySelectorAll('input[type="radio"]');
+                let selectedAnswer = null;
+
+                radios.forEach(radio => {
+                    if (radio.checked) {
+                        selectedAnswer = radio.value;
+                    }
+                });
+
+                const explanation = q.querySelector('.explanation');
+                explanation.classList.remove('hidden');
+
+                // Reset styles
+                q.classList.remove('border-green-500', 'bg-green-50', 'border-red-500', 'bg-red-50', 'border-gray-200');
+
+                if (selectedAnswer === correctAnswer) {
+                    score++;
+                    q.classList.add('border-green-500', 'bg-green-50');
+                    explanation.classList.add('bg-green-100', 'text-green-800');
+                    explanation.classList.remove('bg-red-100', 'text-red-800', 'bg-blue-100', 'text-blue-800');
+                    explanation.innerHTML = `<strong><span class="text-green-600">✔ Đúng!</span></strong> ` + explanation.innerHTML.replace(/<strong>.*?<\/strong> /, '');
+                } else {
+                    q.classList.add('border-red-500', 'bg-red-50');
+                    explanation.classList.add('bg-red-100', 'text-red-800');
+                    explanation.classList.remove('bg-green-100', 'text-green-800', 'bg-blue-100', 'text-blue-800');
+                    let feedback = selectedAnswer ? `<strong><span class="text-red-600">✘ Sai.</span> Đáp án đúng là ${correctAnswer}.</strong> ` : `<strong><span class="text-red-600">⚠ Bạn chưa chọn đáp án.</span> Đáp án đúng là ${correctAnswer}.</strong> `;
+                    explanation.innerHTML = feedback + explanation.innerHTML.replace(/<strong>.*?<\/strong> /, '').replace(/<strong><span.*?>.*?<\/span>.*?<\/strong> /, '');
+                }
+            });
+
+            // Hiển thị kết quả tổng
+            const resultDiv = document.getElementById('quizResult');
+            resultDiv.classList.remove('hidden');
+            resultDiv.innerText = `Kết quả: ${score} / ${total} câu`;
+            
+            if (score === total) {
+                resultDiv.className = 'font-bold text-xl text-green-600 block';
+                resultDiv.innerText += " - Xuất sắc!";
+            } else {
+                resultDiv.className = 'font-bold text-xl text-red-600 block';
+                resultDiv.innerText += " - Hãy xem lại lời giải bên trên nhé!";
+            }
+        }
+    </script>
+</body>
+</html>
