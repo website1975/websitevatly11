@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bài 9: Sóng ngang, Sóng dọc, Sự truyền năng lượng của sóng cơ</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#EE0000',
+                        bglight: '#f4f7f9',
+                        qbg: '#edf2f7',
+                        abg: '#dcfce7', // light green
+                        borderBlue: '#1e3a8a', // dark blue
+                    },
+                    borderRadius: {
+                        '12px': '12px',
+                    },
+                    fontFamily: {
+                        sans: ['"Segoe UI"', 'Roboto', 'Helvetica', 'Arial', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- MathJax for rendering formulas -->
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <style>
+        body {
+            background-color: #f4f7f9;
+        }
+        .section-header {
+            border-bottom: 4px solid #1e3a8a;
+            display: inline-block;
+            padding-bottom: 4px;
+            margin-bottom: 16px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 16px 0;
+        }
+        th, td {
+            border: 1px solid #cbd5e0;
+            padding: 12px;
+            text-align: center;
+        }
+        th {
+            background-color: #e2e8f0;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body class="text-gray-800 leading-relaxed py-8">
+
+    <div class="max-w-4xl mx-auto space-y-8 px-4">
+
+        <!-- HEADER TÊN BÀI -->
+        <div class="bg-primary text-white rounded-12px overflow-hidden shadow-md">
+            <div class="p-4 text-center text-lg font-semibold">
+                CHƯƠNG II - SÓNG
+            </div><hr>
+            <div class="p-6 text-center text-2xl md:text-3xl font-bold uppercase tracking-wide">
+                Bài 9: SÓNG NGANG. SÓNG DỌC. SỰ TRUYỀN NĂNG LƯỢNG CỦA SÓNG CƠ
+            </div>
+        </div>
+
+        <!-- INTRO BOX -->
+        <div class="bg-white border border-black rounded-12px shadow-md p-6 italic text-lg text-gray-700 text-center">
+            "Sóng mặt nước và sóng âm truyền trong không khí có đặc điểm gì chung và riêng?"
+        </div>
+
+        <!-- SECTION I -->
+        <div class="bg-white rounded-12px shadow-md p-6 md:p-8">
+            <h2 class="text-xl font-bold uppercase section-header text-gray-900">I. Sóng ngang</h2>
+            
+            <p class="mb-4">Trong thí nghiệm ở Hình 8.1 các phần tử nước tại O, rồi tại M dao động lên, xuống theo phương thẳng đứng, trong khi sóng truyền từ O đến M theo phương ngang.</p>
+            
+            <div class="bg-yellow-100 p-4 rounded mb-4 font-semibold border-l-4 border-yellow-500">
+                Sóng trong đó các phần tử của môi trường dao động theo phương vuông góc với phương truyền sóng gọi là sóng ngang.
+            </div>
+
+            <!-- Câu hỏi (?) -->
+            <div class="bg-qbg border-l-4 border-borderBlue p-4 rounded my-4">
+                <div class="flex items-start">
+                    <span class="text-primary font-bold text-xl mr-2">❓</span>
+                    <div>
+                        <p class="font-semibold mb-2">Hình 9.1 mô tả một sóng ngang truyền trên dây đàn hồi. Hãy quan sát các mũi tên, từ đó chỉ ra phương dao động của các phần tử của dây và phương truyền sóng.</p>
+                        <img src="h1.png" alt="Hình 9.1. Một sóng ngang truyền trên dây" class="w-full max-w-lg mx-auto bg-gray-200 border border-gray-300 rounded text-center my-4 p-4 text-gray-500" style="min-height: 200px;">
+                        <button onclick="toggleAnswer('ans-q1')" class="bg-primary hover:bg-red-700 text-white px-4 py-2 rounded shadow transition">Xem câu trả lời</button>
+                    </div>
+                </div>
+            </div>
+            <div id="ans-q1" class="hidden bg-abg p-4 rounded mt-2 border border-green-300">
+                <p><strong>Trả lời:</strong></p>
+                <p>- Mũi tên thẳng đứng (lên/xuống) chỉ phương dao động của các phần tử trên dây.</p>
+                <p>- Mũi tên nằm ngang chỉ phương truyền sóng.</p>
+                <p>=> Phương dao động vuông góc với phương truyền sóng.</p>
+            </div>
+        </div>
+
+        <!-- SECTION II -->
+        <div class="bg-white rounded-12px shadow-md p-6 md:p-8">
+            <h2 class="text-xl font-bold uppercase section-header text-gray-900">II. Sóng dọc</h2>
+            
+            <p class="mb-4">Đặt một lò xo ống dài và mềm trên mặt bàn nhẵn. Dùng tay cầm một đầu lò xo và cho bàn tay dao động dọc theo trục của lò xo. Các vòng của lò xo ở sát bàn tay lần lượt bị nén rồi bị dãn. Nhờ có lực đàn hồi giữa các vòng lò xo mà các biến dạng nén – dãn lan truyền đi xa dọc theo trục của lò xo (Hình 9.2).</p>
+            
+            <img src="h2.png" alt="Hình 9.2. Một sóng dọc truyền trên lò xo" class="w-full max-w-lg mx-auto bg-gray-200 border border-gray-300 rounded text-center my-4 p-4 text-gray-500" style="min-height: 150px;">
+
+            <div class="bg-yellow-100 p-4 rounded mb-4 font-semibold border-l-4 border-yellow-500">
+                Sóng trong đó các phần tử của môi trường dao động theo phương trùng với phương truyền sóng gọi là sóng dọc.
+            </div>
+
+            <!-- Câu hỏi (?) -->
+            <div class="bg-qbg border-l-4 border-borderBlue p-4 rounded my-4">
+                <div class="flex items-start">
+                    <span class="text-primary font-bold text-xl mr-2">❓</span>
+                    <div>
+                        <p class="font-semibold mb-2">Dựa vào Hình 9.1 và Hình 9.2, hãy chỉ ra điểm giống và khác nhau giữa sóng dọc và sóng ngang.</p>
+                        <button onclick="toggleAnswer('ans-q2')" class="bg-primary hover:bg-red-700 text-white px-4 py-2 rounded shadow transition">Xem câu trả lời</button>
+                    </div>
+                </div>
+            </div>
+            <div id="ans-q2" class="hidden bg-abg p-4 rounded mt-2 border border-green-300">
+                <p><strong>Trả lời:</strong></p>
+                <ul class="list-disc ml-6 mt-2">
+                    <li><strong>Giống nhau:</strong> Đều là quá trình lan truyền dao động trong môi trường vật chất. Trong quá trình truyền sóng, các phần tử môi trường chỉ dao động quanh vị trí cân bằng của chúng, không chuyển động theo sóng.</li>
+                    <li><strong>Khác nhau:</strong> 
+                        <br>+ Sóng ngang: Phương dao động vuông góc với phương truyền sóng.
+                        <br>+ Sóng dọc: Phương dao động trùng với phương truyền sóng.
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- SECTION III -->
+        <div class="bg-white rounded-12px shadow-md p-6 md:p-8">
+            <h2 class="text-xl font-bold uppercase section-header text-gray-900">III. Quá trình truyền năng lượng bởi sóng</h2>
+            
+            <p class="mb-4">Trong thí nghiệm Hình 8.1, khi sóng lan truyền đến đâu thì các phân tử nước ở đó bắt đầu dao động. Năng lượng dao động mà các phân tử nước này có được là do sóng mang năng lượng của nguồn đến cho chúng.</p>
+            
+            <p class="mb-4 text-blue-900 font-medium">Các phân tử nước chỉ dao động tại chỗ, quanh vị trí cân bằng của nó chứ không chuyển động theo sóng. Điều đó chứng tỏ sóng mang năng lượng mà không mang các phân tử nước đi theo.</p>
+
+            <p class="mb-4">Đối với sóng dọc trên lò xo thì năng lượng được truyền đi bằng sự nén, dãn liên tiếp của các vòng lò xo.</p>
+            <p>Mọi sóng cơ khác như sóng âm đều mang năng lượng đi xa theo cách như vậy.</p>
+        </div>
+
+        <!-- SECTION IV -->
+        <div class="bg-white rounded-12px shadow-md p-6 md:p-8">
+            <h2 class="text-xl font-bold uppercase section-header text-gray-900">IV. Sử dụng mô hình sóng để giải thích một số tính chất của âm</h2>
+            
+            <p class="mb-4">Sóng dọc chạy trên lò xo là mô hình giúp ta hiểu được sự lan truyền và một số tính chất của sóng âm.</p>
+            
+            <p class="mb-4">Nguồn âm dao động làm cho các phân tử không khí trên dao động theo phương truyền âm, các phân tử không khí dao động lệch pha nhau tạo nên các lớp không khí nén, dãn giống như ở lò xo. Các nén, dãn này truyền đi tạo thành sóng âm theo mọi hướng trong không khí. Hình 9.3 chỉ xét sóng âm truyền theo hướng Ox. Khi sóng âm truyền đến tai người làm cho màng nhĩ dao động, do đó ta nghe được âm thanh.</p>
+
+            <img src="h3.png" alt="Hình 9.3. Các lớp không khí nén - dãn lan truyền tạo thành sóng âm" class="w-full max-w-2xl mx-auto bg-gray-200 border border-gray-300 rounded text-center my-4 p-4 text-gray-500" style="min-height: 200px;">
+
+            <p class="mb-4 font-semibold text-red-700">Như vậy, dù sóng âm không nhìn thấy nhưng ta lại có thể nghe được âm. Biên độ của sóng âm càng lớn thì biên độ dao động của màng nhĩ càng lớn, âm nghe càng to. Tần số của sóng âm càng lớn thì tần số dao động của màng nhĩ càng lớn, âm nghe càng cao.</p>
+
+            <!-- Câu hỏi (?) -->
+            <div class="bg-qbg border-l-4 border-borderBlue p-4 rounded my-4">
+                <div class="flex items-start">
+                    <span class="text-primary font-bold text-xl mr-2">❓</span>
+                    <div class="w-full">
+                        <p class="font-semibold mb-2">Quan sát Hình 9.4 mô tả biên độ và tần số của âm qua dao động kí để trả lời các câu hỏi sau:</p>
+                        <ul class="list-disc ml-6 mb-4">
+                            <li>Ở Hình 9.4a loa phát ra âm có chu kì bằng bao nhiêu?</li>
+                            <li>So với Hình 9.4a:
+                                <ul class="list-circle ml-6 mt-1">
+                                    <li>Ở hình nào biên độ âm lớn hơn nhưng tần số không thay đổi?</li>
+                                    <li>Ở hình nào tần số âm giảm nhưng không giảm biên độ?</li>
+                                    <li>Ở hình nào biên độ âm giảm nhưng không giảm tần số?</li>
+                                </ul>
+                            </li>
+                        </ul>
+                        <img src="h4.png" alt="Hình 9.4. Đồ thị dao động kí" class="w-full max-w-2xl mx-auto bg-gray-200 border border-gray-300 rounded text-center my-4 p-4 text-gray-500" style="min-height: 300px;">
+                        
+                        <button onclick="toggleAnswer('ans-q3')" class="bg-primary hover:bg-red-700 text-white px-4 py-2 rounded shadow transition">Xem câu trả lời</button>
+                    </div>
+                </div>
+            </div>
+            <div id="ans-q3" class="hidden bg-abg p-4 rounded mt-2 border border-green-300">
+                <p><strong>Trả lời:</strong></p>
+                <ul class="list-decimal ml-6 mt-2 space-y-2">
+                    <li>Dựa vào trục thời gian của dao động kí Hình 9.4a, ta thấy 3 chu kì dao động ứng với khoảng thời gian là \( 0.006 \) s. Vậy chu kì của âm phát ra là: \( T = \frac{0.006}{3} = 0.002 \) (s).</li>
+                    <li>So với Hình 9.4a:
+                        <ul class="list-disc ml-6 mt-1 text-gray-700">
+                            <li>Biên độ âm lớn hơn nhưng tần số không đổi là <strong>Hình b</strong> (Sóng nhô cao hơn nhưng khoảng cách giữa các đỉnh không đổi).</li>
+                            <li>Tần số âm giảm (tức là chu kì tăng, đồ thị dãn ra theo phương ngang) nhưng biên độ không giảm là <strong>Hình e</strong>.</li>
+                            <li>Biên độ âm giảm (sóng thấp đi) nhưng tần số không giảm (khoảng cách các đỉnh giữ nguyên) là <strong>Hình c</strong>.</li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- EM CÓ BIẾT -->
+        <div class="bg-blue-50 border-2 border-blue-200 rounded-12px shadow p-6">
+            <h3 class="text-blue-800 font-bold text-lg mb-2 flex items-center">
+                <svg class="w-6 h-6 mr-2" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path></svg>
+                EM CÓ BIẾT
+            </h3>
+            <p class="mb-2">Ánh sáng là sóng, mang năng lượng và truyền được trong chân không. Ánh sáng cũng có những đại lượng đặc trưng như chu kì, tần số, bước sóng và tốc độ truyền sóng. Trong chân không, ánh sáng nhìn thấy có bước sóng nằm trong khoảng từ \( 0,38~\mu m \) đến \( 0,76~\mu m \).</p>
+            <p>Âm nghe được có tần số nằm trong khoảng từ \( 16 \text{ Hz} \) đến \( 20 000 \text{ Hz} \).</p>
+        </div>
+
+        <!-- BÀI TẬP SGK -->
+        <div class="bg-white rounded-12px shadow-md p-6 md:p-8">
+            <h2 class="text-xl font-bold uppercase section-header text-gray-900">Bài tập</h2>
+            
+            <!-- Câu 1 -->
+            <div class="mb-6 pb-4 border-b border-gray-200">
+                <p class="font-bold mb-2">Câu 1: <span class="font-normal">Tại thời điểm mà sóng trên lò xo được chỉ trên Hình 9.2. Hãy xác định:</span></p>
+                <p class="ml-4">a) Sóng đã truyền được bao nhiêu bước sóng?</p>
+                <p class="ml-4 mb-3">b) Trong các điểm X, Y, Z điểm nào là điểm chưa dao động?</p>
+                
+                <button onclick="toggleAnswer('bt-sgk-1')" class="bg-primary hover:bg-red-700 text-white px-4 py-2 rounded shadow transition text-sm">Xem lời giải</button>
+                
+                <div id="bt-sgk-1" class="hidden bg-abg p-4 rounded mt-4 border border-green-300">
+                    <p><strong>Hướng dẫn giải:</strong></p>
+                    <p>a) Một bước sóng \( \lambda \) trên lò xo là khoảng cách giữa hai phần tử nén liên tiếp (hoặc hai phần tử dãn liên tiếp). Đếm trên hình từ điểm bắt đầu (tay) đến hết vùng có sóng, ta có khoảng <strong>3 bước sóng</strong> hoàn chỉnh.</p>
+                    <p>b) Sóng truyền từ trái sang phải. Vùng bên phải điểm X được ghi "Sóng chưa truyền đến". Do đó <strong>điểm X</strong> nằm trong vùng chưa có sóng truyền tới nên điểm X là điểm chưa dao động. (Điểm Y đang ở phần nén, Z đang ở phần dãn).</p>
+                </div>
+            </div>
+
+            <!-- Câu 2 -->
+            <div>
+                <p class="font-bold mb-3">Câu 2: <span class="font-normal">Dải tần số mà một học sinh có thể nghe thấy từ \( 30 \text{ Hz} \) đến \( 16000 \text{ Hz} \). Tốc độ truyền âm trong không khí là \( 330 \text{ m/s} \). Tính bước sóng ngắn nhất của âm thanh trong không khí mà bạn học sinh đó nghe được.</span></p>
+                
+                <button onclick="toggleAnswer('bt-sgk-2')" class="bg-primary hover:bg-red-700 text-white px-4 py-2 rounded shadow transition text-sm">Xem lời giải</button>
+                
+                <div id="bt-sgk-2" class="hidden bg-abg p-4 rounded mt-4 border border-green-300">
+                    <p><strong>Hướng dẫn giải:</strong></p>
+                    <p>Ta có công thức liên hệ: \( v = \lambda \cdot f \Rightarrow \lambda = \frac{v}{f} \)</p>
+                    <p>Vì vận tốc truyền âm \( v \) không đổi, nên bước sóng \( \lambda \) tỉ lệ nghịch với tần số \( f \).</p>
+                    <p>Để bước sóng ngắn nhất (\( \lambda_{min} \)), thì tần số âm phải lớn nhất (\( f_{max} \)).</p>
+                    <p>Theo đề bài: \( f_{max} = 16000 \text{ Hz} \).</p>
+                    <p>Bước sóng ngắn nhất là:</p>
+                    <p class="text-center text-lg my-2 font-bold text-blue-800">
+                        \( \lambda_{min} = \frac{v}{f_{max}} = \frac{330}{16000} = 0,020625 \text{ (m)} = 2,0625 \text{ (cm)} \)
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- EM ĐÃ HỌC -->
+        <div class="bg-yellow-50 border-2 border-yellow-300 rounded-12px shadow p-6">
+            <h3 class="text-yellow-800 font-bold text-lg mb-4 flex items-center">
+                <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                EM ĐÃ HỌC
+            </h3>
+            <ul class="list-disc ml-6 space-y-2 text-gray-800">
+                <li>Sóng trong đó các phần tử của môi trường dao động theo phương vuông góc với phương truyền sóng gọi là <strong>sóng ngang</strong>.</li>
+                <li>Sóng trong đó các phần tử của môi trường dao động theo phương trùng với phương truyền sóng gọi là <strong>sóng dọc</strong>.</li>
+                <li>Quá trình truyền sóng là quá trình truyền năng lượng.</li>
+                <li>Nguồn sóng là nguồn năng lượng. Sóng mang năng lượng của nguồn đến mọi nơi trên phương truyền sóng.</li>
+                <li>Mọi sóng mang năng lượng đi xa mà <strong>không mang các phần tử vật chất đi cùng</strong>. Đó là điểm khác biệt căn bản giữa chuyển động của sóng và chuyển động của hạt.</li>
+            </ul>
+        </div>
+
+        <!-- EM CÓ THỂ -->
+        <div class="bg-purple-50 border-2 border-purple-300 rounded-12px shadow p-6">
+            <h3 class="text-purple-800 font-bold text-lg mb-4 flex items-center">
+                <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                EM CÓ THỂ
+            </h3>
+            <ul class="list-disc ml-6 space-y-2 text-gray-800">
+                <li>Nêu được ví dụ trong thực tế chứng tỏ sóng truyền năng lượng.</li>
+                <li>Nêu được ví dụ về sóng dọc và sóng ngang trong thực tiễn.</li>
+                <li>Sử dụng mô hình sóng để giải thích được một số tính chất đơn giản của âm.</li>
+            </ul>
+        </div>
+
+        <!-- BÀI TẬP VẬN DỤNG TÍNH TOÁN (Thêm theo yêu cầu) -->
+        <div class="bg-white rounded-12px shadow-md p-6 md:p-8">
+            <h2 class="text-xl font-bold uppercase section-header text-gray-900">Bài tập vận dụng thêm</h2>
+            
+            <!-- Vận dụng 1 -->
+            <div class="mb-6 pb-4 border-b border-gray-200">
+                <p class="font-bold mb-3">Bài 1: <span class="font-normal">Một nguồn phát sóng dao động với tần số \( 50 \text{ Hz} \). Sóng truyền đi với bước sóng bằng \( 0,4 \text{ m} \). Tốc độ truyền sóng là bao nhiêu?</span></p>
+                <button onclick="toggleAnswer('vd-1')" class="bg-primary hover:bg-red-700 text-white px-4 py-2 rounded shadow transition text-sm">Xem lời giải</button>
+                <div id="vd-1" class="hidden bg-abg p-4 rounded mt-4 border border-green-300">
+                    <p><strong>Giải:</strong></p>
+                    <p>Áp dụng công thức liên hệ giữa vận tốc, bước sóng và tần số:</p>
+                    <p>\( v = \lambda \cdot f \)</p>
+                    <p>\( v = 0,4 \cdot 50 = 20 \text{ (m/s)} \)</p>
+                    <p><strong>Đáp số:</strong> 20 m/s.</p>
+                </div>
+            </div>
+
+            <!-- Vận dụng 2 -->
+            <div class="mb-6 pb-4 border-b border-gray-200">
+                <p class="font-bold mb-3">Bài 2: <span class="font-normal">Sóng âm truyền trong nước với tốc độ \( 1500 \text{ m/s} \). Một máy phát sóng âm dưới nước phát ra sóng có chu kì \( 0,002 \text{ s} \). Khoảng cách giữa 2 điểm gần nhất trên cùng một phương truyền sóng dao động cùng pha bằng bao nhiêu?</span></p>
+                <button onclick="toggleAnswer('vd-2')" class="bg-primary hover:bg-red-700 text-white px-4 py-2 rounded shadow transition text-sm">Xem lời giải</button>
+                <div id="vd-2" class="hidden bg-abg p-4 rounded mt-4 border border-green-300">
+                    <p><strong>Giải:</strong></p>
+                    <p>Khoảng cách giữa 2 điểm gần nhất trên cùng một phương truyền sóng dao động cùng pha chính là 1 bước sóng \( \lambda \).</p>
+                    <p>Áp dụng công thức: \( \lambda = v \cdot T \)</p>
+                    <p>\( \lambda = 1500 \cdot 0,002 = 3 \text{ (m)} \)</p>
+                    <p><strong>Đáp số:</strong> 3 m.</p>
+                </div>
+            </div>
+
+            <!-- Vận dụng 3 -->
+            <div>
+                <p class="font-bold mb-3">Bài 3: <span class="font-normal">Tại sao khi ta đứng ở xa một sân khấu ngoài trời, ta lại thấy ca sĩ mấp máy môi trước, sau đó mới nghe tiếng hát?</span></p>
+                <button onclick="toggleAnswer('vd-3')" class="bg-primary hover:bg-red-700 text-white px-4 py-2 rounded shadow transition text-sm">Xem lời giải</button>
+                <div id="vd-3" class="hidden bg-abg p-4 rounded mt-4 border border-green-300">
+                    <p><strong>Giải:</strong></p>
+                    <p>Hành động mấp máy môi của ca sĩ được ta nhìn thấy nhờ <strong>sóng ánh sáng</strong> truyền đến mắt ta. Tốc độ truyền ánh sáng trong không khí rất lớn (khoảng \( 3 \cdot 10^8 \text{ m/s} \)), gần như tức thời.</p>
+                    <p>Tiếng hát là <strong>sóng âm</strong> truyền trong không khí, có tốc độ chậm hơn rất nhiều (chỉ khoảng \( 340 \text{ m/s} \)).</p>
+                    <p>Do đứng xa, thời gian sóng âm truyền đến tai lớn hơn thời gian ánh sáng truyền đến mắt, nên ta thấy hình ảnh trước khi nghe âm thanh.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- BÀI TẬP TRẮC NGHIỆM -->
+        <div class="bg-white rounded-12px shadow-md p-6 md:p-8">
+            <h2 class="text-xl font-bold uppercase section-header text-gray-900">Trắc nghiệm củng cố</h2>
+            
+            <form id="quiz-form" onsubmit="event.preventDefault(); checkQuiz();">
+                
+                <!-- Q1 -->
+                <div class="mb-6 p-4 rounded-lg border border-gray-200 quiz-item" id="q1-box">
+                    <p class="font-bold mb-3">Câu 1: Sóng ngang là sóng mà phương dao động của các phần tử môi trường:</p>
+                    <div class="space-y-2">
+                        <label class="flex items-center space-x-2 cursor-pointer"><input type="radio" name="q1" value="A" class="form-radio text-primary h-4 w-4"> <span>A. Trùng với phương truyền sóng.</span></label>
+                        <label class="flex items-center space-x-2 cursor-pointer"><input type="radio" name="q1" value="B" class="form-radio text-primary h-4 w-4"> <span>B. Vuông góc với phương truyền sóng.</span></label>
+                        <label class="flex items-center space-x-2 cursor-pointer"><input type="radio" name="q1" value="C" class="form-radio text-primary h-4 w-4"> <span>C. Thẳng đứng lên xuống.</span></label>
+                        <label class="flex items-center space-x-2 cursor-pointer"><input type="radio" name="q1" value="D" class="form-radio text-primary h-4 w-4"> <span>D. Nằm ngang song song mặt đất.</span></label>
+                    </div>
+                    <div id="exp-q1" class="hidden mt-3 p-3 bg-blue-50 text-blue-800 text-sm rounded">
+                        <strong>Giải thích:</strong> Theo định nghĩa, sóng ngang có phương dao động vuông góc với phương truyền sóng. Đáp án B đúng.
+                    </div>
+                </div>
+
+                <!-- Q2 -->
+                <div class="mb-6 p-4 rounded-lg border border-gray-200 quiz-item" id="q2-box">
+                    <p class="font-bold mb-3">Câu 2: Sóng dọc truyền được trong các môi trường nào?</p>
+                    <div class="space-y-2">
+                        <label class="flex items-center space-x-2 cursor-pointer"><input type="radio" name="q2" value="A" class="form-radio text-primary h-4 w-4"> <span>A. Chỉ trong chất rắn.</span></label>
+                        <label class="flex items-center space-x-2 cursor-pointer"><input type="radio" name="q2" value="B" class="form-radio text-primary h-4 w-4"> <span>B. Chỉ trong chất khí.</span></label>
+                        <label class="flex items-center space-x-2 cursor-pointer"><input type="radio" name="q2" value="C" class="form-radio text-primary h-4 w-4"> <span>C. Trong chất rắn, lỏng và khí.</span></label>
+                        <label class="flex items-center space-x-2 cursor-pointer"><input type="radio" name="q2" value="D" class="form-radio text-primary h-4 w-4"> <span>D. Trong mọi môi trường kể cả chân không.</span></label>
+                    </div>
+                    <div id="exp-q2" class="hidden mt-3 p-3 bg-blue-50 text-blue-800 text-sm rounded">
+                        <strong>Giải thích:</strong> Sóng dọc lan truyền do sự nén dãn của môi trường, nên nó truyền được trong cả 3 trạng thái: rắn, lỏng, khí. Sóng cơ không truyền được trong chân không. Đáp án C.
+                    </div>
+                </div>
+
+                <!-- Q3 -->
+                <div class="mb-6 p-4 rounded-lg border border-gray-200 quiz-item" id="q3-box">
+                    <p class="font-bold mb-3">Câu 3: Sóng cơ học khi lan truyền <strong>không</strong> mang theo thứ gì sau đây?</p>
+                    <div class="space-y-2">
+                        <label class="flex items-center space-x-2 cursor-pointer"><input type="radio" name="q3" value="A" class="form-radio text-primary h-4 w-4"> <span>A. Năng lượng.</span></label>
+                        <label class="flex items-center space-x-2 cursor-pointer"><input type="radio" name="q3" value="B" class="form-radio text-primary h-4 w-4"> <span>B. Pha dao động.</span></label>
+                        <label class="flex items-center space-x-2 cursor-pointer"><input type="radio" name="q3" value="C" class="form-radio text-primary h-4 w-4"> <span>C. Trạng thái dao động.</span></label>
+                        <label class="flex items-center space-x-2 cursor-pointer"><input type="radio" name="q3" value="D" class="form-radio text-primary h-4 w-4"> <span>D. Phần tử vật chất.</span></label>
+                    </div>
+                    <div id="exp-q3" class="hidden mt-3 p-3 bg-blue-50 text-blue-800 text-sm rounded">
+                        <strong>Giải thích:</strong> Mọi sóng mang năng lượng và trạng thái dao động đi xa mà không mang các phần tử vật chất đi cùng. Các phần tử chỉ dao động tại chỗ. Đáp án D.
+                    </div>
+                </div>
+
+                <!-- Q4 -->
+                <div class="mb-6 p-4 rounded-lg border border-gray-200 quiz-item" id="q4-box">
+                    <p class="font-bold mb-3">Câu 4: Sóng âm thanh truyền trong không khí (như giọng nói, tiếng nhạc) là loại sóng gì?</p>
+                    <div class="space-y-2">
+                        <label class="flex items-center space-x-2 cursor-pointer"><input type="radio" name="q4" value="A" class="form-radio text-primary h-4 w-4"> <span>A. Sóng ngang.</span></label>
+                        <label class="flex items-center space-x-2 cursor-pointer"><input type="radio" name="q4" value="B" class="form-radio text-primary h-4 w-4"> <span>B. Sóng dọc.</span></label>
+                        <label class="flex items-center space-x-2 cursor-pointer"><input type="radio" name="q4" value="C" class="form-radio text-primary h-4 w-4"> <span>C. Vừa là sóng ngang vừa là sóng dọc.</span></label>
+                        <label class="flex items-center space-x-2 cursor-pointer"><input type="radio" name="q4" value="D" class="form-radio text-primary h-4 w-4"> <span>D. Sóng điện từ.</span></label>
+                    </div>
+                    <div id="exp-q4" class="hidden mt-3 p-3 bg-blue-50 text-blue-800 text-sm rounded">
+                        <strong>Giải thích:</strong> Âm thanh truyền trong chất khí thông qua các lớp không khí bị nén, dãn dọc theo phương truyền sóng, do đó nó là sóng dọc. Đáp án B.
+                    </div>
+                </div>
+
+                <!-- Q5 -->
+                <div class="mb-6 p-4 rounded-lg border border-gray-200 quiz-item" id="q5-box">
+                    <p class="font-bold mb-3">Câu 5: Âm nghe được (âm thanh) có dải tần số nằm trong khoảng nào?</p>
+                    <div class="space-y-2">
+                        <label class="flex items-center space-x-2 cursor-pointer"><input type="radio" name="q5" value="A" class="form-radio text-primary h-4 w-4"> <span>A. Dưới 16 Hz.</span></label>
+                        <label class="flex items-center space-x-2 cursor-pointer"><input type="radio" name="q5" value="B" class="form-radio text-primary h-4 w-4"> <span>B. Trên 20000 Hz.</span></label>
+                        <label class="flex items-center space-x-2 cursor-pointer"><input type="radio" name="q5" value="C" class="form-radio text-primary h-4 w-4"> <span>C. Từ 16 Hz đến 20000 Hz.</span></label>
+                        <label class="flex items-center space-x-2 cursor-pointer"><input type="radio" name="q5" value="D" class="form-radio text-primary h-4 w-4"> <span>D. Từ 0 Hz đến vô cùng.</span></label>
+                    </div>
+                    <div id="exp-q5" class="hidden mt-3 p-3 bg-blue-50 text-blue-800 text-sm rounded">
+                        <strong>Giải thích:</strong> Theo phần "Em có biết", dải tần số âm thanh con người nghe được là từ 16 Hz đến 20000 Hz. Dưới 16Hz là hạ âm, trên 20000Hz là siêu âm. Đáp án C.
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-4 mt-6">
+                    <button type="submit" class="bg-blue-900 hover:bg-blue-800 text-white font-bold py-3 px-8 rounded shadow-lg transition duration-200 uppercase tracking-wide">
+                        Nộp Bài
+                    </button>
+                    <div id="quiz-result" class="text-xl font-bold font-sans"></div>
+                </div>
+            </form>
+        </div>
+
+    </div>
+
+    <!-- JavaScript Functions -->
+    <script>
+        // Hàm ẩn/hiện lời giải
+        function toggleAnswer(id) {
+            const el = document.getElementById(id);
+            if (el.classList.contains('hidden')) {
+                el.classList.remove('hidden');
+            } else {
+                el.classList.add('hidden');
+            }
+        }
+
+        // Hàm kiểm tra bài trắc nghiệm
+        function checkQuiz() {
+            const answers = {
+                q1: 'B',
+                q2: 'C',
+                q3: 'D',
+                q4: 'B',
+                q5: 'C'
+            };
+
+            let score = 0;
+            const total = Object.keys(answers).length;
+
+            for (let q in answers) {
+                const radios = document.getElementsByName(q);
+                let selected = null;
+                for (let r of radios) {
+                    if (r.checked) {
+                        selected = r.value;
+                        break;
+                    }
+                }
+
+                const box = document.getElementById(q + '-box');
+                const exp = document.getElementById('exp-' + q);
+                
+                // Reset styling
+                box.classList.remove('border-green-500', 'bg-green-50', 'border-red-500', 'bg-red-50');
+                
+                // Hiển thị giải thích
+                exp.classList.remove('hidden');
+
+                if (selected === answers[q]) {
+                    score++;
+                    box.classList.add('border-green-500', 'bg-green-50', 'border-2');
+                } else {
+                    box.classList.add('border-red-500', 'bg-red-50', 'border-2');
+                }
+            }
+
+            // Hiển thị kết quả
+            const resultDiv = document.getElementById('quiz-result');
+            if (score === total) {
+                resultDiv.innerHTML = `Tuyệt vời! Bạn làm đúng ${score}/${total} câu. 🎉`;
+                resultDiv.className = 'text-xl font-bold font-sans text-green-600';
+            } else {
+                resultDiv.innerHTML = `Bạn làm đúng ${score}/${total} câu. Hãy xem lại giải thích bên trên nhé!`;
+                resultDiv.className = 'text-xl font-bold font-sans text-red-600';
+            }
+            
+            // Re-render math in explanations just in case
+            if (window.MathJax) {
+                MathJax.typesetPromise();
+            }
+        }
+    </script>
+</body>
+</html>
