@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mô phỏng Thang Tần số & Động vật</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        input[type=range] {
+            height: 38px;
+            -webkit-appearance: none;
+            margin: 10px 0;
+            width: 100%;
+            background: transparent;
+        }
+        input[type=range]:focus {
+            outline: none;
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 12px;
+            cursor: pointer;
+            background: #e2e8f0;
+            border-radius: 10px;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            height: 28px;
+            width: 28px;
+            border-radius: 50%;
+            background: #3b82f6;
+            cursor: pointer;
+            -webkit-appearance: none;
+            margin-top: -8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.2);
+        }
+        .animal-card {
+            transition: all 0.3s ease;
+            opacity: 0.3;
+            transform: scale(0.9);
+        }
+        .animal-active {
+            opacity: 1;
+            transform: scale(1.05);
+            border-color: #3b82f6;
+            background-color: #eff6ff;
+        }
+    </style>
+</head>
+<body class="bg-slate-100 min-h-screen flex items-center justify-center p-4">
+
+    <div class="bg-white p-8 rounded-3xl shadow-2xl w-full max-w-4xl">
+        <h1 class="text-3xl font-bold text-center text-slate-800 mb-2">Thang Tần số Sóng âm</h1>
+        <p class="text-center text-slate-500 mb-8 italic">Kéo thanh trượt để khám phá thế giới âm thanh của muôn loài</p>
+
+        <!-- Display Area -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+            <div class="flex flex-col justify-center items-center p-6 bg-slate-50 rounded-2xl border border-slate-100">
+                <div id="typeLabel" class="px-4 py-1 rounded-full text-sm font-bold mb-2 bg-red-100 text-red-600">HẠ ÂM</div>
+                <div class="text-6xl font-black text-blue-600 mb-2"><span id="freqValue">1</span> <span class="text-2xl">Hz</span></div>
+                <div id="statusText" class="text-slate-500 text-sm text-center h-10">Tai người không thể nghe thấy</div>
+                
+                <button id="audioToggle" class="mt-6 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-full transition-all flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
+                    Bật âm thanh
+                </button>
+            </div>
+
+            <div class="space-y-4">
+                <h3 class="font-bold text-slate-700">Khả năng nghe của các loài:</h3>
+                <div id="animalContainer" class="grid grid-cols-2 gap-3">
+                    <!-- Elephant -->
+                    <div id="animal-voi" class="animal-card border-2 p-3 rounded-xl flex flex-col items-center">
+                        <span class="text-3xl">🐘</span>
+                        <span class="font-bold text-sm">Voi</span>
+                        <span class="text-xs text-slate-400">14 - 12,000 Hz</span>
+                    </div>
+                    <!-- Human -->
+                    <div id="animal-nguoi" class="animal-card border-2 p-3 rounded-xl flex flex-col items-center">
+                        <span class="text-3xl">👨‍🦱</span>
+                        <span class="font-bold text-sm">Người</span>
+                        <span class="text-xs text-slate-400">20 - 20,000 Hz</span>
+                    </div>
+                    <!-- Dog -->
+                    <div id="animal-cho" class="animal-card border-2 p-3 rounded-xl flex flex-col items-center">
+                        <span class="text-3xl">🐕</span>
+                        <span class="font-bold text-sm">Chó</span>
+                        <span class="text-xs text-slate-400">67 - 45,000 Hz</span>
+                    </div>
+                    <!-- Dolphin/Bat -->
+                    <div id="animal-doi" class="animal-card border-2 p-3 rounded-xl flex flex-col items-center">
+                        <span class="text-3xl">🦇</span>
+                        <span class="font-bold text-sm">Dơi/Cá heo</span>
+                        <span class="text-xs text-slate-400">Up to 150kHz</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slider -->
+        <div class="px-4">
+            <input type="range" id="freqSlider" min="0" max="5" step="0.001" value="0">
+            <div class="flex justify-between text-xs font-bold text-slate-400 mt-2">
+                <span>HẠ ÂM (1Hz)</span>
+                <span>NGHE ĐƯỢC (20Hz - 20kHz)</span>
+                <span>SIÊU ÂM (100kHz)</span>
+            </div>
+        </div>
+
+        <div class="mt-8 p-4 bg-amber-50 rounded-xl border border-amber-100">
+            <p class="text-sm text-amber-800 leading-relaxed">
+                <strong>Ghi chú:</strong> Tần số thấp (như 50Hz) đòi hỏi loa có kích thước lớn (loa bass) để nghe rõ. Tai người nhạy nhất ở khoảng 2000Hz - 4000Hz (giọng nói).
+            </p>
+        </div>
+    </div>
+
+    <script>
+        const slider = document.getElementById('freqSlider');
+        const freqValueDisplay = document.getElementById('freqValue');
+        const typeLabel = document.getElementById('typeLabel');
+        const statusText = document.getElementById('statusText');
+        const audioToggle = document.getElementById('audioToggle');
+
+        // Audio State
+        let audioCtx = null;
+        let oscillator = null;
+        let gainNode = null;
+        let isPlaying = false;
+
+        const animals = {
+            voi: { min: 14, max: 12000, el: document.getElementById('animal-voi') },
+            nguoi: { min: 20, max: 20000, el: document.getElementById('animal-nguoi') },
+            cho: { min: 67, max: 45000, el: document.getElementById('animal-cho') },
+            doi: { min: 1000, max: 150000, el: document.getElementById('animal-doi') }
+        };
+
+        function initAudio() {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            oscillator = audioCtx.createOscillator();
+            gainNode = audioCtx.createGain();
+            
+            oscillator.type = 'sine';
+            oscillator.frequency.setValueAtTime(1, audioCtx.currentTime);
+            
+            // Smoother volume transition
+            gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            oscillator.start();
+            audioCtx.suspend();
+        }
+
+        function updateUI(freq) {
+            const f = Math.round(freq);
+            freqValueDisplay.innerText = f.toLocaleString();
+
+            // Update Labels
+            if (f < 20) {
+                typeLabel.innerText = "HẠ ÂM";
+                typeLabel.className = "px-4 py-1 rounded-full text-sm font-bold mb-2 bg-red-100 text-red-600";
+                statusText.innerText = "Tai người không thể nghe (chỉ cảm nhận rung động)";
+            } else if (f <= 20000) {
+                typeLabel.innerText = "NGHE ĐƯỢC";
+                typeLabel.className = "px-4 py-1 rounded-full text-sm font-bold mb-2 bg-green-100 text-green-600";
+                statusText.innerText = "Âm thanh nằm trong ngưỡng nghe của con người";
+            } else {
+                typeLabel.innerText = "SIÊU ÂM";
+                typeLabel.className = "px-4 py-1 rounded-full text-sm font-bold mb-2 bg-purple-100 text-purple-600";
+                statusText.innerText = "Tai người không thể nghe (Dùng trong y tế, radar)";
+            }
+
+            // Update Animals
+            for (let key in animals) {
+                const a = animals[key];
+                if (f >= a.min && f <= a.max) {
+                    a.el.classList.add('animal-active');
+                } else {
+                    a.el.classList.remove('animal-active');
+                }
+            }
+
+            // Update Sound
+            if (oscillator && audioCtx) {
+                // Chúng ta giới hạn âm thanh phát ra tối đa 20kHz để bảo vệ tai và loa
+                const safeFreq = Math.min(f, 20000);
+                oscillator.frequency.setTargetAtTime(safeFreq, audioCtx.currentTime, 0.05);
+                
+                // Giảm âm lượng khi tần số quá cao để tránh khó chịu
+                let vol = 0.1;
+                if (f > 15000) vol = 0.02;
+                if (f < 40) vol = 0.3; // Tăng âm trầm để dễ nghe hơn nếu loa tốt
+                gainNode.gain.setTargetAtTime(vol, audioCtx.currentTime, 0.1);
+            }
+        }
+
+        slider.addEventListener('input', (e) => {
+            // Logarithmic scale: 10^0 to 10^5 (1Hz to 100,000Hz)
+            const freq = Math.pow(10, e.target.value);
+            updateUI(freq);
+        });
+
+        audioToggle.addEventListener('click', () => {
+            if (!audioCtx) initAudio();
+            
+            if (isPlaying) {
+                audioCtx.suspend();
+                audioToggle.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg> Bật âm thanh`;
+                audioToggle.classList.replace('bg-red-600', 'bg-blue-600');
+            } else {
+                audioCtx.resume();
+                audioToggle.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg> Tắt âm thanh`;
+                audioToggle.classList.replace('bg-blue-600', 'bg-red-600');
+            }
+            isPlaying = !isPlaying;
+            updateUI(Math.pow(10, slider.value));
+        });
+
+    </script>
+</body>
+</html>
