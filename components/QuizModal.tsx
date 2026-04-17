@@ -14,13 +14,14 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 interface QuizModalProps {
   nodeId: string;
   lessonTitle: string;
+  lessonUrl?: string;
   isAdmin: boolean;
   selectedGrade: number | null;
   themeColor: string;
   onClose: () => void;
 }
 
-const QuizModal: React.FC<QuizModalProps> = ({ nodeId, lessonTitle, isAdmin, selectedGrade, themeColor, onClose }) => {
+const QuizModal: React.FC<QuizModalProps> = ({ nodeId, lessonTitle, lessonUrl, isAdmin, selectedGrade, themeColor, onClose }) => {
   const [questions, setQuestions] = useState<QuizQuestion[]>([]);
   const [fullBank, setFullBank] = useState<QuizQuestion[]>([]);
   const [loading, setLoading] = useState(false);
@@ -96,12 +97,26 @@ const QuizModal: React.FC<QuizModalProps> = ({ nodeId, lessonTitle, isAdmin, sel
     try {
       const ai = new GoogleGenAI({ apiKey });
       const gradeLabel = selectedGrade === 1 ? '11' : (selectedGrade || '11');
+      
+      let prompt = `Tạo 5 câu trắc nghiệm Vật lý ${gradeLabel} bài: "${lessonTitle}". 
+      2 Biết/Hiểu, 2 Vận dụng, 1 Vận dụng cao. 
+      Sử dụng $...$ cho công thức. Xuất JSON array.`;
+
+      const tools: any[] = [];
+      if (lessonUrl) {
+        tools.push({ googleSearch: {} });
+        prompt = `Hãy truy cập và đọc nội dung từ đường link bài học sau đây: ${lessonUrl}. 
+        Dựa trên nội dung bài học đó, hãy soạn 5 câu trắc nghiệm Vật lý ${gradeLabel}. 
+        Nếu không truy cập được link, hãy soạn dựa trên tên bài: "${lessonTitle}".
+        Phân bổ: 2 Biết/Hiểu, 2 Vận dụng, 1 Vận dụng cao. 
+        Sử dụng $...$ cho công thức LaTeX. Xuất kết quả dưới dạng JSON array.`;
+      }
+
       const response = await ai.models.generateContent({
         model: 'gemini-3-flash-preview',
-        contents: `Tạo 5 câu trắc nghiệm Vật lý ${gradeLabel} bài: "${lessonTitle}". 
-        2 Biết/Hiểu, 2 Vận dụng, 1 Vận dụng cao. 
-        Sử dụng $...$ cho công thức. Xuất JSON array.`,
+        contents: prompt,
         config: {
+          tools: tools.length > 0 ? tools : undefined,
           responseMimeType: "application/json",
           responseSchema: {
             type: Type.ARRAY,
