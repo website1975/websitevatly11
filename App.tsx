@@ -478,6 +478,7 @@ const MainView: React.FC<{ isAdmin: boolean; data: AppData; updateData: (d: AppD
         <QuizModal 
           nodeId={selectedId!}
           lessonTitle={selectedNode.title} 
+          lessonUrl={selectedNode.url}
           isAdmin={isAdmin}
           selectedGrade={selectedGrade}
           themeColor={themeColor}
