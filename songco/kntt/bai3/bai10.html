@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bài 10: THỰC HÀNH ĐO TẦN SỐ CỦA SÓNG ÂM</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        mainBg: '#f4f7f9',
+                        primary: '#EE0000',
+                        boxBorder: '#cbd5e0',
+                        tableHead: '#e2e8f0',
+                        questionBg: '#edf2f7',
+                        answerBg: '#d1fae5', // Xanh lá nhạt
+                        darkBlue: '#1e3a8a',
+                    },
+                    fontFamily: {
+                        sans: ['"Segoe UI"', 'Roboto', 'Helvetica', 'Arial', 'sans-serif'],
+                    },
+                    borderRadius: {
+                        '12px': '12px',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- MathJax -->
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    </style>
+</head>
+<body class="bg-mainBg text-gray-800 p-4 md:p-8">
+
+    <div class="max-w-5xl mx-auto space-y-8">
+        
+        <!-- HEADER -->
+        <div class="bg-primary text-white text-center p-6 rounded-12px shadow-md">
+            <h2 class="text-xl md:text-2xl font-semibold mb-2">CHƯƠNG II - SÓNG</h2>
+            <h1 class="text-2xl md:text-4xl font-extrabold uppercase tracking-wide">Bài 10: Thực hành đo tần số của sóng âm</h1>
+        </div>
+
+        <!-- INTRO BOX -->
+        <div class="bg-white border border-gray-800 p-5 rounded-12px shadow-md italic text-lg text-gray-700">
+            Để chỉnh các dây đàn, có thể so sánh tần số âm của nhạc cụ với âm phát ra từ âm thoa có tần số xác định. Làm thế nào kiểm tra tần số âm được ghi trên âm thoa bằng dụng cụ thí nghiệm?
+        </div>
+
+        <!-- PHẦN I -->
+        <div>
+            <h3 class="text-2xl font-bold text-primary uppercase border-b-4 border-darkBlue pb-2 mb-4 inline-block">I. Giới thiệu dao động kí điện tử</h3>
+            
+            <div class="bg-white p-6 rounded-12px shadow-md space-y-4">
+                <p>Dao động kí là thiết bị dùng để hiển thị trên màn hình dạng tín hiệu đưa vào cần quan sát. Khoảng tần số đo được phụ thuộc vào từng loại dao động kí.</p>
+                
+                <p class="font-semibold">Dao động kí có các tính năng cơ bản sau:</p>
+                <ul class="list-disc ml-6 space-y-1">
+                    <li>Đo cường độ của tín hiệu dao động điện.</li>
+                    <li>Đo tần số, chu kì, khoảng thời gian của tín hiệu dao động điện.</li>
+                </ul>
+
+                <p class="font-semibold mt-4">Cách sử dụng dao động kí để đo tín hiệu:</p>
+                <ul class="list-decimal ml-6 space-y-2">
+                    <li>Nối que đo vào chân cắm tín hiệu vào.</li>
+                    <li>Chọn dạng tín hiệu đo AC hoặc DC.</li>
+                    <li>Nối dao động kí với bộ nguồn và bật công tắc.</li>
+                    <li>Sử dụng dây đo nối với đầu tín hiệu cần đo.</li>
+                    <li>Nhấn nút <strong>TRIGGER</strong> để chế độ là Auto.</li>
+                    <li>Nhấn nút <strong>VOLTS/DIV</strong> điều chỉnh biên độ dao động.</li>
+                    <li>Nhấn nút <strong>SEC/DIV</strong> điều chỉnh giá trị tương ứng với một ô hiển thị trên màn hình.</li>
+                    <li>Sử dụng nút điều chỉnh lên xuống đồ thị tín hiệu.</li>
+                </ul>
+
+                <!-- Khung lưu ý -->
+                <div class="bg-yellow-50 border-l-4 border-yellow-500 p-4 rounded text-yellow-900 my-4">
+                    <strong>⚠️ Lưu ý:</strong> Mỗi dao động kí chỉ đo được tín hiệu có hiệu điện thế nhất định, nếu vượt quá có thể hỏng thiết bị.
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 my-6">
+                    <div class="border-2 border-dashed border-gray-400 bg-gray-100 flex items-center justify-center text-gray-500 rounded-lg min-h-[250px] p-2 text-center">
+			 <img src="h1.png" class="max-h-full max-w-full object-contain"></img>
+                    </div>
+                    <div class="border-2 border-dashed border-gray-400 bg-gray-100 flex items-center justify-center text-gray-500 rounded-lg min-h-[250px] p-2 text-center">
+			<img src="h2.png" class="max-h-full max-w-full object-contain"></img>
+                    </div>
+                </div>
+
+                <!-- Câu hỏi Hình 10.2 -->
+                <div class="bg-questionBg border-l-4 border-darkBlue p-4 rounded-r-lg mt-4">
+                    <p class="font-semibold mb-2">❓ Vấn đề:</p>
+                    <p>Quan sát màn hình hiển thị tín hiệu dao động điện trên dao động kí (Hình 10.2), hãy xác định tần số dao động của tín hiệu.</p>
+                    <button onclick="toggleAnswer('ans_h102')" class="mt-3 bg-primary text-white font-semibold px-4 py-2 rounded-lg hover:bg-red-700 transition">Xem hướng giải quyết</button>
+                </div>
+                <div id="ans_h102" class="hidden mt-2 bg-answerBg border border-green-400 p-4 rounded-lg text-green-900">
+                    <strong>Hướng giải quyết:</strong><br>
+                    - Bước 1: Đếm số ô nằm ngang tương ứng với 1 chu kì (từ một đỉnh sóng đến đỉnh sóng tiếp theo liền kề).<br>
+                    - Bước 2: Đọc giá trị tương ứng của 1 ô trên thang đo thời gian (SEC/DIV) hiển thị trên màn hình dao động kí.<br>
+                    - Bước 3: Tính chu kì \( T = (\text{Số ô của 1 chu kì}) \times (\text{Giá trị SEC/DIV}) \).<br>
+                    - Bước 4: Tính tần số theo công thức \( f = \frac{1}{T} \).
+                </div>
+            </div>
+        </div>
+
+        <!-- PHẦN II -->
+        <div>
+            <h3 class="text-2xl font-bold text-primary uppercase border-b-4 border-darkBlue pb-2 mb-4 inline-block">II. Thực hành đo tần số sóng âm</h3>
+            
+            <div class="bg-white p-6 rounded-12px shadow-md space-y-6">
+                <!-- 1. Dụng cụ -->
+                <div>
+                    <h4 class="text-xl font-bold text-gray-800 mb-2">1. Dụng cụ thí nghiệm</h4>
+                    <ul class="list-disc ml-6 space-y-1">
+                        <li>Dao động kí điện tử và dây đo (1).</li>
+                        <li>Micro (2).</li>
+                        <li>Bộ khuếch đại tín hiệu (3).</li>
+                        <li>Âm thoa và búa cao su (4).</li>
+                        <li>Giá đỡ và kẹp giữ âm thoa.</li>
+                    </ul>
+                    <div class="flex flex-col md:flex-row justify-center gap-6 my-4">
+                        <div class="w-full md:w-1/2 border-2 border-dashed border-gray-400 bg-gray-100 flex items-center justify-center text-gray-500 rounded-lg min-h-[250px] p-2 text-center">
+                            <img src="h3.png" class="max-h-full max-w-full object-contain"></img>
+                        </div>
+                        <div class="w-full md:w-1/2 border-2 border-dashed border-gray-400 bg-gray-100 flex items-center justify-center text-gray-500 rounded-lg min-h-[250px] p-2 text-center">
+                            <img src="h4.png" class="max-h-full max-w-full object-contain"></img>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. Thiết kế phương án -->
+                <div>
+                    <h4 class="text-xl font-bold text-gray-800 mb-2">2. Thiết kế phương án thí nghiệm</h4>
+                    
+                    <div class="bg-questionBg border-l-4 border-darkBlue p-4 rounded-r-lg">
+                        <p class="font-semibold mb-2">Quan sát thí nghiệm Hình 10.4. Trả lời các câu hỏi sau:</p>
+                        <ol class="list-decimal ml-5 space-y-2">
+                            <li>Sóng âm truyền tới dao động kí như thế nào?</li>
+                            <li>Tại sao tần số dao động của tín hiệu đưa vào dao động kí lại bằng tần số dao động của âm thoa?</li>
+                            <li>Thiết kế phương án thí nghiệm để đo tần số sóng âm với các dụng cụ thí nghiệm trên.</li>
+                            <li>Làm thế nào để giảm ảnh hưởng của tiếng ồn bên ngoài đến phép đo?</li>
+                        </ol>
+                        <button onclick="toggleAnswer('ans_tkpa')" class="mt-4 bg-primary text-white font-semibold px-4 py-2 rounded-lg hover:bg-red-700 transition">Xem lời giải</button>
+                    </div>
+                    <div id="ans_tkpa" class="hidden mt-2 bg-answerBg border border-green-400 p-4 rounded-lg text-green-900 space-y-2">
+                        <strong>Lời giải chi tiết:</strong><br>
+                        <strong>1.</strong> Sóng âm do âm thoa phát ra truyền qua không khí đến micro. Màng micro dao động theo sóng âm, chuyển đổi tín hiệu âm thanh thành tín hiệu điện. Tín hiệu này đi qua bộ khuếch đại rồi truyền theo dây dẫn vào dao động kí.<br>
+                        <strong>2.</strong> Micro có màng rung hoạt động đồng bộ với sự thay đổi áp suất không khí do sóng âm tạo ra. Do đó, tần số của dòng điện xoay chiều do micro tạo ra hoàn toàn bằng với tần số dao động của âm thoa phát ra âm thanh đó.<br>
+                        <strong>3.</strong> Phương án: Bố trí micro gần âm thoa, nối qua bộ khuếch đại vào dao động kí. Kích thích âm thoa dao động bằng búa cao su. Quan sát tín hiệu trên màn hình dao động kí, đo chu kì \( T \) từ đồ thị, sau đó tính tần số \( f = \frac{1}{T} \).<br>
+                        <strong>4.</strong> Để giảm ảnh hưởng của tiếng ồn: Thực hiện trong không gian yên tĩnh, đóng kín cửa; đặt micro đủ gần âm thoa để tín hiệu chính lấn át tiếng ồn; có thể dùng vật liệu tiêu âm trong phòng thí nghiệm.
+                    </div>
+                </div>
+
+                <!-- 3. Tiến hành thí nghiệm -->
+                <div>
+                    <h4 class="text-xl font-bold text-gray-800 mb-2">3. Tiến hành thí nghiệm</h4>
+                    <ul class="list-decimal ml-6 space-y-2">
+                        <li>Bố trí thí nghiệm như Hình 10.4.</li>
+                        <li>Đặt micro cách âm thoa một khoảng 20 cm. Nối micro và bộ khuếch đại vào dao động kí, bật dao động kí.</li>
+                        <li>Dùng búa cao su gõ âm thoa.</li>
+                        <li>Xác định chu kì của sóng trên màn hình. Đọc giá trị \( T \) và ghi vào mẫu Bảng 10.1.</li>
+                        <li>Lặp lại các bước thí nghiệm 4, 5 hai lần.</li>
+                    </ul>
+
+                    <div class="bg-blue-50 border-l-4 border-blue-500 p-4 rounded text-blue-900 mt-4">
+                        <p class="font-semibold">Để dao động kí hiển thị dòng điện từ micro đi vào dao động kí thực hiện như sau:</p>
+                        <ul class="list-disc ml-5 mt-2">
+                            <li>Nối dây đo với cổng tín hiệu vào.</li>
+                            <li>Nối bộ khuếch đại tín hiệu micro vào dây đo.</li>
+                            <li>Đặt <strong>TRIGGER MODE</strong> ở chế độ <strong>AUTO</strong>. Điều chỉnh <strong>VOLTS/DIV</strong> cho tới khi thấy sóng trên màn hình.</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- 4. Kết quả thí nghiệm -->
+                <div>
+                    <h4 class="text-xl font-bold text-gray-800 mb-2">4. Kết quả thí nghiệm</h4>
+                    <p class="font-semibold mb-2">Bảng 10.1</p>
+                    <div class="overflow-x-auto">
+                        <table class="w-full border-collapse border border-boxBorder text-center">
+                            <thead class="bg-tableHead text-gray-700">
+                                <tr>
+                                    <th class="border border-boxBorder p-3 w-1/3">Đại lượng</th>
+                                    <th class="border border-boxBorder p-3">Lần 1</th>
+                                    <th class="border border-boxBorder p-3">Lần 2</th>
+                                    <th class="border border-boxBorder p-3">Lần 3</th>
+                                    <th class="border border-boxBorder p-3 font-bold">Giá trị trung bình</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td class="border border-boxBorder p-3 font-semibold text-left">Chu kì \( T(s) \)</td>
+                                    <td class="border border-boxBorder p-3">?</td>
+                                    <td class="border border-boxBorder p-3">?</td>
+                                    <td class="border border-boxBorder p-3">?</td>
+                                    <td class="border border-boxBorder p-3">?</td>
+                                </tr>
+                                <tr>
+                                    <td class="border border-boxBorder p-3 font-semibold text-left">Tần số \( f(Hz) \)</td>
+                                    <td class="border border-boxBorder p-3">?</td>
+                                    <td class="border border-boxBorder p-3">?</td>
+                                    <td class="border border-boxBorder p-3">?</td>
+                                    <td class="border border-boxBorder p-3">?</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="bg-questionBg border-l-4 border-darkBlue p-4 rounded-r-lg mt-6">
+                        <ul class="list-disc ml-5 space-y-2">
+                            <li>So sánh tần số sóng âm đo được với tần số ghi trên âm thoa.</li>
+                            <li>Ghi lại kết quả đo chu kì và xử lí kết quả thí nghiệm:</li>
+                            <ul class="list-[circle] ml-5">
+                                <li>Tính tần số sóng âm và ghi kết quả vào mẫu Bảng 10.1.</li>
+                                <li>Tính giá trị trung bình, sai số của phép đo chu kì và tần số.</li>
+                            </ul>
+                        </ul>
+                        <button onclick="toggleAnswer('ans_kq')" class="mt-4 bg-primary text-white font-semibold px-4 py-2 rounded-lg hover:bg-red-700 transition">Xem hướng dẫn xử lí</button>
+                    </div>
+                    <div id="ans_kq" class="hidden mt-2 bg-answerBg border border-green-400 p-4 rounded-lg text-green-900 space-y-2">
+                        <strong>Hướng dẫn:</strong><br>
+                        - Từ các giá trị \( T_1, T_2, T_3 \), tính giá trị trung bình: \( \bar{T} = \frac{T_1 + T_2 + T_3}{3} \).<br>
+                        - Tính tần số cho từng lần: \( f_1 = \frac{1}{T_1}, f_2 = \frac{1}{T_2}, f_3 = \frac{1}{T_3} \).<br>
+                        - Tính tần số trung bình: \( \bar{f} = \frac{f_1 + f_2 + f_3}{3} \).<br>
+                        - Tính sai số tuyệt đối của mỗi lần đo: \( \Delta T_1 = |\bar{T} - T_1| \), tương tự cho lần 2, 3.<br>
+                        - Tính sai số tuyệt đối trung bình: \( \Delta \bar{T} = \frac{\Delta T_1 + \Delta T_2 + \Delta T_3}{3} \).<br>
+                        - Kết quả phép đo ghi dưới dạng: \( T = \bar{T} \pm \Delta T \) và \( f = \bar{f} \pm \Delta f \).<br>
+                        - So sánh giá trị \( \bar{f} \) với con số ghi trên âm thoa (ví dụ âm thoa chuẩn ghi 440Hz), kết quả thường rất sát nhau, sai số nhỏ do hao phí hoặc độ nhạy của thiết bị.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- CÁC KHUNG THÔNG TIN BỔ SUNG -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Em đã học -->
+            <div class="bg-green-50 border-2 border-green-400 p-5 rounded-12px shadow-md">
+                <h4 class="text-lg font-bold text-green-800 mb-2 flex items-center">
+                    <span class="text-2xl mr-2">✅</span> EM ĐÃ HỌC
+                </h4>
+                <p>Đo được tần số của sóng âm bằng cách sử dụng dao động kí.</p>
+            </div>
+
+            <!-- Em có thể -->
+            <div class="bg-purple-50 border-2 border-purple-400 p-5 rounded-12px shadow-md">
+                <h4 class="text-lg font-bold text-purple-800 mb-2 flex items-center">
+                    <span class="text-2xl mr-2">🌟</span> EM CÓ THỂ
+                </h4>
+                <p>Sử dụng một số phần mềm trên điện thoại thông minh để chỉnh dây đàn ghita.</p>
+            </div>
+        </div>
+
+        <!-- Em có biết -->
+        <div class="bg-orange-50 border-2 border-orange-400 p-5 rounded-12px shadow-md">
+            <h4 class="text-lg font-bold text-orange-800 mb-3 flex items-center">
+                <span class="text-2xl mr-2">💡</span> EM CÓ BIẾT
+            </h4>
+            <p class="mb-4">Các nhạc cụ có thể phát ra các nốt nhạc cơ bản có tần số như Bảng 10.2. Với các quãng tám khác nhau thì tần số các nốt nhạc cũng có sự thay đổi.</p>
+            <p class="font-semibold text-center mb-2">Bảng 10.2. Bảng tần số các nốt nhạc cơ bản</p>
+            <div class="overflow-x-auto flex justify-center">
+                <table class="w-full md:w-3/4 border-collapse border border-boxBorder text-center">
+                    <thead class="bg-tableHead">
+                        <tr>
+                            <th class="border border-boxBorder p-2">Nốt nhạc (Kí hiệu)</th>
+                            <th class="border border-boxBorder p-2">Tần số (Hz)</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white">
+                        <tr><td class="border border-boxBorder p-2">Đô (C)</td><td class="border border-boxBorder p-2">262</td></tr>
+                        <tr><td class="border border-boxBorder p-2">Rê (D)</td><td class="border border-boxBorder p-2">294</td></tr>
+                        <tr><td class="border border-boxBorder p-2">Mi (E)</td><td class="border border-boxBorder p-2">330</td></tr>
+                        <tr><td class="border border-boxBorder p-2">Pha (F)</td><td class="border border-boxBorder p-2">349</td></tr>
+                        <tr><td class="border border-boxBorder p-2">Son (G)</td><td class="border border-boxBorder p-2">392</td></tr>
+                        <tr><td class="border border-boxBorder p-2 text-primary font-bold">La (A)</td><td class="border border-boxBorder p-2 text-primary font-bold">440</td></tr>
+                        <tr><td class="border border-boxBorder p-2">Si (B)</td><td class="border border-boxBorder p-2">494</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- ============================================== -->
+        <!-- PHẦN CỦNG CỐ & VẬN DỤNG -->
+        <!-- ============================================== -->
+        <div class="mt-12 pt-8 border-t-4 border-gray-300">
+            <h3 class="text-2xl font-bold text-center text-darkBlue uppercase mb-8">Kiểm tra củng cố và vận dụng</h3>
+
+            <!-- TRẮC NGHIỆM -->
+            <div class="bg-white p-6 rounded-12px shadow-md mb-8">
+                <h4 class="text-xl font-bold text-primary mb-4">A. Bài tập trắc nghiệm củng cố</h4>
+                <form id="quizForm" class="space-y-6">
+                    
+                    <!-- Câu 1 -->
+                    <div class="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                        <p class="font-semibold mb-2">Câu 1: Dao động kí điện tử dùng để làm gì trong bài thực hành này?</p>
+                        <div class="space-y-2 ml-4">
+                            <label class="block cursor-pointer"><input type="radio" name="q1" value="A" class="mr-2">A. Đo nhiệt độ của môi trường truyền âm.</label>
+                            <label class="block cursor-pointer"><input type="radio" name="q1" value="B" class="mr-2">B. Hiển thị dạng tín hiệu dao động điện để đo tần số, chu kì.</label>
+                            <label class="block cursor-pointer"><input type="radio" name="q1" value="C" class="mr-2">C. Trực tiếp phát ra âm thanh thay thế âm thoa.</label>
+                            <label class="block cursor-pointer"><input type="radio" name="q1" value="D" class="mr-2">D. Đo vận tốc truyền âm trong không khí.</label>
+                        </div>
+                    </div>
+
+                    <!-- Câu 2 -->
+                    <div class="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                        <p class="font-semibold mb-2">Câu 2: Để điều chỉnh biên độ dao động hiển thị trên màn hình dao động kí, ta dùng nút nào?</p>
+                        <div class="space-y-2 ml-4">
+                            <label class="block cursor-pointer"><input type="radio" name="q2" value="A" class="mr-2">A. Nút SEC/DIV</label>
+                            <label class="block cursor-pointer"><input type="radio" name="q2" value="B" class="mr-2">B. Nút TRIGGER</label>
+                            <label class="block cursor-pointer"><input type="radio" name="q2" value="C" class="mr-2">C. Nút VOLTS/DIV</label>
+                            <label class="block cursor-pointer"><input type="radio" name="q2" value="D" class="mr-2">D. Nút nguồn (Power)</label>
+                        </div>
+                    </div>
+
+                    <!-- Câu 3 -->
+                    <div class="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                        <p class="font-semibold mb-2">Câu 3: Bộ phận nào có chức năng biến đổi dao động cơ học của sóng âm thành tín hiệu dao động điện?</p>
+                        <div class="space-y-2 ml-4">
+                            <label class="block cursor-pointer"><input type="radio" name="q3" value="A" class="mr-2">A. Âm thoa</label>
+                            <label class="block cursor-pointer"><input type="radio" name="q3" value="B" class="mr-2">B. Bộ khuếch đại</label>
+                            <label class="block cursor-pointer"><input type="radio" name="q3" value="C" class="mr-2">C. Micro</label>
+                            <label class="block cursor-pointer"><input type="radio" name="q3" value="D" class="mr-2">D. Dây cáp nối</label>
+                        </div>
+                    </div>
+
+                    <!-- Câu 4 -->
+                    <div class="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                        <p class="font-semibold mb-2">Câu 4: Nút SEC/DIV trên dao động kí có chức năng điều chỉnh thông số gì?</p>
+                        <div class="space-y-2 ml-4">
+                            <label class="block cursor-pointer"><input type="radio" name="q4" value="A" class="mr-2">A. Điều chỉnh điện áp tương ứng với 1 ô trên trục tung.</label>
+                            <label class="block cursor-pointer"><input type="radio" name="q4" value="B" class="mr-2">B. Điều chỉnh giá trị thời gian tương ứng với 1 ô trên trục hoành.</label>
+                            <label class="block cursor-pointer"><input type="radio" name="q4" value="C" class="mr-2">C. Điều chỉnh độ sáng của màn hình hiển thị.</label>
+                            <label class="block cursor-pointer"><input type="radio" name="q4" value="D" class="mr-2">D. Điều chỉnh tự động bắt tín hiệu (Auto).</label>
+                        </div>
+                    </div>
+
+                    <!-- Câu 5 -->
+                    <div class="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                        <p class="font-semibold mb-2">Câu 5: Dựa vào thông tin bài học, nốt nhạc La (A) có tần số cơ bản là bao nhiêu?</p>
+                        <div class="space-y-2 ml-4">
+                            <label class="block cursor-pointer"><input type="radio" name="q5" value="A" class="mr-2">A. 262 Hz</label>
+                            <label class="block cursor-pointer"><input type="radio" name="q5" value="B" class="mr-2">B. 392 Hz</label>
+                            <label class="block cursor-pointer"><input type="radio" name="q5" value="C" class="mr-2">C. 440 Hz</label>
+                            <label class="block cursor-pointer"><input type="radio" name="q5" value="D" class="mr-2">D. 494 Hz</label>
+                        </div>
+                    </div>
+
+                    <button type="button" onclick="checkQuiz()" class="bg-darkBlue text-white font-bold px-6 py-3 rounded-lg hover:bg-blue-800 transition w-full md:w-auto">NỘP BÀI TRẮC NGHIỆM</button>
+                    
+                    <!-- Vùng hiển thị kết quả -->
+                    <div id="quizResultText" class="mt-4 font-bold text-lg"></div>
+                    
+                    <!-- Lời giải chi tiết trắc nghiệm (ẩn ban đầu) -->
+                    <div id="quizExplanations" class="hidden mt-4 space-y-4 bg-yellow-50 p-4 border border-yellow-300 rounded-lg">
+                        <h5 class="font-bold text-red-600">Lời giải chi tiết:</h5>
+                        <p><strong>Câu 1: Chọn B.</strong> (Dao động kí hiển thị dạng tín hiệu điện trên màn hình để ta xác định T, f).</p>
+                        <p><strong>Câu 2: Chọn C.</strong> (Nút VOLTS/DIV điều chỉnh giá trị điện áp / biên độ cho mỗi ô hiển thị dọc).</p>
+                        <p><strong>Câu 3: Chọn C.</strong> (Micro nhận dao động cơ của không khí và biến đổi thành tín hiệu điện).</p>
+                        <p><strong>Câu 4: Chọn B.</strong> (SEC/DIV = Seconds per Division, dùng để chỉnh thời gian cho mỗi ô ngang).</p>
+                        <p><strong>Câu 5: Chọn C.</strong> (Dựa vào Bảng 10.2, nốt La có tần số cơ bản là 440 Hz).</p>
+                    </div>
+                </form>
+            </div>
+
+            <!-- BÀI TẬP VẬN DỤNG -->
+            <div class="bg-white p-6 rounded-12px shadow-md space-y-6">
+                <h4 class="text-xl font-bold text-primary mb-4">B. Bài tập vận dụng tính toán</h4>
+                
+                <!-- VD 1 -->
+                <div class="bg-questionBg border-l-4 border-darkBlue p-4 rounded-r-lg">
+                    <p class="font-semibold mb-2">Bài 1:</p>
+                    <p>Trên màn hình dao động kí, người ta quan sát thấy một chu kì sóng âm chiếm chính xác 4 ô theo phương ngang. Biết rằng nút SEC/DIV đang được đặt ở vị trí \( 0,5 \text{ ms/div} \). Hãy tính chu kì \( T \) và tần số \( f \) của sóng âm này.</p>
+                    <button onclick="toggleAnswer('vd1')" class="mt-3 bg-primary text-white font-semibold px-4 py-2 rounded-lg hover:bg-red-700 transition">Xem lời giải</button>
+                </div>
+                <div id="vd1" class="hidden bg-answerBg border border-green-400 p-4 rounded-lg text-green-900 mt-2">
+                    <strong>Giải chi tiết:</strong><br>
+                    - Thời gian tương ứng với 1 ô (1 division) là \( 0,5 \text{ ms} \).<br>
+                    - Một chu kì chiếm 4 ô, vậy chu kì \( T \) của sóng là:<br>
+                    \( T = 4 \times 0,5 \text{ ms} = 2 \text{ ms} = 2 \times 10^{-3} \text{ s} = 0,002 \text{ s} \).<br>
+                    - Tần số của sóng âm là:<br>
+                    \( f = \frac{1}{T} = \frac{1}{0,002} = 500 \text{ Hz} \).<br>
+                    <em>Đáp số: \( T = 2 \text{ ms}; f = 500 \text{ Hz} \).</em>
+                </div>
+
+                <!-- VD 2 -->
+                <div class="bg-questionBg border-l-4 border-darkBlue p-4 rounded-r-lg">
+                    <p class="font-semibold mb-2">Bài 2:</p>
+                    <p>Tần số ghi trên một âm thoa chuẩn là \( 440 \text{ Hz} \). Khi tiến hành đo bằng dao động kí, một học sinh đếm được 5 chu kì sóng liên tiếp chiếm tổng thời gian là \( 11,4 \text{ ms} \). Tính sai số tỉ đối (phần trăm) của phép đo so với giá trị chuẩn ghi trên âm thoa.</p>
+                    <button onclick="toggleAnswer('vd2')" class="mt-3 bg-primary text-white font-semibold px-4 py-2 rounded-lg hover:bg-red-700 transition">Xem lời giải</button>
+                </div>
+                <div id="vd2" class="hidden bg-answerBg border border-green-400 p-4 rounded-lg text-green-900 mt-2">
+                    <strong>Giải chi tiết:</strong><br>
+                    - Thời gian của 5 chu kì là \( 11,4 \text{ ms} \), suy ra chu kì đo được là:<br>
+                    \( T_{đo} = \frac{11,4}{5} = 2,28 \text{ ms} = 0,00228 \text{ s} \).<br>
+                    - Tần số đo được qua thí nghiệm là:<br>
+                    \( f_{đo} = \frac{1}{T_{đo}} = \frac{1}{0,00228} \approx 438,6 \text{ Hz} \).<br>
+                    - Sai số tuyệt đối: \( \Delta f = |f_{đo} - f_{chuẩn}| = |438,6 - 440| = 1,4 \text{ Hz} \).<br>
+                    - Sai số tỉ đối phần trăm:<br>
+                    \( \delta = \frac{\Delta f}{f_{chuẩn}} \times 100\% = \frac{1,4}{440} \times 100\% \approx 0,32\% \).<br>
+                    <em>Đáp số: Sai số khoảng \( 0,32\% \).</em>
+                </div>
+
+                <!-- VD 3 -->
+                <div class="bg-questionBg border-l-4 border-darkBlue p-4 rounded-r-lg">
+                    <p class="font-semibold mb-2">Bài 3:</p>
+                    <p>Dựa vào bảng tần số các nốt nhạc cơ bản (Bảng 10.2). Một dây đàn ghi ta khi gảy phát ra âm có chu kì đo được trên dao động kí là \( T = 3,03 \text{ ms} \). Hỏi âm do dây đàn phát ra gần nhất với nốt nhạc nào?</p>
+                    <button onclick="toggleAnswer('vd3')" class="mt-3 bg-primary text-white font-semibold px-4 py-2 rounded-lg hover:bg-red-700 transition">Xem lời giải</button>
+                </div>
+                <div id="vd3" class="hidden bg-answerBg border border-green-400 p-4 rounded-lg text-green-900 mt-2">
+                    <strong>Giải chi tiết:</strong><br>
+                    - Đổi chu kì về giây: \( T = 3,03 \text{ ms} = 3,03 \times 10^{-3} \text{ s} \).<br>
+                    - Tần số âm thanh phát ra là:<br>
+                    \( f = \frac{1}{T} = \frac{1}{3,03 \times 10^{-3}} \approx 330,03 \text{ Hz} \).<br>
+                    - Đối chiếu với Bảng 10.2, tần số \( 330 \text{ Hz} \) tương ứng với nốt <strong>Mi (E)</strong>.<br>
+                    <em>Kết luận: Dây đàn đang phát ra nốt Mi (E).</em>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT CHO CHỨC NĂNG TƯƠNG TÁC -->
+    <script>
+        // Hàm ẩn/hiện lời giải
+        function toggleAnswer(id) {
+            const el = document.getElementById(id);
+            if (el.classList.contains('hidden')) {
+                el.classList.remove('hidden');
+            } else {
+                el.classList.add('hidden');
+            }
+        }
+
+        // Hàm chấm điểm trắc nghiệm
+        function checkQuiz() {
+            // Đáp án đúng
+            const answers = {
+                q1: 'B',
+                q2: 'C',
+                q3: 'C',
+                q4: 'B',
+                q5: 'C'
+            };
+
+            let score = 0;
+            const total = Object.keys(answers).length;
+            const form = document.getElementById('quizForm');
+            
+            // Xóa màu chữ cũ của form nếu có (để reset màu khi nộp lại)
+            const labels = form.querySelectorAll('label');
+            labels.forEach(label => label.classList.remove('text-red-600', 'text-green-600', 'font-bold'));
+
+            for (let q in answers) {
+                const selected = form.querySelector(`input[name="${q}"]:checked`);
+                if (selected) {
+                    if (selected.value === answers[q]) {
+                        score++;
+                        selected.parentElement.classList.add('text-green-600', 'font-bold');
+                    } else {
+                        selected.parentElement.classList.add('text-red-600', 'font-bold');
+                    }
+                }
+            }
+
+            const resultText = document.getElementById('quizResultText');
+            const explanations = document.getElementById('quizExplanations');
+
+            if (score === total) {
+                resultText.innerHTML = `Tuyệt vời! Bạn đã trả lời đúng ${score}/${total} câu.`;
+                resultText.className = "mt-4 font-bold text-xl text-green-600";
+            } else {
+                resultText.innerHTML = `Bạn đã trả lời đúng ${score}/${total} câu. Hãy xem lời giải bên dưới để hiểu rõ hơn nhé!`;
+                resultText.className = "mt-4 font-bold text-xl text-red-600";
+            }
+
+            // Hiển thị khung lời giải chi tiết
+            explanations.classList.remove('hidden');
+        }
+    </script>
+</body>
+</html>

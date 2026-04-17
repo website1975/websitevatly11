@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phòng Thí Nghiệm Ảo: Đo Tần Số Sóng Âm</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- MathJax for formulas -->
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <style>
+        body { background-color: #f0f2f5; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        .osc-screen {
+            background-color: #1a1a1a;
+            border: 10px solid #333;
+            border-radius: 8px;
+            box-shadow: inset 0 0 20px #000;
+            position: relative;
+            overflow: hidden;
+            cursor: grab; /* Hình bàn tay mở */
+        }
+        .osc-screen:active { cursor: grabbing; } /* Hình bàn tay nắm khi kéo */
+        .knob-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+        }
+        input[type=range] { width: 120px; cursor: pointer; }
+        .led {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 5px;
+        }
+        .led-green { background-color: #00ff00; box-shadow: 0 0 5px #00ff00; }
+        .led-red { background-color: #ff0000; box-shadow: 0 0 5px #ff0000; }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+
+    <div class="max-w-6xl mx-auto">
+        <header class="mb-8 text-center">
+            <h1 class="text-3-xl font-bold text-blue-800 uppercase">Bài 10: Thực Hành Đo Tần Số Sóng Âm</h1>
+            <p class="text-gray-600 mt-2 italic">Sử dụng dao động kí để xác định đặc tính sóng âm</p>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            
+            <!-- Cột 1: Điều khiển -->
+            <div class="bg-white p-6 rounded-xl shadow-md border-t-4 border-blue-500">
+                <h2 class="text-xl font-semibold mb-4 flex items-center">
+                    <span class="mr-2">⚙️</span> Thiết lập thiết bị
+                </h2>
+                
+                <div class="space-y-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Chọn nguồn âm đo:</label>
+                        <select id="toneSelect" class="w-full p-2 border rounded bg-gray-50 focus:ring-2 focus:ring-blue-400">
+                            <option value="440">Âm thoa nốt La (A) - 440 Hz</option>
+                            <option value="262">Âm thoa nốt Đô (C) - 262 Hz</option>
+                            <option value="1000">Âm thoa chuẩn - 1000 Hz</option>
+                        </select>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-2">
+                        <button id="playBtn" class="py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg transition-all shadow-md">
+                            PHÁT ÂM
+                        </button>
+                        <button id="holdBtn" class="py-3 bg-gray-600 hover:bg-gray-700 text-white font-bold rounded-lg transition-all shadow-md">
+                            HOLD (DỪNG)
+                        </button>
+                    </div>
+
+                    <div class="bg-yellow-50 p-3 rounded-lg border border-yellow-200 text-xs text-yellow-800">
+                        <strong>Mẹo căn chỉnh:</strong> Bạn có thể dùng chuột <strong>kéo thả trực tiếp</strong> trên màn hình đen để dịch chuyển sóng "cực nhuyễn".
+                    </div>
+
+                    <hr>
+
+                    <div class="space-y-6">
+                        <div class="knob-container">
+                            <label class="text-sm font-bold text-gray-600 uppercase tracking-tighter text-[10px]">Tỉ lệ thời gian (ms/div)</label>
+                            <input type="range" id="timeScale" min="0.5" max="5" step="0.1" value="2">
+                            <span id="timeScaleVal" class="text-blue-600 font-mono font-bold">2.0 ms</span>
+                        </div>
+                        
+                        <div class="knob-container">
+                            <label class="text-sm font-bold text-gray-600 uppercase tracking-tighter text-[10px]">Dịch ngang (Fine Adjust)</label>
+                            <input type="range" id="xPos" min="-500" max="500" step="1" value="0">
+                        </div>
+
+                        <div class="knob-container">
+                            <label class="text-sm font-bold text-gray-600 uppercase tracking-tighter text-[10px]">Biên độ (V/div)</label>
+                            <input type="range" id="ampScale" min="10" max="100" step="5" value="50">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Cột 2: Màn hình Dao động kí -->
+            <div class="lg:col-span-2 space-y-4">
+                <div class="bg-gray-800 p-4 rounded-2xl shadow-2xl border-4 border-gray-700">
+                    <div class="flex justify-between items-center mb-2 px-2">
+                        <div class="flex items-center">
+                            <span id="statusLed" class="led led-red"></span>
+                            <span id="statusText" class="text-xs text-gray-400 font-mono uppercase">Stopped</span>
+                        </div>
+                        <span id="holdIndicator" class="hidden text-xs text-yellow-500 font-mono font-bold animate-pulse">|| HOLD ACTIVE</span>
+                    </div>
+                    
+                    <div class="osc-screen aspect-video w-full" id="screenArea">
+                        <canvas id="oscCanvas"></canvas>
+                    </div>
+
+                    <div class="grid grid-cols-4 mt-4 gap-2 text-center text-green-400 font-mono">
+                        <div class="bg-black p-2 rounded border border-gray-600">
+                            <span class="block text-[9px] text-gray-500 uppercase">Theoretical f</span>
+                            <span id="freqDisplay">---</span>
+                        </div>
+                        <div class="bg-black p-2 rounded border border-gray-600">
+                            <span class="block text-[9px] text-gray-500 uppercase">Input</span>
+                            <span>CH-A</span>
+                        </div>
+                        <div class="bg-black p-2 rounded border border-gray-600">
+                            <span class="block text-[9px] text-gray-500 uppercase">T/DIV</span>
+                            <span id="tDivDisplay">2.0ms</span>
+                        </div>
+                        <div class="bg-black p-2 rounded border border-gray-600">
+                            <span class="block text-[9px] text-gray-500 uppercase">Coupling</span>
+                            <span>AC</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bảng báo cáo -->
+                <div class="bg-white p-6 rounded-xl shadow-md">
+                    <h3 class="text-lg font-bold mb-4 flex items-center">
+                        📋 Báo cáo thí nghiệm (Nốt La - 440Hz)
+                    </h3>
+                    <table class="w-full text-sm border-collapse border border-gray-200">
+                        <thead>
+                            <tr class="bg-gray-100">
+                                <th class="border border-gray-300 p-2">Lần đo</th>
+                                <th class="border border-gray-300 p-2">Số ô ($n$)</th>
+                                <th class="border border-gray-300 p-2">Chu kỳ $T$ (s)</th>
+                                <th class="border border-gray-300 p-2">Tần số $f$ (Hz)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="border border-gray-300 p-2 text-center font-bold">1</td>
+                                <td class="border border-gray-300 p-2"><input type="number" step="0.01" class="w-full p-1 border rounded input-n text-center" placeholder="Đếm ô"></td>
+                                <td class="border border-gray-300 p-2"><input type="number" step="0.0001" class="w-full p-1 border rounded input-t text-center" readonly></td>
+                                <td class="border border-gray-300 p-2"><input type="number" step="0.1" class="w-full p-1 border rounded input-f text-center" readonly></td>
+                            </tr>
+                            <tr>
+                                <td class="border border-gray-300 p-2 text-center font-bold">2</td>
+                                <td class="border border-gray-300 p-2"><input type="number" step="0.01" class="w-full p-1 border rounded input-n text-center"></td>
+                                <td class="border border-gray-300 p-2"><input type="number" step="0.0001" class="w-full p-1 border rounded input-t text-center" readonly></td>
+                                <td class="border border-gray-300 p-2"><input type="number" step="0.1" class="w-full p-1 border rounded input-f text-center" readonly></td>
+                            </tr>
+                            <tr>
+                                <td class="border border-gray-300 p-2 text-center font-bold">3</td>
+                                <td class="border border-gray-300 p-2"><input type="number" step="0.01" class="w-full p-1 border rounded input-n text-center"></td>
+                                <td class="border border-gray-300 p-2"><input type="number" step="0.0001" class="w-full p-1 border rounded input-t text-center" readonly></td>
+                                <td class="border border-gray-300 p-2"><input type="number" step="0.1" class="w-full p-1 border rounded input-f text-center" readonly></td>
+                            </tr>
+                            <tr class="bg-blue-50 font-bold">
+                                <td class="border border-gray-300 p-2 text-center text-blue-700">TRUNG BÌNH</td>
+                                <td class="border border-gray-300 p-2 text-center" id="avgN">---</td>
+                                <td class="border border-gray-300 p-2 text-center text-blue-700" id="avgT">---</td>
+                                <td class="border border-gray-300 p-2 text-center text-blue-700" id="avgF">---</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <div class="mt-4 flex flex-col md:flex-row justify-between items-center gap-4">
+                        <div class="text-[11px] text-gray-500 italic">
+                            Sử dụng: $T = n \times (\text{SEC/DIV}) \times 10^{-3} $ (s)
+                        </div>
+                        <button onclick="calculateTable()" class="w-full md:w-auto px-8 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 shadow-lg font-bold transition-all">
+                            TÍNH TOÁN & XỬ LÝ SAI SỐ
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('oscCanvas');
+        const ctx = canvas.getContext('2d');
+        const playBtn = document.getElementById('playBtn');
+        const holdBtn = document.getElementById('holdBtn');
+        const timeScaleInput = document.getElementById('timeScale');
+        const ampScaleInput = document.getElementById('ampScale');
+        const xPosInput = document.getElementById('xPos');
+        const toneSelect = document.getElementById('toneSelect');
+        const screenArea = document.getElementById('screenArea');
+
+        let audioCtx = null;
+        let oscillator = null;
+        let isPlaying = false;
+        let isHold = false;
+        let baseFrequency = 440;
+        let currentFrequency = 440; 
+        let phase = 0;
+        let animationId = null;
+
+        // Xử lý kéo thả bằng chuột/tay
+        let isDragging = false;
+        let lastMouseX = 0;
+
+        function resizeCanvas() {
+            canvas.width = canvas.parentElement.clientWidth;
+            canvas.height = canvas.parentElement.clientHeight;
+            drawWave();
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        // Sự kiện chuột/touch để kéo thả đồ thị
+        const startDragging = (e) => {
+            isDragging = true;
+            lastMouseX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
+        };
+
+        const stopDragging = () => {
+            isDragging = false;
+        };
+
+        const moveDragging = (e) => {
+            if (!isDragging) return;
+            const currentX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
+            const deltaX = currentX - lastMouseX;
+            
+            // Cập nhật giá trị xPosInput dựa trên chuyển động chuột (chia cho 2 để kéo "mượt" hơn)
+            let newVal = parseInt(xPosInput.value) + deltaX;
+            if (newVal < -500) newVal = -500;
+            if (newVal > 500) newVal = 500;
+            
+            xPosInput.value = newVal;
+            lastMouseX = currentX;
+            renderFrame();
+        };
+
+        screenArea.addEventListener('mousedown', startDragging);
+        window.addEventListener('mouseup', stopDragging);
+        window.addEventListener('mousemove', moveDragging);
+
+        screenArea.addEventListener('touchstart', startDragging);
+        window.addEventListener('touchend', stopDragging);
+        window.addEventListener('touchmove', moveDragging);
+
+        function drawGrid() {
+            const w = canvas.width;
+            const h = canvas.height;
+            const step = w / 10;
+            
+            // Vẽ lưới mờ
+            ctx.strokeStyle = '#222';
+            ctx.lineWidth = 1;
+            for(let x=0; x<=w; x+=step){ ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,h); ctx.stroke(); }
+            for(let y=0; y<=h; y+=step){ ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(w,y); ctx.stroke(); }
+            
+            // Vẽ trục trung tâm đậm
+            ctx.strokeStyle = '#444';
+            ctx.lineWidth = 2;
+            ctx.beginPath(); ctx.moveTo(0, h/2); ctx.lineTo(w, h/2); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(w/2, 0); ctx.lineTo(w/2, h); ctx.stroke();
+            
+            // Vạch chia nhỏ trên trục ngang
+            ctx.beginPath();
+            ctx.strokeStyle = '#555';
+            for(let x=0; x<=w; x+=step/5) {
+                ctx.moveTo(x, h/2 - 5); ctx.lineTo(x, h/2 + 5);
+            }
+            ctx.stroke();
+        }
+
+        function renderFrame() {
+            ctx.clearRect(0,0,canvas.width,canvas.height);
+            drawGrid();
+            if(!isPlaying) return;
+
+            const w = canvas.width;
+            const h = canvas.height;
+            const timeScale = parseFloat(timeScaleInput.value);
+            const ampScale = parseFloat(ampScaleInput.value);
+            const xOffset = parseFloat(xPosInput.value);
+
+            ctx.beginPath();
+            ctx.strokeStyle = '#00ff00';
+            ctx.lineWidth = 2.5;
+            ctx.shadowBlur = 8;
+            ctx.shadowColor = '#00ff00';
+            
+            const totalMsVisible = timeScale * 10;
+            const msPerPixel = totalMsVisible / w;
+            
+            // Tính toán phase dịch chuyển dựa trên xOffset (kéo tay)
+            // 1 unit của xOffset tương ứng với sự dịch chuyển mịn của sóng
+            const manualPhaseShift = (xOffset / w) * (totalMsVisible / 1000) * 2 * Math.PI * currentFrequency;
+
+            for(let x=0; x<w; x++){
+                const t = x * msPerPixel / 1000;
+                const angle = 2 * Math.PI * currentFrequency * t + phase + manualPhaseShift;
+                const y = h/2 + Math.sin(angle) * (h/4) * (100/ampScale);
+                if(x===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+            }
+            ctx.stroke();
+            ctx.shadowBlur = 0;
+        }
+
+        function drawWave() {
+            if(isHold && isPlaying) { renderFrame(); return; }
+            if(!isHold) {
+                renderFrame();
+                if(isPlaying) {
+                    phase -= 0.12; // Tốc độ chạy sóng tự nhiên
+                    animationId = requestAnimationFrame(drawWave);
+                }
+            }
+        }
+
+        playBtn.onclick = () => {
+            if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            if(isPlaying){
+                if(oscillator) oscillator.stop();
+                isPlaying = false;
+                isHold = false;
+                playBtn.innerText = "PHÁT ÂM";
+                playBtn.classList.replace('bg-red-600', 'bg-blue-600');
+                document.getElementById('statusLed').classList.replace('led-green', 'led-red');
+                document.getElementById('statusText').innerText = "Stopped";
+                document.getElementById('holdIndicator').classList.add('hidden');
+                cancelAnimationFrame(animationId);
+                renderFrame();
+            } else {
+                baseFrequency = parseInt(toneSelect.value);
+                // Tạo sai số ngẫu nhiên cực nhỏ mỗi lần phát (±0.3 Hz)
+                currentFrequency = baseFrequency + (Math.random() - 0.5) * 0.6;
+
+                oscillator = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                oscillator.frequency.value = currentFrequency;
+                gain.gain.value = 0.15;
+                oscillator.connect(gain);
+                gain.connect(audioCtx.destination);
+                oscillator.start();
+
+                isPlaying = true;
+                playBtn.innerText = "DỪNG LẠI";
+                playBtn.classList.replace('bg-blue-600', 'bg-red-600');
+                document.getElementById('statusLed').classList.replace('led-red', 'led-green');
+                document.getElementById('statusText').innerText = "Running";
+                document.getElementById('freqDisplay').innerText = baseFrequency + " Hz";
+                
+                drawWave();
+            }
+        };
+
+        holdBtn.onclick = () => {
+            if(!isPlaying) return;
+            isHold = !isHold;
+            holdBtn.innerText = isHold ? "RESUME (CHẠY)" : "HOLD (DỪNG)";
+            holdBtn.classList.toggle('bg-yellow-600');
+            document.getElementById('holdIndicator').classList.toggle('hidden');
+            if(!isHold) drawWave();
+        };
+
+        timeScaleInput.oninput = (e) => {
+            document.getElementById('timeScaleVal').innerText = parseFloat(e.target.value).toFixed(1) + " ms";
+            document.getElementById('tDivDisplay').innerText = parseFloat(e.target.value).toFixed(1) + "ms";
+            renderFrame();
+        };
+        xPosInput.oninput = renderFrame;
+        ampScaleInput.oninput = renderFrame;
+
+        function calculateTable() {
+            const nInputs = document.querySelectorAll('.input-n');
+            const tInputs = document.querySelectorAll('.input-t');
+            const fInputs = document.querySelectorAll('.input-f');
+            
+            let sumN = 0, sumT = 0, sumF = 0, count = 0;
+
+            nInputs.forEach((input, i) => {
+                if(input.value) {
+                    const n = parseFloat(input.value);
+                    const secPerDiv = parseFloat(timeScaleInput.value) / 1000;
+                    const T = n * secPerDiv;
+                    const F = 1 / T;
+
+                    tInputs[i].value = T.toFixed(5);
+                    fInputs[i].value = F.toFixed(1);
+
+                    sumN += n; sumT += T; sumF += F;
+                    count++;
+                }
+            });
+
+            if(count > 0) {
+                document.getElementById('avgN').innerText = (sumN/count).toFixed(2);
+                document.getElementById('avgT').innerText = (sumT/count).toFixed(5) + " s";
+                document.getElementById('avgF').innerText = (sumF/count).toFixed(1) + " Hz";
+            }
+        }
+    </script>
+</body>
+</html>
