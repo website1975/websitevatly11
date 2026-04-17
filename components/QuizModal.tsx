@@ -107,7 +107,7 @@ const QuizModal: React.FC<QuizModalProps> = ({ nodeId, lessonTitle, lessonUrl, i
         tools.push({ googleSearch: {} });
         prompt = `Hãy truy cập và đọc nội dung từ đường link bài học sau đây: ${lessonUrl}. 
         Dựa trên nội dung bài học đó, hãy soạn 5 câu trắc nghiệm Vật lý ${gradeLabel}. 
-        Nếu không truy cập được link, hãy soạn dựa trên tên bài: "${lessonTitle}".
+        Nếu không truy cập được link hoặc nội dung không phù hợp, hãy soạn dựa trên tên bài: "${lessonTitle}".
         Phân bổ: 2 Biết/Hiểu, 2 Vận dụng, 1 Vận dụng cao. 
         Sử dụng $...$ cho công thức LaTeX. Xuất kết quả dưới dạng JSON array.`;
       }
@@ -115,8 +115,9 @@ const QuizModal: React.FC<QuizModalProps> = ({ nodeId, lessonTitle, lessonUrl, i
       const response = await ai.models.generateContent({
         model: 'gemini-3-flash-preview',
         contents: prompt,
+        tools: tools.length > 0 ? tools : undefined,
+        toolConfig: tools.length > 0 ? { includeServerSideTool_invocations: true } : undefined,
         config: {
-          tools: tools.length > 0 ? tools : undefined,
           responseMimeType: "application/json",
           responseSchema: {
             type: Type.ARRAY,
@@ -138,7 +139,27 @@ const QuizModal: React.FC<QuizModalProps> = ({ nodeId, lessonTitle, lessonUrl, i
       setUserAnswers(new Array(qData.length).fill(null));
       setIsAiMode(true);
       setShowResults(false);
-    } catch (e: any) { setErrorInfo({ title: "Lỗi AI", msg: "Không thể tạo câu hỏi tự động." }); }
+    } catch (e: any) { 
+      console.error("AI Error:", e);
+      // Fallback: If tools/link failing, try one more time without tools
+      if (lessonUrl) {
+        try {
+          const ai = new GoogleGenAI({ apiKey });
+          const response = await ai.models.generateContent({
+            model: 'gemini-3-flash-preview',
+            contents: `Tạo 5 câu trắc nghiệm Vật lý bài: "${lessonTitle}". Xuất JSON array.`,
+            config: { responseMimeType: "application/json" }
+          });
+          const qData = JSON.parse(response.text || "[]");
+          setQuestions(qData);
+          setUserAnswers(new Array(qData.length).fill(null));
+          setIsAiMode(true);
+          setShowResults(false);
+          return;
+        } catch (innerE) {}
+      }
+      setErrorInfo({ title: "Lỗi AI", msg: "AI gặp khó khăn khi truy cập tài liệu. Vui lòng thử lại sau hoặc kiểm tra link." }); 
+    }
     finally { setLoading(false); }
   };
 
