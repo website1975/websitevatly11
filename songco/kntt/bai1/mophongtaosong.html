@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Mô phỏng Sóng Cơ - Hình 8.1</title>
+    <style>
+        body { font-family: sans-serif; display: flex; flex-direction: column; align-items: center; background: #f0f0f0; }
+        canvas { background: white; border: 2px solid #333; box-shadow: 0 4px 8px rgba(0,0,0,0.2); }
+        .controls { margin-top: 20px; padding: 15px; background: #fff; border-radius: 8px; }
+        label { font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <h2>Mô phỏng Thiết bị tạo sóng mặt nước</h2>
+    
+    <canvas id="waveCanvas" width="800" height="300"></canvas>
+
+    <div class="controls">
+        <label>Biên độ (A): </label>
+        <input type="range" id="ampRange" min="5" max="50" value="30">
+        <label> Tần số (f): </label>
+        <input type="range" id="freqRange" min="0.01" max="0.1" step="0.01" value="0.05">
+        <p><i>Ghi chú: Điểm màu đỏ đại diện cho miếng xốp (C), nó chỉ dao động lên xuống tại chỗ.</i></p>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('waveCanvas');
+        const ctx = canvas.getContext('2d');
+        const ampInput = document.getElementById('ampRange');
+        const freqInput = document.getElementById('freqRange');
+
+        let time = 0;
+        const waveSpeed = 2; // Tốc độ truyền sóng
+        const wavelength = 100; // Bước sóng
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            const amplitude = parseInt(ampInput.value);
+            const frequency = parseFloat(freqInput.value);
+            const centerY = canvas.height / 2;
+
+            // 1. Vẽ bể nước (Tấm chống phản xạ ở cuối)
+            ctx.fillStyle = "#eef9ff";
+            ctx.fillRect(50, centerY - 80, 700, 160);
+
+            // 2. Vẽ sóng mặt nước
+            ctx.beginPath();
+            ctx.strokeStyle = "#0077be";
+            ctx.lineWidth = 3;
+
+            for (let x = 50; x <= 750; x++) {
+                // Phương trình sóng: y = A * cos(omega * t - 2pi * x / lambda)
+                // Khoảng cách từ nguồn O (x=50)
+                let dist = x - 50;
+                let y = centerY;
+
+                // Sóng chỉ xuất hiện khi thời gian trôi qua đủ để sóng truyền tới x
+                if (time * waveSpeed * 10 > dist) {
+                    y = centerY + amplitude * Math.sin(time - dist / 20);
+                }
+
+                if (x === 50) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            }
+            ctx.stroke();
+
+            // 3. Vẽ Vật tạo sóng (Piston O)
+            let sourceY = centerY + amplitude * Math.sin(time);
+            ctx.fillStyle = "#555";
+            ctx.fillRect(30, sourceY - 20, 20, 40); // Piston
+            ctx.beginPath(); // Thanh truyền
+            ctx.moveTo(40, sourceY - 20);
+            ctx.lineTo(40, 50);
+            ctx.strokeStyle = "#333";
+            ctx.stroke();
+
+            // 4. Vẽ Miếng xốp nhỏ (C) tại vị trí x = 400
+            let corkX = 400;
+            let corkY = centerY;
+            if (time * waveSpeed * 10 > (corkX - 50)) {
+                corkY = centerY + amplitude * Math.sin(time - (corkX - 50) / 20);
+            }
+            
+            ctx.fillStyle = "red";
+            ctx.beginPath();
+            ctx.arc(corkX, corkY, 8, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = "black";
+            ctx.fillText("C (Miếng xốp)", corkX - 30, corkY - 15);
+
+            // 5. Vẽ nhãn nguồn O
+            ctx.fillText("Nguồn O", 15, centerY - 10);
+
+            time += frequency;
+            requestAnimationFrame(draw);
+        }
+
+        draw();
+    </script>
+</body>
+</html>
