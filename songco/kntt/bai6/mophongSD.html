@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mô phỏng Thí nghiệm Sóng Dừng</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-color: #f8fafc;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .canvas-container {
+            background: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+        input[type="range"] {
+            cursor: pointer;
+        }
+        .param-label {
+            font-weight: 600;
+            color: #1e293b;
+        }
+        .led-display {
+            font-family: 'Courier New', Courier, monospace;
+            background: #111;
+            color: #ff3333;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-weight: bold;
+            box-shadow: inset 0 0 5px rgba(255,0,0,0.5);
+        }
+        .tab-btn {
+            background-color: #f1f5f9;
+            color: #475569;
+            border: 1px solid #e2e8f0;
+        }
+        .tab-btn.active {
+            background-color: #1e40af;
+            color: white;
+            border-color: #1e40af;
+        }
+        .resonance-indicator {
+            transition: all 0.3s ease;
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+    <div class="max-w-4xl mx-auto">
+        <header class="mb-8 text-center">
+            <h1 class="text-3xl font-bold text-blue-800">Mô phỏng Thí nghiệm Sóng Dừng</h1>
+            <p class="text-slate-600 mt-2">Nghiên cứu sóng dừng với các điều kiện biên khác nhau</p>
+        </header>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <!-- Khu vực điều khiển -->
+            <div class="space-y-6 bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                <!-- Chọn loại dây -->
+                <div>
+                    <label class="param-label block mb-2">Điều kiện biên:</label>
+                    <div class="flex flex-col gap-2">
+                        <button id="fixedFixedBtn" class="tab-btn active px-3 py-3 text-sm font-semibold rounded-lg transition-all text-left flex items-center">
+                            <span class="mr-2">●—●</span> Hai đầu cố định
+                        </button>
+                        <button id="fixedFreeBtn" class="tab-btn px-3 py-3 text-sm font-semibold rounded-lg transition-all text-left flex items-center">
+                            <span class="mr-2">●—○</span> Một đầu tự do (Q là bụng)
+                        </button>
+                    </div>
+                </div>
+
+                <div>
+                    <div class="flex justify-between mb-2">
+                        <label class="param-label">Tần số (f):</label>
+                        <span class="led-display" id="freqVal">50 Hz</span>
+                    </div>
+                    <input type="range" id="frequency" min="5" max="150" value="50" class="w-full h-2 bg-slate-200 rounded-lg appearance-none accent-blue-600">
+                </div>
+
+                <div>
+                    <div class="flex justify-between mb-2">
+                        <label class="param-label">Biên độ (A):</label>
+                        <span class="text-blue-600 font-bold" id="ampVal">20</span>
+                    </div>
+                    <input type="range" id="amplitude" min="5" max="50" value="20" class="w-full h-2 bg-slate-200 rounded-lg appearance-none accent-blue-600">
+                </div>
+
+                <div>
+                    <div class="flex justify-between mb-2">
+                        <label class="param-label">Tốc độ mô phỏng:</label>
+                        <span class="text-blue-600 font-bold" id="simSpeedVal">1.0x</span>
+                    </div>
+                    <input type="range" id="simSpeed" min="0.1" max="2.0" step="0.1" value="1.0" class="w-full h-2 bg-slate-200 rounded-lg appearance-none accent-blue-600">
+                </div>
+
+                <div class="pt-4 border-t border-slate-100">
+                    <h3 class="font-bold text-slate-800 mb-2">Trạng thái dây:</h3>
+                    <div class="text-sm space-y-2 text-slate-600">
+                        <div class="flex justify-between items-center">
+                            <span>Độ cộng hưởng:</span>
+                            <div id="resIndicator" class="h-3 w-20 bg-gray-200 rounded-full overflow-hidden">
+                                <div id="resBar" class="h-full bg-green-500 w-0 transition-all duration-300"></div>
+                            </div>
+                        </div>
+                        <div class="flex justify-between">
+                            <span>Số bụng sóng:</span>
+                            <span id="antiNodesCount" class="font-mono text-blue-600 font-bold">1</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span>Bước sóng (&lambda;):</span>
+                            <span id="wavelength" class="font-mono">---</span>
+                        </div>
+                    </div>
+                </div>
+
+                <button id="resetBtn" class="w-full py-2 bg-slate-800 text-white rounded-lg hover:bg-slate-700 transition-colors font-semibold">
+                    Làm mới thí nghiệm
+                </button>
+            </div>
+
+            <!-- Khu vực hiển thị mô phỏng -->
+            <div class="md:col-span-2 space-y-4">
+                <div class="canvas-container h-[500px] border-4 border-slate-300 flex items-center justify-center bg-slate-50">
+                    <div class="absolute top-4 left-6 text-slate-400 font-bold text-lg opacity-30">MÔ PHỎNG VẬT LÝ</div>
+                    
+                    <div id="resonanceMsg" class="absolute top-12 left-1/2 -translate-x-1/2 bg-green-100 text-green-800 px-4 py-1 rounded-full text-xs font-bold border border-green-200 opacity-0 transition-opacity">ĐANG CÓ SÓNG DỪNG RÕ RỆT</div>
+
+                    <!-- Labels -->
+                    <div class="absolute top-10 right-10 text-right">
+                        <div class="text-xs font-bold text-slate-500" id="qDesc">ĐẦU Q (CỐ ĐỊNH)</div>
+                        <div class="w-24 h-1 bg-slate-300 inline-block mt-1"></div>
+                    </div>
+                    <div class="absolute bottom-10 right-10 text-right">
+                        <div class="text-xs font-bold text-slate-500">ĐẦU P (NGUỒN RUNG)</div>
+                        <div class="w-24 h-1 bg-slate-300 inline-block mt-1"></div>
+                    </div>
+                    
+                    <canvas id="waveCanvas" class="w-full h-full"></canvas>
+                </div>
+                
+                <div class="bg-blue-50 p-4 rounded-lg border border-blue-200 shadow-sm" id="theoryNote">
+                    <p class="text-blue-900 text-sm">
+                        <strong>Hai đầu cố định:</strong> Sóng dừng chỉ xảy ra khi $f$ là bội số của $f_{cb} = v/2L$. Khi đó dây rung mạnh nhất.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('waveCanvas');
+        const ctx = canvas.getContext('2d');
+        const freqInput = document.getElementById('frequency');
+        const ampInput = document.getElementById('amplitude');
+        const simSpeedInput = document.getElementById('simSpeed');
+        const freqVal = document.getElementById('freqVal');
+        const ampVal = document.getElementById('ampVal');
+        const simSpeedVal = document.getElementById('simSpeedVal');
+        const antiNodesCountDisp = document.getElementById('antiNodesCount');
+        const wavelengthDisp = document.getElementById('wavelength');
+        const resetBtn = document.getElementById('resetBtn');
+        const fixedFixedBtn = document.getElementById('fixedFixedBtn');
+        const fixedFreeBtn = document.getElementById('fixedFreeBtn');
+        const qDesc = document.getElementById('qDesc');
+        const theoryNote = document.getElementById('theoryNote');
+        const resBar = document.getElementById('resBar');
+        const resonanceMsg = document.getElementById('resonanceMsg');
+
+        let width, height;
+        let time = 0;
+        let mode = 'fixed-fixed';
+        const L_phys = 1.0; 
+        const v_phys = 100; 
+
+        function resize() {
+            width = canvas.clientWidth;
+            height = canvas.clientHeight;
+            canvas.width = width;
+            canvas.height = height;
+        }
+
+        window.addEventListener('resize', resize);
+        resize();
+
+        fixedFixedBtn.addEventListener('click', () => {
+            mode = 'fixed-fixed';
+            fixedFixedBtn.classList.add('active');
+            fixedFreeBtn.classList.remove('active');
+            qDesc.innerText = 'ĐẦU Q (CỐ ĐỊNH)';
+            theoryNote.innerHTML = '<p class="text-blue-900 text-sm"><strong>Hai đầu cố định:</strong> Sóng dừng chỉ xảy ra khi $f = k \cdot (v/2L)$. Các giá trị khác làm dây rung yếu.</p>';
+        });
+
+        fixedFreeBtn.addEventListener('click', () => {
+            mode = 'fixed-free';
+            fixedFreeBtn.classList.add('active');
+            fixedFixedBtn.classList.remove('active');
+            qDesc.innerText = 'ĐẦU Q (TỰ DO - BỤNG)';
+            theoryNote.innerHTML = '<p class="text-blue-900 text-sm"><strong>Một đầu tự do:</strong> Sóng dừng xảy ra khi $f = (2k+1) \cdot (v/4L)$.</p>';
+        });
+
+        function draw() {
+            ctx.clearRect(0, 0, width, height);
+
+            const f = parseFloat(freqInput.value);
+            const A_input = parseFloat(ampInput.value);
+            const simSpeed = parseFloat(simSpeedInput.value);
+            
+            freqVal.innerText = `${f} Hz`;
+            ampVal.innerText = A_input;
+            simSpeedVal.innerText = `${simSpeed.toFixed(1)}x`;
+
+            const lambda = v_phys / f;
+            wavelengthDisp.innerText = `${lambda.toFixed(3)} m`;
+
+            // Tính toán độ cộng hưởng (Resonance Factor)
+            // Trong thực tế, biên độ sóng dừng đạt cực đại tại các tần số f_k
+            let resonanceFactor = 0;
+            if (mode === 'fixed-fixed') {
+                // Điều kiện cộng hưởng: L = k * lambda/2 => 2L/lambda = k (số nguyên)
+                const k_exact = (2 * L_phys) / lambda;
+                const distToInteger = Math.abs(k_exact - Math.round(k_exact));
+                // Resonance factor: 1.0 khi distToInteger = 0, giảm dần khi lệch
+                resonanceFactor = Math.max(0.1, 1 - distToInteger * 6);
+            } else {
+                // Điều kiện cộng hưởng: L = (2k+1) * lambda/4 => 4L/lambda = 2k+1 (số lẻ)
+                const odd_exact = (4 * L_phys) / lambda;
+                const distToOdd = Math.abs(odd_exact - (2 * Math.round((odd_exact-1)/2) + 1));
+                resonanceFactor = Math.max(0.1, 1 - distToOdd * 6);
+            }
+
+            // Hiển thị thanh độ cộng hưởng
+            resBar.style.width = `${resonanceFactor * 100}%`;
+            resBar.style.backgroundColor = resonanceFactor > 0.8 ? '#22c55e' : (resonanceFactor > 0.4 ? '#eab308' : '#ef4444');
+            resonanceMsg.style.opacity = resonanceFactor > 0.85 ? '1' : '0';
+
+            const finalAmp = A_input * resonanceFactor;
+            const startX = width * 0.45;
+            const startY = 60;
+            const endY = height - 60;
+            const drawLength = endY - startY;
+
+            let antiNodes;
+            if (mode === 'fixed-fixed') {
+                antiNodes = Math.round((2 * L_phys) / lambda);
+            } else {
+                antiNodes = Math.round(((4 * L_phys) / lambda - 1) / 2) + 1;
+            }
+            antiNodesCountDisp.innerText = resonanceFactor > 0.3 ? antiNodes : "N/A";
+
+            const oscillation = Math.cos(2 * Math.PI * f * time);
+
+            // Vẽ envelope
+            ctx.fillStyle = `rgba(185, 28, 28, ${0.05 * resonanceFactor + 0.01})`;
+            ctx.beginPath();
+            for (let i = 0; i <= 200; i++) {
+                const step = i / 200;
+                const yPos = endY - (step * drawLength);
+                const distFromP = step * L_phys;
+                const phase = (2 * Math.PI * distFromP) / lambda;
+                const currentAmp = finalAmp * Math.sin(phase);
+                if (i === 0) ctx.moveTo(startX + currentAmp, yPos);
+                else ctx.lineTo(startX + currentAmp, yPos);
+            }
+            for (let i = 200; i >= 0; i--) {
+                const step = i / 200;
+                const yPos = endY - (step * drawLength);
+                const distFromP = step * L_phys;
+                const phase = (2 * Math.PI * distFromP) / lambda;
+                const currentAmp = -finalAmp * Math.sin(phase);
+                ctx.lineTo(startX + currentAmp, yPos);
+            }
+            ctx.fill();
+
+            // Vẽ dây chính
+            ctx.beginPath();
+            ctx.lineWidth = resonanceFactor > 0.5 ? 2.5 : 1.5;
+            ctx.strokeStyle = resonanceFactor > 0.5 ? '#7f1d1d' : '#94a3b8';
+            for (let i = 0; i <= 200; i++) {
+                const step = i / 200;
+                const yPos = endY - (step * drawLength);
+                const distFromP = step * L_phys;
+                const phase = (2 * Math.PI * distFromP) / lambda;
+                
+                // Khi không cộng hưởng, hình ảnh sóng sẽ hơi "nhiễu" một chút để mô phỏng sự không ổn định
+                const noise = resonanceFactor < 0.4 ? (Math.random() - 0.5) * 2 : 0;
+                const currentX = startX + finalAmp * Math.sin(phase) * oscillation + noise;
+                
+                if (i === 0) ctx.moveTo(currentX, yPos);
+                else ctx.lineTo(currentX, yPos);
+            }
+            ctx.stroke();
+
+            // Vẽ vật cố định P
+            ctx.fillStyle = '#1e293b';
+            ctx.fillRect(startX - 20, endY, 40, 15);
+            ctx.fillStyle = '#fff';
+            ctx.font = 'bold 12px sans-serif';
+            ctx.fillText('P', startX - 4, endY + 12);
+
+            // Vẽ vật cố định Q
+            if (mode === 'fixed-fixed') {
+                ctx.fillStyle = '#1e293b';
+                ctx.fillRect(startX - 20, startY - 15, 40, 15);
+                ctx.fillStyle = '#fff';
+                ctx.fillText('Q', startX - 4, startY - 3);
+            } else {
+                const qX = startX + finalAmp * Math.sin((2 * Math.PI * L_phys) / lambda) * oscillation;
+                ctx.strokeStyle = '#cbd5e1';
+                ctx.lineWidth = 4;
+                ctx.beginPath();
+                ctx.moveTo(startX - A_input - 10, startY);
+                ctx.lineTo(startX + A_input + 10, startY);
+                ctx.stroke();
+
+                ctx.strokeStyle = '#1e40af';
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.arc(qX, startY, 7, 0, Math.PI * 2);
+                ctx.stroke();
+                ctx.fillStyle = '#fff';
+                ctx.fill();
+                ctx.fillStyle = '#1e293b';
+                ctx.fillText('Q', startX - 4, startY - 15);
+            }
+
+            time += 0.0005 * simSpeed; 
+            requestAnimationFrame(draw);
+        }
+
+        resetBtn.addEventListener('click', () => {
+            freqInput.value = 50;
+            ampInput.value = 20;
+            simSpeedInput.value = 1.0;
+            fixedFixedBtn.click();
+        });
+
+        draw();
+    </script>
+</body>
+</html>
