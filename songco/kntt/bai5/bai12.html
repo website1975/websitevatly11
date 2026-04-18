@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bài 12: Giao Thoa Sóng</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#EE0000',
+                        bglight: '#f4f7f9',
+                        qbg: '#edf2f7',
+                        abg: '#f0fff4',
+                        tableborder: '#cbd5e0',
+                        tablehead: '#e2e8f0'
+                    },
+                    fontFamily: {
+                        sans: ['Segoe UI', 'Roboto', 'Helvetica', 'Arial', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- MathJax -->
+    <script src="h1.png"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    
+    <style>
+        body {
+            background-color: #f4f7f9;
+        }
+        /* Custom scrollbar for better look */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e0; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #a0aec0; }
+    </style>
+</head>
+<body class="text-gray-800 antialiased p-4 md:p-8">
+
+    <div class="max-w-5xl mx-auto space-y-8">
+
+        <!-- HEADER -->
+        <div class="bg-primary text-white rounded-[12px] p-6 text-center shadow-md">
+            <h2 class="text-xl font-medium tracking-wide">CHƯƠNG II - SÓNG</h2><hr>
+            <h1 class="text-3xl font-bold uppercase mt-2">BÀI 12: GIAO THOA SÓNG</h1>
+        </div>
+
+        <!-- INTRO BOX -->
+        <div class="bg-white border border-gray-400 p-5 rounded-[12px] shadow-md relative">
+            <div class="italic text-gray-700 text-lg leading-relaxed mb-4">
+                "Cho hai loa giống nhau cùng phát âm thanh như hình bên, dịch chuyển một micro có nối với dao động kí phía trước hai loa để ghi đô thị sóng âm thì thấy có những điểm tại đó biên độ sóng âm thu được rất lớn (L) và những điểm biên độ rất bé (B) nằm xen kẽ. Hiện tượng thú vị này giải thích như thế nào?"
+            </div>
+	    <div class="w-full h-45 bg-gray-200 border-2 border-dashed border-gray-400 rounded flex flex-col items-center justify-center text-gray-500 p-2 text-center">
+                <img src="hinh1.png" alt="Máy phát âm tần và loa" class="mx-auto rounded border border-gray-200">
+            </div>
+            
+            <button onclick="toggleAnswer('intro-ans')" class="bg-primary hover:bg-red-700 transition-colors text-white font-semibold px-5 py-2 rounded shadow-sm text-sm">Xem hướng giải quyết</button>
+            <div id="intro-ans" class="hidden mt-4 p-4 bg-abg border-l-4 border-green-500 rounded text-gray-800 shadow-inner">
+                <strong>Hướng giải quyết:</strong> Đây là hiện tượng giao thoa sóng âm. Hai loa đóng vai trò là hai nguồn kết hợp (phát ra sóng âm cùng tần số, có độ lệch pha không đổi). Trong không gian, hai sóng này gặp nhau. 
+                <br>- Tại các điểm (L), hai sóng lan truyền tới dao động cùng pha với nhau, chúng tăng cường lẫn nhau tạo ra âm thanh lớn (cực đại giao thoa).
+                <br>- Tại các điểm (B), hai sóng lan truyền tới dao động ngược pha với nhau, chúng triệt tiêu nhau tạo ra âm thanh rất nhỏ (cực tiểu giao thoa).
+            </div>
+        </div>
+
+        <!-- SECTION I -->
+        <div class="bg-white p-6 md:p-8 rounded-[12px] shadow-md">
+            <h2 class="text-2xl font-bold uppercase border-b-4 border-blue-900 pb-2 mb-6 text-blue-900">I. HIỆN TƯỢNG GIAO THOA CỦA HAI SÓNG MẶT NƯỚC</h2>
+            
+            <h3 class="text-xl font-semibold mb-3">1. Thí nghiệm</h3>
+            <p class="mb-2 font-medium">Chuẩn bị:</p>
+            <ul class="list-disc ml-6 mb-4 space-y-1">
+                <li>Đèn chiếu.</li>
+                <li>Cần rung có gắn một quả cầu.</li>
+                <li>Cần rung có gắn hai quả cầu.</li>
+                <li>Khay nước có đáy trong suốt.</li>
+                <li>Gương phẳng đặt hợp với đáy khay nước một góc \(45^{\circ}\) để thu hình ảnh giao thoa chiếu trên màn thẳng đứng.</li>
+            </ul>
+
+         	<div class="w-full h-75 bg-gray-200 border-2 border-dashed border-gray-400 rounded flex flex-col items-center justify-center text-gray-500 p-2 text-center">
+                <img src="hinh2.png" alt="Hình 12.1. Thí nghiệm tạo ra sự giao thoa của hai sóng nước" class="mx-auto rounded border border-gray-200">
+                <p class="text-sm italic text-gray-500 mt-2">Hình 12.1. Thí nghiệm tạo ra sự giao thoa của hai sóng nước</p>
+		
+            </div>
+
+            <p class="mb-2 font-medium">Tiến hành:</p>
+            <ul class="list-none mb-4 space-y-2">
+                <li><strong>Bước 1:</strong> Cho cần rung có gắn một quả cầu dao động, quan sát hình ảnh sóng trên màn thẳng đứng.</li>
+                <li><strong>Bước 2:</strong> Cho cần rung có gắn hai quả cầu dao động, quan sát hình ảnh sóng trên màn thẳng đứng và rút ra nhận xét.</li>
+                <li><strong>Bước 3:</strong> Dùng bút nối các điểm dao động cực đại (các điểm tối) trên màn ta thu được các đường cong liền nét như trên Hình 12.2. Tương tự ta nối các điểm dao động cực tiểu trên màn ta thu được các đường cong đứt nét như trên Hình 12.2.</li>
+            </ul>
+
+            <p class="mb-2 font-medium">Kết quả:</p>
+            <ul class="list-disc ml-6 mb-6 space-y-1">
+                <li>Đối với cần rung có gắn một quả cầu, hình ảnh trên màn thẳng đứng cho thấy có các hình tròn sáng, tối đồng tâm xen kẽ, lan truyền từ tâm dao động ra xa.</li>
+                <li>Đối với cần rung có gắn hai quả cầu, hình ảnh trên màn thẳng đứng ta thấy ảnh của các gợn sóng là các đường sáng và tối ổn định. Các đường này được biểu diễn như trong Hình 12.2</li>
+            </ul>
+
+           <div class="w-full h-75 bg-gray-200 border-2 border-dashed border-gray-400 rounded flex flex-col items-center justify-center text-gray-500 p-2 text-center">
+                <img src="hinh3.png" alt="Hình 12.2. Sự giao thoa của hai sóng mặt nước" class="mx-auto rounded border border-gray-200">
+                <p class="text-sm italic text-gray-500 mt-2">Hình 12.2. Sự giao thoa của hai sóng mặt nước</p>
+            </div>
+
+            <h3 class="text-xl font-semibold mb-3 mt-8">2. Giải thích</h3>
+            <p class="mb-3">a) Để giải thích hiện tượng trên, ta cần biết thêm một đặc điểm nữa của chuyển động sóng: Mỗi nguồn sóng phát ra một sóng có các gợn sóng là những đường tròn giống hệt như khi không có các nguồn sóng khác ở bên cạnh.</p>
+            <p class="mb-3 pl-4 border-l-4 border-gray-300">Những điểm nào cách nguồn một khoảng bằng \(k\lambda\) thì dao động đồng pha với nguồn, còn những điểm nào cách nguồn một khoảng \((k+\frac{1}{2})\lambda\) thì dao động ngược pha với nguồn.</p>
+            <p class="mb-3">b) Trong thí nghiệm ta đã dùng hai nguồn sóng giống hệt nhau dao động theo phương vuông góc với mặt nước. Vì thế, trên mặt nước có những điểm đứng yên, do hai sóng gặp nhau ở đó dao động ngược pha, triệt tiêu nhau. Có những điểm dao động rất mạnh do hai sóng ở đó dao động đồng pha.</p>
+            <p class="mb-3">c) Ánh sáng truyền qua những điểm đứng yên không bị cản trở, nên cho ảnh là những hypebol rất sáng. Còn ánh sáng truyền qua những điểm dao động mạnh thì bị tán xạ nên cho ảnh là những đường hypebol nhoè và tối.</p>
+            
+            <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 my-4">
+                <strong>Kết luận:</strong> Hiện tượng hai sóng gặp nhau tạo nên các gợn sóng ổn định gọi là hiện tượng giao thoa của hai sóng. Các gợn sóng ổn định gọi là các vân giao thoa.
+            </div>
+
+            <h3 class="text-xl font-semibold mb-3 mt-8">3. Điều kiện để xảy ra giao thoa</h3>
+            <p class="mb-2">Để xảy ra hiện tượng giao thoa hai nguồn sóng phải:</p>
+            <ul class="list-disc ml-6 mb-4 space-y-1 font-medium text-primary">
+                <li>Dao động cùng phương, cùng tần số.</li>
+                <li>Có độ lệch pha không đổi theo thời gian.</li>
+            </ul>
+            <p class="mb-4">Hai nguồn như vậy gọi là hai nguồn kết hợp. Hai sóng do hai nguồn kết hợp phát ra gọi là hai sóng kết hợp.</p>
+            <p class="mb-4 italic">Hiện tượng giao thoa là một hiện tượng đặc trưng của sóng. Vì thế, mọi quá trình vật lí nào gây ra được hiện tượng giao thoa cũng tất yếu là một quá trình sóng.</p>
+
+            <!-- Question Box inside Section I -->
+            <div class="bg-qbg border-l-4 border-blue-800 p-5 rounded shadow-sm mt-6">
+                <div class="flex items-start">
+                    <span class="text-3xl font-bold text-primary mr-3">?</span>
+                    <div class="w-full">
+                        <p class="font-semibold text-blue-900 text-lg mb-2">Câu hỏi thảo luận</p>
+                        <p class="mb-4 text-gray-800">Giải thích hiện tượng nêu ở mục khởi động của đầu bài.</p>
+                        <button onclick="toggleAnswer('q-hoatdong-1')" class="bg-primary hover:bg-red-700 text-white px-4 py-2 rounded text-sm font-semibold transition">Xem câu trả lời</button>
+                        
+                        <div id="q-hoatdong-1" class="hidden mt-4 p-4 bg-abg border border-green-200 rounded text-gray-800">
+                            <strong>Trả lời:</strong> 
+                            Hiện tượng ở phần mở đầu chính là hiện tượng giao thoa sóng âm trong không khí. <br>
+                            - Hai loa được nối cùng một máy phát âm tần nên chúng là hai nguồn kết hợp (cùng phương, cùng tần số, độ lệch pha không đổi).<br>
+                            - Tại các vị trí thu được âm lớn (L), sóng từ hai loa truyền tới gặp nhau và đồng pha, chúng tăng cường biên độ của nhau tạo thành cực đại giao thoa.<br>
+                            - Tại các vị trí thu được âm nhỏ (B), sóng từ hai loa truyền tới gặp nhau và ngược pha, chúng triệt tiêu nhau tạo thành cực tiểu giao thoa.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION II -->
+        <div class="bg-white p-6 md:p-8 rounded-[12px] shadow-md">
+            <h2 class="text-2xl font-bold uppercase border-b-4 border-blue-900 pb-2 mb-6 text-blue-900">II. THÍ NGHIỆM CỦA YOUNG (Y-ÂNG) VỀ GIAO THOA ÁNH SÁNG</h2>
+            
+            <h3 class="text-xl font-semibold mb-3">1. Thí nghiệm</h3>
+            <p class="mb-3">Tương tự như sóng nước, làm thí nghiệm về giao thoa của hai nguồn sóng ánh sáng kết hợp. Thí nghiệm được bố trí như Hình 12.3.</p>
+            <p class="mb-4">Ánh sáng phát ra từ nguồn S chiếu vào hai khe hẹp \(F_{1}\), \(F_{2}\). Hai khe hẹp này là hai nguồn kết hợp.</p>
+
+	    <div class="w-full h-75 bg-gray-200 border-2 border-dashed border-gray-400 rounded flex flex-col items-center justify-center text-gray-500 p-2 text-center">
+                <img src="hinh4.png" alt="Hình 12.3. Thí nghiệm giao thoa ánh sáng" class="mx-auto rounded border border-gray-200">
+                <p class="text-sm italic text-gray-500 mt-2">Hình 12.3. Thí nghiệm giao thoa ánh sáng</p>
+            </div>
+            
+            <div class="w-full h-75 bg-gray-200 border-2 border-dashed border-gray-400 rounded flex flex-col items-center justify-center text-gray-500 p-2 text-center">
+                <img src="hinh5.png" alt="Hình 12.4. Thí nghiệm tạo ra sự giao thoa ánh sáng của hai chùm laze" class="mx-auto rounded border border-gray-200">
+                <p class="text-sm italic text-gray-500 mt-2">Hình 12.4. Thí nghiệm tạo ra sự giao thoa ánh sáng của hai chùm laze</p>
+            </div>
+
+            <!-- Question Box inside Section II -->
+            <div class="bg-qbg border-l-4 border-blue-800 p-5 rounded shadow-sm my-6">
+                <div class="flex items-start">
+                    <span class="text-3xl font-bold text-primary mr-3">?</span>
+                    <div class="w-full">
+                        <p class="mb-4 text-gray-800">Trong thí nghiệm trên, nếu thay nguồn sáng laze trong thí nghiệm trên bằng bóng đèn dây tóc phát ánh sáng trắng thì vân sáng chính giữa sẽ có màu gì?</p>
+                        <button onclick="toggleAnswer('q-hoatdong-2')" class="bg-primary hover:bg-red-700 text-white px-4 py-2 rounded text-sm font-semibold transition">Xem câu trả lời</button>
+                        
+                        <div id="q-hoatdong-2" class="hidden mt-4 p-4 bg-abg border border-green-200 rounded text-gray-800">
+                            <strong>Trả lời:</strong> 
+                            Nếu thay nguồn phát laze (đơn sắc) bằng nguồn ánh sáng trắng (đa sắc), tại vị trí vân chính giữa (vị trí O), hiệu đường đi của hai sóng từ 2 nguồn luôn bằng 0 đối với mọi bước sóng. <br>
+                            Do đó, mọi bức xạ đơn sắc trong ánh sáng trắng đều cho vân sáng cực đại tại O. Sự tổng hợp của các vân sáng đơn sắc này tạo ra <strong>vân sáng chính giữa có màu trắng</strong>.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <p class="mb-4 leading-relaxed">
+                Trong vùng hai chùm sáng gặp nhau lại có những vạch tối và vạch sáng xen kẽ như trên Hình 12.4 đã khẳng định ánh sáng có tính chất sóng. Những vạch tối là chỗ hai sóng ánh sáng triệt tiêu lẫn nhau. Những vạch sáng là chỗ hai sóng ánh sáng tăng cường lẫn nhau. Những vạch sáng và tối xen kẽ nhau chính là hệ vân giao thoa của hai sóng ánh sáng.
+            </p>
+
+            <h3 class="text-xl font-semibold mb-3 mt-8">2. Công thức xác định bước sóng \(\lambda\) của ánh sáng</h3>
+            <p class="mb-4">Hình 12.5 là sơ đồ rút gọn của thí nghiệm Y-âng. Gọi:</p>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+                <div>
+                    <ul class="list-disc ml-6 mb-4 space-y-2">
+                        <li><strong>O:</strong> là vị trí tại đó xuất hiện vân sáng chính giữa.</li>
+                        <li><strong>a:</strong> là khoảng cách giữa hai khe: \(a = F_{1}F_{2}\).</li>
+                        <li><strong>D:</strong> là khoảng cách từ hai khe đến màn quan sát: \(D = IO\).</li>
+                        <li><strong>i:</strong> là khoảng vân. Đó là khoảng cách giữa hai vân sáng hoặc hai vân tối liên tiếp.</li>
+                    </ul>
+                    <div class="bg-gray-100 p-4 rounded text-center border border-gray-300">
+                        <p class="mb-2 font-medium">Nếu đo được a, D và i thì sẽ xác định được bước sóng \(\lambda\) theo công thức sau:</p>
+                        <p class="text-2xl font-bold text-primary my-2">\(\lambda = \frac{ia}{D}\)</p>
+                    </div>
+                </div>
+                <div class="text-center">
+                    <img src="hinh6.png" alt="Hình 12.5. Sơ đồ rút gọn của thí nghiệm Y-âng" class="mx-auto rounded border border-gray-200">
+                    <p class="text-sm italic text-gray-500 mt-2">Hình 12.5. Sơ đồ rút gọn của thí nghiệm Y-âng</p>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- EXERCISES FROM PDF -->
+        <div class="bg-white p-6 md:p-8 rounded-[12px] shadow-md">
+            <h2 class="text-2xl font-bold uppercase border-b-4 border-blue-900 pb-2 mb-6 text-blue-900">BÀI TẬP CUỐI BÀI</h2>
+
+            <!-- Ex 1 -->
+            <div class="bg-qbg border-l-4 border-blue-800 p-5 rounded shadow-sm mb-6">
+                <p class="font-semibold text-blue-900 mb-2">Bài 1:</p>
+                <p class="mb-4">Trong thí nghiệm ở Hình 12.1, tốc độ truyền sóng trên mặt nước là \(50\text{ cm/s}\), cần rung có tần số \(40\text{ Hz}\). Tính khoảng cách giữa hai điểm cực đại giao thoa cạnh nhau trên đoạn thẳng \(S_{1}S_{2}\).</p>
+                <button onclick="toggleAnswer('ex1-ans')" class="bg-primary hover:bg-red-700 text-white px-4 py-2 rounded text-sm font-semibold transition">Xem lời giải chi tiết</button>
+                <div id="ex1-ans" class="hidden mt-4 p-4 bg-abg border border-green-200 rounded text-gray-800">
+                    <strong>Lời giải:</strong><br>
+                    - Bước sóng của sóng nước là: <br>
+                    \(\lambda = \frac{v}{f} = \frac{50}{40} = 1,25\text{ cm}\) <br>
+                    - Khoảng cách giữa hai điểm cực đại giao thoa liên tiếp nằm trên đoạn thẳng nối hai nguồn (đoạn \(S_{1}S_{2}\)) bằng một nửa bước sóng:<br>
+                    \(d = \frac{\lambda}{2} = \frac{1,25}{2} = 0,625\text{ cm}\).<br>
+                    <em>Đáp số: \(0,625\text{ cm}\)</em>
+                </div>
+            </div>
+
+            <!-- Ex 2 -->
+            <div class="bg-qbg border-l-4 border-blue-800 p-5 rounded shadow-sm mb-6">
+                <p class="font-semibold text-blue-900 mb-2">Bài 2:</p>
+                <p class="mb-4">Trong một thí nghiệm Y-âng về giao thoa ánh sáng với \(a = 0,2\text{ mm}\), \(D = 1,2\text{ m}\), người ta đo được \(i = 0,36\text{ mm}\). Tính bước sóng \(\lambda\) và tần số \(f\) của bức xạ.</p>
+                <button onclick="toggleAnswer('ex2-ans')" class="bg-primary hover:bg-red-700 text-white px-4 py-2 rounded text-sm font-semibold transition">Xem lời giải chi tiết</button>
+                <div id="ex2-ans" class="hidden mt-4 p-4 bg-abg border border-green-200 rounded text-gray-800">
+                    <strong>Lời giải:</strong><br>
+                    - Áp dụng công thức tính bước sóng: <br>
+                    \(\lambda = \frac{ia}{D}\) <br>
+                    Thay số (đổi về cùng đơn vị hoặc dùng hệ đơn vị chuẩn mm, m, \(\mu m\)): <br>
+                    \(\lambda = \frac{0,36\text{ mm} \cdot 0,2\text{ mm}}{1,2\text{ m}} = 0,06\text{ }\mu\text{m}\)<br>
+                    - Tần số bức xạ (lấy \(c = 3 \cdot 10^8\text{ m/s}\)): <br>
+                    \(f = \frac{c}{\lambda} = \frac{3 \cdot 10^8}{0,06 \cdot 10^{-6}} = 5 \cdot 10^{15}\text{ Hz}\).<br>
+                    <em>Lưu ý: Với giá trị tính được \(0,06\text{ }\mu\text{m}\), bức xạ này thuộc vùng tử ngoại.</em>
+                </div>
+            </div>
+
+            <!-- Ex 3 -->
+            <div class="bg-qbg border-l-4 border-blue-800 p-5 rounded shadow-sm mb-6">
+                <p class="font-semibold text-blue-900 mb-2">Bài 3:</p>
+                <p class="mb-4">Trong một thí nghiệm Y-âng, biết \(a = 0,15\text{ mm}\), \(D = 1,20\text{ m}\), khoảng cách giữa 12 vân sáng liên tiếp là \(5,2\text{ mm}\). Tính bước sóng ánh sáng.</p>
+                <button onclick="toggleAnswer('ex3-ans')" class="bg-primary hover:bg-red-700 text-white px-4 py-2 rounded text-sm font-semibold transition">Xem lời giải chi tiết</button>
+                <div id="ex3-ans" class="hidden mt-4 p-4 bg-abg border border-green-200 rounded text-gray-800">
+                    <strong>Lời giải:</strong><br>
+                    - Khoảng cách giữa \(n\) vân sáng liên tiếp là \((n-1)i\). Do đó, khoảng cách giữa 12 vân sáng liên tiếp là \(11i\).<br>
+                    Ta có: \(11i = 5,2\text{ mm} \Rightarrow i = \frac{5,2}{11} \approx 0,4727\text{ mm}\).<br>
+                    - Bước sóng ánh sáng dùng trong thí nghiệm là: <br>
+                    \(\lambda = \frac{ia}{D} = \frac{\frac{5,2}{11} \cdot 0,15}{1,20} \approx 0,059\text{ }\mu\text{m}\).<br>
+                    <em>Đáp số: \(\lambda \approx 0,059\text{ }\mu\text{m}\)</em>
+                </div>
+            </div>
+        </div>
+
+        <!-- SUMMARY BOXES -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- EM ĐÃ HỌC -->
+            <div class="bg-teal-50 border-2 border-teal-500 p-6 rounded-[12px] shadow-md relative">
+                <div class="absolute -top-4 left-6 bg-teal-500 text-white font-bold px-4 py-1 rounded-full uppercase">Em đã học</div>
+                <ul class="list-none space-y-3 mt-4 text-gray-800">
+                    <li class="flex items-start"><span class="text-teal-600 mr-2">■</span> Hai nguồn sóng kết hợp là hai nguồn có cùng tần số và có độ lệch pha không đổi theo thời gian. Hai sóng do hai nguồn kết hợp phát ra là hai sóng kết hợp.</li>
+                    <li class="flex items-start"><span class="text-teal-600 mr-2">■</span> Hiện tượng giao thoa là hiện tượng khi hai sóng kết hợp gặp nhau thì có những điểm ở đó hai sóng luôn đồng pha thì dao động mạnh; có những điểm ở đó hai sóng luôn ngược pha thì đứng yên.</li>
+                    <li class="flex items-start"><span class="text-teal-600 mr-2">■</span> Bước sóng \(\lambda\) của ánh sáng được xác định theo hệ thức: \(\lambda=\frac{ia}{D}\)<br>(trong đó: a là khoảng cách giữa hai nguồn kết hợp, D là khoảng cách từ hai nguồn kết hợp đến màn quan sát, i là khoảng vân).</li>
+                </ul>
+            </div>
+
+            <!-- EM CÓ THỂ -->
+            <div class="bg-orange-50 border-2 border-orange-500 p-6 rounded-[12px] shadow-md relative">
+                <div class="absolute -top-4 left-6 bg-orange-500 text-white font-bold px-4 py-1 rounded-full uppercase">Em có thể</div>
+                <ul class="list-none space-y-3 mt-4 text-gray-800">
+                    <li class="flex items-start">
+                        <span class="text-orange-600 mr-2">⭐</span> 
+                        Từ hiện tượng giao thoa sóng nước, giải thích hiện được tượng giao thoa của các sóng khác như sóng âm, sóng ánh sáng.
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- ================= EXTRA SECTIONS (AS REQUESTED) ================= -->
+
+        <!-- 3 BÀI TẬP VẬN DỤNG TÍNH TOÁN -->
+        <div class="bg-white p-6 md:p-8 rounded-[12px] shadow-md border-t-4 border-indigo-500">
+            <h2 class="text-xl font-bold uppercase border-b-2 border-indigo-200 pb-2 mb-6 text-indigo-900">BÀI TẬP VẬN DỤNG TÍNH TOÁN (BỔ SUNG)</h2>
+
+            <!-- Vận dụng 1 -->
+            <div class="mb-6 pb-6 border-b border-gray-200">
+                <p class="font-bold text-gray-800 mb-2">Câu 1:</p>
+                <p class="mb-4">Hai nguồn phát sóng kết hợp \(A\) và \(B\) trên mặt nước dao động cùng pha với tần số \(f = 20\text{ Hz}\). Tốc độ truyền sóng trên mặt nước là \(v = 30\text{ cm/s}\). Tính khoảng cách giữa 5 gợn lồi (cực đại) liên tiếp nằm trên đoạn thẳng nối \(A\) và \(B\).</p>
+                <button onclick="toggleAnswer('vd1-ans')" class="bg-indigo-600 hover:bg-indigo-800 text-white px-4 py-2 rounded text-sm font-semibold transition">Xem lời giải</button>
+                <div id="vd1-ans" class="hidden mt-4 p-4 bg-indigo-50 border border-indigo-200 rounded text-gray-800">
+                    <strong>Lời giải:</strong><br>
+                    - Bước sóng: \(\lambda = \frac{v}{f} = \frac{30}{20} = 1,5\text{ cm}\).<br>
+                    - Khoảng cách giữa 2 cực đại liên tiếp trên đoạn AB là \(d = \frac{\lambda}{2} = 0,75\text{ cm}\).<br>
+                    - Khoảng cách giữa 5 cực đại liên tiếp bao gồm 4 khoảng cực đại.<br>
+                    Vậy khoảng cách cần tìm là: \(L = 4 \cdot \frac{\lambda}{2} = 4 \cdot 0,75 = 3\text{ cm}\).
+                </div>
+            </div>
+
+            <!-- Vận dụng 2 -->
+            <div class="mb-6 pb-6 border-b border-gray-200">
+                <p class="font-bold text-gray-800 mb-2">Câu 2:</p>
+                <p class="mb-4">Trong thí nghiệm Y-âng về giao thoa ánh sáng, khoảng cách giữa 2 khe là \(a = 1\text{ mm}\), khoảng cách từ mặt phẳng chứa 2 khe đến màn quan sát là \(D = 2\text{ m}\). Nguồn phát ra ánh sáng đơn sắc có bước sóng \(\lambda = 0,5\text{ }\mu\text{m}\). Tính khoảng cách từ vân sáng bậc 3 đến vân trung tâm.</p>
+                <button onclick="toggleAnswer('vd2-ans')" class="bg-indigo-600 hover:bg-indigo-800 text-white px-4 py-2 rounded text-sm font-semibold transition">Xem lời giải</button>
+                <div id="vd2-ans" class="hidden mt-4 p-4 bg-indigo-50 border border-indigo-200 rounded text-gray-800">
+                    <strong>Lời giải:</strong><br>
+                    - Khoảng vân: \(i = \frac{\lambda D}{a} = \frac{0,5 \cdot 2}{1} = 1\text{ mm}\).<br>
+                    - Vị trí vân sáng bậc 3 (so với vân trung tâm) cách vân trung tâm một đoạn: \(x = 3i\).<br>
+                    - Suy ra: \(x = 3 \cdot 1\text{ mm} = 3\text{ mm}\).
+                </div>
+            </div>
+
+            <!-- Vận dụng 3 -->
+            <div>
+                <p class="font-bold text-gray-800 mb-2">Câu 3:</p>
+                <p class="mb-4">Trong thí nghiệm Y-âng, khoảng vân đo được trên màn là \(i = 1,2\text{ mm}\). Xét điểm \(M\) trên màn cách vân sáng trung tâm một đoạn \(x_M = 3,6\text{ mm}\) và điểm \(N\) cách vân trung tâm \(x_N = 5,4\text{ mm}\). Hỏi tại \(M\) và \(N\) là vân sáng hay vân tối bậc (thứ) mấy?</p>
+                <button onclick="toggleAnswer('vd3-ans')" class="bg-indigo-600 hover:bg-indigo-800 text-white px-4 py-2 rounded text-sm font-semibold transition">Xem lời giải</button>
+                <div id="vd3-ans" class="hidden mt-4 p-4 bg-indigo-50 border border-indigo-200 rounded text-gray-800">
+                    <strong>Lời giải:</strong><br>
+                    - Tại điểm \(M\): Lập tỉ số \(\frac{x_M}{i} = \frac{3,6}{1,2} = 3\). Số nguyên, do đó tại \(M\) là <strong>vân sáng bậc 3</strong>.<br>
+                    - Tại điểm \(N\): Lập tỉ số \(\frac{x_N}{i} = \frac{5,4}{1,2} = 4,5 = 4 + 0,5\). Dạng bán nguyên (\(k + 0,5\)), với \(k=4\). Do đó tại \(N\) là <strong>vân tối thứ 5</strong>.
+                </div>
+            </div>
+        </div>
+
+        <!-- TRẮC NGHIỆM CỦNG CỐ -->
+        <div class="bg-white p-6 md:p-8 rounded-[12px] shadow-md border-t-4 border-green-500">
+            <h2 class="text-xl font-bold uppercase border-b-2 border-green-200 pb-2 mb-6 text-green-900">TRẮC NGHIỆM CỦNG CỐ (5 CÂU)</h2>
+            
+            <form id="quiz-form" class="space-y-8">
+                <!-- Câu 1 -->
+                <div>
+                    <p class="font-bold text-gray-800 mb-3">1. Hai nguồn kết hợp là hai nguồn có:</p>
+                    <div class="space-y-2 ml-4 text-gray-700">
+                        <label class="flex items-center space-x-2 cursor-pointer"><input type="radio" name="q1" value="A" class="form-radio text-primary"> <span>Cùng biên độ, cùng pha ban đầu.</span></label>
+                        <label class="flex items-center space-x-2 cursor-pointer"><input type="radio" name="q1" value="B" class="form-radio text-primary"> <span>Cùng phương, cùng tần số và hiệu số pha không đổi theo thời gian.</span></label>
+                        <label class="flex items-center space-x-2 cursor-pointer"><input type="radio" name="q1" value="C" class="form-radio text-primary"> <span>Cùng tần số, cùng năng lượng truyền sóng.</span></label>
+                        <label class="flex items-center space-x-2 cursor-pointer"><input type="radio" name="q1" value="D" class="form-radio text-primary"> <span>Cùng biên độ nhưng khác tần số.</span></label>
+                    </div>
+                    <div id="q1-feedback" class="hidden mt-2 text-sm p-3 bg-gray-50 border border-gray-200 rounded"></div>
+                </div>
+
+                <!-- Câu 2 -->
+                <div>
+                    <p class="font-bold text-gray-800 mb-3">2. Trong thí nghiệm Y-âng, khoảng vân \(i\) là:</p>
+                    <div class="space-y-2 ml-4 text-gray-700">
+                        <label class="flex items-center space-x-2 cursor-pointer"><input type="radio" name="q2" value="A" class="form-radio text-primary"> <span>Khoảng cách giữa hai vân sáng hoặc hai vân tối liên tiếp.</span></label>
+                        <label class="flex items-center space-x-2 cursor-pointer"><input type="radio" name="q2" value="B" class="form-radio text-primary"> <span>Khoảng cách giữa một vân sáng và một vân tối liên tiếp.</span></label>
+                        <label class="flex items-center space-x-2 cursor-pointer"><input type="radio" name="q2" value="C" class="form-radio text-primary"> <span>Khoảng cách từ vân sáng bậc 1 đến vân trung tâm.</span></label>
+                        <label class="flex items-center space-x-2 cursor-pointer"><input type="radio" name="q2" value="D" class="form-radio text-primary"> <span>Khoảng cách giữa hai nguồn sáng.</span></label>
+                    </div>
+                    <div id="q2-feedback" class="hidden mt-2 text-sm p-3 bg-gray-50 border border-gray-200 rounded"></div>
+                </div>
+
+                <!-- Câu 3 -->
+                <div>
+                    <p class="font-bold text-gray-800 mb-3">3. Trên đường nối hai nguồn kết hợp trên mặt nước, khoảng cách giữa hai cực đại giao thoa liên tiếp bằng:</p>
+                    <div class="space-y-2 ml-4 text-gray-700">
+                        <label class="flex items-center space-x-2 cursor-pointer"><input type="radio" name="q3" value="A" class="form-radio text-primary"> <span>Một bước sóng.</span></label>
+                        <label class="flex items-center space-x-2 cursor-pointer"><input type="radio" name="q3" value="B" class="form-radio text-primary"> <span>Nửa bước sóng.</span></label>
+                        <label class="flex items-center space-x-2 cursor-pointer"><input type="radio" name="q3" value="C" class="form-radio text-primary"> <span>Một phần tư bước sóng.</span></label>
+                        <label class="flex items-center space-x-2 cursor-pointer"><input type="radio" name="q3" value="D" class="form-radio text-primary"> <span>Hai bước sóng.</span></label>
+                    </div>
+                    <div id="q3-feedback" class="hidden mt-2 text-sm p-3 bg-gray-50 border border-gray-200 rounded"></div>
+                </div>
+
+                <!-- Câu 4 -->
+                <div>
+                    <p class="font-bold text-gray-800 mb-3">4. Công thức tính khoảng vân trong giao thoa ánh sáng là:</p>
+                    <div class="space-y-2 ml-4 text-gray-700">
+                        <label class="flex items-center space-x-2 cursor-pointer"><input type="radio" name="q4" value="A" class="form-radio text-primary"> <span>\(i = \frac{\lambda a}{D}\)</span></label>
+                        <label class="flex items-center space-x-2 cursor-pointer"><input type="radio" name="q4" value="B" class="form-radio text-primary"> <span>\(i = \frac{aD}{\lambda}\)</span></label>
+                        <label class="flex items-center space-x-2 cursor-pointer"><input type="radio" name="q4" value="C" class="form-radio text-primary"> <span>\(i = \frac{\lambda D}{a}\)</span></label>
+                        <label class="flex items-center space-x-2 cursor-pointer"><input type="radio" name="q4" value="D" class="form-radio text-primary"> <span>\(i = \lambda D a\)</span></label>
+                    </div>
+                    <div id="q4-feedback" class="hidden mt-2 text-sm p-3 bg-gray-50 border border-gray-200 rounded"></div>
+                </div>
+
+                <!-- Câu 5 -->
+                <div>
+                    <p class="font-bold text-gray-800 mb-3">5. Hiện tượng giao thoa chứng tỏ ánh sáng có bản chất:</p>
+                    <div class="space-y-2 ml-4 text-gray-700">
+                        <label class="flex items-center space-x-2 cursor-pointer"><input type="radio" name="q5" value="A" class="form-radio text-primary"> <span>Sóng.</span></label>
+                        <label class="flex items-center space-x-2 cursor-pointer"><input type="radio" name="q5" value="B" class="form-radio text-primary"> <span>Hạt.</span></label>
+                        <label class="flex items-center space-x-2 cursor-pointer"><input type="radio" name="q5" value="C" class="form-radio text-primary"> <span>Lượng tử.</span></label>
+                        <label class="flex items-center space-x-2 cursor-pointer"><input type="radio" name="q5" value="D" class="form-radio text-primary"> <span>Cả sóng và hạt.</span></label>
+                    </div>
+                    <div id="q5-feedback" class="hidden mt-2 text-sm p-3 bg-gray-50 border border-gray-200 rounded"></div>
+                </div>
+
+                <div class="text-center mt-8">
+                    <button type="button" onclick="checkQuiz()" class="bg-gray-800 hover:bg-gray-900 text-white font-bold py-3 px-8 rounded-[8px] text-lg transition shadow-lg">NỘP BÀI</button>
+                </div>
+            </form>
+
+            <div id="quiz-result" class="hidden mt-6 text-center p-4 rounded bg-gray-100 border border-gray-300">
+                <!-- Result will be injected here -->
+            </div>
+        </div>
+
+    </div>
+
+    <!-- JAVASCRIPT -->
+    <script>
+        // Toggle Answer Function
+        function toggleAnswer(id) {
+            const element = document.getElementById(id);
+            if (element.classList.contains('hidden')) {
+                element.classList.remove('hidden');
+            } else {
+                element.classList.add('hidden');
+            }
+        }
+
+        // Quiz Logic
+        function checkQuiz() {
+            // Đáp án đúng
+            const correctAnswers = {
+                q1: 'B',
+                q2: 'A',
+                q3: 'B',
+                q4: 'C',
+                q5: 'A'
+            };
+
+            // Lời giải chi tiết
+            const explanations = {
+                q1: "Hai nguồn kết hợp phải thoả mãn 3 điều kiện: cùng phương, cùng tần số và độ lệch pha không đổi theo thời gian.",
+                q2: "Theo định nghĩa, khoảng vân (i) là khoảng cách giữa 2 vân sáng hoặc 2 vân tối liên tiếp.",
+                q3: "Trên đường nối hai nguồn, khoảng cách giữa 2 cực đại liên tiếp là nửa bước sóng (λ/2).",
+                q4: "Từ công thức tính bước sóng λ = (ia)/D suy ra i = (λD)/a.",
+                q5: "Giao thoa là hiện tượng đặc trưng của sóng. Ánh sáng có hiện tượng giao thoa chứng tỏ ánh sáng có tính chất sóng."
+            };
+
+            let score = 0;
+            const total = Object.keys(correctAnswers).length;
+            const form = document.getElementById('quiz-form');
+            
+            // Xóa kết quả cũ nếu bấm nộp lại
+            for (let i = 1; i <= total; i++) {
+                const feedbackDiv = document.getElementById('q' + i + '-feedback');
+                feedbackDiv.classList.add('hidden');
+            }
+
+            let allAnswered = true;
+
+            for (let q in correctAnswers) {
+                const options = form.elements[q];
+                let selectedValue = null;
+                
+                // Lấy giá trị được chọn
+                for(let i=0; i<options.length; i++) {
+                    if(options[i].checked) {
+                        selectedValue = options[i].value;
+                        break;
+                    }
+                }
+
+                if (!selectedValue) {
+                    allAnswered = false;
+                }
+
+                const feedbackDiv = document.getElementById(q + '-feedback');
+                
+                if (selectedValue) {
+                    if (selectedValue === correctAnswers[q]) {
+                        score++;
+                        feedbackDiv.innerHTML = `<span class="text-green-600 font-bold text-base">Đúng!</span> <br><span class="text-gray-600">${explanations[q]}</span>`;
+                        feedbackDiv.classList.add('bg-green-50', 'border-green-200');
+                        feedbackDiv.classList.remove('bg-red-50', 'border-red-200');
+                    } else {
+                        feedbackDiv.innerHTML = `<span class="text-red-600 font-bold text-base">Sai.</span> Đáp án đúng là <strong>${correctAnswers[q]}</strong>. <br><span class="text-gray-600">${explanations[q]}</span>`;
+                        feedbackDiv.classList.add('bg-red-50', 'border-red-200');
+                        feedbackDiv.classList.remove('bg-green-50', 'border-green-200');
+                    }
+                    feedbackDiv.classList.remove('hidden');
+                }
+            }
+
+            if(!allAnswered) {
+                alert("Vui lòng trả lời đầy đủ tất cả các câu hỏi trước khi nộp bài!");
+                return;
+            }
+
+            // Hiển thị tổng kết
+            const resultDiv = document.getElementById('quiz-result');
+            resultDiv.classList.remove('hidden');
+            
+            if (score === total) {
+                resultDiv.innerHTML = `<p class="text-green-600 font-bold text-2xl mb-2">🎉 XUẤT SẮC! 🎉</p>
+                                       <p class="text-green-700 text-lg">Bạn làm đúng tuyệt đối ${score}/${total} câu.</p>`;
+            } else {
+                resultDiv.innerHTML = `<p class="text-red-600 font-bold text-2xl mb-2">HOÀN THÀNH!</p>
+                                       <p class="text-red-700 text-lg">Bạn làm đúng ${score}/${total} câu. Hãy xem lại lời giải bên trên nhé!</p>`;
+            }
+        }
+    </script>
+</body>
+</html>
