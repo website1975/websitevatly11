@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bài 11: Sóng Điện Từ</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#EE0000',
+                        darkblue: '#1a365d',
+                        lightbg: '#f4f7f9',
+                        questionbg: '#edf2f7',
+                        answerbg: '#c6f6d5',
+                        tableborder: '#cbd5e0',
+                        tablehead: '#e2e8f0'
+                    },
+                    fontFamily: {
+                        sans: ['"Segoe UI"', 'Roboto', 'Helvetica', 'Arial', 'sans-serif']
+                    },
+                    borderRadius: {
+                        '12px': '12px'
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- MathJax -->
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <style>
+        body { background-color: #f4f7f9; }
+        .section-header {
+            color: #333;
+            border-bottom: 4px solid #1a365d;
+            display: inline-block;
+            padding-bottom: 4px;
+            margin-bottom: 16px;
+            text-transform: uppercase;
+            font-weight: 700;
+            font-size: 1.25rem;
+        }
+    </style>
+</head>
+<body class="text-gray-800 antialiased p-4 md:p-8">
+
+    <div class="max-w-5xl mx-auto space-y-8">
+        
+        <!-- Header -->
+        <div class="bg-primary rounded-12px overflow-hidden shadow-md">
+            <div class="bg-primary bg-opacity-90 text-white p-3 text-center text-lg font-semibold tracking-wide border-b border-white/20">
+                CHƯƠNG II - SÓNG
+            </div><hr>
+            <div class="p-6 text-center">
+                <h1 class="text-white text-3xl md:text-4xl font-bold uppercase tracking-wider">Bài 11: SÓNG ĐIỆN TỪ</h1>
+            </div>
+        </div>
+
+        <!-- Intro Box -->
+        <div class="bg-white border border-black rounded-12px shadow-md p-6 mx-4 md:mx-12">
+            <p class="italic text-lg text-center text-gray-700">
+                Chỉ với một chiếc điện thoại thông minh hay chiếc máy tính được kết nối với internet, ta có thể trao đổi thông tin với nhau trên khắp toàn cầu. Vậy tại sao thông tin lại có thể lan truyền được trong không gian?
+            </p>
+        </div>
+
+        <!-- Section I -->
+        <div class="bg-white rounded-12px shadow-md p-6 md:p-8">
+            <h2 class="section-header">I. SÓNG ĐIỆN TỪ</h2>
+            
+            <p class="mb-4">Các thiết bị như ti vi, điện thoại di động, lò vi sóng đều sử dụng sóng điện từ. Vậy sóng điện từ là gì?</p>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6 items-start">
+                <div class="md:col-span-2 space-y-4">
+                    <p>Dựa vào các thí nghiệm nghiên cứu về mối liên hệ giữa dòng điện và từ trường, nhà bác học Faraday đã xây dựng lí thuyết điện từ. Lí thuyết này đã được phát triển và ứng dụng rộng rãi cho tới ngày nay.</p>
+                    <p>Maxwell đã mở rộng lí thuyết này và dựa vào đó tiên đoán điện từ trường biến thiên sẽ lan truyền khắp không gian dưới dạng sóng. Sóng này gọi là sóng điện từ. Qua rất nhiều nghiên cứu ông đã đi tới kết luận:</p>
+                    <div class="bg-yellow-50 border-l-4 border-yellow-500 p-4 font-semibold text-gray-800 rounded-r">
+                        Sóng điện từ là điện từ trường lan truyền trong không gian.
+                    </div>
+            <p class="mb-4">Khi tính toán, Maxwell đã chỉ ra được tốc độ của tất cả các sóng điện từ truyền trong chân không có giá trị bằng \( 3.10^{8}m/s \), đúng bằng tốc độ ánh sáng trong chân không. Đây là cơ sở để ông khẳng định rằng ánh sáng chính là sóng điện từ. Sóng điện từ bao gồm một dải rộng tần số (hoặc bước sóng), gọi là thang sóng điện từ.</p>
+               </div>
+                <div class="flex flex-col space-y-4">
+                    <!-- Image Placeholder -->
+                    <div class="w-full h-55 bg-gray-200 border-2 border-dashed border-gray-400 rounded flex flex-col items-center justify-center text-gray-500 p-2 text-center">
+                        <span><img src="h1.png" class="max-h-full max-w-full object-contain"></img></span>
+			<strong><p class="text-bold"> Michael Faraday (1791 - 1867)</p></strong>
+                    </div>
+                    <div class="w-full h-55 bg-gray-200 border-2 border-dashed border-gray-400 rounded flex flex-col items-center justify-center text-gray-500 p-2 text-center">
+                        <span><img src="h2.png" class="max-h-full max-w-full object-contain"></img></span>
+			<strong><p>James Clerk Maxwell(1831-1879)</p></strong>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Question Box -->
+            <div class="bg-questionbg border-l-4 border-darkblue p-4 my-6 rounded-r-12px shadow-sm">
+                <div class="flex items-start">
+                    <div class="bg-primary text-white rounded-full w-8 h-8 flex items-center justify-center font-bold mr-3 flex-shrink-0">?</div>
+                    <div>
+                        <p class="text-gray-800 font-medium">Một vệ tinh thông tin (vệ tinh địa tĩnh) chuyển động trên quỹ đạo tròn ngay phía trên xích đạo của Trái Đất, quay cùng hướng và cùng chu kì tự quay của Trái Đất ở độ cao 36 600 km so với đài phát hình trên mặt đất. Đài phát nằm trên đường thẳng nối vệ tinh và tâm Trái Đất. Coi Trái Đất là một hình cầu có bán kính \( R=6~400 \text{ km} \). Vệ tinh nhận sóng truyền hình từ đài phát rồi phát lại tức thời tín hiệu đó về Trái Đất. Biết sóng có bước sóng \( \lambda=0,5 \text{ m} \); tốc độ truyền sóng \( c=3.10^{8}m/s \). Tính khoảng thời gian lớn nhất mà sóng truyền hình đi từ đài phát đến một điểm trên mặt Trái Đất, vẽ hình minh hoạ.</p>
+                        <button onclick="toggleAnswer('ans-vetinh')" class="bg-primary hover:bg-red-700 text-white font-medium py-2 px-4 rounded transition mt-4">Xem lời giải</button>
+                    </div>
+                </div>
+                <!-- Answer Box -->
+                <div id="ans-vetinh" class="hidden bg-answerbg p-4 mt-4 rounded-lg border border-green-300">
+                    <p class="font-bold mb-2 text-green-900">Lời giải chi tiết:</p>
+                    <p>Khoảng cách lớn nhất từ vệ tinh đến một điểm trên mặt Trái Đất là khoảng cách theo phương tiếp tuyến với bề mặt Trái Đất.</p>
+                    <p>Khoảng cách từ tâm Trái Đất đến vệ tinh: \( d = R + h = 6400 + 36600 = 43000 \text{ km} \)</p>
+                    <p>Áp dụng định lí Pytago trong tam giác vuông tạo bởi tâm Trái Đất, điểm tiếp tuyến trên mặt đất và vệ tinh, khoảng cách lớn nhất sóng truyền từ vệ tinh về Trái Đất là:</p>
+                    <p class="my-2">\( L = \sqrt{d^2 - R^2} = \sqrt{43000^2 - 6400^2} \approx 42521,5 \text{ km} = 42.521.500 \text{ m} \)</p>
+                    <p>Tổng quãng đường sóng truyền từ đài phát lên vệ tinh rồi truyền về điểm xa nhất: \( S = h + L = 36.600.000 + 42.521.500 = 79.121.500 \text{ m} \)</p>
+                    <p>Khoảng thời gian lớn nhất: \( t = \frac{S}{c} = \frac{79.121.500}{3.10^8} \approx 0,264 \text{ s} \)</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section II -->
+        <div class="bg-white rounded-12px shadow-md p-6 md:p-8">
+            <h2 class="section-header">II. THANG SÓNG ĐIỆN TỪ</h2>
+            
+            <p class="mb-4">Sự khác nhau về bước sóng (hay tần số) của các loại sóng điện từ đã dẫn đến sự khác nhau về tính chất và tác dụng của chúng.</p>
+            <p class="mb-4">Toàn bộ thang sóng điện từ, từ sóng dài nhất (hàng chục km) đến sóng ngắn nhất (cỡ \( 10^{-12}m \) đến \( 10^{-15}m \)) đã được khám phá và sử dụng (Hình 11.3).</p>
+
+            <div class="w-full h-65 bg-gray-200 border-2 border-dashed border-gray-400 rounded flex flex-col items-center justify-center text-gray-500 p-2 text-center my-6">
+                 <span><img src="h3.png" class="max-h-full max-w-full object-contain"></img></span>
+            </div>
+
+            <p class="mb-4 text-sm text-gray-600 italic">Không có sự phân chia rõ ràng giữa các dải trong phổ của sóng điện từ. Ví dụ, sóng vi ba đôi khi được coi là sự chia nhỏ của sóng vô tuyến, dãy gồm tia X và tia \(\gamma\) có khoảng trùng nhau.</p>
+
+            <h3 class="font-bold text-lg text-primary mt-6 mb-2">1. Ánh sáng nhìn thấy</h3>
+            <p class="mb-2">Dải bước sóng của ánh sáng nhìn thấy là một phần của thang sóng điện từ (Hình 11.3). Quang phổ của ánh sáng nhìn thấy là một dải màu biến thiên liên tục từ tím đến đỏ. Bước sóng của ánh sáng nhìn thấy nằm trong khoảng từ \( 0,38~\mu m \) đến \( 0,76~\mu m \), trong đó ánh sáng đỏ có bước sóng dài nhất khoảng \( 0,76~\mu m \), ánh sáng tím có bước sóng ngắn nhất khoảng \( 0,38~\mu m \).</p>
+            <p class="mb-4">Nguồn phát ra ánh sáng nhìn thấy như: Mặt Trời, một số loại đèn, tia chớp, ngọn lửa,...</p>
+
+            <!-- Question Box -->
+            <div class="bg-questionbg border-l-4 border-darkblue p-4 my-4 rounded-r-12px shadow-sm">
+                <div class="flex items-start">
+                    <div class="bg-primary text-white rounded-full w-8 h-8 flex items-center justify-center font-bold mr-3 flex-shrink-0">?</div>
+                    <div>
+                        <p class="text-gray-800 font-medium">So sánh tần số của ánh sáng đỏ và ánh sáng tím.</p>
+                        <button onclick="toggleAnswer('ans-ss_tanso')" class="bg-primary hover:bg-red-700 text-white font-medium py-1 px-3 rounded transition mt-3 text-sm">Xem lời giải</button>
+                    </div>
+                </div>
+                <div id="ans-ss_tanso" class="hidden bg-answerbg p-4 mt-3 rounded-lg border border-green-300 text-sm">
+                    <p>Vì tần số \( f = \frac{c}{\lambda} \), mà bước sóng của ánh sáng đỏ lớn hơn ánh sáng tím (\( \lambda_{đỏ} > \lambda_{tím} \)) nên tần số của ánh sáng đỏ nhỏ hơn tần số của ánh sáng tím (\( f_{đỏ} < f_{tím} \)).</p>
+                </div>
+            </div>
+
+            <h3 class="font-bold text-lg text-primary mt-6 mb-2">2. Tia hồng ngoại (IR)</h3>
+            <p class="mb-2">Tia hồng ngoại là sóng điện từ không nhìn thấy có bước sóng nằm trong khoảng từ \( 0,76~\mu m \) đến \( 1 \text{ mm} \).</p>
+            <p class="mb-4">Nguồn phát tia hồng ngoại: Vật có nhiệt độ cao hơn môi trường xung quanh thì phát được tia hồng ngoại ra môi trường. Nguồn thông dụng là bóng đèn dây tóc, bếp gas, bếp than, điốt hồng ngoại,...</p>
+
+            <h3 class="font-bold text-lg text-primary mt-6 mb-2">3. Tia tử ngoại (UV)</h3>
+            <p class="mb-4">Tia tử ngoại là sóng điện từ không nhìn thấy có bước sóng ngắn hơn ánh sáng tím nằm trong khoảng từ \( 10 \text{ nm} \) đến \( 400 \text{ nm} \).</p>
+            <p class="mb-4">Nguồn phát tia tử ngoại: Vật có nhiệt độ trên \( 2000^\circ C \) thì phát được tia tử ngoại, nhiệt độ của vật càng cao thì bước sóng tử ngoại càng nhỏ. Hồ quang điện, đèn hơi thuỷ ngân là nguồn phát tia tử ngoại mạnh.</p>
+
+            <h3 class="font-bold text-lg text-primary mt-6 mb-2">4. Sóng vô tuyến</h3>
+            <p class="mb-4">Sóng vô tuyến có bước sóng nằm trong khoảng từ \( 1 \text{ mm} \) đến \( 100 \text{ km} \). Chúng được phát ra từ ăng-ten và được sử dụng để "mang" các thông tin như âm thanh, hình ảnh đi rất xa. Sóng này bị phản xạ bởi tầng điện li trước khi tới máy thu (Hình 11.4). Trong đó, sóng VHF (Very High Frequency) (bước sóng rất ngắn) từ \( 1\text{m} \) đến \( 10 \text{ m} \) và sóng UHF (Ultra High Frequency) (bước sóng cực ngắn) từ \( 10 \text{ cm} \) đến \( 1 \text{ m} \) có thể truyền thẳng đến máy thu, không bị phản xạ bởi tầng điện li. Chúng được sử dụng cho các đài phát thanh và truyền hình địa phương. Sóng vi ba (bước sóng khoảng vài cm) được sử dụng cho viễn thông quốc tế và chuyển tiếp truyền hình qua vệ tinh thông tin và cho mạng điện thoại di động qua tháp vi ba.</p>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                <div class="w-full h-70 bg-gray-200 border-2 border-dashed border-gray-400 rounded flex flex-col items-center justify-center text-gray-500 p-2 text-center">
+                    <span><img src="h4.png" class="max-h-full max-w-full object-contain"></img></span>
+                </div>
+                <div class="w-full h-70 bg-gray-200 border-2 border-dashed border-gray-400 rounded flex flex-col items-center justify-center text-gray-500 p-2 text-center">
+                    <span><img src="h5.png" class="max-h-full max-w-full object-contain"></img></span>
+                </div>
+            </div>
+
+            <!-- Question Box -->
+            <div class="bg-questionbg border-l-4 border-darkblue p-4 my-4 rounded-r-12px shadow-sm">
+                <div class="flex items-start">
+                    <div class="bg-primary text-white rounded-full w-8 h-8 flex items-center justify-center font-bold mr-3 flex-shrink-0">?</div>
+                    <div>
+                        <ol class="list-decimal pl-5 space-y-2 font-medium text-gray-800">
+                            <li>Giải thích tại sao mỗi khi cho phóng hồ quang người thợ hàn cần mặt nạ che mặt (Hình 11.5).</li>
+                            <li>Giải thích tại sao Mặt Trời là một nguồn năng lượng khổng lồ phát ra tia tử ngoại mà con người và các sinh vật trên Trái Đất vẫn có thể sinh sống dưới ánh nắng mặt trời được.</li>
+                        </ol>
+                        <button onclick="toggleAnswer('ans-uv')" class="bg-primary hover:bg-red-700 text-white font-medium py-1 px-3 rounded transition mt-4 text-sm">Xem lời giải</button>
+                    </div>
+                </div>
+                <div id="ans-uv" class="hidden bg-answerbg p-4 mt-3 rounded-lg border border-green-300 text-sm">
+                    <ol class="list-decimal pl-5 space-y-2">
+                        <li>Hồ quang điện có nhiệt độ rất cao (trên \(3000^\circ C\)), do đó phát ra tia tử ngoại rất mạnh. Tia tử ngoại có thể gây tổn thương nghiêm trọng cho giác mạc, võng mạc và da. Việc đeo mặt nạ giúp thợ hàn cản tia tử ngoại và bảo vệ mắt.</li>
+                        <li>Trái Đất được bao bọc bởi bầu khí quyển, trong đó tầng ozon có khả năng hấp thụ hầu hết các tia tử ngoại (đặc biệt là tia UV-B và UV-C có hại) từ Mặt Trời. Nhờ lớp "áo giáp" này mà con người và sinh vật được bảo vệ.</li>
+                    </ol>
+                </div>
+            </div>
+
+            <h3 class="font-bold text-lg text-primary mt-6 mb-2">5. Tia Rơn ghen (tia X)</h3>
+            <p class="mb-2">Tia X có bước sóng nhỏ hơn tia tử ngoại (khoảng từ \( 30 \text{ pm} \) đến \( 3 \text{ nm} \)).</p>
+            <p class="mb-2">Nguồn phát tia X: Tia X được tạo ra khi các electron chuyển động với tốc độ cao tới đập vào tấm kim loại có nguyên tử lượng lớn trong ống tia X.</p>
+            <p class="mb-4">Ngoài các công dụng về chuẩn đoán và chữa trị một số bệnh trong y học, tia X còn được sử dụng trong công nghiệp để tìm khuyết tật trong các vật đúc bằng kim loại và trong các tinh thể; sử dụng trong giao thông để kiểm tra hành lí của hành khách khi đi máy bay,...</p>
+
+            <h3 class="font-bold text-lg text-primary mt-6 mb-2">6. Tia gamma (\( \gamma \))</h3>
+            <p class="mb-4">Tia gamma có bước sóng nhỏ nhất trong thang sóng điện từ, khoảng từ \( 10^{-5} \text{ nm} \) đến \( 0,1 \text{ nm} \). Trong y học, tia gamma được dùng trong phẫu thuật, điều trị các căn bệnh liên quan đến khối u, dị dạng mạch máu, các bệnh chức năng của não. Bên cạnh lĩnh vực y tế, tia gamma còn được ứng dụng trong lĩnh vực công nghiệp. Tia gamma giúp phát hiện các khuyết tật bằng hình ảnh rõ ràng với độ chính xác cao.</p>
+
+            <!-- Activity Box -->
+            <div class="bg-indigo-50 border border-indigo-200 p-4 my-6 rounded-12px shadow-sm">
+                <div class="flex items-center gap-2 mb-3">
+                    <span class="text-2xl">✍️</span>
+                    <p class="font-bold text-indigo-900">Hoạt động: Bảng 11.1 cho biết phạm vi của bước sóng trong chân không của các dải chính tạo nên thang sóng điện từ. Hãy xác định phạm vi của tần số tương ứng với các dải bước sóng đó.</p>
+                </div>
+                
+                <h4 class="text-center font-bold mt-4 mb-2">Bảng 11.1. Bước sóng trong chân không của thang sóng điện từ</h4>
+                <div class="overflow-x-auto">
+                    <table class="w-full border-collapse border border-tableborder mb-4 text-center bg-white">
+                        <thead>
+                            <tr class="bg-tablehead text-gray-700">
+                                <th class="border border-tableborder p-2">Loại bức xạ</th>
+                                <th class="border border-tableborder p-2">Phạm vi bước sóng</th>
+                                <th class="border border-tableborder p-2">Phạm vi tần số (Hz)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="border border-tableborder p-2 font-medium">Sóng vô tuyến</td>
+                                <td class="border border-tableborder p-2">Từ \( 1 \text{ mm} \) đến \( 100 \text{ km} \)</td>
+                                <td class="border border-tableborder p-2 italic text-gray-400">?</td>
+                            </tr>
+                            <tr>
+                                <td class="border border-tableborder p-2 font-medium">Sóng vi ba</td>
+                                <td class="border border-tableborder p-2">Từ \( 1 \text{ mm} \) đến \( 1 \text{ m} \)</td>
+                                <td class="border border-tableborder p-2 italic text-gray-400">?</td>
+                            </tr>
+                            <tr>
+                                <td class="border border-tableborder p-2 font-medium">Tia hồng ngoại</td>
+                                <td class="border border-tableborder p-2">Từ \( 0,76~\mu m \) đến \( 1 \text{ mm} \)</td>
+                                <td class="border border-tableborder p-2 italic text-gray-400">?</td>
+                            </tr>
+                            <tr>
+                                <td class="border border-tableborder p-2 font-medium">Ánh sáng nhìn thấy</td>
+                                <td class="border border-tableborder p-2">Từ \( 0,38~\mu m \) đến \( 0,76~\mu m \)</td>
+                                <td class="border border-tableborder p-2 italic text-gray-400">?</td>
+                            </tr>
+                            <tr>
+                                <td class="border border-tableborder p-2 font-medium">Tia tử ngoại</td>
+                                <td class="border border-tableborder p-2">Từ \( 10 \text{ nm} \) đến \( 400 \text{ nm} \)</td>
+                                <td class="border border-tableborder p-2 italic text-gray-400">?</td>
+                            </tr>
+                            <tr>
+                                <td class="border border-tableborder p-2 font-medium">Tia X</td>
+                                <td class="border border-tableborder p-2">Từ \( 30 \text{ pm} \) đến \( 3 \text{ nm} \)</td>
+                                <td class="border border-tableborder p-2 italic text-gray-400">?</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <button onclick="toggleAnswer('ans-table')" class="bg-primary hover:bg-red-700 text-white font-medium py-2 px-4 rounded transition">Xem đáp án</button>
+                
+                <div id="ans-table" class="hidden bg-white mt-4 p-4 rounded border border-indigo-300">
+                    <p class="mb-2 italic text-sm">Sử dụng công thức \( f = \frac{c}{\lambda} \) với \( c = 3.10^8 \text{ m/s} \) để tính:</p>
+                    <table class="w-full border-collapse border border-tableborder text-center text-sm">
+                        <thead>
+                            <tr class="bg-green-100 text-gray-700">
+                                <th class="border border-tableborder p-2">Loại bức xạ</th>
+                                <th class="border border-tableborder p-2">Phạm vi tần số (Hz)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr><td class="border border-tableborder p-2">Sóng vô tuyến</td><td class="border border-tableborder p-2">Từ \( 3.10^3 \) đến \( 3.10^{11} \)</td></tr>
+                            <tr><td class="border border-tableborder p-2">Sóng vi ba</td><td class="border border-tableborder p-2">Từ \( 3.10^8 \) đến \( 3.10^{11} \)</td></tr>
+                            <tr><td class="border border-tableborder p-2">Tia hồng ngoại</td><td class="border border-tableborder p-2">Từ \( 3.10^{11} \) đến \( 3,95.10^{14} \)</td></tr>
+                            <tr><td class="border border-tableborder p-2">Ánh sáng nhìn thấy</td><td class="border border-tableborder p-2">Từ \( 3,95.10^{14} \) đến \( 7,89.10^{14} \)</td></tr>
+                            <tr><td class="border border-tableborder p-2">Tia tử ngoại</td><td class="border border-tableborder p-2">Từ \( 7,5.10^{14} \) đến \( 3.10^{16} \)</td></tr>
+                            <tr><td class="border border-tableborder p-2">Tia X</td><td class="border border-tableborder p-2">Từ \( 10^{17} \) đến \( 10^{19} \)</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- In-text Exercises -->
+            <div class="bg-questionbg border-l-4 border-darkblue p-4 my-6 rounded-r-12px shadow-sm">
+                <p class="font-bold text-lg mb-4">Câu hỏi bài tập:</p>
+                
+                <div class="mb-4">
+                    <p class="font-medium">1. Nêu tên sóng điện từ trong chân không ứng với mỗi bước sóng.</p>
+                    <div class="grid grid-cols-3 gap-2 mt-2 ml-4">
+                        <p>a) 1 km;</p><p>b) 3 cm;</p><p>c) \( 5~\mu m \);</p>
+                        <p>d) 500 nm;</p><p>e) 50 nm;</p><p>g) \( 10^{-12} \text{ m} \).</p>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <p class="font-medium">2. Nêu loại sóng điện từ ứng với mỗi tần số sau:</p>
+                    <div class="grid grid-cols-2 gap-2 mt-2 ml-4">
+                        <p>a) 200 kHz;</p><p>b) 100 MHz;</p>
+                        <p>c) \( 5.10^{14} \text{ Hz} \);</p><p>d) \( 10^{18} \text{ Hz} \).</p>
+                    </div>
+                </div>
+
+                <button onclick="toggleAnswer('ans-exercises')" class="bg-primary hover:bg-red-700 text-white font-medium py-2 px-4 rounded transition">Xem giải chi tiết</button>
+                
+                <div id="ans-exercises" class="hidden bg-answerbg p-4 mt-4 rounded-lg border border-green-300">
+                    <p class="font-bold mb-2 text-green-900">Giải đáp:</p>
+                    <p class="font-medium mt-2">Bài 1:</p>
+                    <ul class="list-disc pl-6 space-y-1">
+                        <li>a) 1 km (\(10^3 \text{ m}\)): Sóng vô tuyến.</li>
+                        <li>b) 3 cm (\(0,03 \text{ m}\)): Sóng vi ba.</li>
+                        <li>c) \(5~\mu m\) (\(5.10^{-6} \text{ m}\)): Tia hồng ngoại.</li>
+                        <li>d) 500 nm (\(0,5~\mu m\)): Ánh sáng nhìn thấy.</li>
+                        <li>e) 50 nm (\(5.10^{-8} \text{ m}\)): Tia tử ngoại.</li>
+                        <li>g) \(10^{-12} \text{ m}\): Tia gamma.</li>
+                    </ul>
+                    
+                    <p class="font-medium mt-4">Bài 2: Tính bước sóng tương ứng \(\lambda = \frac{c}{f}\)</p>
+                    <ul class="list-disc pl-6 space-y-1">
+                        <li>a) \( f = 200 \text{ kHz} \Rightarrow \lambda = 1500 \text{ m} \): Sóng vô tuyến.</li>
+                        <li>b) \( f = 100 \text{ MHz} \Rightarrow \lambda = 3 \text{ m} \): Sóng vô tuyến (sóng VHF).</li>
+                        <li>c) \( f = 5.10^{14} \text{ Hz} \Rightarrow \lambda = 0,6~\mu m \): Ánh sáng nhìn thấy.</li>
+                        <li>d) \( f = 10^{18} \text{ Hz} \Rightarrow \lambda = 0,3 \text{ nm} \): Tia X.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Summary Boxes -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
+                <!-- Em đã học -->
+                <div class="bg-[#e0f2fe] border-2 border-[#38bdf8] rounded-12px p-5 relative mt-4">
+                    <div class="absolute -top-4 left-4 bg-[#38bdf8] text-white px-3 py-1 font-bold rounded shadow">EM ĐÃ HỌC</div>
+                    <ul class="list-disc pl-5 mt-2 space-y-2 text-gray-800">
+                        <li>Sóng điện từ là điện từ trường lan truyền trong không gian.</li>
+                        <li>Sóng điện từ truyền trong chân không với tốc độ bằng tốc độ ánh sáng \( c = 3.10^8 \text{ m/s} \).</li>
+                        <li>Dải bước sóng của thang sóng điện từ.</li>
+                    </ul>
+                </div>
+                
+                <!-- Em có thể -->
+                <div class="bg-[#fef08a] border-2 border-[#eab308] rounded-12px p-5 relative mt-4">
+                    <div class="absolute -top-4 left-4 bg-[#eab308] text-white px-3 py-1 font-bold rounded shadow">EM CÓ THỂ</div>
+                    <p class="mt-2 text-gray-800">
+                        Nhận biết được các loại bức xạ trong thang sóng điện từ dựa vào bước sóng hoặc tần số của nó.
+                    </p>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Extra Section: Quiz & Math Practice -->
+        <div class="bg-white rounded-12px shadow-md p-6 md:p-8">
+            <h2 class="section-header">CỦNG CỐ & VẬN DỤNG</h2>
+            
+            <h3 class="font-bold text-xl text-primary mt-4 mb-4">A. Bài tập trắc nghiệm</h3>
+            <div id="quiz-container" class="space-y-6">
+                <!-- Q1 -->
+                <div class="quiz-item">
+                    <p class="font-medium mb-2">Câu 1: Sóng điện từ là gì?</p>
+                    <label class="block cursor-pointer"><input type="radio" name="q1" value="A" class="mr-2">A. Là dao động cơ học lan truyền trong không gian.</label>
+                    <label class="block cursor-pointer"><input type="radio" name="q1" value="B" class="mr-2">B. Là điện từ trường lan truyền trong không gian.</label>
+                    <label class="block cursor-pointer"><input type="radio" name="q1" value="C" class="mr-2">C. Là dòng các hạt electron chuyển động có hướng.</label>
+                    <label class="block cursor-pointer"><input type="radio" name="q1" value="D" class="mr-2">D. Là bức xạ hạt nhân lan truyền trong chân không.</label>
+                </div>
+                <!-- Q2 -->
+                <div class="quiz-item">
+                    <p class="font-medium mb-2">Câu 2: Tốc độ của sóng điện từ trong chân không là bao nhiêu?</p>
+                    <label class="block cursor-pointer"><input type="radio" name="q2" value="A" class="mr-2">A. \( 3.10^5 \text{ m/s} \)</label>
+                    <label class="block cursor-pointer"><input type="radio" name="q2" value="B" class="mr-2">B. \( 340 \text{ m/s} \)</label>
+                    <label class="block cursor-pointer"><input type="radio" name="q2" value="C" class="mr-2">C. \( 3.10^8 \text{ km/s} \)</label>
+                    <label class="block cursor-pointer"><input type="radio" name="q2" value="D" class="mr-2">D. \( 3.10^8 \text{ m/s} \)</label>
+                </div>
+                <!-- Q3 -->
+                <div class="quiz-item">
+                    <p class="font-medium mb-2">Câu 3: Sắp xếp các bức xạ sau theo thứ tự bước sóng GIẢM DẦN:</p>
+                    <label class="block cursor-pointer"><input type="radio" name="q3" value="A" class="mr-2">A. Tia hồng ngoại, Ánh sáng nhìn thấy, Tia tử ngoại, Tia X.</label>
+                    <label class="block cursor-pointer"><input type="radio" name="q3" value="B" class="mr-2">B. Tia X, Tia tử ngoại, Ánh sáng nhìn thấy, Tia hồng ngoại.</label>
+                    <label class="block cursor-pointer"><input type="radio" name="q3" value="C" class="mr-2">C. Tia tử ngoại, Tia hồng ngoại, Tia X, Ánh sáng nhìn thấy.</label>
+                    <label class="block cursor-pointer"><input type="radio" name="q3" value="D" class="mr-2">D. Ánh sáng nhìn thấy, Tia hồng ngoại, Tia tử ngoại, Tia X.</label>
+                </div>
+                <!-- Q4 -->
+                <div class="quiz-item">
+                    <p class="font-medium mb-2">Câu 4: Ứng dụng nổi bật của sóng vi ba là gì?</p>
+                    <label class="block cursor-pointer"><input type="radio" name="q4" value="A" class="mr-2">A. Chiếu điện, chụp điện trong y tế.</label>
+                    <label class="block cursor-pointer"><input type="radio" name="q4" value="B" class="mr-2">B. Sử dụng cho viễn thông quốc tế và mạng điện thoại di động.</label>
+                    <label class="block cursor-pointer"><input type="radio" name="q4" value="C" class="mr-2">C. Chữa bệnh còi xương.</label>
+                    <label class="block cursor-pointer"><input type="radio" name="q4" value="D" class="mr-2">D. Tìm khuyết tật bên trong sản phẩm đúc kim loại.</label>
+                </div>
+                <!-- Q5 -->
+                <div class="quiz-item">
+                    <p class="font-medium mb-2">Câu 5: Tia X không có ứng dụng nào sau đây?</p>
+                    <label class="block cursor-pointer"><input type="radio" name="q5" value="A" class="mr-2">A. Chẩn đoán hình ảnh y tế.</label>
+                    <label class="block cursor-pointer"><input type="radio" name="q5" value="B" class="mr-2">B. Kiểm tra hành lí tại sân bay.</label>
+                    <label class="block cursor-pointer"><input type="radio" name="q5" value="C" class="mr-2">C. Sưởi ấm và sấy khô sản phẩm.</label>
+                    <label class="block cursor-pointer"><input type="radio" name="q5" value="D" class="mr-2">D. Tìm khuyết tật trong vật đúc bằng kim loại.</label>
+                </div>
+
+                <div class="mt-6 flex items-center gap-4">
+                    <button onclick="checkQuiz()" class="bg-darkblue hover:bg-blue-900 text-white font-bold py-2 px-6 rounded transition">NỘP BÀI</button>
+                    <span id="quiz-result" class="font-bold text-lg"></span>
+                </div>
+
+                <!-- Quiz Explanations -->
+                <div id="quiz-explanation" class="hidden bg-gray-100 p-5 rounded mt-4 border border-gray-300">
+                    <h4 class="font-bold text-lg border-b border-gray-300 pb-2 mb-2">Đáp án và Giải thích:</h4>
+                    <p><strong>Câu 1: B.</strong> Theo định nghĩa của Maxwell.</p>
+                    <p><strong>Câu 2: D.</strong> Tốc độ là \( 3.10^8 \text{ m/s} \).</p>
+                    <p><strong>Câu 3: A.</strong> Dựa vào thang sóng điện từ, \(\lambda_{\text{Hồng ngoại}} > \lambda_{\text{Ánh sáng}} > \lambda_{\text{Tử ngoại}} > \lambda_{\text{Tia X}}\).</p>
+                    <p><strong>Câu 4: B.</strong> Sóng vi ba truyền được qua tầng điện li, thích hợp cho vệ tinh thông tin và mạng di động.</p>
+                    <p><strong>Câu 5: C.</strong> Sưởi ấm và sấy khô là ứng dụng đặc trưng của tia hồng ngoại (tác dụng nhiệt).</p>
+                </div>
+            </div>
+
+            <h3 class="font-bold text-xl text-primary mt-10 mb-4 border-t pt-6">B. Bài tập vận dụng tính toán</h3>
+            
+            <div class="space-y-6">
+                <!-- Calc 1 -->
+                <div class="border rounded-lg p-4">
+                    <p class="font-medium">Bài 1: Một bức xạ ánh sáng có bước sóng \( 600 \text{ nm} \). Hãy tính tần số của bức xạ này và cho biết nó thuộc vùng ánh sáng nào?</p>
+                    <button onclick="toggleAnswer('calc-1')" class="bg-primary text-white text-sm py-1 px-3 mt-3 rounded">Xem lời giải chi tiết</button>
+                    <div id="calc-1" class="hidden mt-3 p-3 bg-green-50 border border-green-200 rounded">
+                        <p>Ta có bước sóng \( \lambda = 600 \text{ nm} = 600.10^{-9} \text{ m} = 0,6~\mu m \).</p>
+                        <p>Tần số bức xạ là: \( f = \frac{c}{\lambda} = \frac{3.10^8}{600.10^{-9}} = 5.10^{14} \text{ Hz} \).</p>
+                        <p>Vì \( 0,38~\mu m < 0,6~\mu m < 0,76~\mu m \) nên bức xạ này thuộc vùng <strong>Ánh sáng nhìn thấy</strong>.</p>
+                    </div>
+                </div>
+
+                <!-- Calc 2 -->
+                <div class="border rounded-lg p-4">
+                    <p class="font-medium">Bài 2: Đài tiếng nói Việt Nam VOV Giao thông phát sóng trên tần số \( 91 \text{ MHz} \). Tính bước sóng của đài phát xạ và cho biết đây là loại sóng gì?</p>
+                    <button onclick="toggleAnswer('calc-2')" class="bg-primary text-white text-sm py-1 px-3 mt-3 rounded">Xem lời giải chi tiết</button>
+                    <div id="calc-2" class="hidden mt-3 p-3 bg-green-50 border border-green-200 rounded">
+                        <p>Ta có tần số \( f = 91 \text{ MHz} = 91.10^6 \text{ Hz} \).</p>
+                        <p>Bước sóng là: \( \lambda = \frac{c}{f} = \frac{3.10^8}{91.10^6} \approx 3,3 \text{ m} \).</p>
+                        <p>Vì bước sóng nằm trong khoảng \( 1 \text{ m} \) đến \( 10 \text{ m} \), nên đây là <strong>Sóng vô tuyến (sóng VHF - cực ngắn)</strong>.</p>
+                    </div>
+                </div>
+
+                <!-- Calc 3 -->
+                <div class="border rounded-lg p-4">
+                    <p class="font-medium">Bài 3: Một trạm Radar phát ra một xung sóng vô tuyến hướng về phía một chiếc máy bay. Thời gian từ lúc phát sóng đến lúc nhận lại sóng phản xạ là \( 0,2 \text{ ms} \). Tính khoảng cách từ trạm Radar đến máy bay.</p>
+                    <button onclick="toggleAnswer('calc-3')" class="bg-primary text-white text-sm py-1 px-3 mt-3 rounded">Xem lời giải chi tiết</button>
+                    <div id="calc-3" class="hidden mt-3 p-3 bg-green-50 border border-green-200 rounded">
+                        <p>Thời gian sóng truyền từ Radar đến máy bay là một nửa thời gian tổng: \( t = \frac{0,2 \text{ ms}}{2} = 0,1 \text{ ms} = 10^{-4} \text{ s} \).</p>
+                        <p>Khoảng cách từ Radar đến máy bay là: \( d = c.t = 3.10^8 \times 10^{-4} = 30000 \text{ m} = 30 \text{ km} \).</p>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- JavaScript Functions -->
+    <script>
+        // Toggle visibility of answer blocks
+        function toggleAnswer(id) {
+            const el = document.getElementById(id);
+            if (el.classList.contains('hidden')) {
+                el.classList.remove('hidden');
+            } else {
+                el.classList.add('hidden');
+            }
+        }
+
+        // Quiz checking logic
+        function checkQuiz() {
+            const answers = {
+                q1: 'B',
+                q2: 'D',
+                q3: 'A',
+                q4: 'B',
+                q5: 'C'
+            };
+            
+            let score = 0;
+            let total = 5;
+
+            for (let i = 1; i <= total; i++) {
+                const radios = document.getElementsByName('q' + i);
+                let selected = null;
+                for (let radio of radios) {
+                    if (radio.checked) {
+                        selected = radio.value;
+                        break;
+                    }
+                }
+                if (selected === answers['q' + i]) {
+                    score++;
+                }
+            }
+
+            const resultText = document.getElementById('quiz-result');
+            const explanation = document.getElementById('quiz-explanation');
+
+            if (score === total) {
+                resultText.innerHTML = `Tuyệt vời! Bạn làm đúng ${score}/${total} câu.`;
+                resultText.className = "font-bold text-lg text-green-600";
+            } else {
+                resultText.innerHTML = `Bạn làm đúng ${score}/${total} câu. Hãy xem lại đáp án nhé.`;
+                resultText.className = "font-bold text-lg text-red-600";
+            }
+
+            // Show explanation
+            explanation.classList.remove('hidden');
+        }
+    </script>
+</body>
+</html>
