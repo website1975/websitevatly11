@@ -52,7 +52,7 @@
     <div class="max-w-4xl mx-auto">
         <header class="mb-8 text-center">
             <h1 class="text-3xl font-bold text-blue-800">Mô phỏng Thí nghiệm Sóng Dừng</h1>
-            <p class="text-slate-600 mt-2">Nghiên cứu sóng dừng với các điều kiện biên khác nhau</p>
+            <p class="text-slate-600 mt-2">Nghiên cứu sóng dừng với chiều dài dây $L$ thay đổi</p>
         </header>
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -60,15 +60,23 @@
             <div class="space-y-6 bg-white p-6 rounded-xl shadow-sm border border-slate-200">
                 <!-- Chọn loại dây -->
                 <div>
-                    <label class="param-label block mb-2">Điều kiện biên:</label>
+                    <label class="param-label block mb-2">Điều kiện biên tại kẹp:</label>
                     <div class="flex flex-col gap-2">
                         <button id="fixedFixedBtn" class="tab-btn active px-3 py-3 text-sm font-semibold rounded-lg transition-all text-left flex items-center">
-                            <span class="mr-2">●—●</span> Hai đầu cố định
+                            <span class="mr-2">●—●</span> Đầu kẹp cố định
                         </button>
                         <button id="fixedFreeBtn" class="tab-btn px-3 py-3 text-sm font-semibold rounded-lg transition-all text-left flex items-center">
-                            <span class="mr-2">●—○</span> Một đầu tự do (Q là bụng)
+                            <span class="mr-2">●—○</span> Đầu kẹp tự do
                         </button>
                     </div>
+                </div>
+
+                <div>
+                    <div class="flex justify-between mb-2">
+                        <label class="param-label">Chiều dài dây hiệu dụng (L):</label>
+                        <span class="text-blue-600 font-bold" id="lenVal">1.0 m</span>
+                    </div>
+                    <input type="range" id="lengthInput" min="0.2" max="1.0" step="0.01" value="1.0" class="w-full h-2 bg-slate-200 rounded-lg appearance-none accent-blue-600">
                 </div>
 
                 <div>
@@ -122,18 +130,18 @@
 
             <!-- Khu vực hiển thị mô phỏng -->
             <div class="md:col-span-2 space-y-4">
-                <div class="canvas-container h-[500px] border-4 border-slate-300 flex items-center justify-center bg-slate-50">
-                    <div class="absolute top-4 left-6 text-slate-400 font-bold text-lg opacity-30">MÔ PHỎNG VẬT LÝ</div>
+                <div class="canvas-container h-[550px] border-4 border-slate-300 flex items-center justify-center bg-slate-50">
+                    <div class="absolute top-4 left-6 text-slate-400 font-bold text-lg opacity-30 uppercase tracking-widest">Physics Simulation</div>
                     
-                    <div id="resonanceMsg" class="absolute top-12 left-1/2 -translate-x-1/2 bg-green-100 text-green-800 px-4 py-1 rounded-full text-xs font-bold border border-green-200 opacity-0 transition-opacity">ĐANG CÓ SÓNG DỪNG RÕ RỆT</div>
+                    <div id="resonanceMsg" class="absolute top-12 left-1/2 -translate-x-1/2 bg-green-100 text-green-800 px-4 py-1 rounded-full text-xs font-bold border border-green-200 opacity-0 transition-opacity z-10">ĐANG CÓ SÓNG DỪNG RÕ RỆT</div>
 
                     <!-- Labels -->
                     <div class="absolute top-10 right-10 text-right">
-                        <div class="text-xs font-bold text-slate-500" id="qDesc">ĐẦU Q (CỐ ĐỊNH)</div>
+                        <div class="text-xs font-bold text-slate-500" id="qDesc">ĐẦU KẸP Q (CỐ ĐỊNH)</div>
                         <div class="w-24 h-1 bg-slate-300 inline-block mt-1"></div>
                     </div>
                     <div class="absolute bottom-10 right-10 text-right">
-                        <div class="text-xs font-bold text-slate-500">ĐẦU P (NGUỒN RUNG)</div>
+                        <div class="text-xs font-bold text-slate-500 uppercase">Nguồn rung P</div>
                         <div class="w-24 h-1 bg-slate-300 inline-block mt-1"></div>
                     </div>
                     
@@ -142,7 +150,7 @@
                 
                 <div class="bg-blue-50 p-4 rounded-lg border border-blue-200 shadow-sm" id="theoryNote">
                     <p class="text-blue-900 text-sm">
-                        <strong>Hai đầu cố định:</strong> Sóng dừng chỉ xảy ra khi $f$ là bội số của $f_{cb} = v/2L$. Khi đó dây rung mạnh nhất.
+                        <strong>Thay đổi L:</strong> Khi kẹp dây, bạn thay đổi chiều dài phần dây tham gia dao động. Sóng dừng chỉ hình thành khi $L$ thỏa mãn điều kiện cộng hưởng với tần số $f$ hiện tại.
                     </p>
                 </div>
             </div>
@@ -154,12 +162,16 @@
         const ctx = canvas.getContext('2d');
         const freqInput = document.getElementById('frequency');
         const ampInput = document.getElementById('amplitude');
+        const lenInput = document.getElementById('lengthInput');
         const simSpeedInput = document.getElementById('simSpeed');
+        
         const freqVal = document.getElementById('freqVal');
         const ampVal = document.getElementById('ampVal');
+        const lenVal = document.getElementById('lenVal');
         const simSpeedVal = document.getElementById('simSpeedVal');
         const antiNodesCountDisp = document.getElementById('antiNodesCount');
         const wavelengthDisp = document.getElementById('wavelength');
+        
         const resetBtn = document.getElementById('resetBtn');
         const fixedFixedBtn = document.getElementById('fixedFixedBtn');
         const fixedFreeBtn = document.getElementById('fixedFreeBtn');
@@ -171,8 +183,7 @@
         let width, height;
         let time = 0;
         let mode = 'fixed-fixed';
-        const L_phys = 1.0; 
-        const v_phys = 100; 
+        const v_phys = 100; // Tốc độ truyền sóng (m/s)
 
         function resize() {
             width = canvas.clientWidth;
@@ -188,16 +199,16 @@
             mode = 'fixed-fixed';
             fixedFixedBtn.classList.add('active');
             fixedFreeBtn.classList.remove('active');
-            qDesc.innerText = 'ĐẦU Q (CỐ ĐỊNH)';
-            theoryNote.innerHTML = '<p class="text-blue-900 text-sm"><strong>Hai đầu cố định:</strong> Sóng dừng chỉ xảy ra khi $f = k \cdot (v/2L)$. Các giá trị khác làm dây rung yếu.</p>';
+            qDesc.innerText = 'ĐẦU KẸP Q (CỐ ĐỊNH)';
+            theoryNote.innerHTML = '<p class="text-blue-900 text-sm"><strong>Đầu kẹp cố định:</strong> Chiều dài hiệu dụng $L$ từ P đến Q phải thỏa mãn $L = k \cdot \lambda / 2$ để có sóng dừng rõ rệt.</p>';
         });
 
         fixedFreeBtn.addEventListener('click', () => {
             mode = 'fixed-free';
             fixedFreeBtn.classList.add('active');
             fixedFixedBtn.classList.remove('active');
-            qDesc.innerText = 'ĐẦU Q (TỰ DO - BỤNG)';
-            theoryNote.innerHTML = '<p class="text-blue-900 text-sm"><strong>Một đầu tự do:</strong> Sóng dừng xảy ra khi $f = (2k+1) \cdot (v/4L)$.</p>';
+            qDesc.innerText = 'ĐẦU KẸP Q (TỰ DO)';
+            theoryNote.innerHTML = '<p class="text-blue-900 text-sm"><strong>Đầu kẹp tự do:</strong> Chiều dài hiệu dụng $L$ phải thỏa mãn $L = (2k+1) \cdot \lambda / 4$. Q sẽ là bụng sóng.</p>';
         });
 
         function draw() {
@@ -205,124 +216,149 @@
 
             const f = parseFloat(freqInput.value);
             const A_input = parseFloat(ampInput.value);
+            const L_eff = parseFloat(lenInput.value); // Chiều dài hiệu dụng từ 0.2 đến 1.0
             const simSpeed = parseFloat(simSpeedInput.value);
             
             freqVal.innerText = `${f} Hz`;
             ampVal.innerText = A_input;
+            lenVal.innerText = `${L_eff.toFixed(2)} m`;
             simSpeedVal.innerText = `${simSpeed.toFixed(1)}x`;
 
             const lambda = v_phys / f;
             wavelengthDisp.innerText = `${lambda.toFixed(3)} m`;
 
-            // Tính toán độ cộng hưởng (Resonance Factor)
-            // Trong thực tế, biên độ sóng dừng đạt cực đại tại các tần số f_k
+            // Tính toán độ cộng hưởng dựa trên chiều dài hiệu dụng L_eff
             let resonanceFactor = 0;
             if (mode === 'fixed-fixed') {
-                // Điều kiện cộng hưởng: L = k * lambda/2 => 2L/lambda = k (số nguyên)
-                const k_exact = (2 * L_phys) / lambda;
+                const k_exact = (2 * L_eff) / lambda;
                 const distToInteger = Math.abs(k_exact - Math.round(k_exact));
-                // Resonance factor: 1.0 khi distToInteger = 0, giảm dần khi lệch
                 resonanceFactor = Math.max(0.1, 1 - distToInteger * 6);
             } else {
-                // Điều kiện cộng hưởng: L = (2k+1) * lambda/4 => 4L/lambda = 2k+1 (số lẻ)
-                const odd_exact = (4 * L_phys) / lambda;
+                const odd_exact = (4 * L_eff) / lambda;
                 const distToOdd = Math.abs(odd_exact - (2 * Math.round((odd_exact-1)/2) + 1));
                 resonanceFactor = Math.max(0.1, 1 - distToOdd * 6);
             }
 
-            // Hiển thị thanh độ cộng hưởng
             resBar.style.width = `${resonanceFactor * 100}%`;
             resBar.style.backgroundColor = resonanceFactor > 0.8 ? '#22c55e' : (resonanceFactor > 0.4 ? '#eab308' : '#ef4444');
             resonanceMsg.style.opacity = resonanceFactor > 0.85 ? '1' : '0';
 
             const finalAmp = A_input * resonanceFactor;
             const startX = width * 0.45;
-            const startY = 60;
-            const endY = height - 60;
-            const drawLength = endY - startY;
+            const startY = 60; // Vị trí đầu Q tối đa (L=1.0)
+            const endY = height - 60; // Vị trí P cố định
+            const maxDrawLength = endY - startY;
+            
+            // Tọa độ Y của kẹp Q thực tế dựa trên L_eff
+            const qY = endY - (L_eff * maxDrawLength);
 
             let antiNodes;
             if (mode === 'fixed-fixed') {
-                antiNodes = Math.round((2 * L_phys) / lambda);
+                antiNodes = Math.round((2 * L_eff) / lambda);
             } else {
-                antiNodes = Math.round(((4 * L_phys) / lambda - 1) / 2) + 1;
+                antiNodes = Math.round(((4 * L_eff) / lambda - 1) / 2) + 1;
             }
             antiNodesCountDisp.innerText = resonanceFactor > 0.3 ? antiNodes : "N/A";
 
             const oscillation = Math.cos(2 * Math.PI * f * time);
 
-            // Vẽ envelope
+            // 1. Vẽ đoạn dây "chết" (phần trên kẹp, không dao động)
+            if (L_eff < 1.0) {
+                ctx.beginPath();
+                ctx.setLineDash([5, 5]);
+                ctx.lineWidth = 1;
+                ctx.strokeStyle = '#94a3b8';
+                ctx.moveTo(startX, startY);
+                ctx.lineTo(startX, qY);
+                ctx.stroke();
+                ctx.setLineDash([]);
+            }
+
+            // 2. Vẽ Envelope (Vùng dao động) cho đoạn dây hiệu dụng
             ctx.fillStyle = `rgba(185, 28, 28, ${0.05 * resonanceFactor + 0.01})`;
             ctx.beginPath();
             for (let i = 0; i <= 200; i++) {
                 const step = i / 200;
-                const yPos = endY - (step * drawLength);
-                const distFromP = step * L_phys;
+                const currentY = endY - (step * (endY - qY));
+                const distFromP = step * L_eff;
                 const phase = (2 * Math.PI * distFromP) / lambda;
                 const currentAmp = finalAmp * Math.sin(phase);
-                if (i === 0) ctx.moveTo(startX + currentAmp, yPos);
-                else ctx.lineTo(startX + currentAmp, yPos);
+                if (i === 0) ctx.moveTo(startX + currentAmp, currentY);
+                else ctx.lineTo(startX + currentAmp, currentY);
             }
             for (let i = 200; i >= 0; i--) {
                 const step = i / 200;
-                const yPos = endY - (step * drawLength);
-                const distFromP = step * L_phys;
+                const currentY = endY - (step * (endY - qY));
+                const distFromP = step * L_eff;
                 const phase = (2 * Math.PI * distFromP) / lambda;
                 const currentAmp = -finalAmp * Math.sin(phase);
-                ctx.lineTo(startX + currentAmp, yPos);
+                ctx.lineTo(startX + currentAmp, currentY);
             }
             ctx.fill();
 
-            // Vẽ dây chính
+            // 3. Vẽ dây chính (Đoạn từ P đến Q)
             ctx.beginPath();
             ctx.lineWidth = resonanceFactor > 0.5 ? 2.5 : 1.5;
             ctx.strokeStyle = resonanceFactor > 0.5 ? '#7f1d1d' : '#94a3b8';
             for (let i = 0; i <= 200; i++) {
                 const step = i / 200;
-                const yPos = endY - (step * drawLength);
-                const distFromP = step * L_phys;
+                const currentY = endY - (step * (endY - qY));
+                const distFromP = step * L_eff;
                 const phase = (2 * Math.PI * distFromP) / lambda;
                 
-                // Khi không cộng hưởng, hình ảnh sóng sẽ hơi "nhiễu" một chút để mô phỏng sự không ổn định
-                const noise = resonanceFactor < 0.4 ? (Math.random() - 0.5) * 2 : 0;
+                const noise = resonanceFactor < 0.4 ? (Math.random() - 0.5) * 1.5 : 0;
                 const currentX = startX + finalAmp * Math.sin(phase) * oscillation + noise;
                 
-                if (i === 0) ctx.moveTo(currentX, yPos);
-                else ctx.lineTo(currentX, yPos);
+                if (i === 0) ctx.moveTo(currentX, currentY);
+                else ctx.lineTo(currentX, currentY);
             }
             ctx.stroke();
 
-            // Vẽ vật cố định P
+            // 4. Vẽ vật cố định P (Nguồn rung)
             ctx.fillStyle = '#1e293b';
             ctx.fillRect(startX - 20, endY, 40, 15);
             ctx.fillStyle = '#fff';
             ctx.font = 'bold 12px sans-serif';
             ctx.fillText('P', startX - 4, endY + 12);
 
-            // Vẽ vật cố định Q
+            // 5. Vẽ Cái Kẹp Q
             if (mode === 'fixed-fixed') {
+                // Kẹp cố định: Hình khối kẹp chặt dây
                 ctx.fillStyle = '#1e293b';
-                ctx.fillRect(startX - 20, startY - 15, 40, 15);
+                ctx.fillRect(startX - 25, qY - 10, 50, 20);
+                
+                // Vẽ ốc vít kẹp
+                ctx.fillStyle = '#64748b';
+                ctx.beginPath();
+                ctx.arc(startX - 15, qY, 4, 0, Math.PI * 2);
+                ctx.arc(startX + 15, qY, 4, 0, Math.PI * 2);
+                ctx.fill();
+
                 ctx.fillStyle = '#fff';
-                ctx.fillText('Q', startX - 4, startY - 3);
+                ctx.font = 'bold 11px sans-serif';
+                ctx.fillText('KẸP Q', startX - 18, qY + 4);
             } else {
-                const qX = startX + finalAmp * Math.sin((2 * Math.PI * L_phys) / lambda) * oscillation;
-                ctx.strokeStyle = '#cbd5e1';
+                // Kẹp tự do: Vòng khuyên trên thanh ngang di động
+                const qX = startX + finalAmp * Math.sin((2 * Math.PI * L_eff) / lambda) * oscillation;
+                
+                ctx.strokeStyle = '#94a3b8';
                 ctx.lineWidth = 4;
                 ctx.beginPath();
-                ctx.moveTo(startX - A_input - 10, startY);
-                ctx.lineTo(startX + A_input + 10, startY);
+                ctx.moveTo(startX - A_input - 15, qY);
+                ctx.lineTo(startX + A_input + 15, qY);
                 ctx.stroke();
 
                 ctx.strokeStyle = '#1e40af';
                 ctx.lineWidth = 3;
                 ctx.beginPath();
-                ctx.arc(qX, startY, 7, 0, Math.PI * 2);
+                ctx.arc(qX, qY, 8, 0, Math.PI * 2);
                 ctx.stroke();
                 ctx.fillStyle = '#fff';
                 ctx.fill();
+                
                 ctx.fillStyle = '#1e293b';
-                ctx.fillText('Q', startX - 4, startY - 15);
+                ctx.font = 'bold 11px sans-serif';
+                ctx.fillText('KẸP Q', startX - 18, qY - 15);
             }
 
             time += 0.0005 * simSpeed; 
@@ -332,6 +368,7 @@
         resetBtn.addEventListener('click', () => {
             freqInput.value = 50;
             ampInput.value = 20;
+            lenInput.value = 1.0;
             simSpeedInput.value = 1.0;
             fixedFixedBtn.click();
         });
