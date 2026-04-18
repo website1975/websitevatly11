@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mô phỏng Giao thoa Sóng âm</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-color: #f8fafc;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .canvas-container {
+            position: relative;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+            overflow: hidden;
+            cursor: crosshair;
+        }
+        canvas {
+            display: block;
+            width: 100%;
+            height: auto;
+        }
+        .control-panel {
+            background: #ffffff;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+        }
+        input[type="range"] {
+            width: 100%;
+            accent-color: #3b82f6;
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+    <div class="max-w-4xl mx-auto">
+        <h1 class="text-3xl font-bold text-gray-800 mb-2 text-center">Thí nghiệm Giao thoa Sóng âm</h1>
+        <p class="text-gray-600 mb-6 text-center">Di chuyển chuột hoặc chạm vào vùng sóng để di chuyển Micro. Điều chỉnh tần số để thấy sự thay đổi của các vân giao thoa.</p>
+
+        <div class="canvas-container mb-6">
+            <canvas id="interferenceCanvas"></canvas>
+            <div id="volumeIndicator" class="absolute top-4 right-4 bg-white/90 p-3 rounded-lg border border-blue-200 shadow-sm hidden md:block">
+                <div class="text-xs font-bold text-gray-500 uppercase">Cường độ tại Micro</div>
+                <div id="intensityBar" class="h-4 bg-blue-500 mt-1 transition-all duration-75 rounded" style="width: 0%"></div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="control-panel">
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Máy phát âm tần (Tần số: <span id="freqVal">440</span> Hz)</label>
+                <input type="range" id="frequency" min="100" max="1000" value="440" class="mb-4">
+                
+                <div class="flex items-center space-x-4">
+                    <button id="toggleSound" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-full transition-colors flex items-center">
+                        <span id="soundIcon" class="mr-2">🔈</span> Bật âm thanh
+                    </button>
+                    <span class="text-sm text-gray-500 italic">Lưu ý: Giảm âm lượng loa trước khi bật.</span>
+                </div>
+            </div>
+
+            <div class="control-panel flex flex-col justify-center">
+                <h3 class="font-bold text-gray-700 mb-2">Chú giải:</h3>
+                <ul class="text-sm space-y-1">
+                    <li class="flex items-center text-red-600 font-bold"><span class="w-4 h-4 rounded-full bg-red-600 mr-2"></span> L (Âm thanh lớn): Các điểm cực đại giao thoa</li>
+                    <li class="flex items-center text-blue-800 font-bold"><span class="w-4 h-4 rounded-full bg-gray-400 mr-2"></span> B (Âm thanh nhỏ): Các điểm cực tiểu giao thoa</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('interferenceCanvas');
+        const ctx = canvas.getContext('2d');
+        const freqInput = document.getElementById('frequency');
+        const freqVal = document.getElementById('freqVal');
+        const intensityBar = document.getElementById('intensityBar');
+        const toggleBtn = document.getElementById('toggleSound');
+        const soundIcon = document.getElementById('soundIcon');
+
+        // Cài đặt kích thước canvas
+        function resize() {
+            canvas.width = canvas.offsetWidth;
+            canvas.height = 400;
+        }
+        window.addEventListener('resize', resize);
+        resize();
+
+        // Biến trạng thái
+        let time = 0;
+        let frequency = 440;
+        let isSoundOn = false;
+        let microPos = { x: 400, y: 320 };
+        
+        // Audio Context
+        let audioCtx, osc1, osc2, gainNode;
+
+        function initAudio() {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            gainNode = audioCtx.createGain();
+            gainNode.connect(audioCtx.destination);
+            gainNode.gain.value = 0;
+
+            osc1 = audioCtx.createOscillator();
+            osc2 = audioCtx.createOscillator();
+            
+            osc1.type = 'sine';
+            osc2.type = 'sine';
+            
+            osc1.connect(gainNode);
+            osc2.connect(gainNode);
+            
+            osc1.start();
+            osc2.start();
+        }
+
+        toggleBtn.addEventListener('click', () => {
+            if (!audioCtx) initAudio();
+            
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+
+            isSoundOn = !isSoundOn;
+            if (isSoundOn) {
+                toggleBtn.classList.replace('bg-blue-600', 'bg-red-600');
+                toggleBtn.innerHTML = '<span class="mr-2">🔇</span> Tắt âm thanh';
+            } else {
+                toggleBtn.classList.replace('bg-red-600', 'bg-blue-600');
+                toggleBtn.innerHTML = '<span class="mr-2">🔈</span> Bật âm thanh';
+                gainNode.gain.value = 0;
+            }
+        });
+
+        canvas.addEventListener('mousemove', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            microPos.x = e.clientX - rect.left;
+            microPos.y = 320; // Khóa micro trên trục số như hình mẫu
+        });
+
+        canvas.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            const rect = canvas.getBoundingClientRect();
+            const touch = e.touches[0];
+            microPos.x = touch.clientX - rect.left;
+            microPos.y = 320;
+        }, { passive: false });
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            const speaker1 = { x: canvas.width/2 - 80, y: 150 };
+            const speaker2 = { x: canvas.width/2 + 80, y: 150 };
+            const speedOfSound = 340; // m/s (tương đối)
+            const wavelength = (speedOfSound / frequency) * 40; // Tỷ lệ hóa
+
+            // Vẽ Máy phát âm tần
+            ctx.fillStyle = "#fef3c7";
+            ctx.strokeStyle = "#451a03";
+            ctx.lineWidth = 2;
+            const boxX = canvas.width/2 - 60;
+            ctx.fillRect(boxX, 20, 120, 80);
+            ctx.strokeRect(boxX, 20, 120, 80);
+            
+            // Chi tiết máy phát
+            ctx.fillStyle = "#451a03";
+            ctx.fillRect(boxX + 10, 40, 60, 20); // Màn hình
+            ctx.beginPath();
+            ctx.arc(boxX + 95, 50, 10, 0, Math.PI*2); // Núm vặn
+            ctx.stroke();
+            ctx.fillText("Máy phát âm tần", boxX + 15, 15);
+
+            // Vẽ dây nối và Loa
+            ctx.beginPath();
+            ctx.moveTo(boxX + 40, 100); ctx.lineTo(boxX + 40, 120);
+            ctx.lineTo(speaker1.x, 120); ctx.lineTo(speaker1.x, 150);
+            ctx.moveTo(boxX + 80, 100); ctx.lineTo(boxX + 80, 120);
+            ctx.lineTo(speaker2.x, 120); ctx.lineTo(speaker2.x, 150);
+            ctx.stroke();
+
+            // Vẽ hình loa
+            [speaker1, speaker2].forEach(s => {
+                ctx.fillStyle = "#334155";
+                ctx.beginPath();
+                ctx.moveTo(s.x - 20, s.y);
+                ctx.lineTo(s.x + 20, s.y);
+                ctx.lineTo(s.x + 30, s.y + 25);
+                ctx.lineTo(s.x - 30, s.y + 25);
+                ctx.closePath();
+                ctx.fill();
+            });
+            ctx.fillStyle = "#000";
+            ctx.font = "bold 16px sans-serif";
+            ctx.fillText("Loa", canvas.width/2 - 15, 145);
+
+            // Vẽ sóng lan truyền
+            time += 0.05;
+            ctx.lineWidth = 1;
+            for(let r = 20; r < 250; r += wavelength) {
+                const alpha = Math.max(0, 1 - r/250);
+                ctx.strokeStyle = `rgba(0, 0, 0, ${alpha * 0.5})`;
+                
+                // Sóng loa 1
+                ctx.beginPath();
+                ctx.arc(speaker1.x, speaker1.y + 25, r + (time % 1) * wavelength, 0.2, Math.PI - 0.2);
+                ctx.stroke();
+                
+                // Sóng loa 2
+                ctx.beginPath();
+                ctx.arc(speaker2.x, speaker2.y + 25, r + (time % 1) * wavelength, 0.2, Math.PI - 0.2);
+                ctx.stroke();
+            }
+
+            // Vẽ Trục Micro và các điểm L, B
+            ctx.strokeStyle = "#000";
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(50, 320);
+            ctx.lineTo(canvas.width - 50, 320);
+            ctx.stroke();
+            // Mũi tên trục
+            ctx.beginPath();
+            ctx.moveTo(canvas.width - 55, 315); ctx.lineTo(canvas.width-45, 320); ctx.lineTo(canvas.width-55, 325);
+            ctx.stroke();
+
+            // Tính toán giao thoa tại các điểm trên trục
+            for(let x = 60; x < canvas.width - 60; x += 30) {
+                const d1 = Math.sqrt(Math.pow(x - speaker1.x, 2) + Math.pow(320 - (speaker1.y+25), 2));
+                const d2 = Math.sqrt(Math.pow(x - speaker2.x, 2) + Math.pow(320 - (speaker2.y+25), 2));
+                
+                const diff = Math.abs(d1 - d2);
+                const phase = (diff / wavelength);
+                const isMax = Math.abs(Math.round(phase) - phase) < 0.15;
+                const isMin = Math.abs(Math.round(phase + 0.5) - (phase + 0.5)) < 0.15;
+
+                ctx.font = "bold 14px sans-serif";
+                if (isMax) {
+                    ctx.fillStyle = "red";
+                    ctx.fillText("L", x - 4, 340);
+                    ctx.beginPath(); ctx.moveTo(x, 315); ctx.lineTo(x, 325); ctx.stroke();
+                } else if (isMin) {
+                    ctx.fillStyle = "gray";
+                    ctx.fillText("B", x - 4, 340);
+                    ctx.beginPath(); ctx.moveTo(x, 315); ctx.lineTo(x, 325); ctx.stroke();
+                }
+            }
+
+            // Vẽ Micro
+            ctx.fillStyle = "#334155";
+            ctx.fillRect(microPos.x - 5, microPos.y - 15, 10, 30);
+            ctx.beginPath();
+            ctx.arc(microPos.x, microPos.y - 15, 8, 0, Math.PI*2);
+            ctx.fill();
+            ctx.font = "bold 18px sans-serif";
+            ctx.fillText("Micro", microPos.x - 25, 375);
+
+            // Tính cường độ âm thanh tại Micro
+            const d1m = Math.sqrt(Math.pow(microPos.x - speaker1.x, 2) + Math.pow(microPos.y - (speaker1.y+25), 2));
+            const d2m = Math.sqrt(Math.pow(microPos.x - speaker2.x, 2) + Math.pow(microPos.y - (speaker2.y+25), 2));
+            const phaseM = (2 * Math.PI * (d1m - d2m)) / wavelength;
+            const intensity = Math.pow(Math.cos(phaseM / 2), 2); // 0 to 1
+
+            intensityBar.style.width = (intensity * 100) + "%";
+            intensityBar.style.backgroundColor = intensity > 0.7 ? '#ef4444' : (intensity < 0.2 ? '#94a3b8' : '#3b82f6');
+
+            if (isSoundOn && audioCtx) {
+                osc1.frequency.setTargetAtTime(frequency, audioCtx.currentTime, 0.05);
+                osc2.frequency.setTargetAtTime(frequency, audioCtx.currentTime, 0.05);
+                // Giả lập âm thanh to nhỏ dựa trên vị trí micro
+                gainNode.gain.setTargetAtTime(intensity * 0.1, audioCtx.currentTime, 0.05);
+            }
+
+            requestAnimationFrame(draw);
+        }
+
+        freqInput.addEventListener('input', (e) => {
+            frequency = parseInt(e.target.value);
+            freqVal.innerText = frequency;
+        });
+
+        draw();
+    </script>
+</body>
+</html>

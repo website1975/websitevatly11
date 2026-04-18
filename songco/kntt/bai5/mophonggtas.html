@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mô phỏng Thí nghiệm Giao thoa Ánh sáng Young</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-color: #0f172a;
+            color: #f8fafc;
+        }
+        .interference-pattern {
+            background: black;
+            height: 150px;
+            width: 100%;
+            border: 2px solid #334155;
+            border-radius: 8px;
+            overflow: hidden;
+            position: relative;
+        }
+        input[type=range] {
+            width: 100%;
+            cursor: pointer;
+        }
+        .label-value {
+            color: #38bdf8;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+    <div class="max-w-4xl mx-auto">
+        <header class="mb-8 text-center">
+            <h1 class="text-3xl font-bold mb-2">Mô phỏng Thí nghiệm Giao thoa Ánh sáng</h1>
+            <p class="text-slate-400">Dựa trên mô hình thí nghiệm khe Young (Hình 12.3)</p>
+        </header>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <!-- Bảng điều khiển -->
+            <div class="bg-slate-800 p-6 rounded-xl shadow-lg border border-slate-700">
+                <h2 class="text-xl font-semibold mb-4 border-b border-slate-700 pb-2">Thông số (K-S-P)</h2>
+                
+                <div class="mb-6">
+                    <label class="block text-sm mb-2">Bước sóng &lambda; (nm): <span id="lambda-val" class="label-value">550</span></label>
+                    <input type="range" id="lambda" min="380" max="750" value="550" class="accent-blue-500">
+                    <div class="flex justify-between text-xs mt-1 text-slate-500">
+                        <span>Tím</span><span>Đỏ</span>
+                    </div>
+                </div>
+
+                <div class="mb-6">
+                    <label class="block text-sm mb-2">Khoảng cách 2 khe a (mm): <span id="a-val" class="label-value">0.15</span></label>
+                    <input type="range" id="a" min="0.05" max="0.5" step="0.01" value="0.15" class="accent-blue-500">
+                </div>
+
+                <div class="mb-6">
+                    <label class="block text-sm mb-2">Khoảng cách đến màn D (m): <span id="d-val" class="label-value">2.0</span></label>
+                    <input type="range" id="d" min="0.5" max="5.0" step="0.1" value="2.0" class="accent-blue-500">
+                </div>
+
+                <div class="p-4 bg-slate-900 rounded-lg text-sm">
+                    <p class="mb-1 text-slate-400">Kết quả tính toán:</p>
+                    <p>Khoảng vân i = <span id="i-val" class="text-green-400 font-bold">7.33</span> mm</p>
+                </div>
+            </div>
+
+            <!-- Kết quả quan sát -->
+            <div class="md:col-span-2 flex flex-col gap-6">
+                <div class="bg-slate-800 p-6 rounded-xl shadow-lg border border-slate-700">
+                    <h2 class="text-xl font-semibold mb-4">Màn quan sát E (Hệ vân)</h2>
+                    <div id="pattern" class="interference-pattern">
+                        <canvas id="interferenceCanvas"></canvas>
+                    </div>
+                    <div class="mt-4 flex justify-between text-xs text-slate-400 px-2">
+                        <span>-15mm</span>
+                        <span>0 (Vân sáng trung tâm)</span>
+                        <span>+15mm</span>
+                    </div>
+                </div>
+
+                <div class="bg-slate-800 p-6 rounded-xl shadow-lg border border-slate-700">
+                    <h2 class="text-xl font-semibold mb-4">Sơ đồ quang học</h2>
+                    <div class="relative h-32 bg-slate-900 rounded-lg flex items-center justify-around border border-slate-700 overflow-hidden">
+                        <!-- Sơ đồ đơn giản hóa -->
+                        <div class="flex flex-col items-center">
+                            <div class="w-8 h-8 bg-slate-600 rounded"></div>
+                            <span class="text-[10px] mt-1">Nguồn S</span>
+                        </div>
+                        <div class="h-0.5 bg-green-500 w-16 relative">
+                            <div class="absolute right-0 top-1/2 -translate-y-1/2 border-l-8 border-l-green-500 border-y-4 border-y-transparent"></div>
+                        </div>
+                        <div class="flex flex-col items-center">
+                            <div class="w-1 h-12 bg-slate-400 relative">
+                                <div class="absolute top-1/4 -left-1 w-3 h-1 bg-slate-900"></div>
+                                <div class="absolute bottom-1/4 -left-1 w-3 h-1 bg-slate-900"></div>
+                            </div>
+                            <span class="text-[10px] mt-1">Màn chắn P (a)</span>
+                        </div>
+                        <div class="flex-grow h-0.5 border-t border-dashed border-slate-500 mx-2 relative flex items-center justify-center">
+                            <span class="bg-slate-900 px-2 text-[10px]">D</span>
+                        </div>
+                        <div class="flex flex-col items-center">
+                            <div class="w-2 h-16 bg-slate-200 shadow-[0_0_15px_rgba(255,255,255,0.5)]"></div>
+                            <span class="text-[10px] mt-1">Màn E</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <footer class="mt-10 text-center text-slate-500 text-sm">
+            <p>Sử dụng công thức: i = λD / a</p>
+            <p>© 2024 Mô phỏng Vật lý - Giao thoa ánh sáng đơn sắc</p>
+        </footer>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('interferenceCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        const inputs = {
+            lambda: document.getElementById('lambda'),
+            a: document.getElementById('a'),
+            d: document.getElementById('d')
+        };
+
+        const displays = {
+            lambda: document.getElementById('lambda-val'),
+            a: document.getElementById('a-val'),
+            d: document.getElementById('d-val'),
+            i: document.getElementById('i-val')
+        };
+
+        function nmToRGB(wavelength) {
+            let r, g, b, factor;
+            if (wavelength >= 380 && wavelength <= 439) {
+                r = -(wavelength - 440) / (440 - 380); g = 0.0; b = 1.0;
+            } else if (wavelength >= 440 && wavelength <= 489) {
+                r = 0.0; g = (wavelength - 440) / (490 - 440); b = 1.0;
+            } else if (wavelength >= 490 && wavelength <= 509) {
+                r = 0.0; g = 1.0; b = -(wavelength - 510) / (510 - 490);
+            } else if (wavelength >= 510 && wavelength <= 579) {
+                r = (wavelength - 510) / (580 - 510); g = 1.0; b = 0.0;
+            } else if (wavelength >= 580 && wavelength <= 644) {
+                r = 1.0; g = -(wavelength - 645) / (645 - 580); b = 0.0;
+            } else if (wavelength >= 645 && wavelength <= 750) {
+                r = 1.0; g = 0.0; b = 0.0;
+            } else {
+                r = 0.0; g = 0.0; b = 0.0;
+            }
+
+            // Cường độ giảm dần ở biên vùng nhìn thấy
+            if (wavelength >= 380 && wavelength <= 419) factor = 0.3 + 0.7 * (wavelength - 380) / (420 - 380);
+            else if (wavelength >= 420 && wavelength <= 700) factor = 1.0;
+            else if (wavelength >= 701 && wavelength <= 750) factor = 0.3 + 0.7 * (750 - wavelength) / (750 - 700);
+            else factor = 0.0;
+
+            return {
+                r: Math.round(r * factor * 255),
+                g: Math.round(g * factor * 255),
+                b: Math.round(b * factor * 255)
+            };
+        }
+
+        function drawInterference() {
+            const L = parseFloat(inputs.lambda.value); // nm
+            const A = parseFloat(inputs.a.value);      // mm
+            const D = parseFloat(inputs.d.value);      // m
+            
+            // Tính khoảng vân i (mm)
+            const i = (L * 1e-6 * D * 1000) / A;
+            
+            // Cập nhật hiển thị số
+            displays.lambda.innerText = L;
+            displays.a.innerText = A;
+            displays.d.innerText = D.toFixed(1);
+            displays.i.innerText = i.toFixed(2);
+
+            // Vẽ Canvas
+            const width = canvas.width = canvas.parentElement.clientWidth;
+            const height = canvas.height = canvas.parentElement.clientHeight;
+            
+            const color = nmToRGB(L);
+            const mmToPx = width / 30; // Giả sử chiều rộng màn hiển thị 30mm (-15 đến +15)
+            const centerX = width / 2;
+
+            ctx.clearRect(0, 0, width, height);
+
+            // Vẽ từng pixel theo chiều ngang để mô phỏng cường độ sáng
+            for (let x = 0; x < width; x++) {
+                const posX_mm = (x - centerX) / mmToPx;
+                
+                // Công thức cường độ sáng giao thoa: I = I0 * cos^2(pi * a * x / (lambda * D))
+                // Ở đây ta dùng hiệu quang lộ delta_d = a * x / D
+                const intensity = Math.pow(Math.cos(Math.PI * A * posX_mm / (L * 1e-6 * D * 1000)), 2);
+                
+                ctx.strokeStyle = `rgba(${color.r}, ${color.g}, ${color.b}, ${intensity})`;
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, height);
+                ctx.stroke();
+            }
+            
+            // Vẽ thước đo nhỏ
+            ctx.fillStyle = "rgba(255,255,255,0.2)";
+            for(let m = -15; m <= 15; m++) {
+                const x = centerX + m * mmToPx;
+                ctx.fillRect(x, height - 10, 1, 10);
+            }
+        }
+
+        // Lắng nghe sự kiện thay đổi
+        Object.values(inputs).forEach(input => {
+            input.addEventListener('input', drawInterference);
+        });
+
+        // Khởi tạo lần đầu
+        window.addEventListener('resize', drawInterference);
+        drawInterference();
+    </script>
+</body>
+</html>
