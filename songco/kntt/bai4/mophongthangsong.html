@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mô phỏng Thang Sóng Điện Từ</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-color: #0f172a;
+            color: #f8fafc;
+        }
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        input[type=range] {
+            height: 8px;
+            -webkit-appearance: none;
+            width: 100%;
+            background: #334155;
+            border-radius: 8px;
+            outline: none;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 24px;
+            height: 24px;
+            background: #38bdf8;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(56, 189, 248, 0.5);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-center p-4">
+
+    <div class="max-w-4xl w-full glass-panel rounded-3xl p-8 shadow-2xl">
+        <h1 class="text-3xl font-bold text-center mb-2 bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+            MÔ PHỎNG THANG SÓNG ĐIỆN TỪ
+        </h1>
+        <p class="text-slate-400 text-center mb-8 italic">Hình 11.3. Thang sóng điện từ - Tương tác vật lý</p>
+
+        <!-- Wave Display -->
+        <div class="relative w-full h-48 bg-slate-900 rounded-xl overflow-hidden mb-6 border border-slate-700">
+            <canvas id="waveCanvas" class="w-full h-full"></canvas>
+            
+            <!-- Frequency Labels Overlay -->
+            <div class="absolute top-2 left-4 text-xs text-slate-500 uppercase tracking-widest">Năng lượng thấp / Bước sóng dài</div>
+            <div class="absolute top-2 right-4 text-xs text-slate-500 uppercase tracking-widest">Năng lượng cao / Bước sóng ngắn</div>
+        </div>
+
+        <!-- Spectrum Visualizer -->
+        <div class="h-4 w-full rounded-full mb-8 relative overflow-hidden flex shadow-inner border border-slate-800">
+            <div class="h-full bg-slate-700 flex-1 border-r border-slate-900 flex items-center justify-center text-[8px]">Sóng vô tuyến</div>
+            <div class="h-full bg-slate-600 flex-1 border-r border-slate-900 flex items-center justify-center text-[8px]">Vi ba</div>
+            <div class="h-full bg-slate-500 flex-1 border-r border-slate-900 flex items-center justify-center text-[8px]">Hồng ngoại</div>
+            <div class="h-full w-12 bg-gradient-to-r from-red-500 via-green-500 to-violet-500 border-x border-white/20 flex items-center justify-center text-[8px] font-bold">Visible</div>
+            <div class="h-full bg-slate-500 flex-1 border-r border-slate-900 flex items-center justify-center text-[8px]">Tử ngoại</div>
+            <div class="h-full bg-slate-600 flex-1 border-r border-slate-900 flex items-center justify-center text-[8px]">Tia X</div>
+            <div class="h-full bg-slate-700 flex-1 flex items-center justify-center text-[8px]">Tia Gamma</div>
+        </div>
+
+        <!-- Controls -->
+        <div class="mb-8">
+            <input type="range" id="spectrumSlider" min="0" max="1000" value="0" class="w-full">
+        </div>
+
+        <!-- Info Grid -->
+        <div id="infoBox" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="bg-slate-800/50 p-4 rounded-xl border border-slate-700">
+                <span class="text-blue-400 text-xs font-bold uppercase block mb-1">Vùng bức xạ</span>
+                <h2 id="regionName" class="text-2xl font-bold">---</h2>
+            </div>
+            <div class="bg-slate-800/50 p-4 rounded-xl border border-slate-700">
+                <span class="text-green-400 text-xs font-bold uppercase block mb-1">Đặc điểm vật lý</span>
+                <div class="text-sm">
+                    <p>Tần số: <span id="freqText" class="font-mono text-slate-200">---</span></p>
+                    <p>Bước sóng: <span id="waveText" class="font-mono text-slate-200">---</span></p>
+                </div>
+            </div>
+            <div class="md:col-span-2 bg-blue-900/20 p-4 rounded-xl border border-blue-500/30">
+                <span class="text-blue-300 text-xs font-bold uppercase block mb-1">Phương pháp phát hiện</span>
+                <p id="detectMethod" class="text-slate-200 text-sm">---</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('waveCanvas');
+        const ctx = canvas.getContext('2d');
+        const slider = document.getElementById('spectrumSlider');
+
+        const regions = [
+            { threshold: 140, name: "Sóng vô tuyến", freq: "10² - 10⁶ Hz", wave: "1m - 10³m", detect: "Anten, máy thu vô tuyến (Radio), hệ thống viễn thông.", color: "#475569", waveFactor: 0.01 },
+            { threshold: 280, name: "Vi ba (Microwave)", freq: "10⁸ - 10¹⁰ Hz", wave: "1mm - 1m", detect: "Đèn Magnetron, linh kiện bán dẫn, anten radar.", color: "#64748b", waveFactor: 0.05 },
+            { threshold: 420, name: "Tia hồng ngoại", freq: "10¹¹ - 10¹³ Hz", wave: "700nm - 1mm", detect: "Cặp nhiệt điện, máy ảnh nhiệt, cảm biến hồng ngoại.", color: "#ef4444", waveFactor: 0.15 },
+            { threshold: 580, name: "Ánh sáng nhìn thấy", freq: "4.10¹⁴ - 7.10¹⁴ Hz", wave: "380nm - 760nm", detect: "Mắt người, tế bào quang điện, phim ảnh.", color: "#22c55e", isVisible: true, waveFactor: 0.4 },
+            { threshold: 720, name: "Tia tử ngoại (UV)", freq: "10¹⁵ - 10¹⁷ Hz", wave: "10nm - 380nm", detect: "Phim ảnh đặc biệt, buồng ion hóa, hiện tượng quang điện.", color: "#a855f7", waveFactor: 0.8 },
+            { threshold: 860, name: "Tia X", freq: "10¹⁸ - 10²⁰ Hz", wave: "0.01nm - 10nm", detect: "Máy đếm Geiger, ống phát tia X, phim X-quang.", color: "#38bdf8", waveFactor: 1.5 },
+            { threshold: 1001, name: "Tia Gamma", freq: "> 10²² Hz", wave: "< 10⁻³nm", detect: "Máy đếm nhấp nháy, buồng mây, máy đếm ion hóa.", color: "#ffffff", waveFactor: 3.0 }
+        ];
+
+        let offset = 0;
+
+        function resize() {
+            canvas.width = canvas.parentElement.clientWidth;
+            canvas.height = canvas.parentElement.clientHeight;
+        }
+
+        window.addEventListener('resize', resize);
+        resize();
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            const val = parseInt(slider.value);
+            const currentRegion = regions.find(r => val < r.threshold);
+            
+            // Update Text
+            if (currentRegion) {
+                document.getElementById('regionName').innerText = currentRegion.name;
+                document.getElementById('freqText').innerText = currentRegion.freq;
+                document.getElementById('waveText').innerText = currentRegion.wave;
+                document.getElementById('detectMethod').innerText = currentRegion.detect;
+                document.getElementById('regionName').style.color = currentRegion.isVisible ? '#fbbf24' : currentRegion.color;
+            }
+
+            // Draw Wave
+            ctx.beginPath();
+            ctx.lineWidth = 3;
+            
+            if (currentRegion?.isVisible) {
+                const grad = ctx.createLinearGradient(0, 0, canvas.width, 0);
+                grad.addColorStop(0, 'red');
+                grad.addColorStop(0.5, 'green');
+                grad.addColorStop(1, 'violet');
+                ctx.strokeStyle = grad;
+                ctx.shadowBlur = 15;
+                ctx.shadowColor = 'white';
+            } else {
+                ctx.strokeStyle = currentRegion?.color || '#38bdf8';
+                ctx.shadowBlur = 5;
+                ctx.shadowColor = currentRegion?.color || '#38bdf8';
+            }
+
+            const amplitude = 40;
+            const frequency = currentRegion ? currentRegion.waveFactor : 0.01;
+
+            for (let x = 0; x < canvas.width; x++) {
+                const y = canvas.height / 2 + Math.sin(x * frequency + offset) * amplitude;
+                if (x === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            }
+            
+            ctx.stroke();
+            ctx.shadowBlur = 0; // Reset shadow for next frame
+
+            offset -= 0.1; // Speed of wave
+            requestAnimationFrame(draw);
+        }
+
+        draw();
+    </script>
+</body>
+</html>
