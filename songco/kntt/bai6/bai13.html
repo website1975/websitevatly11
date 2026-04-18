@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bài 13: Sóng Dừng</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- MathJax -->
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script>
+        window.MathJax = {
+            tex: { inlineMath: [['\\(', '\\)']] }
+        };
+    </script>
+    <!-- Custom CSS Configurations -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: '#EE0000',
+                        bglight: '#f4f7f9',
+                        qbg: '#edf2f7',
+                        abg: '#dcfce3', // Xanh lá nhạt
+                        tblBorder: '#cbd5e0',
+                        tblHead: '#e2e8f0'
+                    },
+                    fontFamily: {
+                        sans: ['"Segoe UI"', 'Roboto', 'Helvetica', 'Arial', 'sans-serif'],
+                    },
+                    borderRadius: {
+                        '12px': '12px',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { background-color: #f4f7f9; }
+        .section-header {
+            border-bottom: 4px solid #1a202c;
+            padding-bottom: 0.5rem;
+            margin-bottom: 1.5rem;
+            color: #1a202c;
+        }
+    </style>
+</head>
+<body class="text-gray-800 p-4 md:p-8 space-y-6 max-w-5xl mx-auto">
+
+    <!-- Header Block -->
+    <div class="bg-brand text-white rounded-12px p-6 shadow-md text-center">
+        <h2 class="text-xl md:text-2xl font-semibold opacity-90 mb-2">CHƯƠNG II - SÓNG</h2>
+        <h1 class="text-3xl md:text-4xl font-bold uppercase tracking-wide">Bài 13: Sóng Dừng</h1>
+    </div>
+
+    <!-- Intro Box -->
+    <div class="bg-white border border-gray-800 rounded-12px p-5 shadow-md">
+        <div class="flex items-start gap-4">
+            <img src="h0.png" alt="Đàn K'lông pút" class="w-24 h-24 object-cover rounded shadow bg-gray-200" onerror="this.src='https://via.placeholder.com/150?text=Hình+Mở+Đầu'">
+            <p class="italic text-lg text-gray-700 leading-relaxed">
+                Khi vỗ tay đều trước miệng các ống của đàn K'lông pút có độ dài khác nhau như hình bên, thì thấy âm phát ra ở các miệng ống trầm bổng khác nhau. Sóng âm lan truyền trong mỗi ống không phải là sóng chạy. Vậy đó là loại sóng gì và có những đặc điểm nào?
+            </p>
+        </div>
+    </div>
+
+    <!-- MỤC I -->
+    <div class="bg-white rounded-12px p-6 shadow-md">
+        <h2 class="text-2xl font-bold uppercase section-header">I. THÍ NGHIỆM TẠO SÓNG DỪNG</h2>
+        
+        <p class="mb-4">Bố trí thí nghiệm như Hình 13.1</p>
+        
+        <h3 class="font-bold text-lg mb-2 text-brand">Chuẩn bị</h3>
+        <ul class="list-disc ml-6 mb-4 space-y-1">
+            <li>Giá thí nghiệm.</li>
+            <li>Dây đàn hồi PQ.</li>
+            <li>Bộ rung.</li>
+            <li>Máy phát âm tần.</li>
+        </ul>
+
+        <h3 class="font-bold text-lg mb-2 text-brand">Tiến hành</h3>
+        <ul class="list-none mb-4 space-y-2">
+            <li><strong>Bước 1:</strong> Giữ cho dây căng, đầu P mắc vào ròng rọc, đầu rung mắc vào dây Hình 13.1.</li>
+            <li><strong>Bước 2:</strong> Cho bộ rung hoạt động để rung đầu P. Điều chỉnh tần số của bộ rung cho đến khi trên dây xuất hiện những điểm dao động với biên độ cực đại và có những điểm đứng yên. Hiện tượng như vậy gọi là hiện tượng <strong>sóng dừng</strong>. Ghi lại tần số của bộ rung.</li>
+            <li><strong>Bước 3:</strong> Thay đổi tần số của bộ rung cho đến khi lại quan sát được những điểm dao động với biên độ cực đại và những điểm đứng yên. Ghi lại tần số mới của bộ rung.</li>
+        </ul>
+
+        <div class="my-6 text-center">
+            <img src="h1.png" alt="Bộ thí nghiệm tạo sóng dừng" class="mx-auto max-w-full h-auto rounded shadow bg-gray-200" onerror="this.src='https://via.placeholder.com/400x300?text=Hình+13.1'">
+            <p class="text-sm italic mt-2 text-gray-600">Hình 13.1. Bộ thí nghiệm tạo sóng dừng trên sợi dây</p>
+        </div>
+
+        <!-- Question Box -->
+        <div class="q-box mt-6">
+            <div class="bg-qbg border-l-4 border-blue-800 p-4 rounded-r-lg">
+                <div class="flex items-center gap-2 mb-2">
+                    <span class="bg-blue-800 text-white rounded-full w-6 h-6 flex items-center justify-center font-bold">?</span>
+                    <p class="font-semibold">Câu hỏi</p>
+                </div>
+                <p>Từ kết quả thí nghiệm rút ra điều kiện để có sóng dừng.</p>
+                <button onclick="toggleAnswer('ans1')" class="mt-3 bg-brand text-white px-4 py-2 rounded shadow hover:bg-red-700 transition">Xem lời giải</button>
+            </div>
+            <div id="ans1" class="hidden bg-abg text-green-900 border border-green-300 p-4 rounded-lg mt-2 shadow-inner">
+                <strong>Trả lời:</strong> Điều kiện để có sóng dừng trên dây là chiều dài dây phải thỏa mãn một tỉ lệ nhất định so với bước sóng (phụ thuộc vào việc hai đầu dây cố định hay một đầu cố định, một đầu tự do). Khi tần số thay đổi, bước sóng thay đổi, sóng dừng chỉ xuất hiện ở những tần số xác định.
+            </div>
+        </div>
+    </div>
+
+    <!-- MỤC II -->
+    <div class="bg-white rounded-12px p-6 shadow-md">
+        <h2 class="text-2xl font-bold uppercase section-header">II. GIẢI THÍCH SỰ TẠO THÀNH SÓNG DỪNG</h2>
+        
+        <h3 class="font-bold text-xl mb-3 text-brand">1. Đặc điểm của sóng dừng</h3>
+        <p class="mb-4 text-justify">
+            Sóng dừng được tạo thành mỗi khi có hai sóng cùng biên độ, cùng bước sóng lan truyền theo hai hướng ngược nhau. Hai sóng này gặp nhau, giao thoa nhau tạo nên sóng tổng hợp là sóng dừng. Những điểm tại đó hai sóng ngược pha nhau thì không dao động và được gọi là <strong>nút sóng</strong>. Những điểm tại đó hai sóng đồng pha với nhau thì dao động với biên độ cực đại và được gọi là <strong>bụng sóng</strong> (Hình 13.2).
+        </p>
+        <p class="mb-4 text-justify">
+            Trong thực tế ta thường gặp một trong hai sóng là sóng phản xạ của sóng kia. Sóng dừng là tổng hợp của nhiều sóng tới và sóng phản xạ.
+        </p>
+
+        <div class="my-6 text-center">
+            <img src="h2.png" alt="Sự tạo thành sóng dừng" class="mx-auto max-w-full h-auto rounded shadow bg-gray-200" onerror="this.src='https://via.placeholder.com/400x200?text=Hình+13.2'">
+            <p class="text-sm italic mt-2 text-gray-600">Hình 13.2. Sóng tới và sóng phản xạ</p>
+        </div>
+
+        <!-- Question Box -->
+        <div class="q-box mt-4">
+            <div class="bg-qbg border-l-4 border-blue-800 p-4 rounded-r-lg">
+                <div class="flex items-center gap-2 mb-2">
+                    <span class="bg-blue-800 text-white rounded-full w-6 h-6 flex items-center justify-center font-bold">?</span>
+                    <p class="font-semibold">Hãy xác định</p>
+                </div>
+                <p>Hãy xác định số nút và số bụng của sóng dừng trên sợi dây Hình 13.3.</p>
+                <div class="my-4 text-center">
+                    <img src="h3.png" alt="Sóng dừng trên dây" class="mx-auto max-w-full h-auto rounded shadow bg-gray-200" onerror="this.src='https://via.placeholder.com/400x150?text=Hình+13.3'">
+                    <p class="text-sm italic mt-2 text-gray-600">Hình 13.3</p>
+                </div>
+                <button onclick="toggleAnswer('ans2')" class="mt-3 bg-brand text-white px-4 py-2 rounded shadow hover:bg-red-700 transition">Xem lời giải</button>
+            </div>
+            <div id="ans2" class="hidden bg-abg text-green-900 border border-green-300 p-4 rounded-lg mt-2 shadow-inner">
+                <strong>Trả lời:</strong> Dựa vào hình vẽ 13.3 (mô phỏng), đếm số điểm dao động cực đại (bụng) và số điểm đứng yên (nút). Giả sử hình vẽ hiển thị 4 bó sóng, ta sẽ có: 4 bụng sóng và 5 nút sóng (tính cả 2 đầu cố định P và Q).
+            </div>
+        </div>
+
+        <!-- Question Box -->
+        <div class="q-box mt-6">
+            <div class="bg-qbg border-l-4 border-blue-800 p-4 rounded-r-lg">
+                <div class="flex items-center gap-2 mb-2">
+                    <span class="bg-blue-800 text-white rounded-full w-6 h-6 flex items-center justify-center font-bold">?</span>
+                    <p class="font-semibold">Hãy giải thích</p>
+                </div>
+                <p>Hãy giải thích sự tạo thành sóng dừng trên dây PQ ở thí nghiệm Hình 13.1.</p>
+                <button onclick="toggleAnswer('ans3')" class="mt-3 bg-brand text-white px-4 py-2 rounded shadow hover:bg-red-700 transition">Xem lời giải</button>
+            </div>
+            <div id="ans3" class="hidden bg-abg text-green-900 border border-green-300 p-4 rounded-lg mt-2 shadow-inner">
+                <strong>Trả lời:</strong> Đầu rung P tạo ra sóng tới truyền trên dây đến đầu Q. Tại đầu Q (cố định), sóng bị phản xạ trở lại tạo thành sóng phản xạ. Sóng tới và sóng phản xạ có cùng biên độ, cùng tần số truyền ngược chiều nhau. Sự giao thoa của hai sóng này trên dây tạo ra các điểm luôn dao động cực đại (bụng) và các điểm luôn đứng yên (nút), hình thành nên sóng dừng.
+            </div>
+        </div>
+
+        <h3 class="font-bold text-xl mt-8 mb-3 text-brand">2. Điều kiện để có sóng dừng</h3>
+        <p class="mb-4">
+            Điều kiện để có sóng dừng trên một sợi dây có hai đầu cố định là chiều dài của sợi dây phải bằng một số nguyên lần nửa bước sóng (Hình 13.3).
+        </p>
+        <div class="bg-gray-100 p-4 rounded text-center my-4 font-bold text-xl shadow-inner border border-gray-200">
+            \( L = n \frac{\lambda}{2} \) với \( n = 1, 2, 3, ... \)  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; (13.1)
+        </div>
+        <p class="text-sm text-gray-600 text-center">(Trong đó \(n\) là số bụng sóng, số nút sóng là \(n + 1\))</p>
+    </div>
+
+    <!-- MỤC III -->
+    <div class="bg-white rounded-12px p-6 shadow-md">
+        <h2 class="text-2xl font-bold uppercase section-header">III. SÓNG DỪNG TRONG CÁC NHẠC CỤ</h2>
+        <p class="mb-4 text-justify">
+            Việc các nhạc cụ phát ra các nốt nhạc cao thấp khác nhau thường phụ thuộc vào việc tạo ra các sóng dừng khác nhau.
+        </p>
+
+        <h3 class="font-bold text-xl mb-3 text-brand">1. Sóng dừng đối với nhạc cụ dây</h3>
+        <p class="mb-4 text-justify">
+            Đối với các loại nhạc cụ dây như đàn ghita, violon, đàn tính, đàn bầu thì hai đầu dây đàn được giữ cố định. Khi ta gảy đàn, trên dây xuất hiện sóng dừng. Theo công thức (13.1), nó phát ra một âm có bước sóng \( \lambda = 2L \) hay có tần số \( f = \frac{v}{2L} \).
+        </p>
+        <div class="my-4 text-center">
+            <img src="h4.png" alt="Đàn tính" class="mx-auto w-64 h-auto rounded shadow bg-gray-200" onerror="this.src='https://via.placeholder.com/300x200?text=Hình+13.4'">
+            <p class="text-sm italic mt-2 text-gray-600">Hình 13.4. Đàn tính</p>
+        </div>
+        <p class="mb-4 text-justify">
+            Khi ấn ngón tay vào các phím khác nhau ta đã thay đổi chiều dài của dây đàn, do đó âm phát ra có độ cao, thấp khác nhau. Để khuếch đại âm, đàn ghita còn có một thùng đàn đóng vai trò hộp cộng hưởng.
+        </p>
+
+        <h3 class="font-bold text-xl mt-8 mb-3 text-brand">2. Sóng dừng đối với nhạc cụ khí</h3>
+        <p class="mb-4 text-justify">
+            Đối với các loại nhạc cụ khí như sáo, kèn, khi ta thổi, cột không khí dao động tạo ra sóng dừng. Bằng cách thay đổi lỗ không bị bịt ta thay đổi chiều dài cột không khí dao động. Do đó các nốt nhạc phát ra cũng bị thay đổi (Hình 13.5).
+        </p>
+        <div class="my-4 text-center">
+            <img src="h5.png" alt="Sáo trúc" class="mx-auto w-64 h-auto rounded shadow bg-gray-200" onerror="this.src='https://via.placeholder.com/300x150?text=Hình+13.5'">
+            <p class="text-sm italic mt-2 text-gray-600">Hình 13.5. Sáo trúc</p>
+        </div>
+
+        <!-- Question Box -->
+        <div class="q-box mt-6">
+            <div class="bg-qbg border-l-4 border-blue-800 p-4 rounded-r-lg">
+                <div class="flex items-center gap-2 mb-2">
+                    <span class="bg-blue-800 text-white rounded-full w-6 h-6 flex items-center justify-center font-bold">?</span>
+                    <p class="font-semibold">Câu hỏi</p>
+                </div>
+                <p>Tìm điều kiện để có sóng dừng trong cột không khí một đầu cố định, một đầu tự do (Hình 13.7).</p>
+                <div class="my-4 text-center">
+                    <img src="h6.png" alt="Sóng dừng ống khí" class="mx-auto max-w-full h-auto rounded shadow bg-gray-200" onerror="this.src='https://via.placeholder.com/200x300?text=Hình+13.7'">
+                    <p class="text-sm italic mt-2 text-gray-600">Hình 13.7. Sóng dừng trong ống khí một đầu kín, một đầu hở</p>
+                </div>
+                <button onclick="toggleAnswer('ans4')" class="mt-3 bg-brand text-white px-4 py-2 rounded shadow hover:bg-red-700 transition">Xem lời giải</button>
+            </div>
+            <div id="ans4" class="hidden bg-abg text-green-900 border border-green-300 p-4 rounded-lg mt-2 shadow-inner">
+                <strong>Trả lời:</strong> Đầu kín đóng vai trò là nút sóng, đầu hở đóng vai trò là bụng sóng. Chiều dài cột không khí phải bằng một số lẻ lần một phần tư bước sóng:
+                <br>
+                <div class="text-center font-bold my-2">\( L = (2n + 1)\frac{\lambda}{4} \) với \( n = 0, 1, 2, 3, ... \)</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CÂU HỎI BÀI TẬP SGK -->
+    <div class="bg-white rounded-12px p-6 shadow-md border-t-4 border-yellow-500">
+        <h2 class="text-2xl font-bold uppercase mb-4 text-gray-800">BÀI TẬP</h2>
+        
+        <div class="mb-6">
+            <p class="font-semibold">1. Một dây đàn hồi dài \( 0,6 \text{ m} \) hai đầu cố định dao động với một bụng sóng.</p>
+            <p class="ml-4">a) Tính bước sóng \( \lambda \) của sóng trên dây.</p>
+            <p class="ml-4">b) Nếu dây dao động với 3 bụng sóng thì bước sóng là bao nhiêu?</p>
+            <button onclick="toggleAnswer('ex1')" class="mt-3 ml-4 bg-brand text-white px-4 py-2 rounded shadow hover:bg-red-700 transition">Xem lời giải chi tiết</button>
+            <div id="ex1" class="hidden bg-abg text-green-900 border border-green-300 p-4 rounded-lg mt-2 ml-4 shadow-inner">
+                <p><strong>a)</strong> Vì dây có 2 đầu cố định dao động với 1 bụng sóng (\( n = 1 \)), áp dụng công thức: 
+                \( L = n \frac{\lambda}{2} \Rightarrow 0,6 = 1 \cdot \frac{\lambda}{2} \Rightarrow \lambda = 1,2 \text{ m} \).</p>
+                <p class="mt-2"><strong>b)</strong> Nếu dây dao động với 3 bụng sóng (\( n = 3 \)), ta có:
+                \( L = 3 \frac{\lambda'}{2} \Rightarrow 0,6 = 3 \cdot \frac{\lambda'}{2} \Rightarrow \lambda' = 0,4 \text{ m} \).</p>
+            </div>
+        </div>
+
+        <div>
+            <p class="font-semibold">2. Trên sợi dây đàn hồi, có chiều dài \( L = 1,2 \text{ m} \) người ta tạo ra sóng dừng có hình dạng được mô tả ở Hình 13.6. Biết tần số rung của sợi dây là \( f = 13,3 \text{ Hz} \). Xác định tốc độ truyền sóng trên dây.</p>
+            <div class="my-4 text-center">
+                <img src="h6.png" alt="Sóng dừng bài tập 2" class="mx-auto max-w-full h-auto rounded shadow bg-gray-200" onerror="this.src='https://via.placeholder.com/300x150?text=Hình+13.6'">
+            </div>
+            <button onclick="toggleAnswer('ex2')" class="mt-3 bg-brand text-white px-4 py-2 rounded shadow hover:bg-red-700 transition">Xem lời giải chi tiết</button>
+            <div id="ex2" class="hidden bg-abg text-green-900 border border-green-300 p-4 rounded-lg mt-2 shadow-inner">
+                <p>Từ hình 13.6 (giả sử có 3 bụng sóng, \( n = 3 \)), ta có điều kiện sóng dừng 2 đầu cố định:</p>
+                <p class="text-center my-2">\( L = n \frac{\lambda}{2} \Rightarrow 1,2 = 3 \frac{\lambda}{2} \Rightarrow \lambda = 0,8 \text{ m} \).</p>
+                <p>Tốc độ truyền sóng trên dây: \( v = \lambda \cdot f = 0,8 \cdot 13,3 = 10,64 \text{ m/s} \).</p>
+                <p class="text-xs italic mt-2">*Lưu ý: Số bụng n lấy theo hình vẽ thực tế trong SGK.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- EM ĐÃ HỌC -->
+    <div class="bg-blue-50 border-2 border-blue-300 rounded-12px p-6 shadow-md relative mt-4">
+        <span class="absolute -top-4 left-6 bg-blue-600 text-white px-4 py-1 rounded-full font-bold uppercase shadow">Em đã học</span>
+        <ul class="list-disc ml-6 mt-4 space-y-3 text-gray-800">
+            <li>Hai sóng cùng biên độ, cùng tần số lan truyền theo hai hướng ngược nhau trên một dây giao thoa với nhau tạo nên một sóng tổng hợp gọi là <strong>sóng dừng</strong>.</li>
+            <li>Trong sóng dừng có những điểm luôn đứng yên gọi là <strong>nút sóng</strong> và những điểm luôn dao động với biên độ cực đại gọi là <strong>bụng sóng</strong>. Hai nút liên tiếp cách nhau \( \frac{\lambda}{2} \), xen giữa chúng là một bụng sóng.</li>
+            <li>Điều kiện để có sóng dừng trên một dây có <strong>hai đầu cố định</strong> là chiều dài của dây phải bằng một số nguyên lần nửa bước sóng.<br>
+                <span class="font-bold">\( L = n\frac{\lambda}{2} \)</span> với \( n = 1, 2, 3, ... \)
+            </li>
+            <li>Điều kiện để có sóng dừng trên dây <strong>một đầu cố định, một đầu tự do</strong> hoặc trong ống khí một đầu kín, một đầu hở là chiều dài của dây hoặc của cột không khí phải bằng một số lẻ lần một phần tư bước sóng.<br>
+                <span class="font-bold">\( L = (2n + 1)\frac{\lambda}{4} \)</span> với \( n = 0, 1, 2, 3, ... \)
+            </li>
+        </ul>
+    </div>
+
+    <!-- EM CÓ THỂ -->
+    <div class="bg-yellow-50 border-2 border-yellow-300 rounded-12px p-6 shadow-md relative mt-8">
+        <span class="absolute -top-4 left-6 bg-yellow-500 text-white px-4 py-1 rounded-full font-bold uppercase shadow">Em có thể</span>
+        <p class="mt-4 text-gray-800">
+            Giải thích được sự hình thành sóng dừng trong thực tế. Ví dụ trong ống sáo, đàn K'lông pút.
+        </p>
+    </div>
+
+    <!-- ==================== PHẦN BỔ SUNG: BÀI TẬP TRẮC NGHIỆM ==================== -->
+    <div class="bg-white rounded-12px p-6 shadow-lg border-t-8 border-indigo-600 mt-10">
+        <h2 class="text-2xl font-bold uppercase text-indigo-800 mb-6 flex items-center gap-2">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>
+            5 BÀI TẬP TRẮC NGHIỆM CỦNG CỐ
+        </h2>
+        
+        <form id="quizForm" class="space-y-8">
+            <!-- Câu 1 -->
+            <div class="quiz-question" id="q1-container">
+                <p class="font-semibold text-lg mb-2">Câu 1: Sóng dừng được tạo thành do sự giao thoa của:</p>
+                <div class="space-y-2 ml-4">
+                    <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q1" value="A" class="w-4 h-4 text-brand"> A. Hai sóng tới từ hai nguồn đồng bộ.</label>
+                    <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q1" value="B" class="w-4 h-4 text-brand"> B. Sóng tới và sóng phản xạ của nó truyền theo cùng một hướng.</label>
+                    <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q1" value="C" class="w-4 h-4 text-brand"> C. Sóng tới và sóng phản xạ truyền theo hai hướng ngược nhau trên cùng một phương truyền.</label>
+                    <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q1" value="D" class="w-4 h-4 text-brand"> D. Hai sóng bất kì gặp nhau.</label>
+                </div>
+                <div id="q1-exp" class="hidden mt-3 p-3 bg-blue-50 border-l-4 border-blue-400 text-sm text-gray-700">
+                    <strong>Giải thích:</strong> Sóng dừng là sự giao thoa của sóng tới và sóng phản xạ lan truyền theo hai hướng ngược nhau trên cùng một phương (dây). (Đáp án C)
+                </div>
+            </div>
+
+            <!-- Câu 2 -->
+            <div class="quiz-question" id="q2-container">
+                <p class="font-semibold text-lg mb-2">Câu 2: Trong hiện tượng sóng dừng, khoảng cách giữa hai nút sóng liên tiếp bằng:</p>
+                <div class="space-y-2 ml-4">
+                    <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q2" value="A" class="w-4 h-4 text-brand"> A. Một bước sóng (\( \lambda \)).</label>
+                    <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q2" value="B" class="w-4 h-4 text-brand"> B. Một nửa bước sóng (\( \lambda/2 \)).</label>
+                    <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q2" value="C" class="w-4 h-4 text-brand"> C. Một phần tư bước sóng (\( \lambda/4 \)).</label>
+                    <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q2" value="D" class="w-4 h-4 text-brand"> D. Hai lần bước sóng (\( 2\lambda \)).</label>
+                </div>
+                <div id="q2-exp" class="hidden mt-3 p-3 bg-blue-50 border-l-4 border-blue-400 text-sm text-gray-700">
+                    <strong>Giải thích:</strong> Theo lí thuyết, khoảng cách giữa 2 nút liên tiếp hoặc 2 bụng liên tiếp luôn bằng \( \lambda/2 \). (Đáp án B)
+                </div>
+            </div>
+
+            <!-- Câu 3 -->
+            <div class="quiz-question" id="q3-container">
+                <p class="font-semibold text-lg mb-2">Câu 3: Điều kiện để có sóng dừng trên dây chiều dài \(L\) với hai đầu cố định là:</p>
+                <div class="space-y-2 ml-4">
+                    <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q3" value="A" class="w-4 h-4 text-brand"> A. \( L = (2n + 1)\frac{\lambda}{2} \)</label>
+                    <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q3" value="B" class="w-4 h-4 text-brand"> B. \( L = (2n + 1)\frac{\lambda}{4} \)</label>
+                    <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q3" value="C" class="w-4 h-4 text-brand"> C. \( L = n\frac{\lambda}{2} \)</label>
+                    <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q3" value="D" class="w-4 h-4 text-brand"> D. \( L = n\lambda \)</label>
+                </div>
+                <div id="q3-exp" class="hidden mt-3 p-3 bg-blue-50 border-l-4 border-blue-400 text-sm text-gray-700">
+                    <strong>Giải thích:</strong> Đối với dây 2 đầu cố định, chiều dài dây phải bằng một số nguyên lần nửa bước sóng. (Đáp án C)
+                </div>
+            </div>
+
+            <!-- Câu 4 -->
+            <div class="quiz-question" id="q4-container">
+                <p class="font-semibold text-lg mb-2">Câu 4: Bụng sóng là những điểm:</p>
+                <div class="space-y-2 ml-4">
+                    <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q4" value="A" class="w-4 h-4 text-brand"> A. Dao động với biên độ cực đại.</label>
+                    <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q4" value="B" class="w-4 h-4 text-brand"> B. Luôn luôn đứng yên.</label>
+                    <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q4" value="C" class="w-4 h-4 text-brand"> C. Giao thoa ngược pha.</label>
+                    <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q4" value="D" class="w-4 h-4 text-brand"> D. Chỉ dao động theo phương ngang.</label>
+                </div>
+                <div id="q4-exp" class="hidden mt-3 p-3 bg-blue-50 border-l-4 border-blue-400 text-sm text-gray-700">
+                    <strong>Giải thích:</strong> Bụng sóng là nơi hai sóng tới và sóng phản xạ gặp nhau đồng pha, do đó dao động với biên độ cực đại. (Đáp án A)
+                </div>
+            </div>
+
+            <!-- Câu 5 -->
+            <div class="quiz-question" id="q5-container">
+                <p class="font-semibold text-lg mb-2">Câu 5: Trong một ống sáo (1 đầu kín, 1 đầu hở), để có sóng dừng thì chiều dài cột khí phải thỏa mãn:</p>
+                <div class="space-y-2 ml-4">
+                    <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q5" value="A" class="w-4 h-4 text-brand"> A. Bằng số nguyên lần bước sóng.</label>
+                    <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q5" value="B" class="w-4 h-4 text-brand"> B. Bằng số nguyên lần nửa bước sóng.</label>
+                    <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q5" value="C" class="w-4 h-4 text-brand"> C. Bằng số chẵn lần 1/4 bước sóng.</label>
+                    <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q5" value="D" class="w-4 h-4 text-brand"> D. Bằng số lẻ lần một phần tư bước sóng.</label>
+                </div>
+                <div id="q5-exp" class="hidden mt-3 p-3 bg-blue-50 border-l-4 border-blue-400 text-sm text-gray-700">
+                    <strong>Giải thích:</strong> Hệ 1 đầu cố định (kín) 1 đầu tự do (hở) có điều kiện \( L = (2n+1)\lambda/4 \), tức là số lẻ lần 1/4 bước sóng. (Đáp án D)
+                </div>
+            </div>
+
+            <div class="text-center mt-8">
+                <button type="button" onclick="checkQuiz()" class="bg-gray-800 text-white font-bold py-3 px-8 rounded-full shadow-lg hover:bg-black transition-all transform hover:scale-105">NỘP BÀI</button>
+            </div>
+            <div id="quiz-result" class="text-center mt-4 text-xl font-bold hidden"></div>
+        </form>
+    </div>
+
+    <!-- ==================== PHẦN BỔ SUNG: BÀI TẬP VẬN DỤNG ==================== -->
+    <div class="bg-white rounded-12px p-6 shadow-lg border-t-8 border-teal-500 mt-8 mb-10">
+        <h2 class="text-2xl font-bold uppercase text-teal-800 mb-6 flex items-center gap-2">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+            3 BÀI TẬP VẬN DỤNG TÍNH TOÁN
+        </h2>
+
+        <!-- VD1 -->
+        <div class="mb-6 border-b border-gray-200 pb-6">
+            <p class="font-semibold text-lg text-gray-800">Bài 1: Sóng dừng trên dây đàn</p>
+            <p class="mt-2 text-gray-700">Một sợi dây đàn dài \( L = 1 \text{ m} \) căng ngang, hai đầu cố định. Vận tốc truyền sóng trên dây là \( v = 20 \text{ m/s} \). Kích thích cho dây dao động với tần số \( f = 50 \text{ Hz} \). Tính số bụng sóng và số nút sóng quan sát được trên dây.</p>
+            <button onclick="toggleAnswer('vd1')" class="mt-3 bg-teal-600 text-white px-4 py-2 rounded shadow hover:bg-teal-700 transition">Xem lời giải chi tiết</button>
+            <div id="vd1" class="hidden bg-teal-50 border border-teal-200 text-teal-900 p-4 rounded-lg mt-3 shadow-inner">
+                <p><strong>Bước 1:</strong> Tính bước sóng \( \lambda \)</p>
+                <p>\( \lambda = \frac{v}{f} = \frac{20}{50} = 0,4 \text{ m} \)</p>
+                <p class="mt-2"><strong>Bước 2:</strong> Áp dụng điều kiện sóng dừng 2 đầu cố định</p>
+                <p>\( L = n \frac{\lambda}{2} \Rightarrow 1 = n \frac{0,4}{2} \Rightarrow 1 = 0,2 \cdot n \Rightarrow n = 5 \)</p>
+                <p class="mt-2 text-red-700 font-bold">Kết luận:</p>
+                <ul class="list-disc ml-6">
+                    <li>Số bụng sóng: \( n = 5 \).</li>
+                    <li>Số nút sóng (kể cả 2 đầu cố định): \( n + 1 = 6 \).</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- VD2 -->
+        <div class="mb-6 border-b border-gray-200 pb-6">
+            <p class="font-semibold text-lg text-gray-800">Bài 2: Tần số âm cơ bản của ống sáo</p>
+            <p class="mt-2 text-gray-700">Một ống sáo có chiều dài \( 0,6 \text{ m} \) (coi như một đầu kín, một đầu hở). Biết tốc độ truyền âm trong không khí là \( 340 \text{ m/s} \). Hãy tính tần số âm cơ bản (tần số nhỏ nhất) mà ống sáo phát ra được.</p>
+            <button onclick="toggleAnswer('vd2')" class="mt-3 bg-teal-600 text-white px-4 py-2 rounded shadow hover:bg-teal-700 transition">Xem lời giải chi tiết</button>
+            <div id="vd2" class="hidden bg-teal-50 border border-teal-200 text-teal-900 p-4 rounded-lg mt-3 shadow-inner">
+                <p>Điều kiện sóng dừng trong ống 1 đầu kín 1 đầu hở: \( L = (2n + 1)\frac{\lambda}{4} \)</p>
+                <p>Tần số âm cơ bản ứng với âm thấp nhất, tức là \( n = 0 \).</p>
+                <p class="mt-2">Khi đó: \( L = \frac{\lambda}{4} \Rightarrow \lambda = 4L = 4 \cdot 0,6 = 2,4 \text{ m} \).</p>
+                <p class="mt-2">Tần số âm cơ bản là: \( f = \frac{v}{\lambda} = \frac{340}{2,4} \approx 141,67 \text{ Hz} \).</p>
+            </div>
+        </div>
+
+        <!-- VD3 -->
+        <div>
+            <p class="font-semibold text-lg text-gray-800">Bài 3: Tìm bước sóng qua số nút</p>
+            <p class="mt-2 text-gray-700">Trên một sợi dây dài \( L = 2 \text{ m} \), hai đầu cố định đang có sóng dừng. Người ta đếm được có tất cả 5 nút sóng (kể cả 2 đầu dây). Tính bước sóng của sóng truyền trên dây.</p>
+            <button onclick="toggleAnswer('vd3')" class="mt-3 bg-teal-600 text-white px-4 py-2 rounded shadow hover:bg-teal-700 transition">Xem lời giải chi tiết</button>
+            <div id="vd3" class="hidden bg-teal-50 border border-teal-200 text-teal-900 p-4 rounded-lg mt-3 shadow-inner">
+                <p>Dây có 2 đầu cố định, số nút sóng là \( N_n = n + 1 \).</p>
+                <p>Đề cho có 5 nút sóng nên: \( n + 1 = 5 \Rightarrow n = 4 \) (có 4 bụng sóng).</p>
+                <p class="mt-2">Áp dụng công thức: \( L = n \frac{\lambda}{2} \)</p>
+                <p>\( \Rightarrow 2 = 4 \cdot \frac{\lambda}{2} \Rightarrow 2 = 2\lambda \Rightarrow \lambda = 1 \text{ m} \).</p>
+                <p class="mt-2 text-red-700 font-bold">Vậy bước sóng là \( 1 \text{ m} \).</p>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- JavaScript Actions -->
+    <script>
+        // Hàm hiển thị / ẩn lời giải
+        function toggleAnswer(id) {
+            const el = document.getElementById(id);
+            if (el.classList.contains('hidden')) {
+                el.classList.remove('hidden');
+            } else {
+                el.classList.add('hidden');
+            }
+        }
+
+        // Hàm kiểm tra bài tập trắc nghiệm
+        function checkQuiz() {
+            // Đáp án chuẩn
+            const correctAnswers = {
+                q1: 'C',
+                q2: 'B',
+                q3: 'C',
+                q4: 'A',
+                q5: 'D'
+            };
+
+            let score = 0;
+            let total = 5;
+
+            // Xoá định dạng cũ
+            for(let i=1; i<=total; i++) {
+                document.getElementById('q'+i+'-container').classList.remove('bg-red-50', 'bg-green-50');
+                document.getElementById('q'+i+'-exp').classList.remove('hidden');
+            }
+
+            // Lặp để kiểm tra
+            for(let i=1; i<=total; i++) {
+                let qName = 'q' + i;
+                let selected = document.querySelector(`input[name="${qName}"]:checked`);
+                let container = document.getElementById(qName + '-container');
+
+                if (selected) {
+                    if (selected.value === correctAnswers[qName]) {
+                        score++;
+                        container.classList.add('bg-green-50', 'rounded', 'p-2');
+                    } else {
+                        container.classList.add('bg-red-50', 'rounded', 'p-2');
+                    }
+                } else {
+                    container.classList.add('bg-red-50', 'rounded', 'p-2'); // Chưa chọn coi như sai
+                }
+            }
+
+            // Hiển thị kết quả
+            const resultDiv = document.getElementById('quiz-result');
+            resultDiv.classList.remove('hidden');
+            if(score === total) {
+                resultDiv.innerHTML = `Tuyệt vời! Bạn làm đúng ${score}/${total} câu.`;
+                resultDiv.className = "text-center mt-6 text-2xl font-bold text-green-600 bg-green-100 py-3 rounded";
+            } else {
+                resultDiv.innerHTML = `Bạn làm đúng ${score}/${total} câu. Hãy xem lại giải thích chi tiết bên dưới nhé!`;
+                resultDiv.className = "text-center mt-6 text-xl font-bold text-red-600 bg-red-100 py-3 rounded";
+            }
+        }
+    </script>
+</body>
+</html>
