@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bài 15: Thực hành đo tốc độ truyền âm</title>
+    
+    <!-- Tích hợp Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Tích hợp MathJax để hiển thị công thức toán học -->
+    <script>
+        MathJax = {
+            tex: {
+                inlineMath: [['\\(', '\\)']],
+                displayMath: [['\\[', '\\]']]
+            },
+            startup: {
+                pageReady: () => {
+                    return MathJax.startup.defaultPageReady();
+                }
+            }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <!-- Cấu hình CSS tùy chỉnh bổ sung -->
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f7f9;
+        }
+        .main-container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .content-box {
+            background-color: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+        .section-header {
+            color: #111827;
+            text-transform: uppercase;
+            font-weight: bold;
+            font-size: 1.25rem;
+            border-bottom: 4px solid #1e3a8a; /* Xanh đen */
+            padding-bottom: 8px;
+            margin-bottom: 16px;
+            margin-top: 24px;
+        }
+        .table-custom th, .table-custom td {
+            border: 1px solid #cbd5e0;
+            padding: 10px;
+            text-align: center;
+        }
+        .table-custom th {
+            background-color: #e2e8f0;
+        }
+    </style>
+</head>
+<body class="text-gray-800">
+
+    <div class="main-container">
+
+        <!-- Header -->
+        <div class="content-box !bg-[#EE0000] text-white text-center">
+            <h3 class="text-lg md:text-xl font-semibold mb-2">CHƯƠNG II - SÓNG</h3><hr>
+            <h1 class="text-2xl md:text-3xl font-bold uppercase tracking-wide">Bài 15 Thực Hành: Đo Tốc Độ Truyền Âm</h1>
+        </div>
+
+        <!-- Intro Box -->
+        <div class="bg-white border border-black rounded-[12px] shadow-md p-5 italic text-center text-lg mb-6 text-gray-700">
+            Âm thanh truyền trong một môi trường có tốc độ xác định, làm thế nào đo được tốc độ truyền âm trong không khí bằng dụng cụ thí nghiệm?
+        </div>
+
+        <!-- Nội dung chính -->
+        <div class="content-box">
+            
+            <!-- Mục I -->
+            <h2 class="section-header">I. DỤNG CỤ THÍ NGHIỆM</h2>
+            <ul class="list-disc pl-6 space-y-2 mb-6">
+                <li>Ống trụ làm bằng thuỷ tinh hữu cơ trong suốt, có đường kính trong 40 mm, dài 670 mm, có chia độ \( 0 \div 660 \) mm (1).</li>
+                <li>Pít-tông làm bằng thép bọc nhựa, có vạch dấu, nối với dây kéo và ròng rọc, có thể di chuyển dễ dàng trong ống (2).</li>
+                <li>Máy phát tần số phát ra tín hiệu có dạng sin (3).</li>
+                <li>Một loa nhỏ (4).</li>
+                <li>Giá đỡ ống trụ (5).</li>
+            </ul>
+            <div class="flex flex-col md:flex-row justify-center items-center gap-6 mb-4">
+                <div class="text-center">
+                    <div class="w-64 h-80 bg-gray-200 border-2 border-dashed border-gray-400 flex items-center justify-center rounded-lg mb-2">
+                        <img src="h1.png" alt="Bộ thí nghiệm" class="max-w-full max-h-full object-contain" onerror="this.style.display='none'; this.parentNode.innerHTML='<span class=\'text-gray-500\'>[Hình 15.1 - Bộ thí nghiệm đo tốc độ truyền âm]</span>'">
+                    </div>
+                    <p class="text-sm font-semibold">Hình 15.1. Bộ thí nghiệm đo tốc độ truyền âm</p>
+                </div>
+            </div>
+
+            <!-- Mục II -->
+            <h2 class="section-header">II. THIẾT KẾ PHƯƠNG ÁN THÍ NGHIỆM</h2>
+            <p class="mb-4">Lắp ống trụ đã được lồng pít-tông ở trong ống lên giá đỡ, ghép loa sát đầu dưới của ống trụ (Hình 15.1).</p>
+            <p class="mb-6"><i>*Có thể sử dụng âm thoa La thay cho loa.</i></p>
+            
+            <p class="mb-4">Nối máy phát tần số với loa, bật công tắc nguồn của máy phát tần số, điều chỉnh biên độ và tần số để nghe rõ âm (hoặc dùng búa cao su gõ vào một nhánh của âm thoa), đồng thời dịch chuyển dần pít-tông ra xa loa. Trả lời câu hỏi sau:</p>
+
+            <!-- Khung Câu hỏi & Trả lời -->
+            <div class="bg-[#edf2f7] border-l-4 border-[#1e3a8a] p-4 rounded-r-md mb-6">
+                <div class="flex items-start mb-2">
+                    <span class="text-xl mr-2">❓</span>
+                    <div class="font-semibold text-gray-800">
+                        <p>a) Khi pít-tông di chuyển, độ to của âm thanh nghe được thay đổi như thế nào?</p>
+                        <p>b) Khoảng cách giữa hai vị trí liên tiếp của pít-tông mà âm thanh nghe được to nhất cho phép xác định đại lượng nào của sóng âm?</p>
+                        <p>c) Cần đo đại lượng nào để tính được tốc độ truyền âm?</p>
+                    </div>
+                </div>
+                <button onclick="toggleAnswer('ans-phuongan')" class="mt-2 px-4 py-2 bg-[#EE0000] text-white font-semibold rounded hover:bg-red-700 transition duration-300">Xem lời giải chi tiết</button>
+                
+                <div id="ans-phuongan" class="hidden mt-4 bg-[#d1fae5] p-4 rounded-md text-green-900 border border-green-300">
+                    <p class="font-bold mb-2">Lời giải:</p>
+                    <p class="mb-2"><strong>a)</strong> Khi dịch chuyển pít-tông, ta sẽ nghe thấy độ to của âm thanh thay đổi tuần hoàn: âm to dần lên đến mức cực đại, sau đó lại nhỏ dần đi, rồi lại to lên...</p>
+                    <p class="mb-2"><strong>b)</strong> Khoảng cách giữa hai vị trí liên tiếp của pít-tông mà âm thanh nghe to nhất (tương ứng với 2 bụng sóng liên tiếp của sóng dừng) chính bằng một nửa bước sóng \( \frac{\lambda}{2} \).</p>
+                    <p><strong>c)</strong> Để tính được tốc độ truyền âm \( (v = \lambda \cdot f) \), ta cần đo 2 đại lượng: <strong>Tần số âm \( f \)</strong> (đọc trên máy phát tần số hoặc tần số ghi trên âm thoa) và <strong>Khoảng cách giữa 2 lần liên tiếp âm to nhất \( d \)</strong> (từ đó tính được bước sóng \( \lambda = 2d \)).</p>
+                </div>
+            </div>
+
+            <!-- Mục III -->
+            <h2 class="section-header">III. TIẾN HÀNH THÍ NGHIỆM</h2>
+            <div class="flex flex-col md:flex-row gap-6 items-start">
+                <div class="flex-1 space-y-4">
+                    <p><strong>1.</strong> Điều chỉnh máy phát tần số đến giá trị 500 Hz.</p>
+                    <p><strong>2.</strong> Dùng dây kéo pít-tông di chuyển trong ống thuỷ tinh, cho đến lúc âm thanh nghe được to nhất. Xác định vị trí âm thanh nghe được là lớn nhất lần 1. Đo chiều dài cột khí \( l_1 \). Ghi số liệu vào Bảng 15.1.<br><span class="italic text-gray-600">Thực hiện thao tác thêm hai lần nữa.</span></p>
+                    <p><strong>3.</strong> Tiếp tục kéo pít-tông di chuyển trong ống thuỷ tinh, cho đến lúc lại nghe được âm thanh to nhất. Xác định vị trí của pít-tông mà âm thanh nghe được là to nhất lần 2. Đo chiều dài cột khí \( l_2 \). Ghi số liệu vào Bảng 15.1.<br><span class="italic text-gray-600">Thực hiện thao tác thêm hai lần nữa.</span></p>
+                </div>
+                <div class="w-full md:w-1/3 text-center">
+                    <div class="w-full h-40 bg-gray-200 border-2 border-dashed border-gray-400 flex items-center justify-center rounded-lg mb-2">
+                        <img src="h2.png" alt="Máy phát tần số" class="max-w-full max-h-full object-contain" onerror="this.style.display='none'; this.parentNode.innerHTML='<span class=\'text-gray-500\'>[Hình 15.2 - Máy phát tần số]</span>'">
+                    </div>
+                    <p class="text-sm font-semibold">Hình 15.2. Máy phát tần số</p>
+                </div>
+            </div>
+
+            <!-- Mục IV -->
+            <h2 class="section-header">IV. KẾT QUẢ THÍ NGHIỆM</h2>
+            <p class="font-semibold mb-2">Bảng 15.1</p>
+            <p class="mb-4">Tần số nguồn âm \( f = ... \pm ... Hz \).</p>
+            
+            <div class="overflow-x-auto mb-6">
+                <table class="w-full table-custom border-collapse">
+                    <thead>
+                        <tr>
+                            <th class="w-1/4">Chiều dài cột không khí<br>khi âm to nhất (cm)</th>
+                            <th>Lần 1</th>
+                            <th>Lần 2</th>
+                            <th>Lần 3</th>
+                            <th>Giá trị trung bình (\( l \))</th>
+                            <th>Sai số \( \Delta l \)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="font-semibold bg-gray-50">\( l_1 \)</td>
+                            <td>?</td>
+                            <td>?</td>
+                            <td>?</td>
+                            <td>?</td>
+                            <td>?</td>
+                        </tr>
+                        <tr>
+                            <td class="font-semibold bg-gray-50">\( l_2 \)</td>
+                            <td>?</td>
+                            <td>?</td>
+                            <td>?</td>
+                            <td>?</td>
+                            <td>?</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Khung Xử lý kết quả -->
+            <div class="bg-[#edf2f7] border-l-4 border-[#1e3a8a] p-4 rounded-r-md mb-6">
+                <div class="flex items-start mb-2">
+                    <span class="text-xl mr-2">✍️</span>
+                    <div class="font-semibold text-gray-800">
+                        <p class="text-blue-900 uppercase mb-2">Xử lí kết quả thí nghiệm</p>
+                        <p>a) Tính chiều dài cột không khí giữa hai vị trí của pít-tông khi âm to nhất \( d = l_2 - l_1 = ? \)</p>
+                        <p>b) Tính tốc độ truyền âm \( v = \lambda f = 2df = ? \)</p>
+                        <p>c) Tính sai số: \( \delta v = \delta d + \delta f = ? \)<br>\( \Delta v = ? \)</p>
+                        <p>d) Giải thích tại sao không xác định tốc độ truyền âm qua \( l_1, l_2 \) mà cần xác định qua \( l_2 - l_1 \)</p>
+                    </div>
+                </div>
+                <button onclick="toggleAnswer('ans-xuly')" class="mt-2 px-4 py-2 bg-[#EE0000] text-white font-semibold rounded hover:bg-red-700 transition duration-300">Xem hướng dẫn xử lý</button>
+                
+                <div id="ans-xuly" class="hidden mt-4 bg-[#d1fae5] p-4 rounded-md text-green-900 border border-green-300">
+                    <p class="font-bold mb-2">Hướng dẫn:</p>
+                    <p class="mb-2"><strong>a)</strong> Khoảng cách \( d \) tính bằng: \( \bar{d} = \bar{l_2} - \bar{l_1} \).</p>
+                    <p class="mb-2"><strong>b)</strong> Tính giá trị trung bình tốc độ truyền âm: \( \bar{v} = 2 \cdot \bar{d} \cdot \bar{f} \).</p>
+                    <p class="mb-2"><strong>c)</strong> Tính sai số:<br>
+                        - Sai số tỉ đối: \( \delta v = \frac{\Delta v}{\bar{v}} = \frac{\Delta d}{\bar{d}} + \frac{\Delta f}{\bar{f}} = \delta d + \delta f \)<br>
+                        - Sai số tuyệt đối: \( \Delta v = \delta v \cdot \bar{v} \)
+                    </p>
+                    <p><strong>d)</strong> Khi thiết lập sóng dừng trong ống, tại miệng hở của ống (chỗ đặt loa) sóng không phản xạ hoàn toàn tại đúng miệng ống mà dời ra ngoài một đoạn nhỏ (gọi là hiệu ứng đầu miệng). Do đó \( l_1 \) không chính xác bằng \( \lambda/4 \) hay \( \lambda/2 \). Khi ta lấy hiệu số \( d = l_2 - l_1 \), phần sai số hệ thống ở miệng ống bị triệt tiêu, giúp ta đo được chính xác khoảng cách \( \lambda/2 \) giữa 2 nút/bụng sóng.</p>
+                </div>
+            </div>
+
+            <!-- Các khung thông tin bổ sung -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-8">
+                
+                <div class="bg-blue-50 border-2 border-blue-300 p-4 rounded-xl">
+                    <h3 class="font-bold text-blue-800 flex items-center mb-2"><span class="mr-2 text-xl">💡</span> EM CÓ BIẾT</h3>
+                    <p>Sử dụng một số phần mềm trên điện thoại hay máy tính có thể thay thế cho máy phát âm tần.</p>
+                </div>
+
+                <div class="bg-purple-50 border-2 border-purple-300 p-4 rounded-xl">
+                    <h3 class="font-bold text-purple-800 flex items-center mb-2"><span class="mr-2 text-xl">🛠️</span> EM CÓ THỂ</h3>
+                    <p>Chế tạo chiếc đàn Klông Pút bằng các ống nứa hoặc ống nhựa rỗng, có độ dài khác nhau và có thể phát ra được âm có tần số bằng tần số các nốt nhạc cơ bản.</p>
+                </div>
+
+                <div class="bg-teal-50 border-2 border-teal-300 p-4 rounded-xl">
+                    <h3 class="font-bold text-teal-800 flex items-center mb-2"><span class="mr-2 text-xl">✅</span> EM ĐÃ HỌC</h3>
+                    <p>Cách đo tốc độ truyền âm trong không khí nhờ hiện tượng sóng dừng.</p>
+                </div>
+
+                <div class="bg-yellow-50 border-2 border-yellow-300 p-4 rounded-xl md:col-span-2">
+                    <h3 class="font-bold text-yellow-800 flex items-center mb-2"><span class="mr-2 text-xl">🌟</span> EM CÓ BIẾT</h3>
+                    <p class="mb-3">Âm có thể truyền trong các môi trường chất rắn, chất lỏng và chất khí với tốc độ khác nhau. Tốc độ truyền âm trong một số môi trường như Bảng 15.2.</p>
+                    
+                    <div class="overflow-x-auto w-full md:w-2/3 mx-auto">
+                        <table class="w-full table-custom border-collapse text-sm bg-white">
+                            <thead>
+                                <tr>
+                                    <th class="bg-yellow-100 border-yellow-300">Môi trường</th>
+                                    <th class="bg-yellow-100 border-yellow-300">Tốc độ (m/s)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr><td>Không khí</td><td>340</td></tr>
+                                <tr><td>Gỗ</td><td>3400</td></tr>
+                                <tr><td>Nước</td><td>1500</td></tr>
+                                <tr><td>Thép</td><td>6100</td></tr>
+                                <tr><td>Thuỷ tinh</td><td>5500</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- PHẦN BÀI TẬP CỦNG CỐ & VẬN DỤNG THÊM MỚI -->
+        <div class="content-box">
+            <h2 class="section-header text-[#EE0000] border-[#EE0000]">BÀI TẬP CỦNG CỐ & VẬN DỤNG</h2>
+
+            <!-- Trắc nghiệm -->
+            <div class="mb-8">
+                <h3 class="font-bold text-lg mb-4 text-[#1e3a8a]">A. TRẮC NGHIỆM CỦNG CỐ</h3>
+                <form id="quizForm" class="space-y-6">
+                    
+                    <!-- Câu 1 -->
+                    <div class="p-4 bg-gray-50 rounded border border-gray-200">
+                        <p class="font-semibold mb-2">Câu 1: Hiện tượng vật lí nào được ứng dụng trong phương pháp đo tốc độ truyền âm trong bài thực hành này?</p>
+                        <label class="block mb-1 cursor-pointer"><input type="radio" name="q1" value="A" class="mr-2"> A. Hiện tượng sóng dừng.</label>
+                        <label class="block mb-1 cursor-pointer"><input type="radio" name="q1" value="B" class="mr-2"> B. Hiện tượng giao thoa sóng từ hai nguồn.</label>
+                        <label class="block mb-1 cursor-pointer"><input type="radio" name="q1" value="C" class="mr-2"> C. Hiện tượng khúc xạ âm.</label>
+                        <label class="block mb-1 cursor-pointer"><input type="radio" name="q1" value="D" class="mr-2"> D. Hiện tượng phản xạ âm (tiếng vang).</label>
+                        <div id="feedback-q1" class="hidden"></div>
+                    </div>
+
+                    <!-- Câu 2 -->
+                    <div class="p-4 bg-gray-50 rounded border border-gray-200">
+                        <p class="font-semibold mb-2">Câu 2: Trong ống trụ, khoảng cách giữa hai vị trí liên tiếp của pít-tông để âm nghe được to nhất có giá trị bằng bao nhiêu?</p>
+                        <label class="block mb-1 cursor-pointer"><input type="radio" name="q2" value="A" class="mr-2"> A. Một bước sóng (\( \lambda \)).</label>
+                        <label class="block mb-1 cursor-pointer"><input type="radio" name="q2" value="B" class="mr-2"> B. Một phần tư bước sóng (\( \frac{\lambda}{4} \)).</label>
+                        <label class="block mb-1 cursor-pointer"><input type="radio" name="q2" value="C" class="mr-2"> C. Một nửa bước sóng (\( \frac{\lambda}{2} \)).</label>
+                        <label class="block mb-1 cursor-pointer"><input type="radio" name="q2" value="D" class="mr-2"> D. Hai lần bước sóng (\( 2\lambda \)).</label>
+                        <div id="feedback-q2" class="hidden"></div>
+                    </div>
+
+                    <!-- Câu 3 -->
+                    <div class="p-4 bg-gray-50 rounded border border-gray-200">
+                        <p class="font-semibold mb-2">Câu 3: Gọi \( d \) là khoảng cách giữa 2 lần liên tiếp âm nghe to nhất, \( f \) là tần số âm. Công thức tính tốc độ truyền âm là:</p>
+                        <label class="block mb-1 cursor-pointer"><input type="radio" name="q3" value="A" class="mr-2"> A. \( v = d \cdot f \)</label>
+                        <label class="block mb-1 cursor-pointer"><input type="radio" name="q3" value="B" class="mr-2"> B. \( v = 2 \cdot d \cdot f \)</label>
+                        <label class="block mb-1 cursor-pointer"><input type="radio" name="q3" value="C" class="mr-2"> C. \( v = \frac{d}{f} \)</label>
+                        <label class="block mb-1 cursor-pointer"><input type="radio" name="q3" value="D" class="mr-2"> D. \( v = \frac{2d}{f} \)</label>
+                        <div id="feedback-q3" class="hidden"></div>
+                    </div>
+
+                    <!-- Câu 4 -->
+                    <div class="p-4 bg-gray-50 rounded border border-gray-200">
+                        <p class="font-semibold mb-2">Câu 4: Dựa vào Bảng 15.2, âm truyền nhanh nhất trong môi trường nào sau đây?</p>
+                        <label class="block mb-1 cursor-pointer"><input type="radio" name="q4" value="A" class="mr-2"> A. Không khí</label>
+                        <label class="block mb-1 cursor-pointer"><input type="radio" name="q4" value="B" class="mr-2"> B. Nước</label>
+                        <label class="block mb-1 cursor-pointer"><input type="radio" name="q4" value="C" class="mr-2"> C. Gỗ</label>
+                        <label class="block mb-1 cursor-pointer"><input type="radio" name="q4" value="D" class="mr-2"> D. Thép</label>
+                        <div id="feedback-q4" class="hidden"></div>
+                    </div>
+
+                    <!-- Câu 5 -->
+                    <div class="p-4 bg-gray-50 rounded border border-gray-200">
+                        <p class="font-semibold mb-2">Câu 5: Trong thí nghiệm nếu dùng âm thoa, tại sao phải dùng búa cao su gõ vào nhánh của âm thoa mà không dùng búa kim loại?</p>
+                        <label class="block mb-1 cursor-pointer"><input type="radio" name="q5" value="A" class="mr-2"> A. Để không làm sứt mẻ âm thoa và tạo ra âm cơ bản tròn, ít tạp âm.</label>
+                        <label class="block mb-1 cursor-pointer"><input type="radio" name="q5" value="B" class="mr-2"> B. Để tạo ra âm thanh có tần số cao hơn mức bình thường.</label>
+                        <label class="block mb-1 cursor-pointer"><input type="radio" name="q5" value="C" class="mr-2"> C. Vì cao su truyền âm tốt hơn kim loại.</label>
+                        <label class="block mb-1 cursor-pointer"><input type="radio" name="q5" value="D" class="mr-2"> D. Để âm thoa lâu tắt dần hơn.</label>
+                        <div id="feedback-q5" class="hidden"></div>
+                    </div>
+
+                    <div class="text-center mt-6">
+                        <button type="button" onclick="checkQuiz()" class="px-8 py-3 bg-[#1e3a8a] text-white font-bold rounded hover:bg-blue-800 transition shadow-md text-lg">NỘP BÀI TRẮC NGHIỆM</button>
+                    </div>
+                    <div id="quiz-summary" class="hidden"></div>
+                </form>
+            </div>
+
+            <hr class="my-8 border-gray-300">
+
+            <!-- Bài tập tự luận/tính toán -->
+            <div>
+                <h3 class="font-bold text-lg mb-4 text-[#1e3a8a]">B. BÀI TẬP VẬN DỤNG TÍNH TOÁN</h3>
+                
+                <!-- Vận dụng 1 -->
+                <div class="bg-[#edf2f7] border-l-4 border-[#EE0000] p-4 mb-4 rounded-r">
+                    <p class="font-semibold">Bài 1:</p>
+                    <p>Trong một thí nghiệm đo tốc độ truyền âm, học sinh sử dụng máy phát tần số thiết lập ở mức \( f = 500 Hz \). Kéo pít-tông, học sinh ghi nhận vị trí âm to nhất lần 1 ở \( l_1 = 17 cm \), và lần 2 ở \( l_2 = 51 cm \). Hãy tính tốc độ truyền âm trong không khí đo được từ thí nghiệm này.</p>
+                    <button onclick="toggleAnswer('vd-1')" class="mt-2 px-3 py-1 bg-white border border-[#EE0000] text-[#EE0000] text-sm font-semibold rounded hover:bg-red-50 transition">Xem lời giải</button>
+                    <div id="vd-1" class="hidden mt-3 bg-white p-3 rounded border border-gray-200">
+                        <p><strong>Giải:</strong></p>
+                        <p>Khoảng cách giữa hai vị trí liên tiếp nghe âm to nhất là:<br>
+                           \( d = l_2 - l_1 = 51 - 17 = 34 \text{ cm} = 0.34 \text{ m} \)</p>
+                        <p>Tốc độ truyền âm là:<br>
+                           \( v = 2 \cdot d \cdot f = 2 \cdot 0.34 \cdot 500 = 340 \text{ m/s} \).</p>
+                    </div>
+                </div>
+
+                <!-- Vận dụng 2 -->
+                <div class="bg-[#edf2f7] border-l-4 border-[#EE0000] p-4 mb-4 rounded-r">
+                    <p class="font-semibold">Bài 2:</p>
+                    <p>Với kết quả tính ở Bài 1 (\( \bar{v} = 340 \text{ m/s} \)). Giả sử sai số tỉ đối của phép đo khoảng cách là \( \delta d = 1.5\% \) và sai số tỉ đối của máy phát tần số là \( \delta f = 0.5\% \). Hãy tính sai số tuyệt đối \( \Delta v \) của phép đo vận tốc.</p>
+                    <button onclick="toggleAnswer('vd-2')" class="mt-2 px-3 py-1 bg-white border border-[#EE0000] text-[#EE0000] text-sm font-semibold rounded hover:bg-red-50 transition">Xem lời giải</button>
+                    <div id="vd-2" class="hidden mt-3 bg-white p-3 rounded border border-gray-200">
+                        <p><strong>Giải:</strong></p>
+                        <p>Sai số tỉ đối của phép đo vận tốc là tổng các sai số tỉ đối:<br>
+                           \( \delta v = \delta d + \delta f = 1.5\% + 0.5\% = 2\% = 0.02 \)</p>
+                        <p>Sai số tuyệt đối của phép đo là:<br>
+                           \( \Delta v = \bar{v} \cdot \delta v = 340 \cdot 0.02 = 6.8 \text{ m/s} \).</p>
+                    </div>
+                </div>
+
+                <!-- Vận dụng 3 -->
+                <div class="bg-[#edf2f7] border-l-4 border-[#EE0000] p-4 mb-4 rounded-r">
+                    <p class="font-semibold">Bài 3:</p>
+                    <p>Thay vì dùng máy phát tần số, một học sinh dùng âm thoa chuẩn La có tần số \( f = 440 Hz \). Biết tốc độ truyền âm trong phòng thí nghiệm hôm đó là \( 343.2 \text{ m/s} \). Hãy dự đoán khoảng cách \( d \) giữa hai vị trí liên tiếp của pít-tông để nghe được âm to nhất.</p>
+                    <button onclick="toggleAnswer('vd-3')" class="mt-2 px-3 py-1 bg-white border border-[#EE0000] text-[#EE0000] text-sm font-semibold rounded hover:bg-red-50 transition">Xem lời giải</button>
+                    <div id="vd-3" class="hidden mt-3 bg-white p-3 rounded border border-gray-200">
+                        <p><strong>Giải:</strong></p>
+                        <p>Ta có công thức: \( v = 2 \cdot d \cdot f \)</p>
+                        <p>Suy ra khoảng cách \( d \) là:<br>
+                           \( d = \frac{v}{2f} = \frac{343.2}{2 \cdot 440} = \frac{343.2}{880} = 0.39 \text{ m} = 39 \text{ cm} \).</p>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- JavaScript Xử lý -->
+    <script>
+        // Hàm ẩn hiện khung trả lời
+        function toggleAnswer(id) {
+            const el = document.getElementById(id);
+            if (el.classList.contains('hidden')) {
+                el.classList.remove('hidden');
+            } else {
+                el.classList.add('hidden');
+            }
+        }
+
+        // Dữ liệu đáp án và giải thích trắc nghiệm
+        const correctAnswers = { q1: 'A', q2: 'C', q3: 'B', q4: 'D', q5: 'A' };
+        const explanations = {
+            q1: "Sự thay đổi độ to của âm thanh là do sự tạo thành sóng dừng trong ống. Khi nghe âm to nhất nghĩa là ngay miệng ống đang là một bụng sóng.",
+            q2: "Hai vị trí liên tiếp nghe âm to nhất tương ứng với khoảng cách giữa hai bụng sóng dừng liên tiếp. Khoảng cách này đúng bằng \( \\frac{\\lambda}{2} \).",
+            q3: "Ta có khoảng cách giữa 2 bụng sóng liên tiếp \( d = \\frac{\\lambda}{2} \\Rightarrow \\lambda = 2d \). Vận tốc truyền sóng \( v = \\lambda \\cdot f = 2df \).",
+            q4: "Theo bảng 15.2 và lí thuyết, sóng âm truyền nhanh nhất trong chất rắn, chậm hơn trong chất lỏng và chậm nhất trong chất khí. Thép là chất rắn nên truyền nhanh nhất (6100 m/s).",
+            q5: "Gõ bằng búa cao su giúp âm thoa dao động nhẹ nhàng tạo ra âm cơ bản chuẩn xác (dạng sin), hạn chế các hoạ âm bậc cao và tránh làm xước, biến dạng kim loại của âm thoa."
+        };
+
+        // Hàm kiểm tra bài trắc nghiệm
+        function checkQuiz() {
+            let score = 0;
+            let total = 5;
+
+            for(let i=1; i<=total; i++) {
+                let qName = 'q' + i;
+                let selected = document.querySelector(`input[name="${qName}"]:checked`);
+                let feedbackEl = document.getElementById(`feedback-${qName}`);
+                feedbackEl.classList.remove('hidden');
+
+                if (selected) {
+                    if (selected.value === correctAnswers[qName]) {
+                        score++;
+                        feedbackEl.innerHTML = `<span class="text-green-700 font-bold">✔️ Đúng!</span> ${explanations[qName]}`;
+                        feedbackEl.className = "mt-3 p-3 bg-green-50 border border-green-300 rounded-md text-sm text-green-900";
+                    } else {
+                        feedbackEl.innerHTML = `<span class="text-red-700 font-bold">❌ Sai!</span> Đáp án đúng là <strong>${correctAnswers[qName]}</strong>. ${explanations[qName]}`;
+                        feedbackEl.className = "mt-3 p-3 bg-red-50 border border-red-300 rounded-md text-sm text-red-900";
+                    }
+                } else {
+                    feedbackEl.innerHTML = `<span class="text-orange-600 font-bold">⚠️ Bạn chưa chọn đáp án!</span>`;
+                    feedbackEl.className = "mt-3 p-3 bg-orange-50 border border-orange-300 rounded-md text-sm text-orange-900";
+                }
+            }
+
+            // Hiển thị tổng kết
+            let summary = document.getElementById('quiz-summary');
+            summary.classList.remove('hidden');
+            if(score === total) {
+                summary.innerHTML = `🎉 Tuyệt vời! Bạn đã trả lời đúng ${score}/${total} câu.`;
+                summary.className = "mt-6 font-bold text-xl text-green-600 text-center p-4 border-2 border-green-500 rounded bg-green-50";
+            } else {
+                summary.innerHTML = `📝 Bạn trả lời đúng ${score}/${total} câu. Hãy xem lại phần giải thích chi tiết bên trên nhé!`;
+                summary.className = "mt-6 font-bold text-xl text-[#EE0000] text-center p-4 border-2 border-[#EE0000] rounded bg-red-50";
+            }
+
+            // Yêu cầu MathJax render lại các công thức trong phần feedback vừa hiện
+            if(window.MathJax) {
+                MathJax.typesetPromise();
+            }
+        }
+    </script>
+</body>
+</html>
