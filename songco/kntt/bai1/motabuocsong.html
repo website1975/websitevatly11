@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mô phỏng Truyền pha và Bước sóng</title>
+    <style>
+        :root {
+            --primary: #000080;
+            --accent: #d9534f;
+            --bg: #f4f7f6;
+            --source: red;
+            --pointM: #28a745;
+            --pointN: #fd7e14;
+            --pointP: #6f42c1;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg);
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            max-width: 900px;
+            width: 100%;
+        }
+        h2 { color: var(--primary); margin-top: 0; text-align: center; font-size: 22px; }
+        canvas {
+            display: block;
+            background: #fff;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            margin: 10px auto;
+        }
+        .info-panel {
+            display: grid;
+            grid-template-columns: 1fr 220px;
+            gap: 20px;
+            margin-top: 10px;
+        }
+        .explanation {
+            padding: 15px;
+            background: #f8f9fa;
+            border-left: 5px solid var(--primary);
+            min-height: 80px;
+            font-size: 16px;
+            line-height: 1.4;
+        }
+        .time-badge {
+            color: var(--accent);
+            font-weight: bold;
+            display: block;
+            margin-bottom: 5px;
+            font-size: 1.1em;
+        }
+        .controls {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        button {
+            padding: 10px;
+            font-size: 15px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: bold;
+        }
+        .btn-main { background-color: var(--primary); color: white; }
+        .btn-main:hover { background-color: #000060; transform: translateY(-2px); }
+        .btn-reset { background-color: #6c757d; color: white; }
+        .btn-reset:hover { background-color: #5a6268; }
+        .highlight { font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Mô phỏng Truyền pha Dao động & Hình thành Bước sóng</h2>
+    
+    <!-- Canvas chính cho sóng và vòng tròn vecto -->
+    <canvas id="waveCanvas" width="850" height="480"></canvas>
+
+    <div class="info-panel">
+        <div class="explanation" id="expBox">
+            <span class="time-badge" id="timeLabel">Sẵn sàng</span>
+            <span id="textLabel">Nhấn nút "Bắt đầu" để quan sát sự lan truyền pha dao động từ nguồn O.</span>
+        </div>
+        <div class="controls">
+            <button class="btn-main" id="actionBtn" onclick="handleAction()">Bắt đầu</button>
+            <button class="btn-reset" onclick="resetSim()">Đặt lại (Reset)</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const canvas = document.getElementById('waveCanvas');
+    const ctx = canvas.getContext('2d');
+    const actionBtn = document.getElementById('actionBtn');
+    const timeLabel = document.getElementById('timeLabel');
+    const textLabel = document.getElementById('textLabel');
+
+    // Cấu hình vật lý
+    const T = 6.0;              // Chu kỳ dài để dễ quan sát (6s)
+    const lambda = 280;         // Bước sóng (pixels)
+    const A = 60;               // Biên độ
+    const v = lambda / T;       // Vận tốc
+    const numParticles = 100;
+    const spacing = 8;
+    const startX = 50;          // Tọa độ nguồn O
+    const waveY = 120;          // Độ cao trục sóng
+    const circleCenter = { x: 425, y: 350 }; // Tâm vòng tròn vecto
+    const radius = 80;          // Bán kính vòng tròn vecto
+
+    let currentTime = 0;
+    let isRunning = false;
+    let lastTime = 0;
+    let nextPauseTime = T / 4;
+    let reachedEnd = false;
+    let isContinuous = false;
+
+    const particles = [];
+    for (let i = 0; i < numParticles; i++) {
+        particles.push({ x0: startX + i * spacing, y0: waveY });
+    }
+
+    const markers = [
+        { x: startX, name: "O", color: "red", phaseLag: 0 },
+        { x: startX + lambda/4, name: "M", color: "#28a745", phaseLag: Math.PI/2 },
+        { x: startX + lambda/2, name: "N", color: "#fd7e14", phaseLag: Math.PI },
+        { x: startX + 3*lambda/4, name: "P", color: "#6f42c1", phaseLag: 3*Math.PI/2 },
+        { x: startX + lambda, name: "Q", color: "red", phaseLag: 2*Math.PI }
+    ];
+
+    const phaseData = [
+        { t: T/4, label: "t = T/4 (Pha O = 90°)", msg: "Nguồn O đạt đỉnh. Sóng truyền đến <span style='color:#28a745' class='highlight'>M (λ/4)</span>. Vecto O quay 90°, vecto M bắt đầu quay từ vị trí biên âm (pha = 0)." },
+        { t: T/2, label: "t = T/2 (Pha O = 180°)", msg: "Nguồn O về VTCB. Sóng truyền đến <span style='color:#fd7e14' class='highlight'>N (λ/2)</span>. Vecto N ngược pha hoàn toàn với O (lệch 180°)." },
+        { t: 3*T/4, label: "t = 3T/4 (Pha O = 270°)", msg: "Nguồn O ở biên âm. Sóng truyền đến <span style='color:#6f42c1' class='highlight'>P (3λ/4)</span>. Vecto P trễ pha 270° so với O." },
+        { t: T, label: "t = T (Pha O = 360°)", msg: "Nguồn O hoàn thành 1 chu kỳ. Sóng truyền đến <span style='color:red' class='highlight'>Q (λ)</span>. O và Q dao động <span class='highlight'>đồng pha</span>." },
+        { t: Infinity, label: "Truyền pha liên tục", msg: "Pha dao động lan truyền đi với vận tốc v. Các vecto quay thể hiện sự lệch pha duy trì không đổi giữa các điểm." }
+    ];
+
+    function draw() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // --- PHẦN 1: VẼ SÓNG TRÊN DÂY ---
+        ctx.beginPath();
+        ctx.strokeStyle = "#eee";
+        ctx.moveTo(startX, waveY); ctx.lineTo(820, waveY);
+        ctx.stroke();
+
+        let waveFront = v * currentTime;
+
+        particles.forEach((p, index) => {
+            let dist = p.x0 - startX;
+            let y = p.y0;
+            if (dist <= waveFront) {
+                let phase = 2 * Math.PI * (currentTime / T - dist / lambda);
+                y = p.y0 - A * Math.sin(phase);
+                ctx.fillStyle = (dist < 1) ? "red" : "royalBlue";
+            } else {
+                ctx.fillStyle = "#ddd";
+            }
+            ctx.beginPath(); ctx.arc(p.x0, y, 3, 0, Math.PI * 2); ctx.fill();
+        });
+
+        // Đánh dấu các điểm O, M, N, P, Q trên trục sóng
+        markers.forEach(m => {
+            let dist = m.x - startX;
+            if (dist <= waveFront) {
+                let phase = 2 * Math.PI * (currentTime / T - dist / lambda);
+                let y = waveY - A * Math.sin(phase);
+                ctx.fillStyle = m.color;
+                ctx.beginPath(); ctx.arc(m.x, y, 6, 0, Math.PI * 2); ctx.fill();
+                ctx.strokeStyle = "white"; ctx.stroke();
+                ctx.fillStyle = "black";
+                ctx.font = "bold 14px Arial";
+                ctx.fillText(m.name, m.x - 5, waveY + A + 25);
+            }
+        });
+
+        // --- PHẦN 2: VÒNG TRÒN VECTO QUAY ---
+        // Vẽ vòng tròn nền
+        ctx.beginPath();
+        ctx.strokeStyle = "#ccc";
+        ctx.setLineDash([2, 2]);
+        ctx.arc(circleCenter.x, circleCenter.y, radius, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        // Vẽ 2 trục vòng tròn
+        ctx.beginPath();
+        ctx.moveTo(circleCenter.x - radius - 20, circleCenter.y);
+        ctx.lineTo(circleCenter.x + radius + 20, circleCenter.y);
+        ctx.moveTo(circleCenter.x, circleCenter.y - radius - 20);
+        ctx.lineTo(circleCenter.x, circleCenter.y + radius + 20);
+        ctx.stroke();
+
+        // Vẽ các Vecto
+        markers.forEach(m => {
+            let dist = m.x - startX;
+            if (dist <= waveFront) {
+                // Pha của từng điểm: Phi = 2pi * (t/T - d/lambda)
+                let currentPhase = 2 * Math.PI * (currentTime / T - dist / lambda);
+                
+                // Tọa độ đầu vecto (Trong vòng tròn lượng giác, sin ứng với trục tung, cos ứng với trục hoành)
+                // Ta vẽ vecto quay ngược chiều kim đồng hồ
+                let vx = circleCenter.x + radius * Math.cos(currentPhase);
+                let vy = circleCenter.y - radius * Math.sin(currentPhase);
+
+                // Vẽ đường dóng từ vecto sang hình chiếu (nếu muốn nhấn mạnh dao động điều hòa)
+                ctx.setLineDash([3, 3]);
+                ctx.strokeStyle = m.color + "55";
+                ctx.beginPath(); ctx.moveTo(vx, vy); ctx.lineTo(vx, circleCenter.y); ctx.stroke();
+                ctx.setLineDash([]);
+
+                // Vẽ vecto
+                drawVector(circleCenter.x, circleCenter.y, vx, vy, m.color, m.name);
+            }
+        });
+
+        // Chú thích vận tốc v
+        if (currentTime > 0 && 50 + waveFront < 800) {
+            drawArrow(50 + waveFront, waveY - A - 20, 50 + waveFront + 40, waveY - A - 20, "green", "v (truyền pha)");
+        }
+    }
+
+    function drawVector(x0, y0, x1, y1, color, label) {
+        ctx.strokeStyle = color;
+        ctx.fillStyle = color;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(x0, y0);
+        ctx.lineTo(x1, y1);
+        ctx.stroke();
+        // Mũi tên
+        let headlen = 8;
+        let angle = Math.atan2(y1 - y0, x1 - x0);
+        ctx.beginPath();
+        ctx.moveTo(x1, y1);
+        ctx.lineTo(x1 - headlen * Math.cos(angle - Math.PI / 6), y1 - headlen * Math.sin(angle - Math.PI / 6));
+        ctx.lineTo(x1 - headlen * Math.cos(angle + Math.PI / 6), y1 - headlen * Math.sin(angle + Math.PI / 6));
+        ctx.fill();
+        ctx.font = "bold 14px Arial";
+        ctx.fillText(label, x1 + 5 * Math.cos(angle), y1 + 5 * Math.sin(angle));
+    }
+
+    function drawArrow(x1, y1, x2, y2, color, label) {
+        ctx.strokeStyle = color; ctx.fillStyle = color;
+        ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+        let angle = Math.atan2(y2 - y1, x2 - x1);
+        ctx.beginPath();
+        ctx.moveTo(x2, y2);
+        ctx.lineTo(x2 - 8 * Math.cos(angle - Math.PI/6), y2 - 8 * Math.sin(angle - Math.PI/6));
+        ctx.lineTo(x2 - 8 * Math.cos(angle + Math.PI/6), y2 - 8 * Math.sin(angle + Math.PI/6));
+        ctx.fill();
+        ctx.fillText(label, (x1+x2)/2 - 10, y1 - 5);
+    }
+
+    function update(time) {
+        if (!isRunning) return;
+        let dt = (time - lastTime) / 1000;
+        if (dt > 0.1) dt = 0;
+        lastTime = time;
+        currentTime += dt;
+
+        if (!isContinuous && currentTime >= nextPauseTime) {
+            currentTime = nextPauseTime;
+            isRunning = false;
+            let currentPhase = phaseData.find(p => Math.abs(p.t - nextPauseTime) < 0.01);
+            if (currentPhase) {
+                timeLabel.innerText = currentPhase.label;
+                textLabel.innerHTML = currentPhase.msg;
+            }
+            if (nextPauseTime < T) {
+                nextPauseTime += T / 4;
+                actionBtn.innerText = "Tiếp tục";
+            } else {
+                isContinuous = true;
+                actionBtn.innerText = "Sóng truyền tiếp";
+            }
+        }
+
+        if (startX + v * currentTime >= 800 && !reachedEnd) {
+            reachedEnd = true;
+            timeLabel.innerText = "Truyền sóng liên tục";
+            textLabel.innerHTML = phaseData[4].msg;
+            actionBtn.innerText = "Kết thúc";
+            actionBtn.disabled = true;
+        }
+
+        draw();
+        if (isRunning) requestAnimationFrame(update);
+    }
+
+    function handleAction() {
+        if (reachedEnd) return;
+        if (!isRunning) {
+            isRunning = true;
+            lastTime = performance.now();
+            actionBtn.innerText = "Đang chạy...";
+            requestAnimationFrame(update);
+        }
+    }
+
+    function resetSim() {
+        isRunning = false;
+        currentTime = 0;
+        nextPauseTime = T / 4;
+        reachedEnd = false;
+        isContinuous = false;
+        actionBtn.disabled = false;
+        actionBtn.innerText = "Bắt đầu";
+        timeLabel.innerText = "Sẵn sàng";
+        textLabel.innerText = "Nhấn nút 'Bắt đầu' để quan sát sự lan truyền pha dao động.";
+        draw();
+    }
+
+    draw();
+</script>
+
+</body>
+</html>
