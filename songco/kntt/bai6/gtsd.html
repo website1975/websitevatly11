@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mô phỏng Giao thoa Sóng dừng</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-color: #f8fafc;
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+        }
+        canvas {
+            background: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            height: 400px;
+            touch-action: none;
+        }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(226, 232, 240, 1);
+        }
+        .radio-group input:checked + label {
+            background-color: #4f46e5;
+            color: white;
+            border-color: #4f46e5;
+        }
+    </style>
+</head>
+<body class="flex flex-col items-center p-4 min-h-screen">
+
+    <div class="max-w-5xl w-full">
+        <header class="text-center mb-6">
+            <h1 class="text-4xl font-extrabold text-slate-900 mb-2">Mô phỏng Giao thoa Sóng Dừng</h1>
+            <p class="text-slate-600 italic">Mô phỏng chính xác sự lan truyền năng lượng và pha của từng phần tử</p>
+        </header>
+
+        <div class="relative mb-6">
+            <canvas id="waveCanvas"></canvas>
+            <div id="statusIndicator" class="absolute top-6 left-6 bg-blue-500 text-white px-4 py-1.5 rounded-full text-sm font-bold shadow-lg transition-all duration-300">
+                Sẵn sàng...
+            </div>
+        </div>
+
+        <div class="glass-panel p-6 rounded-2xl shadow-xl">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <!-- Cấu hình vật lý -->
+                <div class="space-y-4">
+                    <h3 class="font-bold text-slate-800 border-b pb-2">Thông số sóng</h3>
+                    <div>
+                        <div class="flex justify-between items-center mb-1">
+                            <label class="text-xs font-semibold text-slate-500">Tần số (f)</label>
+                            <span id="freqVal" class="text-blue-600 font-mono font-bold text-sm">1.0 Hz</span>
+                        </div>
+                        <input type="range" id="freqInput" min="0.5" max="3" step="0.1" value="1" class="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600">
+                    </div>
+                    <div>
+                        <div class="flex justify-between items-center mb-1">
+                            <label class="text-xs font-semibold text-slate-500">Biên độ (A)</label>
+                            <span id="ampVal" class="text-blue-600 font-mono font-bold text-sm">40</span>
+                        </div>
+                        <input type="range" id="ampInput" min="10" max="80" step="5" value="40" class="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600">
+                    </div>
+                </div>
+
+                <!-- Lựa chọn chế độ -->
+                <div class="space-y-4">
+                    <h3 class="font-bold text-slate-800 border-b pb-2">Chế độ hiển thị</h3>
+                    <div class="flex flex-col gap-2 radio-group">
+                        <div class="relative">
+                            <input type="radio" id="modeLine" name="viewMode" value="line" checked class="hidden">
+                            <label for="modeLine" class="flex items-center justify-center py-2 px-4 border-2 border-slate-200 rounded-lg cursor-pointer font-medium text-slate-600 transition-all hover:bg-slate-50">
+                                📈 Dạng đường kẻ (Line)
+                            </label>
+                        </div>
+                        <div class="relative">
+                            <input type="radio" id="modeDots" name="viewMode" value="dots" class="hidden">
+                            <label for="modeDots" class="flex items-center justify-center py-2 px-4 border-2 border-slate-200 rounded-lg cursor-pointer font-medium text-slate-600 transition-all hover:bg-slate-50">
+                                🔘 Dạng phần tử (Particles)
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Điều khiển -->
+                <div class="flex flex-col justify-center gap-3">
+                    <button id="startBtn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-3 rounded-xl font-bold text-lg transition-all shadow-lg transform active:scale-95">
+                        Bắt đầu mô phỏng
+                    </button>
+                    <button id="resetBtn" class="w-full bg-slate-200 hover:bg-slate-300 text-slate-700 py-3 rounded-xl font-bold text-lg transition-all transform active:scale-95">
+                        Đặt lại
+                    </button>
+                </div>
+            </div>
+
+            <div class="flex flex-wrap justify-center gap-6 mt-6 pt-4 border-t border-slate-100">
+                <div class="flex items-center gap-2">
+                    <div class="w-4 h-1 bg-blue-500 rounded-full opacity-40"></div>
+                    <span class="text-xs font-medium text-slate-500">Sóng tới</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <div class="w-4 h-1 bg-red-500 rounded-full opacity-40"></div>
+                    <span class="text-xs font-medium text-slate-500">Sóng phản xạ</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <div class="w-4 h-1 bg-purple-700 rounded-full"></div>
+                    <span class="text-sm font-bold text-slate-800">Sóng dừng</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('waveCanvas');
+        const ctx = canvas.getContext('2d');
+        const startBtn = document.getElementById('startBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const statusInd = document.getElementById('statusIndicator');
+        const freqInput = document.getElementById('freqInput');
+        const ampInput = document.getElementById('ampInput');
+        const freqVal = document.getElementById('freqVal');
+        const ampVal = document.getElementById('ampVal');
+        const viewModeInputs = document.getElementsByName('viewMode');
+
+        function resize() {
+            const container = canvas.parentElement;
+            canvas.width = container.clientWidth;
+            canvas.height = 400;
+        }
+        window.addEventListener('resize', resize);
+        resize();
+
+        let isRunning = false;
+        let globalTime = 0; 
+        
+        const params = {
+            startX: 40,
+            amplitude: 40,
+            frequency: 1,
+            wavelength: 240,
+            speed: 3, // pixel mỗi frame
+            reflectionPoint: 0,
+            dotSpacing: 15
+        };
+
+        function getActiveMode() {
+            for (const input of viewModeInputs) {
+                if (input.checked) return input.value;
+            }
+            return 'line';
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            const centerY = canvas.height / 2;
+            params.reflectionPoint = canvas.width - 60;
+            params.frequency = parseFloat(freqInput.value);
+            params.amplitude = parseFloat(ampInput.value);
+            const currentMode = getActiveMode();
+            
+            freqVal.innerText = params.frequency.toFixed(1) + " Hz";
+            ampVal.innerText = params.amplitude;
+
+            // Trục tọa độ
+            ctx.beginPath();
+            ctx.strokeStyle = '#cbd5e1';
+            ctx.moveTo(params.startX, centerY);
+            ctx.lineTo(params.reflectionPoint, centerY);
+            ctx.stroke();
+
+            // Vật cản
+            ctx.fillStyle = '#1e293b';
+            ctx.fillRect(params.reflectionPoint, centerY - 100, 15, 200);
+
+            const omega = 2 * Math.PI * (params.frequency * 0.015);
+            const k = (2 * Math.PI) / params.wavelength;
+            const L = params.reflectionPoint - params.startX;
+
+            let points = [];
+            const step = (currentMode === 'dots') ? params.dotSpacing : 2;
+
+            for (let x = params.startX; x <= params.reflectionPoint; x += step) {
+                const dist = x - params.startX;
+                
+                // 1. SÓNG TỚI
+                // Thời gian trễ để sóng tới được x: t_delay = dist / speed
+                const delayInc = dist / params.speed;
+                let yInc = 0;
+                if (globalTime > delayInc) {
+                    // Local time của hạt đối với sóng tới
+                    const localTimeInc = globalTime - delayInc;
+                    yInc = params.amplitude * Math.sin(localTimeInc * omega);
+                }
+
+                // 2. SÓNG PHẢN XẠ
+                // Thời gian trễ để sóng tới tường rồi quay về x: t_delay = (L + (L - dist)) / speed
+                const delayRef = (2 * L - dist) / params.speed;
+                let yRef = 0;
+                if (globalTime > delayRef) {
+                    // Local time của hạt đối với sóng phản xạ
+                    const localTimeRef = globalTime - delayRef;
+                    // Phản xạ tại đầu cố định -> Ngược pha (-sin)
+                    yRef = -params.amplitude * Math.sin(localTimeRef * omega);
+                }
+
+                points.push({ x, yInc, yRef, total: yInc + yRef });
+            }
+
+            // Vẽ các thành phần mờ
+            if (currentMode === 'line') {
+                ctx.lineWidth = 1;
+                ctx.setLineDash([4, 4]);
+                ctx.beginPath();
+                ctx.strokeStyle = 'rgba(59, 130, 246, 0.3)';
+                points.forEach((p, i) => i === 0 ? ctx.moveTo(p.x, centerY + p.yInc) : ctx.lineTo(p.x, centerY + p.yInc));
+                ctx.stroke();
+
+                ctx.beginPath();
+                ctx.strokeStyle = 'rgba(239, 68, 68, 0.3)';
+                points.forEach((p, i) => i === 0 ? ctx.moveTo(p.x, centerY + p.yRef) : ctx.lineTo(p.x, centerY + p.yRef));
+                ctx.stroke();
+                ctx.setLineDash([]);
+            }
+
+            // Vẽ Sóng Tổng Hợp
+            if (currentMode === 'line') {
+                ctx.beginPath();
+                ctx.strokeStyle = '#6b21a8';
+                ctx.lineWidth = 4;
+                ctx.lineJoin = 'round';
+                points.forEach((p, i) => i === 0 ? ctx.moveTo(p.x, centerY + p.total) : ctx.lineTo(p.x, centerY + p.total));
+                ctx.stroke();
+            } else {
+                points.forEach(p => {
+                    ctx.beginPath();
+                    ctx.fillStyle = '#6b21a8';
+                    ctx.arc(p.x, centerY + p.total, 4, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.beginPath();
+                    ctx.fillStyle = 'rgba(107, 33, 168, 0.08)';
+                    ctx.arc(p.x, centerY, 2, 0, Math.PI * 2);
+                    ctx.fill();
+                });
+            }
+
+            // Cập nhật trạng thái dựa trên thời gian thực tế
+            const timeToWall = L / params.speed;
+            if (globalTime > timeToWall * 2) {
+                statusInd.innerText = "Sóng dừng ổn định";
+                statusInd.className = "absolute top-6 left-6 bg-purple-700 text-white px-4 py-1.5 rounded-full text-sm font-bold shadow-lg";
+            } else if (globalTime > timeToWall) {
+                statusInd.innerText = "Sóng phản xạ đang truyền...";
+                statusInd.className = "absolute top-6 left-6 bg-red-600 text-white px-4 py-1.5 rounded-full text-sm font-bold shadow-lg";
+            } else if (globalTime > 0) {
+                statusInd.innerText = "Sóng tới đang truyền...";
+                statusInd.className = "absolute top-6 left-6 bg-blue-600 text-white px-4 py-1.5 rounded-full text-sm font-bold shadow-lg";
+            }
+
+            if (isRunning) {
+                globalTime += 1;
+            }
+
+            requestAnimationFrame(draw);
+        }
+
+        startBtn.onclick = () => {
+            if (!isRunning) {
+                isRunning = true;
+                startBtn.innerText = "Tạm dừng";
+                startBtn.classList.replace('bg-indigo-600', 'bg-amber-500');
+            } else {
+                isRunning = false;
+                startBtn.innerText = "Tiếp tục";
+                startBtn.classList.replace('bg-amber-500', 'bg-indigo-600');
+            }
+        };
+
+        resetBtn.onclick = () => {
+            isRunning = false;
+            globalTime = 0;
+            startBtn.innerText = "Bắt đầu mô phỏng";
+            startBtn.className = "w-full bg-indigo-600 hover:bg-indigo-700 text-white py-3 rounded-xl font-bold text-lg transition-all shadow-lg transform active:scale-95";
+            statusInd.innerText = "Sẵn sàng...";
+            statusInd.className = "absolute top-6 left-6 bg-blue-500 text-white px-4 py-1.5 rounded-full text-sm font-bold shadow-lg";
+        };
+
+        requestAnimationFrame(draw);
+    </script>
+</body>
+</html>
