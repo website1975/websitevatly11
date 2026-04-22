@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mô phỏng Hợp lực Tĩnh điện - Hình bình hành</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-color: #f1f5f9;
+            overflow: hidden;
+            touch-action: none;
+            font-family: system-ui, -apple-system, sans-serif;
+        }
+        canvas {
+            cursor: move;
+            background: #ffffff;
+            border-radius: 16px;
+            box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1);
+        }
+    </style>
+</head>
+<body class="flex flex-col md:flex-row h-screen p-4 gap-4">
+
+    <!-- Bảng điều khiển -->
+    <div class="w-full md:w-80 bg-white p-6 rounded-2xl shadow-xl flex flex-col gap-6 overflow-y-auto border border-gray-100">
+        <h1 class="text-xl font-black text-gray-800 uppercase tracking-tight text-center border-b pb-4">Quy tắc Hình bình hành</h1>
+        
+        <div class="bg-blue-50 p-3 rounded-lg border border-blue-100 text-xs text-blue-800 leading-relaxed">
+            <b>Mô phỏng:</b> Di chuyển <b>q₃</b> để thấy cách hợp lực được tạo ra từ hai lực thành phần theo quy tắc hình bình hành.
+        </div>
+
+        <!-- q1 Slider -->
+        <div class="space-y-3">
+            <div class="flex justify-between items-center">
+                <span class="text-sm font-bold text-red-600">Điện tích q₁ (B)</span>
+                <span id="txt-q1" class="text-xs font-mono bg-red-100 px-2 py-1 rounded text-red-700">+12 u.a</span>
+            </div>
+            <input type="range" id="q1" min="-30" max="30" value="12" class="w-full h-2 bg-red-100 rounded-lg appearance-none cursor-pointer">
+        </div>
+
+        <!-- q2 Slider -->
+        <div class="space-y-3">
+            <div class="flex justify-between items-center">
+                <span class="text-sm font-bold text-blue-600">Điện tích q₂ (C)</span>
+                <span id="txt-q2" class="text-xs font-mono bg-blue-100 px-2 py-1 rounded text-blue-700">+12 u.a</span>
+            </div>
+            <input type="range" id="q2" min="-30" max="30" value="12" class="w-full h-2 bg-blue-100 rounded-lg appearance-none cursor-pointer">
+        </div>
+
+        <!-- q3 Slider -->
+        <div class="space-y-3">
+            <div class="flex justify-between items-center">
+                <span class="text-sm font-bold text-green-600">Điện tích q₃ (A)</span>
+                <span id="txt-q3" class="text-xs font-mono bg-green-100 px-2 py-1 rounded text-green-700">+6 u.a</span>
+            </div>
+            <input type="range" id="q3" min="-15" max="15" value="6" class="w-full h-2 bg-green-100 rounded-lg appearance-none cursor-pointer">
+        </div>
+
+        <!-- Vector Scale -->
+        <div class="space-y-3 pt-4 border-t">
+            <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Độ dài Vector</label>
+            <input type="range" id="vScale" min="0.5" max="8" value="2.5" step="0.1" class="w-full h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+        </div>
+    </div>
+
+    <!-- Canvas -->
+    <div class="flex-1 relative">
+        <canvas id="simCanvas" class="w-full h-full"></canvas>
+        
+        <!-- Legend -->
+        <div class="absolute bottom-6 right-6">
+            <div class="bg-white/95 backdrop-blur p-4 rounded-xl shadow-2xl border border-gray-100 text-xs font-semibold space-y-2">
+                <div class="flex items-center gap-3"><div class="w-4 h-0.5 bg-red-500"></div> <span>Lực F₁₃ (do q₁)</span></div>
+                <div class="flex items-center gap-3"><div class="w-4 h-0.5 bg-blue-500"></div> <span>Lực F₂₃ (do q₂)</span></div>
+                <div class="flex items-center gap-3 pt-1 border-t"><div class="w-6 h-1 bg-purple-600"></div> <span class="text-purple-700 font-bold">Hợp lực F = F₁₃ + F₂₃</span></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('simCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        let width, height;
+        let isDragging = false;
+        let vectorMultiplier = 2.5;
+
+        const state = {
+            q1: { x: 0, y: 0, val: 12, color: '#ef4444', label: 'q₁' },
+            q2: { x: 0, y: 0, val: 12, color: '#3b82f6', label: 'q₂' },
+            q3: { x: 0, y: 0, val: 6, color: '#10b981', label: 'q₃' }
+        };
+
+        function resize() {
+            width = canvas.offsetWidth;
+            height = canvas.offsetHeight;
+            canvas.width = width;
+            canvas.height = height;
+            
+            state.q1.x = width/2 - 200;
+            state.q1.y = height * 0.8;
+            state.q2.x = width/2 + 200;
+            state.q2.y = height * 0.8;
+            
+            if (!isDragging) {
+                state.q3.x = width/2;
+                state.q3.y = height * 0.35;
+            }
+        }
+
+        function drawCharge(q) {
+            const r = 10;
+            ctx.save();
+            ctx.beginPath();
+            ctx.arc(q.x, q.y, r, 0, Math.PI * 2);
+            ctx.fillStyle = q.val > 0 ? q.color : (q.val < 0 ? '#475569' : '#cbd5e1');
+            ctx.fill();
+            
+            ctx.fillStyle = 'white';
+            ctx.font = 'bold 12px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(q.val > 0 ? '+' : (q.val < 0 ? '-' : ''), q.x, q.y);
+            
+            ctx.fillStyle = '#1e293b';
+            ctx.font = 'bold 13px sans-serif';
+            ctx.fillText(q.label, q.x, q.y + r + 18);
+            ctx.restore();
+        }
+
+        function getVectorEnds(x, y, vx, vy) {
+            const baseScale = 60; // Tăng baseScale cho dài hơn
+            return {
+                ex: x + vx * baseScale * vectorMultiplier,
+                ey: y + vy * baseScale * vectorMultiplier
+            };
+        }
+
+        function drawArrowLine(x, y, ex, ey, color, lineWidth, label) {
+            const mag = Math.hypot(ex - x, ey - y);
+            if (mag < 2) return;
+
+            ctx.save();
+            ctx.strokeStyle = color;
+            ctx.fillStyle = color;
+            ctx.lineWidth = lineWidth;
+            ctx.lineCap = 'round';
+
+            ctx.beginPath();
+            ctx.moveTo(x, y);
+            ctx.lineTo(ex, ey);
+            ctx.stroke();
+
+            const angle = Math.atan2(ey - y, ex - x);
+            const headSize = 10 + lineWidth;
+            ctx.beginPath();
+            ctx.moveTo(ex, ey);
+            ctx.lineTo(ex - headSize * Math.cos(angle - Math.PI/7), ey - headSize * Math.sin(angle - Math.PI/7));
+            ctx.lineTo(ex - headSize * Math.cos(angle + Math.PI/7), ey - headSize * Math.sin(angle + Math.PI/7));
+            ctx.closePath();
+            ctx.fill();
+            
+            if (label) {
+                ctx.font = 'bold italic 12px sans-serif';
+                ctx.fillText(label, ex + 12 * Math.cos(angle), ey + 12 * Math.sin(angle));
+            }
+            ctx.restore();
+        }
+
+        function loop() {
+            ctx.clearRect(0, 0, width, height);
+
+            const calcForce = (qFixed, qMobile) => {
+                const dx = qMobile.x - qFixed.x;
+                const dy = qMobile.y - qFixed.y;
+                const distSq = (dx*dx + dy*dy) / 10000; 
+                if (distSq < 0.1) return { x: 0, y: 0 };
+
+                const fMag = (qFixed.val * qMobile.val) / distSq;
+                const dist = Math.sqrt(dx*dx + dy*dy);
+                
+                return {
+                    x: (fMag * dx / dist) * 0.04,
+                    y: (fMag * dy / dist) * 0.04
+                };
+            };
+
+            const f13 = calcForce(state.q1, state.q3);
+            const f23 = calcForce(state.q2, state.q3);
+            const fTotal = { x: f13.x + f23.x, y: f13.y + f23.y };
+
+            // Tọa độ các đầu mút vector
+            const v1 = getVectorEnds(state.q3.x, state.q3.y, f13.x, f13.y);
+            const v2 = getVectorEnds(state.q3.x, state.q3.y, f23.x, f23.y);
+            const vT = getVectorEnds(state.q3.x, state.q3.y, fTotal.x, fTotal.y);
+
+            // Vẽ các đường nét đứt tạo hình bình hành
+            ctx.save();
+            ctx.setLineDash([5, 5]);
+            ctx.strokeStyle = '#94a3b8';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            // Nối từ đầu F13 đến đầu F_tổng
+            ctx.moveTo(v1.ex, v1.ey);
+            ctx.lineTo(vT.ex, vT.ey);
+            // Nối từ đầu F23 đến đầu F_tổng
+            ctx.moveTo(v2.ex, v2.ey);
+            ctx.lineTo(vT.ex, vT.ey);
+            ctx.stroke();
+            ctx.restore();
+
+            // Vẽ các vector chính
+            drawArrowLine(state.q3.x, state.q3.y, v1.ex, v1.ey, '#ef4444', 2, 'F₁₃');
+            drawArrowLine(state.q3.x, state.q3.y, v2.ex, v2.ey, '#3b82f6', 2, 'F₂₃');
+            drawArrowLine(state.q3.x, state.q3.y, vT.ex, vT.ey, '#9333ea', 4, 'F');
+
+            // Vẽ các điện tích
+            drawCharge(state.q1);
+            drawCharge(state.q2);
+            drawCharge(state.q3);
+
+            requestAnimationFrame(loop);
+        }
+
+        // Mouse/Touch Handlers
+        function getMousePos(e) {
+            const rect = canvas.getBoundingClientRect();
+            const clientX = e.clientX || (e.touches && e.touches[0].clientX);
+            const clientY = e.clientY || (e.touches && e.touches[0].clientY);
+            return { x: clientX - rect.left, y: clientY - rect.top };
+        }
+
+        const startDrag = (e) => {
+            const pos = getMousePos(e);
+            if (Math.hypot(pos.x - state.q3.x, pos.y - state.q3.y) < 35) isDragging = true;
+        };
+
+        const moveDrag = (e) => {
+            if (!isDragging) return;
+            const pos = getMousePos(e);
+            state.q3.x = pos.x;
+            state.q3.y = pos.y;
+        };
+
+        canvas.addEventListener('mousedown', startDrag);
+        window.addEventListener('mousemove', moveDrag);
+        window.addEventListener('mouseup', () => isDragging = false);
+        canvas.addEventListener('touchstart', startDrag, {passive: false});
+        window.addEventListener('touchmove', moveDrag, {passive: false});
+        window.addEventListener('touchend', () => isDragging = false);
+
+        // UI Updates
+        const updateVal = (id, targetState) => {
+            const el = document.getElementById(id);
+            const txt = document.getElementById('txt-' + id);
+            el.addEventListener('input', (e) => {
+                const v = parseInt(e.target.value);
+                targetState.val = v;
+                txt.innerText = (v > 0 ? '+' : '') + v + " u.a";
+            });
+        };
+
+        updateVal('q1', state.q1);
+        updateVal('q2', state.q2);
+        updateVal('q3', state.q3);
+        
+        document.getElementById('vScale').addEventListener('input', (e) => {
+            vectorMultiplier = parseFloat(e.target.value);
+        });
+
+        window.addEventListener('resize', resize);
+        resize();
+        loop();
+    </script>
+</body>
+</html>
