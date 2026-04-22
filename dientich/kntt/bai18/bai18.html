@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bài 18: ĐIỆN TRƯỜNG ĐỀU</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <style>
+        body {
+            background-color: #f4f7f9;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #333;
+        }
+        .header-bg {
+            background-color: #000080;
+        }
+        .section-title {
+            color: #000080;
+            border-bottom: 4px solid #000080;
+            display: inline-block;
+            margin-bottom: 1rem;
+            text-transform: uppercase;
+            font-weight: bold;
+        }
+        .content-box {
+            background-color: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+        .intro-box {
+            border: 1px solid #333;
+            background-color: white;
+            padding: 1rem;
+            margin-bottom: 2rem;
+        }
+        .question-box {
+            background-color: #edf2f7;
+            border-left: 6px solid #000080;
+            padding: 1rem;
+            margin-top: 1rem;
+            border-radius: 0 8px 8px 0;
+        }
+        .answer-box {
+            background-color: #f0fff4;
+            border-left: 6px solid #48bb78;
+            padding: 1rem;
+            margin-top: 0.5rem;
+            display: none;
+            border-radius: 0 8px 8px 0;
+        }
+        .note-box {
+            background-color: #fffaf0;
+            border: 1px solid #feebc8;
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+        }
+        .can-you-box {
+            background-color: #ebf8ff;
+            border: 1px solid #bee3f8;
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+        }
+        .btn-primary {
+            background-color: #000080;
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            transition: all 0.3s;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+        .btn-primary:hover {
+            background-color: #0000a0;
+            transform: translateY(-1px);
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+        }
+        th {
+            background-color: #e2e8f0;
+            border: 1px solid #cbd5e0;
+            padding: 0.75rem;
+        }
+        td {
+            border: 1px solid #cbd5e0;
+            padding: 0.75rem;
+            text-align: center;
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+
+    <div class="max-w-4xl mx-auto">
+        <!-- Header Section -->
+        <header class="header-bg text-white p-6 rounded-t-xl rounded-b-xl text-center shadow-lg">
+            <p class="text-sm uppercase tracking-widest opacity-80 mb-2">Chương III: ĐIỆN TRƯỜNG</p><hr>
+            <h1 class="text-3xl font-bold">BÀI 18: ĐIỆN TRƯỜNG ĐỀU</h1>
+        </header>
+
+        <div class="bg-white p-6 rounded-b-xl mb-8 shadow-md">
+            <div class="intro-box">
+                <p class="italic text-gray-700">
+                    Chúng ta đã biết, cường độ điện trường tại mỗi điểm thường sẽ có giá trị khác nhau. Vậy có tồn tại những vùng điện trường mà cường độ điện trường tại mỗi điểm có giá trị như nhau không?
+                </p>
+            </div>
+
+            <!-- Section I -->
+            <section class="mb-10">
+                <h2 class="section-title">I. KHÁI NIỆM ĐIỆN TRƯỜNG ĐỀU</h2>
+                <div class="content-box">
+                    <p>
+                        Điện trường đều là điện trường mà cường độ điện trường tại mỗi điểm có giá trị bằng nhau về độ lớn, giống nhau về phương và chiều.
+                    </p>
+                    <div class="flex flex-col items-center my-4">
+                        <img src="h1.png" alt="Điện trường đều" class="border p-2 rounded max-w-full h-auto" onerror="this.src='https://via.placeholder.com/400x200?text=Hinh+18.1+Dien+truong+deu'">
+                        <p class="text-sm italic mt-2">Hình 18.1. Các đường sức điện của điện trường đều</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Section II -->
+            <section class="mb-10">
+                <h2 class="section-title">II. ĐIỆN TRƯỜNG ĐỀU GIỮA HAI BẢN PHẲNG NIỄM ĐIỆN ĐẶT SONG SONG</h2>
+                <div class="content-box">
+                    <p>
+                        Chúng ta có thể tạo ra điện trường đều bằng cách sử dụng hai bản kim loại được đặt song song và cách nhau một khoảng \( d \). Hai bản kim loại này có hình dạng và kích thước giống hệt nhau, kích thước của hai bản lớn so với khoảng cách giữa chúng. Tích điện trái dấu cho hai bản kim loại này, khi đó hiệu điện thế giữa hai bản là \( U \) (Hình 18.2).
+                    </p>
+                    
+                    <div class="flex flex-col items-center my-4">
+                        <img src="h2.png" alt="Thí nghiệm điện trường đều" class="border p-2 rounded max-w-full h-auto" onerror="this.src='https://via.placeholder.com/400x250?text=Hinh+18.2+Hai+ban+phang+song+song'">
+                        <p class="text-sm italic mt-2">Hình 18.2. Thí nghiệm đo cường độ điện trường giữa hai bản phẳng</p>
+                    </div>
+
+                    <p class="mt-4">
+                        Trong thí nghiệm này dây treo điện tích \( q < 0 \) luôn lệch so với phương thẳng đứng một góc không đổi tại mọi điểm trong không gian giữa hai bản kim loại. Điều đó chứng tỏ điện trường giữa hai bản kim loại là đều.
+                    </p>
+
+                    <p class="font-bold mt-4">Đặc điểm đường sức điện:</p>
+                    <ul class="list-disc ml-6">
+                        <li>Các đường sức của điện trường giữa hai bản phẳng song song cách đều và vuông góc với các bản phẳng.</li>
+                        <li>Chúng xuất phát từ bản tích điện dương và kết thúc ở bản tích điện âm.</li>
+                    </ul>
+
+                    <div class="question-box">
+                        <p class="font-bold">? Biểu diễn các đường sức điện giữa hai bản phẳng nhiễm điện trái dấu đặt song song.</p>
+                        <button class="btn-primary mt-2" onclick="toggleAnswer('q_ii_1')">Xem câu trả lời</button>
+                        <div id="q_ii_1" class="answer-box mt-2">
+                            Các đường sức điện là những đoạn thẳng song song, cách đều nhau và vuông góc với hai bản phẳng, có chiều hướng từ bản dương sang bản âm.
+                        </div>
+                    </div>
+
+                    <p class="font-bold mt-6">Cường độ điện trường:</p>
+                    <p>Cường độ điện trường giữa hai bản phẳng nhiễm điện trái dấu đặt song song có độ lớn bằng tỉ số giữa hiệu điện thế giữa hai bản phẳng và khoảng cách giữa chúng:</p>
+                    <p class="text-center font-bold text-xl my-4">\( E = \frac{U}{d} \)</p>
+                    <p>Trong đó:</p>
+                    <ul class="list-disc ml-6">
+                        <li>\( E \): cường độ điện trường (V/m).</li>
+                        <li>\( U \): hiệu điện thế giữa hai bản (V).</li>
+                        <li>\( d \): khoảng cách giữa hai bản (m).</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- Section III -->
+            <section class="mb-10">
+                <h2 class="section-title">III. TÁC DỤNG CỦA ĐIỆN TRƯỜNG ĐỀU LÊN CHUYỂN ĐỘNG CỦA ĐIỆN TÍCH</h2>
+                <div class="content-box">
+                    <p>Xét một điện tích \( q > 0 \) bay vào vùng điện trường đều giữa hai bản phẳng theo phương vuông góc với các đường sức (phương nằm ngang).</p>
+                    
+                    <div class="flex flex-col items-center my-4">
+                        <img src="h3.png" alt="Chuyển động điện tích" class="border p-2 rounded max-w-full h-auto" onerror="this.src='https://via.placeholder.com/400x200?text=Hinh+18.3+Chuyển+động+của+điện+tích'">
+                        <p class="text-sm italic mt-2">Hình 18.3. Quỹ đạo chuyển động của điện tích trong điện trường đều</p>
+                    </div>
+
+                    <p>Khi một điện tích bay vào điện trường đều theo phương vuông góc với đường sức, dưới tác dụng của lực điện trường:</p>
+                    <ul class="list-disc ml-6">
+                        <li>Vận tốc theo phương song song với đường sức bị biến đổi.</li>
+                        <li>Vận tốc theo phương vuông góc với đường sức không thay đổi.</li>
+                    </ul>
+                    <p class="mt-2">Kết quả là vận tốc của điện tích liên tục đổi phương và tăng dần độ lớn, quỹ đạo chuyển động trở thành đường <span class="font-bold">parabol</span>.</p>
+
+                    <div class="note-box">
+                        <p class="font-bold text-orange-800">🖐️ HOẠT ĐỘNG / NÊU VẤN ĐỀ:</p>
+                        <p>Dựa trên các đặc điểm chuyển động đã nêu, hãy chứng minh quỹ đạo chuyển động của điện tích là một cung Parabol.</p>
+                        <button class="btn-primary mt-2" onclick="toggleAnswer('act_iii_1')">Xem hướng giải quyết</button>
+                        <div id="act_iii_1" class="answer-box">
+                            <p>Chọn hệ trục Oxy như hình 18.3. Giả sử điện tích \( q \) có khối lượng \( m \) bay vào với vận tốc \( v_0 \) dọc theo trục Ox.</p>
+                            <p>1. Phương Ox (vuông góc với \( \vec{E} \)): Lực \( F_x = 0 \Rightarrow a_x = 0 \). Chuyển động thẳng đều: \( x = v_0 t \Rightarrow t = \frac{x}{v_0} \).</p>
+                            <p>2. Phương Oy (dọc theo \( \vec{E} \)): Lực điện \( F_y = qE \Rightarrow a_y = \frac{qE}{m} \). Chuyển động biến đổi đều: \( y = \frac{1}{2} a_y t^2 = \frac{1}{2} \frac{qE}{m} t^2 \).</p>
+                            <p>3. Thay \( t \) vào \( y \): \( y = \frac{qE}{2mv_0^2} x^2 \). Vì \( \frac{qE}{2mv_0^2} \) là hằng số, nên đây là phương trình của đường parabol.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Em có biết / Em có thể -->
+            <section class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+                <div class="note-box border-l-4 border-orange-500">
+                    <h3 class="font-bold text-orange-600 mb-2">EM CÓ BIẾT?</h3>
+                    <p class="text-sm">Ống phóng tia điện tử (CRT) trong các tivi thế hệ cũ sử dụng điện trường đều giữa các bản cực để lái chùm electron đập vào màn hình huỳnh quang tạo ra hình ảnh.</p>
+                </div>
+                <div class="can-you-box border-l-4 border-blue-500">
+                    <h3 class="font-bold text-blue-600 mb-2">EM CÓ THỂ?</h3>
+                    <p class="text-sm">Mô tả được ảnh hưởng của điện trường đều lên chuyển động của một điện tích và giải thích nguyên tắc hoạt động của các thiết bị lái tia điện tử.</p>
+                </div>
+            </section>
+
+            <!-- Củng cố và Vận dụng -->
+            <section class="mt-12">
+                <h2 class="section-title">BÀI TẬP CỦNG CỐ</h2>
+                
+                <!-- Trắc nghiệm -->
+                <div class="content-box" id="quiz-section">
+                    <h3 class="font-bold text-lg mb-4">I. Trắc nghiệm (5 câu)</h3>
+                    
+                    <!-- Câu 1 -->
+                    <div class="mb-6 p-4 border rounded">
+                        <p class="font-semibold">Câu 1: Đặc điểm nào sau đây KHÔNG phải của điện trường đều?</p>
+                        <div class="mt-2 space-y-2">
+                            <label class="flex items-center"><input type="radio" name="q1" value="A" class="mr-2"> A. Cường độ điện trường tại mọi điểm bằng nhau về độ lớn.</label>
+                            <label class="flex items-center"><input type="radio" name="q1" value="B" class="mr-2"> B. Các đường sức là những đường thẳng song song cách đều.</label>
+                            <label class="flex items-center"><input type="radio" name="q1" value="C" class="mr-2"> C. Cường độ điện trường thay đổi theo khoảng cách đến nguồn.</label>
+                            <label class="flex items-center"><input type="radio" name="q1" value="D" class="mr-2"> D. Có thể tạo ra bởi hai bản phẳng song song tích điện trái dấu.</label>
+                        </div>
+                        <div id="res-q1" class="hidden mt-2 p-2 text-sm rounded"></div>
+                    </div>
+
+                    <!-- Câu 2 -->
+                    <div class="mb-6 p-4 border rounded">
+                        <p class="font-semibold">Câu 2: Công thức liên hệ giữa cường độ điện trường \( E \) và hiệu điện thế \( U \) là:</p>
+                        <div class="mt-2 space-y-2">
+                            <label class="flex items-center"><input type="radio" name="q2" value="A" class="mr-2"> A. \( E = U.d \)</label>
+                            <label class="flex items-center"><input type="radio" name="q2" value="B" class="mr-2"> B. \( E = U/d \)</label>
+                            <label class="flex items-center"><input type="radio" name="q2" value="C" class="mr-2"> C. \( E = d/U \)</label>
+                            <label class="flex items-center"><input type="radio" name="q2" value="D" class="mr-2"> D. \( E = qU \)</label>
+                        </div>
+                        <div id="res-q2" class="hidden mt-2 p-2 text-sm rounded"></div>
+                    </div>
+
+                    <!-- Câu 3 -->
+                    <div class="mb-6 p-4 border rounded">
+                        <p class="font-semibold">Câu 3: Đơn vị của cường độ điện trường là:</p>
+                        <div class="mt-2 space-y-2">
+                            <label class="flex items-center"><input type="radio" name="q3" value="A" class="mr-2"> A. Vôn (V)</label>
+                            <label class="flex items-center"><input type="radio" name="q3" value="B" class="mr-2"> B. Niutơn (N)</label>
+                            <label class="flex items-center"><input type="radio" name="q3" value="C" class="mr-2"> C. Vôn trên mét (V/m)</label>
+                            <label class="flex items-center"><input type="radio" name="q3" value="D" class="mr-2"> D. Culông (C)</label>
+                        </div>
+                        <div id="res-q3" class="hidden mt-2 p-2 text-sm rounded"></div>
+                    </div>
+
+                    <!-- Câu 4 -->
+                    <div class="mb-6 p-4 border rounded">
+                        <p class="font-semibold">Câu 4: Quỹ đạo của một điện tích khi bay vuông góc vào điện trường đều là:</p>
+                        <div class="mt-2 space-y-2">
+                            <label class="flex items-center"><input type="radio" name="q4" value="A" class="mr-2"> A. Đường thẳng.</label>
+                            <label class="flex items-center"><input type="radio" name="q4" value="B" class="mr-2"> B. Đường tròn.</label>
+                            <label class="flex items-center"><input type="radio" name="q4" value="C" class="mr-2"> C. Đường parabol.</label>
+                            <label class="flex items-center"><input type="radio" name="q4" value="D" class="mr-2"> D. Đường elip.</label>
+                        </div>
+                        <div id="res-q4" class="hidden mt-2 p-2 text-sm rounded"></div>
+                    </div>
+
+                    <!-- Câu 5 -->
+                    <div class="mb-6 p-4 border rounded">
+                        <p class="font-semibold">Câu 5: Một điện tích âm bay vào điện trường đều giữa hai bản nằm ngang, bản trên dương bản dưới âm. Lực điện tác dụng lên nó có chiều:</p>
+                        <div class="mt-2 space-y-2">
+                            <label class="flex items-center"><input type="radio" name="q5" value="A" class="mr-2"> A. Hướng lên trên.</label>
+                            <label class="flex items-center"><input type="radio" name="q5" value="B" class="mr-2"> B. Hướng xuống dưới.</label>
+                            <label class="flex items-center"><input type="radio" name="q5" value="C" class="mr-2"> C. Sang phải.</label>
+                            <label class="flex items-center"><input type="radio" name="q5" value="D" class="mr-2"> D. Sang trái.</label>
+                        </div>
+                        <div id="res-q5" class="hidden mt-2 p-2 text-sm rounded"></div>
+                    </div>
+
+                    <button class="btn-primary w-full py-3 font-bold text-lg" onclick="checkQuiz()">NỘP BÀI</button>
+                    <div id="quiz-result" class="mt-4 text-center font-bold text-xl"></div>
+                </div>
+
+                <!-- Tự luận vận dụng -->
+                <div class="content-box">
+                    <h3 class="font-bold text-lg mb-4">II. Bài tập vận dụng (3 bài)</h3>
+                    
+                    <!-- Bài 1 -->
+                    <div class="mb-6">
+                        <p class="font-semibold">Bài 1: Giữa hai bản phẳng song song cách nhau 2 cm có hiệu điện thế 1000 V. Tính cường độ điện trường giữa hai bản.</p>
+                        <button class="btn-primary mt-2" onclick="toggleAnswer('ex_1')">Xem lời giải chi tiết</button>
+                        <div id="ex_1" class="answer-box">
+                            <p>Tóm tắt: \( d = 2 \, \text{cm} = 0,02 \, \text{m} \); \( U = 1000 \, \text{V} \).</p>
+                            <p>Áp dụng công thức: \( E = \frac{U}{d} = \frac{1000}{0,02} = 50.000 \, \text{V/m} \).</p>
+                        </div>
+                    </div>
+
+                    <!-- Bài 2 -->
+                    <div class="mb-6">
+                        <p class="font-semibold">Bài 2: Một chùm ion âm \( (m = 2,833 \cdot 10^{-26} \, \text{kg}, q = -1,6 \cdot 10^{-19} \, \text{C}) \) bay vào điện trường đều bề mặt Trái Đất \( E = 114 \, \text{V/m} \). Xác định gia tốc của ion.</p>
+                        <button class="btn-primary mt-2" onclick="toggleAnswer('ex_2')">Xem lời giải chi tiết</button>
+                        <div id="ex_2" class="answer-box">
+                            <p>Lực điện tác dụng lên ion: \( F = |q|E = 1,6 \cdot 10^{-19} \cdot 114 = 1,824 \cdot 10^{-17} \, \text{N} \).</p>
+                            <p>Gia tốc: \( a = \frac{F}{m} = \frac{1,824 \cdot 10^{-17}}{2,833 \cdot 10^{-26}} \approx 6,44 \cdot 10^8 \, \text{m/s}^2 \).</p>
+                        </div>
+                    </div>
+
+                    <!-- Bài 3 -->
+                    <div class="mb-6">
+                        <p class="font-semibold">Bài 3: Cần đặt một hiệu điện thế bao nhiêu vào hai bản phẳng cách nhau 5 cm để tạo ra điện trường \( 2000 \, \text{V/m} \)?</p>
+                        <button class="btn-primary mt-2" onclick="toggleAnswer('ex_3')">Xem lời giải chi tiết</button>
+                        <div id="ex_3" class="answer-box">
+                            <p>Tóm tắt: \( d = 5 \, \text{cm} = 0,05 \, \text{m} \); \( E = 2000 \, \text{V/m} \).</p>
+                            <p>Áp dụng: \( U = E \cdot d = 2000 \cdot 0,05 = 100 \, \text{V} \).</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <footer class="text-center text-gray-500 text-sm py-4">
+            &copy; 2024 - Bài học Vật lí 11 - Điện trường đều
+        </footer>
+    </div>
+
+    <script>
+        function toggleAnswer(id) {
+            const element = document.getElementById(id);
+            if (element.style.display === "block") {
+                element.style.display = "none";
+            } else {
+                element.style.display = "block";
+            }
+        }
+
+        function checkQuiz() {
+            const answers = {
+                q1: "C",
+                q2: "B",
+                q3: "C",
+                q4: "C",
+                q5: "A"
+            };
+
+            const feedback = {
+                q1: "Giải thích: Điện trường đều có cường độ tại mọi điểm như nhau.",
+                q2: "Giải thích: Công thức chuẩn là E = U/d.",
+                q3: "Giải thích: Đơn vị đo cường độ điện trường là Vôn trên mét.",
+                q4: "Giải thích: Chuyển động tương tự ném ngang, quỹ đạo là parabol.",
+                q5: "Giải thích: Điện tích âm bị hút về bản dương (hướng lên trên)."
+            }
+
+            let score = 0;
+            const total = 5;
+
+            for (let i = 1; i <= total; i++) {
+                const qName = "q" + i;
+                const selected = document.querySelector(`input[name="${qName}"]:checked`);
+                const resDiv = document.getElementById("res-" + qName);
+                resDiv.classList.remove("hidden", "bg-red-100", "text-red-700", "bg-green-100", "text-green-700");
+
+                if (selected) {
+                    if (selected.value === answers[qName]) {
+                        score++;
+                        resDiv.innerHTML = "✅ Đúng! " + feedback[qName];
+                        resDiv.classList.add("bg-green-100", "text-green-700");
+                    } else {
+                        resDiv.innerHTML = "❌ Sai. Đáp án đúng là " + answers[qName] + ". " + feedback[qName];
+                        resDiv.classList.add("bg-red-100", "text-red-700");
+                    }
+                } else {
+                    resDiv.innerHTML = "⚠️ Bạn chưa chọn câu trả lời.";
+                    resDiv.classList.add("bg-yellow-100", "text-yellow-700");
+                }
+                resDiv.classList.remove("hidden");
+            }
+
+            const resultDisplay = document.getElementById("quiz-result");
+            resultDisplay.innerHTML = `Kết quả: ${score}/${total} điểm`;
+            
+            if (score === total) {
+                resultDisplay.style.color = "green";
+            } else {
+                resultDisplay.style.color = "red";
+            }
+        }
+    </script>
+</body>
+</html>
