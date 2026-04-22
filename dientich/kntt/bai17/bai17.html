@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bài 17: Khái niệm điện trường</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Cấu hình Tailwind màu tùy chỉnh -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'main-blue': '#000080',
+                        'bg-gray': '#f4f7f9',
+                        'box-border': '#cbd5e0',
+                        'table-head': '#e2e8f0',
+                        'q-bg': '#edf2f7',
+                        'a-bg': '#e6ffed'
+                    },
+                    borderRadius: {
+                        '12px': '12px'
+                    },
+                    fontFamily: {
+                        sans: ['"Segoe UI"', 'Roboto', 'Helvetica', 'Arial', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- MathJax -->
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['\\(', '\\)']],
+                displayMath: [['$$', '$$']]
+            }
+        };
+    </script>
+
+    <style>
+        body { background-color: #f4f7f9; }
+        .content-box { background-color: white; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); padding: 1.5rem; margin-bottom: 1.5rem; }
+        .section-title { color: #000080; text-transform: uppercase; font-weight: bold; font-size: 1.25rem; border-bottom: 4px solid #000080; padding-bottom: 0.5rem; margin-top: 2rem; margin-bottom: 1rem; }
+        .question-box { background-color: #edf2f7; border-left: 4px solid #000080; padding: 1rem; margin: 1rem 0; border-radius: 0 8px 8px 0; }
+        .answer-box { background-color: #e6ffed; padding: 1rem; margin-top: 0.5rem; border-radius: 8px; border: 1px solid #b7e4c7; }
+        .info-box { border-left: 4px solid; padding: 1rem; margin: 1rem 0; border-radius: 0 8px 8px 0; }
+        .hidden { display: none; }
+    </style>
+</head>
+<body class="text-gray-800 antialiased leading-relaxed">
+
+    <div class="max-w-4xl mx-auto p-4 md:p-8">
+        
+        <!-- Header -->
+        <div class="mb-8">
+        <div class="bg-[#000080] text-white p-6 rounded-[12px] text-center shadow-md">
+            <p class="text-lg font-medium">CHƯƠNG III – ĐIỆN TRƯỜNG</p><hr>
+            <h1 class="text-2xl font-bold uppercase mt-2">BÀI 17: KHÁI NIỆM ĐIỆN TRƯỜNG</h1>
+        </div>
+        </div>
+
+        <!-- Intro Box -->
+        <div class="border border-gray-800 bg-white p-5 italic rounded-12px shadow-md mb-8 flex flex-col md:flex-row items-center gap-4">
+            <img src="h0.png" alt="Hai quả cầu tích điện" class="w-48 h-auto object-cover rounded border border-gray-300" onerror="this.src='https://placehold.co/200x150?text=H%C3%ACnh+Intro'">
+            <div>
+                <p>Hai quả cầu tích điện cùng dấu được treo bằng hai sợi dây mảnh không dẫn điện như hình bên. Tại sao chúng không tiếp xúc nhưng vẫn tương tác được với nhau?</p>
+            </div>
+        </div>
+
+        <!-- I. KHÁI NIỆM ĐIỆN TRƯỜNG -->
+        <h2 class="section-title">I. KHÁI NIỆM ĐIỆN TRƯỜNG</h2>
+        <div class="content-box">
+            <p class="mb-4">Đặt điện tích \( q \) cách điện tích \( Q \) một khoảng \( r \) (Hình 17.1):</p>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div class="text-center">
+                    <img src="h1.png" alt="Hình 17.1. Tương tác giữa hai điện tích" class="mx-auto rounded border border-gray-200" onerror="this.src='https://placehold.co/300x200?text=H%C3%ACnh+17.1'">
+                    <p class="text-sm text-gray-500 mt-2 italic">Hình 17.1. Tương tác giữa hai điện tích</p>
+                </div>
+                <div class="text-center">
+                    <img src="h2.png" alt="Hình 17.2. Tương tác giữa hai nam châm" class="mx-auto rounded border border-gray-200" onerror="this.src='https://placehold.co/300x200?text=H%C3%ACnh+17.2'">
+                    <p class="text-sm text-gray-500 mt-2 italic">Hình 17.2. Tương tác giữa hai nam châm</p>
+                </div>
+            </div>
+
+            <div class="question-box">
+                <div class="flex items-start gap-2 mb-2">
+                    <span class="font-bold text-main-blue text-xl">?</span>
+                    <div>
+                        <p class="mb-2">1. Có phải không khí đã truyền tương tác điện từ điện tích Q tới điện tích q?</p>
+                        <p>2. Vùng không gian bao quanh một nam châm có từ trường. Tương tự như vậy, vùng không gian bao quanh một điện tích có điện trường. Ta có thể phát hiện sự tồn tại của điện trường bằng cách nào?</p>
+                    </div>
+                </div>
+                <button onclick="toggleAnswer('ans-1')" class="mt-2 bg-main-blue text-white px-4 py-1.5 rounded hover:bg-blue-800 transition text-sm font-semibold">Xem gợi ý</button>
+                <div id="ans-1" class="answer-box hidden">
+                    <p><strong>Gợi ý:</strong></p>
+                    <p>1. Không phải. Tương tác điện vẫn xảy ra ngay cả trong môi trường chân không (không có không khí). Môi trường truyền tương tác ở đây là <strong>điện trường</strong>.</p>
+                    <p>2. Để phát hiện sự tồn tại của điện trường, ta có thể đặt một điện tích khác (gọi là điện tích thử) vào không gian đó. Nếu có lực điện tác dụng lên điện tích thử, chứng tỏ vùng không gian đó có điện trường.</p>
+                </div>
+            </div>
+
+            <p class="mb-4">Xung quanh nam châm có từ trường, từ trường sẽ truyền tương tác từ nam châm này tới nam châm khác (Hình 17.2). Tương tự như nam châm, xung quanh điện tích có một điện trường, điện trường sẽ truyền tương tác giữa các điện tích, đó là một trường lực.</p>
+            
+            <div class="bg-blue-50 border border-blue-200 p-4 rounded-lg text-center font-semibold text-main-blue my-4 shadow-sm">
+                Điện trường được tạo ra bởi điện tích, là dạng vật chất tồn tại xung quanh điện tích và truyền tương tác giữa các điện tích.
+            </div>
+            <p class="text-sm text-gray-600 italic">* Trong bài này ta chỉ xét điện trường của các điện tích đứng yên.</p>
+        </div>
+
+        <!-- II. CƯỜNG ĐỘ ĐIỆN TRƯỜNG -->
+        <h2 class="section-title">II. CƯỜNG ĐỘ ĐIỆN TRƯỜNG</h2>
+        <div class="content-box">
+            <div class="flex flex-col md:flex-row gap-6 items-center mb-4">
+                <div class="flex-1">
+                    <p class="mb-2">Người ta sử dụng điện tích dương có điện tích nhỏ, được gọi là điện tích thử, để phát hiện lực điện tác dụng lên nó, qua đó nhận biết được độ mạnh yếu của điện trường tại điểm ta xét. Đại lượng đặc trưng cho độ mạnh yếu của điện trường được gọi là <strong>cường độ điện trường</strong>.</p>
+                    <p class="mb-2">Theo công thức (16.2), độ lớn của lực điện \( F \) tỉ lệ với độ lớn của điện tích \( q \). Tỉ số \( \frac{F}{q} \) chính bằng độ lớn của lực điện tác dụng lên điện tích 1 C, do đó tỉ số này được lấy làm số đo cường độ điện trường tại điểm đặt điện tích thử \( q \).</p>
+                </div>
+                <div class="w-full md:w-1/3 text-center">
+                    <img src="h3.png" alt="Hình 17.3" class="mx-auto rounded border border-gray-200" onerror="this.src='https://placehold.co/200x250?text=H%C3%ACnh+17.3'">
+                    <p class="text-sm text-gray-500 mt-2 italic">Hình 17.3. Điện trường tại N mạnh hơn điện trường tại M</p>
+                </div>
+            </div>
+
+            <div class="bg-blue-50 border border-blue-200 p-4 rounded-lg my-4 shadow-sm">
+                <p class="font-semibold text-main-blue mb-2">Cường độ điện trường tại một điểm được đo bằng tỉ số giữa lực điện tác dụng lên một điện tích dương đặt tại điểm đó và độ lớn của điện tích đó.</p>
+                <div class="text-center text-xl font-bold my-2">
+                    $$ E = \frac{F}{q} \quad (17.1) $$
+                </div>
+                <p>Trong hệ SI, đơn vị của cường độ điện trường là vôn trên mét (\( V/m \)).</p>
+            </div>
+
+            <p class="mb-4">Vì lực là đại lượng vectơ, \( q \) là đại lượng vô hướng nên cường độ điện trường \( E \) là đại lượng vectơ. Vectơ cường độ điện trường \( \vec{E} \) tại một điểm được xác định bằng tỉ số giữa vectơ lực điện \( \vec{F} \) tác dụng lên một điện tích \( q \) đặt tại điểm đó và trị số của điện tích đó:</p>
+            <div class="text-center text-xl font-bold my-2">
+                $$ \vec{E} = \frac{\vec{F}}{q} \quad (17.2) $$
+            </div>
+
+            <div class="question-box">
+                <div class="flex items-start gap-2 mb-2">
+                    <span class="font-bold text-main-blue text-xl">✎</span>
+                    <div>
+                        <p class="font-semibold mb-2">Hãy chứng tỏ rằng vectơ cường độ điện trường \( \vec{E} \) có:</p>
+                        <ul class="list-disc ml-5 space-y-1">
+                            <li>Phương trùng với phương của lực điện tác dụng lên điện tích.</li>
+                            <li>Chiều cùng với chiều của lực điện khi \( q > 0 \), ngược chiều với chiều của lực điện khi \( q < 0 \).</li>
+                            <li>Độ lớn của vectơ cường độ điện trường \( \vec{E} \) bằng độ lớn của lực điện tác dụng lên điện tích 1C đặt tại điểm ta xét.</li>
+                        </ul>
+                    </div>
+                </div>
+                <button onclick="toggleAnswer('ans-2')" class="mt-2 bg-main-blue text-white px-4 py-1.5 rounded hover:bg-blue-800 transition text-sm font-semibold">Xem chứng minh</button>
+                <div id="ans-2" class="answer-box hidden">
+                    <p><strong>Chứng minh:</strong></p>
+                    <p>Từ biểu thức vectơ \( \vec{E} = \frac{\vec{F}}{q} \) hay \( \vec{F} = q\vec{E} \):</p>
+                    <ul class="list-disc ml-5 mt-2 space-y-1">
+                        <li>Do \( \vec{F} \) và \( \vec{E} \) tỉ lệ với nhau qua một vô hướng \( q \), nên chúng luôn <strong>cùng phương</strong>. Do đó phương của \( \vec{E} \) trùng với phương của \( \vec{F} \).</li>
+                        <li>Nếu \( q > 0 \), hệ số tỉ lệ dương \(\rightarrow \vec{E}\) <strong>cùng chiều</strong> với \(\vec{F}\).</li>
+                        <li>Nếu \( q < 0 \), hệ số tỉ lệ âm \(\rightarrow \vec{E}\) <strong>ngược chiều</strong> với \(\vec{F}\).</li>
+                        <li>Về độ lớn: \( E = \frac{F}{|q|} \). Nếu thay \( |q| = 1 \text{ C} \), ta có \( E = F \). Vậy độ lớn của \( \vec{E} \) bằng độ lớn của lực \( \vec{F} \) tác dụng lên điện tích 1C.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <p class="mb-4">Từ công thức (16.2), ta xác định được độ lớn cường độ điện trường do một điện tích điểm \( Q \) đặt trong chân không hoặc trong không khí gây ra tại một điểm cách nó một khoảng \( r \) có giá trị bằng:</p>
+            <div class="text-center text-xl font-bold my-2">
+                $$ E = \frac{|Q|}{4\pi\epsilon_{0}r^{2}} \quad (17.3) $$
+            </div>
+            
+            <p class="italic text-gray-700 mt-2">(Hoặc dùng hằng số \( k \): \( E = k \frac{|Q|}{r^2} \) với \( k = 9 \cdot 10^9 \text{ Nm}^2/\text{C}^2 \)).</p>
+
+            <div class="question-box bg-yellow-50 border-yellow-500">
+                <div class="flex items-start gap-2 mb-2">
+                    <span class="font-bold text-yellow-600 text-xl">Hoạt động:</span>
+                    <div>
+                        <p>Xét điện trường của điện tích \( Q = 6.10^{-14}C \). Sử dụng đoạn thẳng dài 1cm để biểu diễn cho độ lớn vectơ cường độ điện trường \( E = \frac{10^{-10}}{6\pi\epsilon_{0}} (V/m) \).</p>
+                        <p>Hãy tính và vẽ vectơ cường độ điện trường tại một điểm cách Q một khoảng 2 cm và 3 cm.</p>
+                    </div>
+                </div>
+                <button onclick="toggleAnswer('ans-3')" class="mt-2 bg-yellow-600 text-white px-4 py-1.5 rounded hover:bg-yellow-700 transition text-sm font-semibold">Xem hướng dẫn giải</button>
+                <div id="ans-3" class="answer-box bg-yellow-100 border-yellow-300 hidden">
+                    <p><strong>Hướng dẫn giải:</strong></p>
+                    <p>Ta có công thức: \( E = \frac{|Q|}{4\pi\epsilon_0 r^2} \)</p>
+                    <ul class="list-disc ml-5 mt-2 space-y-2">
+                        <li><strong>Tại \( r_1 = 2 \text{ cm} = 0,02 \text{ m} \):</strong><br>
+                            \( E_1 = \frac{6 \cdot 10^{-14}}{4\pi\epsilon_0 (0,02)^2} = \frac{1,5 \cdot 10^{-10}}{\pi\epsilon_0} \text{ (V/m)} \)<br>
+                            Lập tỉ lệ với E quy ước: Đoạn thẳng biểu diễn \( E_1 \) sẽ dài \( \frac{E_1}{E} \times 1\text{cm} = 9 \text{ cm} \).
+                        </li>
+                        <li><strong>Tại \( r_2 = 3 \text{ cm} = 0,03 \text{ m} \):</strong><br>
+                            \( E_2 = \frac{6 \cdot 10^{-14}}{4\pi\epsilon_0 (0,03)^2} = \frac{1}{6} \cdot \frac{10^{-10}}{\pi\epsilon_0} \text{ (V/m)} \)<br>
+                            Đoạn thẳng biểu diễn \( E_2 \) sẽ dài \( \frac{E_2}{E} \times 1\text{cm} = 1 \text{ cm} \).
+                        </li>
+                    </ul>
+                    <p class="mt-2"><em>*Vẽ hình:</em> Vectơ \( \vec{E_1} \) hướng ra xa \( Q \), gốc tại điểm xét, dài 9cm. Vectơ \( \vec{E_2} \) hướng ra xa \( Q \), gốc tại điểm xét, dài 1cm.</p>
+                </div>
+            </div>
+
+            <!-- Questions part 2 in Section II -->
+            <div class="question-box mt-6">
+                <div class="flex items-start gap-2 mb-2">
+                    <span class="font-bold text-main-blue text-xl">?</span>
+                    <div class="w-full">
+                        <p class="mb-2">1. Hãy chứng tỏ rằng: Độ lớn cường độ điện trường tại một điểm trong công thức (17.1) bằng độ lớn của lực điện tác dụng lên một đơn vị điện tích đặt tại điểm đó.</p>
+                        <p class="mb-2">2. Một điện tích điểm \( Q = 6.10^{-13} \text{ C} \) đặt trong chân không.</p>
+                        <ul class="list-[lower-alpha] ml-6 mb-2 space-y-1">
+                            <li>Xác định phương, chiều, độ lớn của cường độ điện trường do điện tích điểm Q gây ra tại một điểm cách nó một khoảng 1 cm, 2 cm, 3 cm.</li>
+                            <li>Nhận xét về cường độ điện trường ở những điểm gần điện tích Q và ở những điểm cách xa điện tích Q.</li>
+                            <li>Từ các nhận xét trên, em hãy mô tả cường độ điện trường do một điện tích điểm dương Q đặt trong chân không gây ra tại một điểm cách nó một khoảng r. Vẽ hình minh hoạ.</li>
+                        </ul>
+                    </div>
+                </div>
+                <button onclick="toggleAnswer('ans-4')" class="mt-2 bg-main-blue text-white px-4 py-1.5 rounded hover:bg-blue-800 transition text-sm font-semibold">Xem lời giải</button>
+                <div id="ans-4" class="answer-box hidden">
+                    <p><strong>Lời giải:</strong></p>
+                    <p><strong>Câu 1:</strong> Từ \( E = \frac{F}{q} \). Nếu xét 1 đơn vị điện tích (tức \( q = 1 \text{ C} \)) thì \( E = \frac{F}{1} = F \). Vậy độ lớn \( E \) bằng độ lớn lực điện tác dụng lên điện tích 1C.</p>
+                    <p class="mt-4"><strong>Câu 2:</strong> Điện tích \( Q = 6 \cdot 10^{-13} \text{ C} > 0 \). Sử dụng \( E = 9\cdot 10^9 \frac{|Q|}{r^2} \).</p>
+                    <ul class="list-[lower-alpha] ml-6 mt-2 space-y-2">
+                        <li>
+                            - Phương: Nằm trên đường thẳng nối Q và điểm đang xét.<br>
+                            - Chiều: Hướng ra xa điện tích Q (vì Q > 0).<br>
+                            - Độ lớn:<br>
+                            Tại \( r_1 = 0,01\text{m} \): \( E_1 = 9\cdot 10^9 \frac{6 \cdot 10^{-13}}{(0,01)^2} = 54 \text{ V/m} \)<br>
+                            Tại \( r_2 = 0,02\text{m} \): \( E_2 = 9\cdot 10^9 \frac{6 \cdot 10^{-13}}{(0,02)^2} = 13,5 \text{ V/m} \)<br>
+                            Tại \( r_3 = 0,03\text{m} \): \( E_3 = 9\cdot 10^9 \frac{6 \cdot 10^{-13}}{(0,03)^2} = 6 \text{ V/m} \)
+                        </li>
+                        <li><strong>Nhận xét:</strong> Càng xa điện tích Q (r càng lớn) thì cường độ điện trường \( E \) càng giảm (tỉ lệ nghịch với bình phương khoảng cách).</li>
+                        <li><strong>Mô tả:</strong> Cường độ điện trường do Q > 0 gây ra tại điểm cách nó đoạn r là một vectơ có gốc tại điểm xét, phương trùng với đường thẳng nối từ Q đến điểm đó, chiều hướng ra xa Q và có độ lớn giảm dần theo bình phương khoảng cách.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- EM CÓ BIẾT 1 -->
+            <div class="info-box bg-purple-50 border-purple-500 mt-6">
+                <h3 class="font-bold text-purple-800 flex items-center gap-2 mb-2">
+                    <span>💡</span> EM CÓ BIẾT
+                </h3>
+                <p class="text-gray-700">Trong cơn dông, thường xuất hiện những đám mây tích điện do các hạt nước trong đó nhiễm điện, chúng tạo ra những vùng điện trường mạnh quanh các đám mây này. Khi các đám mây tích điện trái dấu tới gần nhau có thể xảy ra hiện tượng phóng điện mà ta gọi là sét.</p>
+            </div>
+
+            <!-- Cường độ điện trường tổng hợp -->
+            <h3 class="font-bold text-lg text-gray-800 mt-8 mb-4">Nguyên lí chồng chất điện trường</h3>
+            <div class="flex flex-col md:flex-row gap-6 mb-4">
+                <div class="flex-1">
+                    <p class="mb-2">Nếu trong không gian có hai điện tích điểm dương \( Q_1 = Q_2 \) được đặt ở hai điểm B và C, một điện tích thử \( q \) được đặt tại một điểm A như Hình 17.4.</p>
+                    <p class="mb-2">Muốn tính vectơ cường độ điện trường của hệ điện tích tại điểm A bất kì ta cũng có vectơ cường độ điện trường \( \vec{E_1} = \frac{\vec{F_1}}{q} \) do \( Q_1 \) gây ra tại điểm A, vectơ cường độ điện trường \( \vec{E_2} = \frac{\vec{F_2}}{q} \) do \( Q_2 \) gây ra tại điểm A. Theo quy tắc tổng hợp vectơ ta sẽ có vectơ cường độ điện trường tổng hợp của hệ điện tích gây ra tại điểm A. Vectơ cường độ điện trường tổng hợp chính bằng thương số của vectơ lực điện tổng hợp chia cho trị số của điện tích q:</p>
+                    <div class="text-center font-bold my-2 text-xl">
+                        $$ \vec{E} = \frac{\vec{F}}{q} $$
+                    </div>
+                </div>
+                <div class="w-full md:w-1/3 text-center">
+                    <img src="h4.png" alt="Hình 17.4" class="mx-auto rounded border border-gray-200" onerror="this.src='https://placehold.co/200x200?text=H%C3%ACnh+17.4'">
+                    <p class="text-sm text-gray-500 mt-2 italic">Hình 17.4. Lực điện tác dụng lên điện tích thử q tại điểm A</p>
+                </div>
+            </div>
+
+            <p class="mb-4">Như vậy, cường độ điện trường của hệ điện tích điểm được tổng hợp từ cường độ điện trường theo công thức của mỗi điện tích điểm:</p>
+            <div class="text-center font-bold my-4 text-xl p-3 bg-gray-100 rounded border border-gray-300">
+                $$ \vec{E} = \vec{E_1} + \vec{E_2} + \vec{E_3} + ... $$
+            </div>
+
+            <!-- Exercise blocks -->
+            <div class="question-box mt-6">
+                <div class="flex items-start gap-2 mb-2">
+                    <span class="font-bold text-main-blue text-xl">?</span>
+                    <div class="w-full">
+                        <p class="mb-2">1. Đặt điện tích điểm \( Q_1 = 6.10^{-8} \text{ C} \) tại điểm A và điện tích điểm \( Q_2 = -2.10^{-8} \text{ C} \) tại điểm B cách A một khoảng bằng 3 cm (Hình 17.5). Hãy xác định những điểm mà cường độ điện trường tại đó bằng 0.</p>
+                        <p class="mb-2">2. Cho tam giác ABC vuông tại A có \( AB = 3 \text{ cm} \) và \( AC = 4 \text{ cm} \). Tại điểm B ta đặt điện tích \( Q_1 = 4,5.10^{-8} \text{ C} \), tại điểm C ta đặt điện tích \( Q_2 = 2.10^{-8} \text{ C} \).</p>
+                        <ul class="list-[lower-alpha] ml-6 mb-2 space-y-1">
+                            <li>Tính độ lớn của cường độ điện trường do mỗi điện tích trên gây ra tại A.</li>
+                            <li>Tính cường độ điện trường tổng cộng tại A.</li>
+                        </ul>
+                    </div>
+                </div>
+                <button onclick="toggleAnswer('ans-5')" class="mt-2 bg-main-blue text-white px-4 py-1.5 rounded hover:bg-blue-800 transition text-sm font-semibold">Xem lời giải</button>
+                <div id="ans-5" class="answer-box hidden">
+                    <p><strong>Lời giải:</strong></p>
+                    <hr class="my-2 border-green-300">
+                    <p><strong>Câu 1:</strong> Điểm M có cường độ điện trường bằng 0 khi \( \vec{E_M} = \vec{E_1} + \vec{E_2} = 0 \Rightarrow \vec{E_1} = -\vec{E_2} \).</p>
+                    <ul class="list-disc ml-5 mt-1">
+                        <li>Hai vectơ cùng phương, ngược chiều: Vì \( Q_1, Q_2 \) trái dấu nên M phải nằm trên đường thẳng AB và nằm <strong>ngoài</strong> đoạn AB.</li>
+                        <li>Hai vectơ cùng độ lớn: \( E_1 = E_2 \Rightarrow k\frac{|Q_1|}{r_1^2} = k\frac{|Q_2|}{r_2^2} \Rightarrow \frac{6 \cdot 10^{-8}}{r_1^2} = \frac{2 \cdot 10^{-8}}{r_2^2} \Rightarrow r_1 = \sqrt{3}r_2 \).</li>
+                        <li>Vì \( r_1 > r_2 \) nên M nằm về phía B (gần B hơn). Ta có: \( r_1 - r_2 = AB = 3 \text{ cm} \).</li>
+                        <li>Giải hệ: \( r_2(\sqrt{3} - 1) = 3 \Rightarrow r_2 \approx 4,1 \text{ cm} \) và \( r_1 \approx 7,1 \text{ cm} \).</li>
+                    </ul>
+                    <p class="mt-2"><em>Kết luận:</em> Điểm cần tìm nằm trên đường thẳng AB, ngoài đoạn AB, về phía B, cách B một khoảng \( 4,1 \text{ cm} \).</p>
+                    
+                    <hr class="my-4 border-green-300">
+                    <p><strong>Câu 2:</strong> Tam giác ABC vuông tại A. \( AB = 0,03\text{m}; AC = 0,04\text{m} \).</p>
+                    <ul class="list-[lower-alpha] ml-6 mt-1">
+                        <li><strong>a)</strong><br>
+                            \( E_1 = 9\cdot 10^9 \frac{4,5\cdot 10^{-8}}{(0,03)^2} = 4,5 \cdot 10^5 \text{ (V/m)} \)<br>
+                            \( E_2 = 9\cdot 10^9 \frac{2\cdot 10^{-8}}{(0,04)^2} = 1,125 \cdot 10^5 \text{ (V/m)} \)
+                        </li>
+                        <li><strong>b)</strong> Vì tam giác vuông tại A, nên \(\vec{E_1}\) và \(\vec{E_2}\) vuông góc với nhau.<br>
+                            \( E_{tong} = \sqrt{E_1^2 + E_2^2} = \sqrt{(4,5\cdot 10^5)^2 + (1,125\cdot 10^5)^2} \approx 4,64 \cdot 10^5 \text{ (V/m)} \)
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- EM CÓ BIẾT 2 -->
+            <div class="info-box bg-purple-50 border-purple-500 mt-6">
+                <h3 class="font-bold text-purple-800 flex items-center gap-2 mb-2">
+                    <span>💡</span> EM CÓ BIẾT
+                </h3>
+                <p class="mb-2">Trong thực tế, một quả cầu có điện tích phân bố đều trong toàn bộ thể tích hoặc phân bố đều trên mặt cầu thì điện trường bên ngoài quả cầu tương đương với điện trường của một điện tích điểm đặt tại tâm cầu và có điện tích bằng với điện tích của quả cầu. Ta thấy công thức \( E = \frac{|Q|}{4\pi\epsilon_0 r^2} \) vẫn được vận dụng để tìm cường độ điện trường trong trường hợp này. Do đó trong các thí nghiệm đơn giản về điện trường người ta thường sử dụng các quả cầu tích điện để thuận tiện trong đo đạc, nghiên cứu và tính toán.</p>
+                <p class="mb-2">Thực nghiệm cho thấy, ngay sát bề mặt của Trái Đất luôn có một điện trường có phương thẳng đứng, hướng từ trên xuống dưới và cường độ vào khoảng từ \( 100 \text{ V/m} \) đến \( 200 \text{ V/m} \).</p>
+                <p>Các hạt bụi mịn lơ lửng trong không khí được phân loại dựa vào kích thước của chúng như pm1, pm2.5, pm10,... con số đứng sau chữ pm chỉ đường kính tối đa của hạt bụi tính theo đơn vị \( \mu\text{m} \). Ví dụ pm2.5 là hạt bụi mịn có đường kính tối đa bằng \( 2,5 \mu\text{m} \). Những hạt bụi mịn này thường tích điện dương nên không thể bay lên cao và phân tán đi xa được và là nguyên nhân chính gây ô nhiễm môi trường ở các thành phố lớn.</p>
+            </div>
+
+            <div class="question-box mt-4">
+                <div class="flex items-start gap-2 mb-2">
+                    <span class="font-bold text-main-blue text-xl">?</span>
+                    <p>Một hạt bụi mịn loại pm2,5 có điện tích bằng \( 1,6.10^{-19} \text{ C} \) lơ lửng trong không khí nơi có điện trường của Trái Đất bằng \( 120 \text{ V/m} \). Bỏ qua trọng lực, tính lực điện của Trái Đất tác dụng lên hạt bụi mịn và từ đó giải thích lí do hạt bụi loại này thường lơ lửng trong không khí.</p>
+                </div>
+                <button onclick="toggleAnswer('ans-6')" class="mt-2 bg-main-blue text-white px-4 py-1.5 rounded hover:bg-blue-800 transition text-sm font-semibold">Xem lời giải</button>
+                <div id="ans-6" class="answer-box hidden">
+                    <p><strong>Lời giải:</strong></p>
+                    <p>Độ lớn lực điện tác dụng lên hạt bụi là:</p>
+                    <p class="my-2">\( F = |q|E = 1,6 \cdot 10^{-19} \times 120 = 1,92 \cdot 10^{-17} \text{ (N)} \)</p>
+                    <p><strong>Giải thích:</strong> Vì hạt bụi tích điện dương (\( q > 0 \)) nên lực điện \( \vec{F} \) cùng chiều với điện trường \( \vec{E} \). Điện trường Trái Đất hướng thẳng đứng từ trên xuống, do đó lực điện cũng hướng từ trên xuống. Trọng lượng của hạt bụi rất nhỏ, kết hợp với các lực cản của không khí và lực điện từ trường Trái Đất khiến chúng lơ lửng, khó khuếch tán hay rơi hoàn toàn xuống đất, tạo thành sương mù bụi dính sát mặt đất.</p>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- III. ĐIỆN PHỔ -->
+        <h2 class="section-title">III. ĐIỆN PHỔ</h2>
+        <div class="content-box">
+            <p class="mb-4">Để quan sát điện trường của hệ hai điện tích, người ta thực hiện thí nghiệm như sau: Cho vào bể chứa dầu một ít hạt cách điện mịn (mạt cưa chẳng hạn) rồi khuấy đều để các hạt lơ lửng trong dầu. Đặt một hoặc hai quả cầu kim loại tích điện trong bể chứa dầu đó, ta thấy các hạt cách điện sẽ nằm dọc theo các đường nhất định (Hình 17.6). Hình ảnh các đường như trên gọi là <strong>điện phổ</strong>.</p>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <div class="text-center">
+                    <img src="h5.png" alt="Điện phổ 1 điện tích" class="mx-auto rounded border border-gray-200" onerror="this.src='https://placehold.co/200x200?text=H%C3%ACnh+17.6a'">
+                    <p class="text-sm text-gray-500 mt-2 italic">a) Điện phổ của một điện tích</p>
+                </div>
+                <div class="text-center">
+                    <img src="h6.png" alt="Điện phổ 2 điện tích cùng dấu" class="mx-auto rounded border border-gray-200" onerror="this.src='https://placehold.co/200x200?text=H%C3%ACnh+17.6b'">
+                    <p class="text-sm text-gray-500 mt-2 italic">b) Điện phổ của hai điện tích cùng dấu</p>
+                </div>
+                <div class="text-center">
+                    <img src="h7.png" alt="Điện phổ 2 điện tích trái dấu" class="mx-auto rounded border border-gray-200" onerror="this.src='https://placehold.co/200x200?text=H%C3%ACnh+17.6c'">
+                    <p class="text-sm text-gray-500 mt-2 italic">c) Điện phổ của hai điện tích trái dấu</p>
+                </div>
+            </div>
+
+            <div class="question-box">
+                <div class="flex items-start gap-2 mb-2">
+                    <span class="font-bold text-main-blue text-xl">?</span>
+                    <div class="w-full">
+                        <p class="mb-2">1. Em hãy quan sát Hình 17.6 và đưa ra nhận xét về đặc điểm của điện phổ:</p>
+                        <ul class="list-[lower-alpha] ml-6 mb-4 space-y-1">
+                            <li>Ở những vùng có điện trường mạnh hơn tức là ở gần điện tích hơn.</li>
+                            <li>Ở những vùng có điện trường yếu hơn tức là ở xa điện tích hơn.</li>
+                            <li>Ở điện trường có một điện tích và điện trường có nhiều điện tích.</li>
+                            <li>Ở vùng gần điện tích dương và ở vùng gần điện tích âm.</li>
+                        </ul>
+                        
+                        <p class="mb-2">2. Từ quan sát Hình 17.7 và các nhận xét trên, em hãy vẽ các đường sức điện của một điện tích âm, các đường sức điện của hai điện tích âm \( Q_1 = Q_2 < 0 \) đặt gần nhau.</p>
+                    </div>
+                </div>
+                <button onclick="toggleAnswer('ans-7')" class="mt-2 bg-main-blue text-white px-4 py-1.5 rounded hover:bg-blue-800 transition text-sm font-semibold">Xem gợi ý</button>
+                <div id="ans-7" class="answer-box hidden">
+                    <p><strong>Gợi ý:</strong></p>
+                    <p><strong>Câu 1: Nhận xét:</strong></p>
+                    <ul class="list-[lower-alpha] ml-6 mt-1 space-y-1">
+                        <li>Vùng điện trường mạnh (gần điện tích): Các đường mạt cưa sắp xếp <strong>dày đặc</strong> hơn.</li>
+                        <li>Vùng điện trường yếu (xa điện tích): Các đường mạt cưa sắp xếp <strong>thưa thớt</strong> hơn.</li>
+                        <li>Điện trường 1 điện tích: Các đường đi ra (hoặc đi vào) theo phương hướng tâm tỏa ra xung quanh. Điện trường nhiều điện tích: Các đường uốn cong, nối giữa các điện tích (trái dấu) hoặc né tránh nhau (cùng dấu).</li>
+                        <li>Gần điện tích dương và điện tích âm đều thấy sự phân bố đường sức hội tụ/phân kỳ sát bề mặt quả cầu.</li>
+                    </ul>
+                    <p class="mt-4"><strong>Câu 2: Vẽ đường sức:</strong></p>
+                    <ul class="list-disc ml-6 mt-1">
+                        <li><strong>Một điện tích âm:</strong> Vẽ các đường thẳng hướng tâm, có mũi tên đi <strong>vào</strong> điện tích âm.</li>
+                        <li><strong>Hai điện tích âm (\(Q_1=Q_2<0\)):</strong> Hình dáng đường sức giống hệt hệ 2 điện tích dương, các đường cong đẩy nhau ở giữa khoảng không 2 điện tích, nhưng mũi tên trên tất cả các đường đều hướng <strong>vào</strong> các điện tích.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 my-6">
+                <div class="text-center">
+                    <img src="h8.png" alt="Đường sức điện tích dương" class="mx-auto rounded border border-gray-200" onerror="this.src='https://placehold.co/200x200?text=H%C3%ACnh+17.7a'">
+                    <p class="text-sm text-gray-500 mt-2 italic">a) Các đường sức điện của một điện tích dương</p>
+                </div>
+                <div class="text-center">
+                    <img src="h9.png" alt="Hệ hai điện tích dương" class="mx-auto rounded border border-gray-200" onerror="this.src='https://placehold.co/200x200?text=H%C3%ACnh+17.7b'">
+                    <p class="text-sm text-gray-500 mt-2 italic">b) Hệ các đường sức điện của hai điện tích dương</p>
+                </div>
+                <div class="text-center">
+                    <img src="h10.png" alt="Hệ hai điện tích trái dấu" class="mx-auto rounded border border-gray-200" onerror="this.src='https://placehold.co/200x200?text=H%C3%ACnh+17.7c'">
+                    <p class="text-sm text-gray-500 mt-2 italic">c) Hệ các đường sức điện của hai điện tích trái dấu</p>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- EM ĐÃ HỌC -->
+        <div class="info-box bg-blue-50 border-blue-500 mt-8 shadow-md">
+            <h3 class="font-bold text-main-blue text-xl mb-4 uppercase text-center">Tóm tắt: Em đã học</h3>
+            <ul class="list-none space-y-3">
+                <li class="flex items-start"><span class="text-main-blue mr-2 font-bold">■</span> Điện trường được tạo ra bởi điện tích, là dạng vật chất tồn tại quanh điện tích và truyền tương tác giữa các điện tích.</li>
+                <li class="flex items-start"><span class="text-main-blue mr-2 font-bold">■</span> Vectơ cường độ điện trường \( \vec{E} \) tại một điểm được xác định bằng tỉ số giữa vectơ lực điện \( \vec{F} \) tác dụng lên một điện tích \( q \) đặt tại điểm đó và giá trị của điện tích đó: \( \vec{E} = \frac{\vec{F}}{q} \)</li>
+                <li class="flex items-start"><span class="text-main-blue mr-2 font-bold">■</span> Độ lớn của cường độ điện trường do một điện tích điểm \( Q \) đặt trong chân không hoặc trong không khí gây ra tại một điểm cách nó một khoảng \( r \) có giá trị bằng: \( E = \frac{|Q|}{4\pi\epsilon_{0}r^{2}} \)</li>
+                <li class="flex items-start"><span class="text-main-blue mr-2 font-bold">■</span> Khi cho một hoặc một số quả cầu tích điện vào trong một bể dầu đã trộn đều các hạt cách điện. Hệ các đường được tạo thành từ các hạt cách điện được gọi là điện phổ của điện tích hoặc hệ điện tích nói trên.</li>
+                <li class="flex items-start"><span class="text-main-blue mr-2 font-bold">■</span> Công thức tính độ lớn cường độ điện trường của một điện tích điểm được vận dụng để tính cường độ điện trường của một hệ điện tích điểm hay tính cường độ điện trường của vật hình cầu tích điện đều.</li>
+                <li class="flex items-start"><span class="text-main-blue mr-2 font-bold">■</span> Đường sức điện xuất phát ở điện tích dương và kết thúc ở điện tích âm.</li>
+            </ul>
+        </div>
+
+        <!-- EM CÓ THỂ -->
+        <div class="info-box bg-green-50 border-green-500 mt-6 shadow-md mb-8">
+            <h3 class="font-bold text-green-700 text-xl mb-4 uppercase text-center">Năng lực: Em có thể</h3>
+            <ul class="list-disc ml-8 space-y-2 text-gray-800">
+                <li>Xác định phương, chiều, độ lớn của vectơ cường độ điện trường tại một điểm bất kì trong điện trường.</li>
+                <li>Tính được độ lớn cường độ điện trường và mô tả được vectơ cường độ điện trường do một điện tích điểm gây ra tại một điểm trong không gian.</li>
+                <li>Vẽ được hệ các đường sức điện trong trường hợp một điện tích hoặc hệ hai điện tích.</li>
+                <li>Vận dụng công thức \( E = \frac{|Q|}{4\pi\epsilon_{0}r^{2}} \) để tính toán và mô tả điện trường của hệ nhiều điện tích, vật tích điện hình cầu,...</li>
+                <li>Dùng hình ảnh điện phổ để qua đó giải thích được ngay sát bề mặt của Trái Đất có điện trường theo phương thẳng đứng hướng từ trên xuống dưới.</li>
+            </ul>
+        </div>
+
+        <!-- PHẦN BÀI TẬP VẬN DỤNG -->
+        <h2 class="section-title text-center text-red-700 border-red-700">LUYỆN TẬP - VẬN DỤNG</h2>
+        
+        <!-- Trắc nghiệm -->
+        <div class="content-box">
+            <h3 class="font-bold text-lg mb-4 text-main-blue bg-blue-100 p-2 rounded inline-block">A. Trắc nghiệm (5 Câu)</h3>
+            <form id="quiz-form">
+                <!-- Q1 -->
+                <div class="mb-6">
+                    <p class="font-semibold mb-2">Câu 1: Cường độ điện trường tại một điểm là đại lượng đặc trưng cho điện trường về:</p>
+                    <div class="space-y-1 ml-4">
+                        <label class="block"><input type="radio" name="q1" value="A" class="mr-2">A. Khả năng thực hiện công.</label>
+                        <label class="block"><input type="radio" name="q1" value="B" class="mr-2">B. Phương diện tác dụng lực.</label>
+                        <label class="block"><input type="radio" name="q1" value="C" class="mr-2">C. Tốc độ chuyển động của điện tích.</label>
+                        <label class="block"><input type="radio" name="q1" value="D" class="mr-2">D. Năng lượng của điện trường.</label>
+                    </div>
+                    <p id="feedback-q1" class="mt-2 text-sm hidden font-semibold"></p>
+                </div>
+                <!-- Q2 -->
+                <div class="mb-6">
+                    <p class="font-semibold mb-2">Câu 2: Đơn vị của cường độ điện trường trong hệ SI là:</p>
+                    <div class="space-y-1 ml-4">
+                        <label class="block"><input type="radio" name="q2" value="A" class="mr-2">A. C (Culông).</label>
+                        <label class="block"><input type="radio" name="q2" value="B" class="mr-2">B. V (Vôn).</label>
+                        <label class="block"><input type="radio" name="q2" value="C" class="mr-2">C. V/m (Vôn trên mét).</label>
+                        <label class="block"><input type="radio" name="q2" value="D" class="mr-2">D. N/C (Niutơn trên Culông) hoặc V/m.</label>
+                    </div>
+                    <p id="feedback-q2" class="mt-2 text-sm hidden font-semibold"></p>
+                </div>
+                <!-- Q3 -->
+                <div class="mb-6">
+                    <p class="font-semibold mb-2">Câu 3: Vectơ cường độ điện trường \(\vec{E}\) do điện tích điểm Q < 0 gây ra tại điểm M cách nó một khoảng r có chiều:</p>
+                    <div class="space-y-1 ml-4">
+                        <label class="block"><input type="radio" name="q3" value="A" class="mr-2">A. Hướng ra xa Q.</label>
+                        <label class="block"><input type="radio" name="q3" value="B" class="mr-2">B. Hướng về phía Q.</label>
+                        <label class="block"><input type="radio" name="q3" value="C" class="mr-2">C. Vuông góc với đoạn MQ.</label>
+                        <label class="block"><input type="radio" name="q3" value="D" class="mr-2">D. Phụ thuộc vào điện tích thử đặt tại M.</label>
+                    </div>
+                    <p id="feedback-q3" class="mt-2 text-sm hidden font-semibold"></p>
+                </div>
+                <!-- Q4 -->
+                <div class="mb-6">
+                    <p class="font-semibold mb-2">Câu 4: Độ lớn cường độ điện trường do điện tích điểm Q đặt trong không khí gây ra tại một điểm tỉ lệ:</p>
+                    <div class="space-y-1 ml-4">
+                        <label class="block"><input type="radio" name="q4" value="A" class="mr-2">A. Thuận với khoảng cách từ điểm đó tới điện tích.</label>
+                        <label class="block"><input type="radio" name="q4" value="B" class="mr-2">B. Nghịch với khoảng cách từ điểm đó tới điện tích.</label>
+                        <label class="block"><input type="radio" name="q4" value="C" class="mr-2">C. Thuận với bình phương khoảng cách từ điểm đó tới điện tích.</label>
+                        <label class="block"><input type="radio" name="q4" value="D" class="mr-2">D. Nghịch với bình phương khoảng cách từ điểm đó tới điện tích.</label>
+                    </div>
+                    <p id="feedback-q4" class="mt-2 text-sm hidden font-semibold"></p>
+                </div>
+                <!-- Q5 -->
+                <div class="mb-6">
+                    <p class="font-semibold mb-2">Câu 5: Đường sức điện của điện trường tĩnh là đường:</p>
+                    <div class="space-y-1 ml-4">
+                        <label class="block"><input type="radio" name="q5" value="A" class="mr-2">A. Cong kín.</label>
+                        <label class="block"><input type="radio" name="q5" value="B" class="mr-2">B. Xuất phát ở điện tích dương, kết thúc ở điện tích âm.</label>
+                        <label class="block"><input type="radio" name="q5" value="C" class="mr-2">C. Cắt nhau tại các điểm có điện trường mạnh.</label>
+                        <label class="block"><input type="radio" name="q5" value="D" class="mr-2">D. Có thể xuất phát và kết thúc trên cùng một điện tích.</label>
+                    </div>
+                    <p id="feedback-q5" class="mt-2 text-sm hidden font-semibold"></p>
+                </div>
+
+                <div class="text-center mt-6">
+                    <button type="button" onclick="checkQuiz()" class="bg-main-blue text-white font-bold py-2 px-8 rounded hover:bg-blue-800 transition shadow-lg text-lg">NỘP BÀI TRẮC NGHIỆM</button>
+                </div>
+                
+                <div id="quiz-result" class="mt-4 text-center font-bold text-xl hidden p-4 rounded bg-gray-100"></div>
+            </form>
+        </div>
+
+        <!-- Tự luận tính toán -->
+        <div class="content-box">
+            <h3 class="font-bold text-lg mb-4 text-main-blue bg-blue-100 p-2 rounded inline-block">B. Bài tập vận dụng tính toán</h3>
+            
+            <!-- VD1 -->
+            <div class="border-b border-gray-300 pb-4 mb-4">
+                <p class="font-semibold mb-2">Bài 1: Một điện tích điểm \( q = 5.10^{-9} \text{ C} \) đặt trong chân không. Tính cường độ điện trường tại một điểm M cách \( q \) một khoảng 10 cm.</p>
+                <button onclick="toggleAnswer('vd-1')" class="mt-2 bg-gray-600 text-white px-3 py-1 rounded hover:bg-gray-700 transition text-sm">Xem lời giải</button>
+                <div id="vd-1" class="answer-box hidden">
+                    <p><strong>Giải:</strong></p>
+                    <p>Đổi \( r = 10 \text{ cm} = 0,1 \text{ m} \).</p>
+                    <p>Áp dụng công thức: \( E = k \frac{|q|}{r^2} \)</p>
+                    <p>\( E = 9.10^9 \times \frac{|5.10^{-9}|}{(0,1)^2} = \frac{45}{0,01} = 4500 \text{ V/m} \).</p>
+                </div>
+            </div>
+
+            <!-- VD2 -->
+            <div class="border-b border-gray-300 pb-4 mb-4">
+                <p class="font-semibold mb-2">Bài 2: Tại một điểm có cường độ điện trường \( E = 4000 \text{ V/m} \). Đặt vào điểm đó một điện tích \( q = -2 \mu\text{C} \). Tính độ lớn lực điện tác dụng lên điện tích và so sánh hướng của lực điện với hướng của điện trường.</p>
+                <button onclick="toggleAnswer('vd-2')" class="mt-2 bg-gray-600 text-white px-3 py-1 rounded hover:bg-gray-700 transition text-sm">Xem lời giải</button>
+                <div id="vd-2" class="answer-box hidden">
+                    <p><strong>Giải:</strong></p>
+                    <p>Đổi \( q = -2 \mu\text{C} = -2.10^{-6} \text{ C} \).</p>
+                    <p>Độ lớn lực điện: \( F = |q|E = 2.10^{-6} \times 4000 = 8.10^{-3} \text{ N} \).</p>
+                    <p>Vì \( q < 0 \) nên lực điện \( \vec{F} \) ngược hướng với cường độ điện trường \( \vec{E} \).</p>
+                </div>
+            </div>
+
+            <!-- VD3 -->
+            <div>
+                <p class="font-semibold mb-2">Bài 3: Hai điện tích \( q_1 = 8.10^{-8} \text{ C} \) và \( q_2 = -8.10^{-8} \text{ C} \) đặt tại A và B trong không khí (\( AB = 4 \text{ cm} \)). Tìm cường độ điện trường tổng hợp tại trung điểm M của AB.</p>
+                <button onclick="toggleAnswer('vd-3')" class="mt-2 bg-gray-600 text-white px-3 py-1 rounded hover:bg-gray-700 transition text-sm">Xem lời giải</button>
+                <div id="vd-3" class="answer-box hidden">
+                    <p><strong>Giải:</strong></p>
+                    <p>M là trung điểm AB nên \( MA = MB = 2 \text{ cm} = 0,02 \text{ m} \).</p>
+                    <p>Cường độ điện trường do \( q_1 \) gây ra tại M có hướng từ A đến M: \( E_1 = 9.10^9 \frac{8.10^{-8}}{(0,02)^2} = 1,8.10^6 \text{ V/m} \).</p>
+                    <p>Cường độ điện trường do \( q_2 \) gây ra tại M có hướng từ M đến B: \( E_2 = 9.10^9 \frac{|-8.10^{-8}|}{(0,02)^2} = 1,8.10^6 \text{ V/m} \).</p>
+                    <p>Vì \( \vec{E_1} \) và \( \vec{E_2} \) cùng hướng (từ A sang B), nên cường độ điện trường tổng hợp tại M là:</p>
+                    <p>\( E_M = E_1 + E_2 = 1,8.10^6 + 1,8.10^6 = 3,6.10^6 \text{ V/m} \).</p>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- JavaScript Functions -->
+    <script>
+        // Toggle Ẩn/Hiện nội dung
+        function toggleAnswer(id) {
+            const element = document.getElementById(id);
+            const button = element.previousElementSibling;
+            
+            if (element.classList.contains('hidden')) {
+                element.classList.remove('hidden');
+                button.innerText = "Ẩn lời giải";
+                button.classList.replace('bg-main-blue', 'bg-gray-500');
+                button.classList.replace('hover:bg-blue-800', 'hover:bg-gray-600');
+                
+                // Trường hợp nút có màu vàng hoặc xám đặc biệt
+                if(button.classList.contains('bg-yellow-600')) {
+                    button.innerText = "Ẩn hướng dẫn";
+                    button.classList.replace('bg-yellow-600', 'bg-gray-500');
+                    button.classList.replace('hover:bg-yellow-700', 'hover:bg-gray-600');
+                }
+            } else {
+                element.classList.add('hidden');
+                if(id === 'ans-3') {
+                    button.innerText = "Xem hướng dẫn giải";
+                    button.classList.replace('bg-gray-500', 'bg-yellow-600');
+                    button.classList.replace('hover:bg-gray-600', 'hover:bg-yellow-700');
+                } else if(id.startsWith('vd')) {
+                    button.innerText = "Xem lời giải";
+                } else {
+                    button.innerText = id === 'ans-1' || id === 'ans-7' ? "Xem gợi ý" : (id === 'ans-2' ? "Xem chứng minh" : "Xem lời giải");
+                    button.classList.replace('bg-gray-500', 'bg-main-blue');
+                    button.classList.replace('hover:bg-gray-600', 'hover:bg-blue-800');
+                }
+            }
+        }
+
+        // Chấm bài trắc nghiệm
+        const correctAnswers = {
+            q1: 'B', 
+            q2: 'D', // Theo SGK chuẩn có thể lấy V/m
+            q3: 'B',
+            q4: 'D',
+            q5: 'B'
+        };
+
+        const explanations = {
+            q1: 'Cường độ điện trường là đại lượng đặc trưng cho khả năng tác dụng lực của điện trường lên điện tích.',
+            q2: 'Đơn vị chính xác theo SI là V/m (hoặc tương đương là N/C).',
+            q3: 'Vectơ E do điện tích âm gây ra luôn hướng về phía điện tích đó.',
+            q4: 'Dựa vào công thức E = k|Q|/r², E tỉ lệ nghịch với bình phương khoảng cách.',
+            q5: 'Tính chất đường sức điện tĩnh: là các đường cong hở, xuất phát ở điện tích dương (hoặc vô cực) và kết thúc ở điện tích âm (hoặc vô cực).'
+        };
+
+        function checkQuiz() {
+            let score = 0;
+            const total = Object.keys(correctAnswers).length;
+            const form = document.getElementById('quiz-form');
+            const resultBox = document.getElementById('quiz-result');
+
+            for (let i = 1; i <= total; i++) {
+                const qName = 'q' + i;
+                const selected = form.querySelector(`input[name="${qName}"]:checked`);
+                const feedbackEl = document.getElementById(`feedback-${qName}`);
+                
+                feedbackEl.classList.remove('hidden', 'text-green-600', 'text-red-600');
+                
+                if (selected) {
+                    if (selected.value === correctAnswers[qName]) {
+                        score++;
+                        feedbackEl.innerHTML = `✓ Đúng! ${explanations[qName]}`;
+                        feedbackEl.classList.add('text-green-600', 'block');
+                    } else {
+                        feedbackEl.innerHTML = `✗ Sai. Đáp án đúng là ${correctAnswers[qName]}. ${explanations[qName]}`;
+                        feedbackEl.classList.add('text-red-600', 'block');
+                    }
+                } else {
+                    feedbackEl.innerHTML = `⚠ Bạn chưa chọn đáp án. Đáp án đúng là ${correctAnswers[qName]}.`;
+                    feedbackEl.classList.add('text-orange-500', 'block');
+                }
+            }
+
+            resultBox.classList.remove('hidden', 'text-green-600', 'text-red-600', 'bg-green-100', 'bg-red-100');
+            resultBox.innerHTML = `TỔNG ĐIỂM: ${score} / ${total}`;
+            
+            if (score === total) {
+                resultBox.classList.add('text-green-700', 'bg-green-100');
+                resultBox.innerHTML += `<br/><span class="text-sm font-normal">Tuyệt vời! Bạn đã nắm rất vững kiến thức.</span>`;
+            } else {
+                resultBox.classList.add('text-red-700', 'bg-red-100');
+                resultBox.innerHTML += `<br/><span class="text-sm font-normal">Hãy xem lại lý thuyết và các câu làm sai nhé!</span>`;
+            }
+        }
+    </script>
+</body>
+</html>
