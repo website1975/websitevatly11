@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bài 16: Lực tương tác giữa hai điện tích</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- MathJax for formulas -->
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f7f9;
+        }
+        /* Custom Table Styles */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            border: 1px solid #cbd5e0;
+            padding: 8px;
+            text-align: center;
+        }
+        th {
+            background-color: #e2e8f0;
+        }
+    </style>
+</head>
+<body class="text-gray-800 pb-12">
+
+    <div class="max-w-4xl mx-auto p-4 space-y-6">
+
+        <!-- Header -->
+        <div class="bg-[#000080] text-white p-6 rounded-[12px] text-center shadow-md">
+            <p class="text-lg font-medium">CHƯƠNG III – ĐIỆN TRƯỜNG</p><hr>
+            <h1 class="text-2xl font-bold uppercase mt-2">BÀI 16: LỰC TƯƠNG TÁC GIỮA HAI ĐIỆN TÍCH</h1>
+        </div>
+
+        <!-- Intro Box -->
+        <div class="bg-white border border-gray-800 p-5 rounded-[12px] shadow-md italic text-gray-700">
+            Em đã biết các điện tích cùng dấu đẩy nhau, khác dấu hút nhau. Theo em, độ lớn của lực tương tác giữa hai điện tích phụ thuộc như thế nào vào độ lớn của các điện tích và khoảng cách giữa chúng?
+        </div>
+
+        <!-- Section I -->
+        <div class="bg-white p-6 rounded-[12px] shadow-md space-y-4">
+            <h2 class="text-xl font-bold text-[#000080] uppercase border-b-4 border-[#000080] inline-block pb-1 mb-4">I. LỰC HÚT VÀ LỰC ĐẨY GIỮA CÁC ĐIỆN TÍCH</h2>
+            
+            <div class="text-center my-4">
+                <img src="h1.png" alt="Hình 16.1. Sự hút, đẩy của các điện tích" class="mx-auto max-w-full h-auto rounded">
+                <p class="text-sm text-gray-500 mt-2">Hình 16.1. Sự hút, đẩy của các điện tích</p>
+            </div>
+
+            <!-- Hoạt động 1 -->
+            <div class="bg-[#edf2f7] border-l-4 border-[#000080] p-4 rounded-r-md mt-4">
+                <p class="font-bold flex items-center gap-2"><span>✋</span> Hoạt động 1</p>
+                <p class="mt-2">Treo thanh nhựa A bằng một dây chỉ để nó có thể quay tự do rồi dùng len cọ xát một đầu của nó. Quan sát, mô tả và giải thích hiện tượng xảy ra khi:</p>
+                <ul class="list-disc ml-6 mt-1 space-y-1">
+                    <li>a) Dùng len cọ xát một đầu thanh nhựa B rồi đưa lại gần đầu đã được cọ xát của thanh nhựa A (Hình 16.1a).</li>
+                    <li>b) Dùng lụa cọ xát một đầu thanh thuỷ tinh C rồi đưa lại gần đầu đã được cọ xát của thanh nhựa A (Hình 16.1b).</li>
+                </ul>
+                <button onclick="toggleAnswer('hd1')" class="mt-3 bg-[#000080] text-white px-4 py-2 rounded shadow hover:bg-blue-800 transition">Xem hướng giải quyết</button>
+            </div>
+            <div id="hd1" class="hidden bg-green-100 p-4 rounded-md mt-2 border border-green-300">
+                <p><strong>Hướng dẫn:</strong></p>
+                <p>a) Thanh nhựa A và thanh nhựa B đều được cọ xát bằng len nên chúng nhiễm điện cùng loại (điện tích âm). Do đó, chúng đẩy nhau. Thanh A sẽ quay ra xa thanh B.</p>
+                <p>b) Thanh thuỷ tinh C cọ xát bằng lụa mang điện tích dương, thanh nhựa A cọ xát bằng len mang điện tích âm. Hai thanh nhiễm điện trái dấu nên hút nhau. Thanh A sẽ quay lại gần thanh C.</p>
+            </div>
+
+            <!-- Hoạt động 2 -->
+            <div class="text-center my-4">
+                <img src="h2.png" alt="Hình 16.2. Lực tương tác giữa hai điện tích" class="mx-auto max-w-full h-auto rounded">
+                <p class="text-sm text-gray-500 mt-2">Hình 16.2. Lực tương tác giữa hai điện tích</p>
+            </div>
+
+            <div class="bg-[#edf2f7] border-l-4 border-[#000080] p-4 rounded-r-md mt-4">
+                <p class="font-bold flex items-center gap-2"><span>✋</span> Hoạt động 2</p>
+                <p class="mt-2">Dựa vào Hình 16.2a, vẽ các vectơ lực biểu diễn tương tác giữa các điện tích trong các hình còn lại (Hình 16.2 b, c).</p>
+                <button onclick="toggleAnswer('hd2')" class="mt-3 bg-[#000080] text-white px-4 py-2 rounded shadow hover:bg-blue-800 transition">Xem hướng giải quyết</button>
+            </div>
+            <div id="hd2" class="hidden bg-green-100 p-4 rounded-md mt-2 border border-green-300">
+                <p><strong>Hướng dẫn:</strong></p>
+                <p>- Hình 16.2b: Hai điện tích âm đẩy nhau. Các vectơ lực có gốc đặt tại mỗi điện tích, phương trùng với đường nối hai điện tích, chiều hướng ra xa nhau.</p>
+                <p>- Hình 16.2c: Một điện tích dương và một điện tích âm hút nhau. Các vectơ lực có gốc đặt tại mỗi điện tích, phương trùng với đường nối hai điện tích, chiều hướng vào nhau.</p>
+            </div>
+
+            <!-- Hoạt động 3 -->
+            <div class="bg-[#edf2f7] border-l-4 border-[#000080] p-4 rounded-r-md mt-4">
+                <p class="font-bold flex items-center gap-2"><span>✋</span> Hoạt động 3</p>
+                <p class="mt-2">Vẽ vectơ lực của ba điện tích đặt tại các đỉnh của một tam giác đều. Biết các điện tích trên đều cùng dấu và cùng độ lớn.</p>
+                <button onclick="toggleAnswer('hd3')" class="mt-3 bg-[#000080] text-white px-4 py-2 rounded shadow hover:bg-blue-800 transition">Xem hướng giải quyết</button>
+            </div>
+            <div id="hd3" class="hidden bg-green-100 p-4 rounded-md mt-2 border border-green-300">
+                <p><strong>Hướng dẫn:</strong> Mỗi điện tích chịu tác dụng của 2 lực đẩy từ 2 điện tích còn lại. Vẽ 2 vectơ lực thành phần hướng ra xa theo cạnh tam giác, sau đó áp dụng quy tắc hình bình hành để tổng hợp lực tác dụng lên mỗi điện tích. Lực tổng hợp hướng ra ngoài tam giác dọc theo đường phân giác của góc đó.</p>
+            </div>
+
+
+            <p class="font-bold mt-4">Từ những thí nghiệm trên có thể rút ra kết luận:</p>
+            <ul class="list-disc ml-6 space-y-2 mt-2">
+                <li>Có hai loại điện tích trái dấu. Điện tích xuất hiện ở thanh thuỷ tinh khi được cọ xát vào len được quy ước gọi là điện tích dương, điện tích xuất hiện ở thanh nhựa được cọ xát vào vải được quy ước gọi là điện tích âm.</li>
+                <li>Các điện tích cùng loại đẩy nhau.</li>
+                <li>Các điện tích khác loại hút nhau.</li>
+            </ul>
+            <p class="mt-2 font-medium italic">Lực hút, đẩy giữa các điện tích được gọi chung là lực tương tác giữa các điện tích (thường gọi tắt là lực điện).</p>
+        </div>
+
+        <!-- Section II -->
+        <div class="bg-white p-6 rounded-[12px] shadow-md space-y-4">
+            <h2 class="text-xl font-bold text-[#000080] uppercase border-b-4 border-[#000080] inline-block pb-1 mb-4">II. ĐỊNH LUẬT COULOMB (CU-LÔNG)</h2>
+
+            <!-- Intro Question II -->
+            <div class="bg-[#edf2f7] border-l-4 border-[#000080] p-4 rounded-r-md mt-4">
+                <p class="font-bold flex items-center gap-2"><span>❓</span> Câu hỏi mở đầu phần</p>
+                <div class="flex flex-col md:flex-row gap-4 mt-2 items-center">
+                    <img src="h3.png" alt="Charles Coulomb" class="w-24 h-auto rounded shadow">
+                    <p>Độ lớn của lực tương tác giữa hai điện tích có phụ thuộc như thế nào vào khoảng cách giữa các điện tích? Đề xuất phương án thí nghiệm để kiểm tra dự đoán.</p>
+                </div>
+                <button onclick="toggleAnswer('cauhoi1')" class="mt-3 bg-[#000080] text-white px-4 py-2 rounded shadow hover:bg-blue-800 transition">Xem câu trả lời</button>
+            </div>
+            <div id="cauhoi1" class="hidden bg-green-100 p-4 rounded-md mt-2 border border-green-300">
+                <p><strong>Trả lời:</strong> Dự đoán: Lực tương tác tỉ lệ nghịch với khoảng cách giữa hai điện tích (khoảng cách càng xa, lực càng yếu). Phương án thí nghiệm: Sử dụng cân xoắn của Coulomb (như trình bày ở phần dưới) để đo lực tương tác khi thay đổi khoảng cách \( r \).</p>
+            </div>
+
+            <h3 class="font-bold text-lg mt-6">1. Đơn vị điện tích, điện tích điểm</h3>
+            <p>Người ta kí hiệu giá trị của điện tích bằng chữ “q”. Trong hệ SI đơn vị đo điện tích là Coulomb (C), lấy theo tên của nhà vật lí người Pháp Charles Coulomb.</p>
+            <p><strong>Điện tích điểm</strong> là vật tích điện có kích thước nhỏ so với khoảng cách tới điểm mà ta xét. Trong các thí nghiệm vật lí, người ta coi các quả cầu tích điện có bán kính nhỏ so với khoảng cách giữa chúng là các điện tích điểm, khoảng cách giữa các điện tích điểm này là khoảng cách giữa tâm của các quả cầu.</p>
+
+            <h3 class="font-bold text-lg mt-6">2. Định luật Coulomb</h3>
+            <p>Coulomb cho rằng độ lớn của lực tương tác giữa hai điện tích phụ thuộc vào giá trị của các điện tích và khoảng cách giữa chúng. Ông dùng cân xoắn (Hình 16.4) để xác định mối liên hệ giữa độ lớn lực tương tác giữa hai quả cầu tích điện với điện tích của hai quả cầu và khoảng cách giữa chúng.</p>
+            
+            <p class="mt-4 font-bold">Các kết quả thí nghiệm được phát biểu thành định luật sau đây mang tên ông:</p>
+            <div class="bg-gray-50 border border-gray-300 p-4 rounded font-medium my-4">
+                Lực tương tác giữa hai điện tích điểm có phương trùng với đường thẳng nối hai điện tích điểm, có độ lớn tỉ lệ thuận với tích giá trị của hai điện tích điểm và tỉ lệ nghịch với bình phương khoảng cách giữa chúng.
+                <div class="text-center mt-3 text-xl">
+                    \( F = \frac{k|q_1q_2|}{r^2} \) &nbsp;&nbsp;&nbsp; (16.1)
+                </div>
+            </div>
+
+            <p>Trong đó \( r \) là khoảng cách giữa hai điện tích điểm \( q_1, q_2 \); \( k \) là hệ số tỉ lệ có độ lớn phụ thuộc vào môi trường trong đó đặt điện tích và đơn vị sử dụng. Khi các điện tích đặt trong chân không và hệ đơn vị sử dụng là SI thì k được xác định bởi:</p>
+            <div class="text-center my-2 text-lg">
+                \( k = \frac{1}{4\pi\epsilon_0} \)
+            </div>
+            <p>Trong đó \( \epsilon_0 \) là một hằng số điện \( \epsilon_0 = 8,85.10^{-12} C^2/Nm^2 \). Do đó, định luật Coulomb đối với các điện tích điểm đặt trong chân không có biểu thức:</p>
+            
+            <div class="text-center font-bold text-lg my-4 space-y-2">
+                <div>\( F = \frac{|q_1q_2|}{4\pi\epsilon_0 r^2} \) &nbsp;&nbsp;&nbsp; (16.2)</div>
+                <div>hoặc &nbsp; \( F = \frac{k|q_1q_2|}{r^2} \), với \( k = 9.10^9 Nm^2/C^2 \) &nbsp;&nbsp;&nbsp; (16.3)</div>
+            </div>
+
+            <!-- Box Em Có Biết - Cân Xoắn -->
+            <div class="bg-[#f0f9ff] border border-blue-200 rounded-[12px] p-5 my-6 shadow-sm">
+                <h4 class="font-bold text-blue-800 uppercase mb-2">💡 Em có biết: Thí nghiệm cân xoắn Coulomb</h4>
+                <div class="flex flex-col md:flex-row gap-4">
+                    <img src="h4.png" alt="Cân xoắn Coulomb" class="w-48 object-contain bg-white p-2 rounded">
+                    <div class="text-sm">
+                        <p><strong>A:</strong> Quả cầu kim loại được giữ cố định.</p>
+                        <p><strong>B:</strong> Quả cầu kim loại giống hệt A, được gắn vào một đầu của thanh ngang làm bằng chất cách điện.</p>
+                        <p><strong>C:</strong> Quả cầu đối trọng của B để giữ thanh ngang cân bằng.</p>
+                        <p><strong>D:</strong> Dây treo có tính đàn hồi chống lại sự xoắn.</p>
+                        <p><strong>E:</strong> Chốt quay để thay đổi vị trí của thanh ngang.</p>
+                        <p><strong>G:</strong> Bảng chia độ.</p>
+                        <p class="mt-2">Tích điện cho quả cầu A. Cho quả cầu A chưa tích điện tiếp xúc với quả cầu B. Khi đó quả cầu A sẽ truyền cho quả cầu B một nửa điện tích của mình và đẩy quả cầu này ra xa nhờ lực tĩnh điện. Lực đẩy tĩnh điện của hai quả cầu làm xoắn dây treo D. Góc xoắn giữa hai quả cầu được xác định nhờ bảng chia độ G trên hình trụ. Từ đó, xác định được độ lớn của lực tương tác giữa hai quả cầu và quan hệ của lực này với độ lớn của điện tích và khoảng cách giữa hai quả cầu.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="text-center my-4">
+                <img src="h5.png" alt="Hình 16.5. Lực tương tác giữa hai điện tích điểm" class="mx-auto max-w-full h-auto rounded">
+                <p class="text-sm text-gray-500 mt-2">Hình 16.5. Lực tương tác giữa hai điện tích điểm</p>
+            </div>
+            
+            <p class="italic">Vì không khí khô có tính chất điện giống của chân không nên người ta thường áp dụng biểu thức (16.2), (16.3) cho cả hai môi trường chân không và không khí.</p>
+        </div>
+
+        <!-- Section III -->
+        <div class="bg-white p-6 rounded-[12px] shadow-md space-y-4">
+            <h2 class="text-xl font-bold text-[#000080] uppercase border-b-4 border-[#000080] inline-block pb-1 mb-4">III. BÀI TẬP VỀ ĐỊNH LUẬT COULOMB</h2>
+
+            <h3 class="font-bold text-lg mt-4">1. Bài tập ví dụ</h3>
+            <div class="bg-[#edf2f7] border-l-4 border-[#000080] p-4 rounded-r-md mt-2">
+                <p>Người ta dùng máy phát tĩnh điện để tích điện cho hai quả cầu kim loại nhỏ đặt cách nhau 10 cm trong không khí. Tính lực điện tương tác giữa hai quả cầu khi:</p>
+                <ul class="list-disc ml-6 mt-1 space-y-1">
+                    <li>a) Hai quả cầu được tích điện cùng dấu và cùng độ lớn \( 9,45.10^{-7} C \).</li>
+                    <li>b) Đưa hai quả cầu cách nhau 20 cm.</li>
+                    <li>c) Đưa hai quả cầu về vị trí cũ và làm giảm điện tích của một quả cầu đi một nửa.</li>
+                </ul>
+                <button onclick="toggleAnswer('btvd')" class="mt-3 bg-[#000080] text-white px-4 py-2 rounded shadow hover:bg-blue-800 transition">Xem lời giải</button>
+            </div>
+            <div id="btvd" class="hidden bg-green-100 p-4 rounded-md mt-2 border border-green-300">
+                <p><strong>Giải:</strong></p>
+                <p>a) Theo định luật Coulomb:</p>
+                <p>\( F = \frac{|q_1q_2|}{4\pi\epsilon_0 r^2} = \frac{(9,45.10^{-7})^2}{4 . 3,14 . 8,85.10^{-12} . 10^{-2}} \approx 0,8 N. \)</p>
+                <p>b) Vì lực điện tỉ lệ nghịch với bình phương khoảng cách giữa hai điện tích nên khi khoảng cách tăng lên 2 lần thì F giảm đi 4 lần: \( F \approx 0,2 N. \)</p>
+                <p>c) Vì lực điện tỉ lệ thuận với tích của \( q_1 \) và \( q_2 \) nên khi \( q_1 \) giảm đi một nửa thì lực cũng giảm đi một nửa: \( F \approx 0,4 N \).</p>
+            </div>
+
+            <h3 class="font-bold text-lg mt-6">2. Bài tập luyện tập</h3>
+
+            <!-- Câu hỏi tình huống -->
+            <div class="bg-[#edf2f7] border-l-4 border-[#000080] p-4 rounded-r-md mt-4">
+                <p class="font-bold flex items-center gap-2"><span>❓</span> Câu hỏi</p>
+                <p class="mt-2">Người ta có thể dùng lực tĩnh điện để tách các trang sách bị dính chặt vào nhau mà không làm chúng hỏng. Hãy mô tả cách làm này.</p>
+                <button onclick="toggleAnswer('btlt_0')" class="mt-3 bg-[#000080] text-white px-4 py-2 rounded shadow hover:bg-blue-800 transition">Xem lời giải</button>
+            </div>
+            <div id="btlt_0" class="hidden bg-green-100 p-4 rounded-md mt-2 border border-green-300">
+                <p><strong>Lời giải:</strong> Người ta có thể dùng một vật nhiễm điện (ví dụ thanh nhựa cọ xát vào len) đưa lại gần các trang sách. Lực hút tĩnh điện giữa vật nhiễm điện và các trang sách sẽ làm các trang tách dần ra khỏi nhau mà không bị rách, hỏng.</p>
+            </div>
+
+            <!-- Bài 1 -->
+            <div class="bg-[#edf2f7] border-l-4 border-[#000080] p-4 rounded-r-md mt-4">
+                <p><strong>Bài 1:</strong> Hãy nêu tên các đại lượng và tên các đơn vị trong biểu thức (16.2) và (16.3).</p>
+                <button onclick="toggleAnswer('btlt_1')" class="mt-2 bg-[#000080] text-white px-4 py-2 rounded shadow hover:bg-blue-800 transition">Xem lời giải</button>
+            </div>
+            <div id="btlt_1" class="hidden bg-green-100 p-4 rounded-md mt-2 border border-green-300">
+                <p><strong>Lời giải:</strong></p>
+                <ul class="list-disc ml-6">
+                    <li>\( F \): Lực điện tương tác (đơn vị: Newton - N).</li>
+                    <li>\( q_1, q_2 \): Giá trị của các điện tích điểm (đơn vị: Coulomb - C).</li>
+                    <li>\( r \): Khoảng cách giữa hai điện tích (đơn vị: mét - m).</li>
+                    <li>\( \epsilon_0 \): Hằng số điện (đơn vị: \( C^2/N.m^2 \)).</li>
+                    <li>\( k \): Hệ số tỉ lệ (đơn vị: \( N.m^2/C^2 \)).</li>
+                </ul>
+            </div>
+
+            <!-- Bài 2 -->
+            <div class="bg-[#edf2f7] border-l-4 border-[#000080] p-4 rounded-r-md mt-4">
+                <p><strong>Bài 2:</strong> Nếu khoảng cách giữa hai điện tích điểm tăng lên 2 lần và giá trị của mỗi điện tích điểm tăng lên 3 lần thì lực điện tương tác giữa chúng tăng hay giảm bao nhiêu lần?</p>
+                <button onclick="toggleAnswer('btlt_2')" class="mt-2 bg-[#000080] text-white px-4 py-2 rounded shadow hover:bg-blue-800 transition">Xem lời giải</button>
+            </div>
+            <div id="btlt_2" class="hidden bg-green-100 p-4 rounded-md mt-2 border border-green-300">
+                <p><strong>Lời giải:</strong></p>
+                <p>Gọi lực ban đầu là \( F = \frac{k|q_1q_2|}{r^2} \).</p>
+                <p>Khi \( r' = 2r \), \( q_1' = 3q_1 \), \( q_2' = 3q_2 \), lực tương tác mới là:</p>
+                <p>\( F' = \frac{k|3q_1 \cdot 3q_2|}{(2r)^2} = \frac{9k|q_1q_2|}{4r^2} = \frac{9}{4}F = 2,25F \).</p>
+                <p>Vậy lực điện tương tác tăng 2,25 lần.</p>
+            </div>
+
+            <!-- Bài 3 -->
+            <div class="bg-[#edf2f7] border-l-4 border-[#000080] p-4 rounded-r-md mt-4">
+                <p><strong>Bài 3:</strong> Hãy vẽ các vectơ lực điện tương tác giữa hai điện tích điểm \( q_1 = 10^{-5} C \) và \( q_2 = 10^{-7} C \) đặt cách nhau 10 cm trong chân không theo tỉ lệ 1 cm ứng với khoảng cách 2 cm và lực 0,4 N. Lấy \( k = 9.10^9 Nm^2/C^2 \).</p>
+                <button onclick="toggleAnswer('btlt_3')" class="mt-2 bg-[#000080] text-white px-4 py-2 rounded shadow hover:bg-blue-800 transition">Xem lời giải</button>
+            </div>
+            <div id="btlt_3" class="hidden bg-green-100 p-4 rounded-md mt-2 border border-green-300">
+                <p><strong>Lời giải:</strong></p>
+                <p>- Tính độ lớn lực điện: \( F = \frac{k|q_1q_2|}{r^2} = \frac{9.10^9 \cdot 10^{-5} \cdot 10^{-7}}{(0,1)^2} = 0,9 N \).</p>
+                <p>- Biểu diễn:</p>
+                <ul class="list-disc ml-6">
+                    <li>Khoảng cách thực 10 cm, tỉ lệ 1 cm ứng 2 cm => Vẽ 2 điện tích cách nhau \( 10 / 2 = 5 \) cm trên giấy.</li>
+                    <li>Lực 0,9 N, tỉ lệ 1 cm ứng 0,4 N => Chiều dài vectơ lực là \( 0,9 / 0,4 = 2,25 \) cm.</li>
+                    <li>Do \( q_1, q_2 \) cùng dấu dương nên lực đẩy, hướng ra xa nhau.</li>
+                </ul>
+            </div>
+
+            <!-- Bài hỏi thêm (có trong ảnh) -->
+            <div class="bg-[#edf2f7] border-l-4 border-[#000080] p-4 rounded-r-md mt-4">
+                <p><strong>Bài 4:</strong> Có thể dùng định luật Coulomb để xác định độ lớn của lực tương tác giữa các điện tích trong các thí nghiệm ở Hình 16.1 không? Tại sao?</p>
+                <button onclick="toggleAnswer('btlt_4')" class="mt-2 bg-[#000080] text-white px-4 py-2 rounded shadow hover:bg-blue-800 transition">Xem lời giải</button>
+            </div>
+            <div id="btlt_4" class="hidden bg-green-100 p-4 rounded-md mt-2 border border-green-300">
+                <p><strong>Lời giải:</strong> Không thể. Định luật Coulomb chỉ áp dụng chính xác cho các <em>điện tích điểm</em>. Các thanh nhựa, thuỷ tinh trong Hình 16.1 có kích thước lớn, khoảng cách giữa chúng không đủ lớn để coi là các điện tích điểm.</p>
+            </div>
+
+            <div class="bg-[#edf2f7] border-l-4 border-[#000080] p-4 rounded-r-md mt-4">
+                <p><strong>Bài 5:</strong> Xác định lực điện tương tác giữa electron và proton của nguyên tử hydrogen. Biết khoảng cách từ electron trong nguyên tử hydrogen đến hạt nhân của nguyên tử này là \( 5.10^{-11} \) m; điện tích của electron và proton có độ lớn bằng nhau \( 1,6.10^{-19} C \). Lấy \( \epsilon_0 = 8,85.10^{-12} \frac{C^2}{N\cdot m^2} \).</p>
+                <button onclick="toggleAnswer('btlt_5')" class="mt-2 bg-[#000080] text-white px-4 py-2 rounded shadow hover:bg-blue-800 transition">Xem lời giải</button>
+            </div>
+            <div id="btlt_5" class="hidden bg-green-100 p-4 rounded-md mt-2 border border-green-300">
+                <p><strong>Lời giải:</strong></p>
+                <p>Áp dụng định luật Coulomb: \( F = \frac{|q_eq_p|}{4\pi\epsilon_0 r^2} \)</p>
+                <p>\( F = \frac{(1,6.10^{-19})^2}{4 \cdot 3,14 \cdot 8,85.10^{-12} \cdot (5.10^{-11})^2} \approx 9,2 \cdot 10^{-8} N \).</p>
+            </div>
+
+            <div class="bg-[#edf2f7] border-l-4 border-[#000080] p-4 rounded-r-md mt-4">
+                <p><strong>Bài 6:</strong> Hai điện tích điểm \( q_1 = 15 \mu C \); \( q_2 = -6 \mu C \) đặt cách nhau 0,2 m trong không khí. Phải đặt một điện tích \( q_3 \) ở vị trí nào để lực điện tác dụng lên điện tích này bằng 0?</p>
+                <button onclick="toggleAnswer('btlt_6')" class="mt-2 bg-[#000080] text-white px-4 py-2 rounded shadow hover:bg-blue-800 transition">Xem lời giải</button>
+            </div>
+            <div id="btlt_6" class="hidden bg-green-100 p-4 rounded-md mt-2 border border-green-300">
+                <p><strong>Lời giải:</strong></p>
+                <p>Để lực tác dụng lên \( q_3 \) bằng 0 thì \( \vec{F}_{13} + \vec{F}_{23} = \vec{0} \Rightarrow \vec{F}_{13} = -\vec{F}_{23} \).</p>
+                <p>Hai lực phải cùng phương, ngược chiều, cùng độ lớn. Do \( q_1, q_2 \) trái dấu nên điểm đặt \( q_3 \) phải nằm trên đường thẳng chứa \( q_1, q_2 \), nằm ngoài khoảng giữa hai điện tích và gần điện tích có độ lớn nhỏ hơn (gần \( q_2 \)).</p>
+                <p>Giả sử \( q_3 \) cách \( q_2 \) đoạn \( x \), cách \( q_1 \) đoạn \( 0,2 + x \). Về độ lớn: \( F_{13} = F_{23} \)</p>
+                <p>\( \Rightarrow \frac{k|q_1q_3|}{(0,2 + x)^2} = \frac{k|q_2q_3|}{x^2} \Rightarrow \frac{|15|}{|-6|} = \frac{(0,2 + x)^2}{x^2} \Rightarrow \frac{0,2 + x}{x} = \sqrt{2,5} \approx 1,58 \)</p>
+                <p>\( \Rightarrow x \approx 0,345 \) m. Vậy phải đặt \( q_3 \) ngoài khoảng \( q_1, q_2 \), cách \( q_2 \) một đoạn 0,345m.</p>
+            </div>
+        </div>
+
+        <!-- Box Tóm tắt kiến thức -->
+        <div class="bg-yellow-50 border-2 border-yellow-400 p-6 rounded-[12px] shadow-md">
+            <h3 class="font-bold text-yellow-700 uppercase mb-3 text-lg border-b border-yellow-300 pb-2">📌 EM ĐÃ HỌC</h3>
+            <ul class="list-square ml-6 space-y-2 text-gray-800">
+                <li>Có hai loại điện tích khác dấu là điện tích dương và điện tích âm.</li>
+                <li>Các điện tích cùng dấu đẩy nhau, khác dấu hút nhau.</li>
+                <li>Trong hệ SI đơn vị điện tích là Coulomb (C).</li>
+                <li><strong>Định luật Coulomb:</strong> Lực tương tác giữa hai điện tích điểm có phương trùng với đường thẳng nối hai điện tích điểm, có độ lớn tỉ lệ thuận với tích giá trị của hai điện tích điểm và tỉ lệ nghịch với bình phương khoảng cách giữa chúng.</li>
+                <li>Biểu thức của định luật Coulomb đối với môi trường chân không:
+                    <div class="text-center font-bold my-2">
+                        \( F = \frac{|q_1q_2|}{4\pi\epsilon_0r^2} ; F = \frac{k|q_1q_2|}{r^2} \)
+                    </div>
+                    với \( k = 9.10^9 Nm^2/C^2 \)
+                </li>
+            </ul>
+        </div>
+
+        <!-- Box Em có biết -->
+        <div class="bg-[#f0f9ff] border-2 border-blue-400 p-6 rounded-[12px] shadow-md">
+            <h3 class="font-bold text-blue-800 uppercase mb-3 text-lg border-b border-blue-300 pb-2">💡 EM CÓ BIẾT</h3>
+            <div class="flex flex-col md:flex-row gap-6 items-center">
+                <div class="flex-1 text-gray-800">
+                    <p>Hình 16.6 mô tả một ứng dụng của lực điện vào thực tế: Sơn tĩnh điện (còn gọi là sơn khô tĩnh điện). Mũi của "súng sơn" được nối với cực dương của một máy phát tĩnh điện, vật cần sơn được nối với cực âm của máy này.</p>
+                    <p class="mt-2">Các hạt sơn cực nhỏ khi bay ra khỏi mũi của súng sơn mang điện dương nên bị vật cần sơn mang điện âm hút dính chặt vào. Cách sơn tĩnh điện tiết kiệm được sơn, ít làm ô nhiễm môi trường, có nước sơn bền lâu hơn so với cách phun sơn thông thường.</p>
+                </div>
+                <div class="w-full md:w-1/3 text-center">
+                    <img src="h6.png" alt="Sơn tĩnh điện" class="rounded shadow-md max-w-full">
+                    <p class="text-sm text-gray-600 mt-2">Hình 16.6. Sơn tĩnh điện</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Box Em có thể -->
+        <div class="bg-green-50 border-2 border-green-400 p-6 rounded-[12px] shadow-md">
+            <h3 class="font-bold text-green-800 uppercase mb-3 text-lg border-b border-green-300 pb-2">⚡ KẾT NỐI - EM CÓ THỂ</h3>
+            <p class="mb-4">Có thể trình bày được nguyên tắc hoạt động của máy lọc không khí trong gia đình dựa trên sơ đồ (Hình 16.7).</p>
+            <div class="text-center">
+                <img src="h7.png" alt="Sơ đồ máy lọc bụi không khí" class="mx-auto rounded max-w-full bg-white p-2 border">
+                <p class="text-sm text-gray-600 mt-2">Hình 16.7. Sơ đồ máy lọc bụi không khí</p>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 text-sm bg-white p-3 rounded border">
+                <p><strong>1:</strong> Lớp lọc bụi có kích thước lớn.</p>
+                <p><strong>2, 3:</strong> Lưới lọc tĩnh điện.</p>
+                <p><strong>4:</strong> Lớp lọc vi khuẩn, mùi.</p>
+                <p><strong>5:</strong> Quạt.</p>
+                <p><strong>6:</strong> Nguồn điện.</p>
+            </div>
+        </div>
+
+        <hr class="border-t-2 border-gray-300 my-8">
+
+        <!-- Phần luyện tập bổ sung -->
+        <h2 class="text-2xl font-bold text-[#000080] uppercase text-center mt-8 mb-6">LUYỆN TẬP BỔ SUNG</h2>
+
+        <!-- Trắc nghiệm -->
+        <div class="bg-white p-6 rounded-[12px] shadow-md border-t-4 border-orange-400">
+            <h3 class="text-xl font-bold text-orange-600 mb-4">A. TRẮC NGHIỆM CỦNG CỐ</h3>
+            <form id="quizForm" class="space-y-6">
+                
+                <!-- Câu 1 -->
+                <div class="p-4 bg-gray-50 border rounded">
+                    <p class="font-bold mb-2">Câu 1: Lực tương tác tĩnh điện giữa hai điện tích điểm tỉ lệ thuận với:</p>
+                    <div class="space-y-2">
+                        <label class="block cursor-pointer"><input type="radio" name="q1" value="A"> A. khoảng cách giữa hai điện tích.</label>
+                        <label class="block cursor-pointer"><input type="radio" name="q1" value="B"> B. bình phương khoảng cách giữa hai điện tích.</label>
+                        <label class="block cursor-pointer"><input type="radio" name="q1" value="C"> C. tích độ lớn của hai điện tích đó.</label>
+                        <label class="block cursor-pointer"><input type="radio" name="q1" value="D"> D. tổng độ lớn của hai điện tích đó.</label>
+                    </div>
+                    <div id="feedback-q1" class="mt-2 text-sm hidden"></div>
+                    <div id="exp-q1" class="mt-2 text-sm text-gray-600 italic bg-blue-50 p-2 rounded hidden">
+                        <strong>Giải thích:</strong> Theo định luật Coulomb \( F = \frac{k|q_1q_2|}{r^2} \), lực tỉ lệ thuận với tích độ lớn hai điện tích. (Đáp án đúng: C)
+                    </div>
+                </div>
+
+                <!-- Câu 2 -->
+                <div class="p-4 bg-gray-50 border rounded">
+                    <p class="font-bold mb-2">Câu 2: Hai điện tích điểm hút nhau chứng tỏ điều gì?</p>
+                    <div class="space-y-2">
+                        <label class="block cursor-pointer"><input type="radio" name="q2" value="A"> A. Chúng cùng dấu dương.</label>
+                        <label class="block cursor-pointer"><input type="radio" name="q2" value="B"> B. Chúng cùng dấu âm.</label>
+                        <label class="block cursor-pointer"><input type="radio" name="q2" value="C"> C. Chúng không mang điện.</label>
+                        <label class="block cursor-pointer"><input type="radio" name="q2" value="D"> D. Chúng trái dấu nhau.</label>
+                    </div>
+                    <div id="feedback-q2" class="mt-2 text-sm hidden"></div>
+                    <div id="exp-q2" class="mt-2 text-sm text-gray-600 italic bg-blue-50 p-2 rounded hidden">
+                        <strong>Giải thích:</strong> Các điện tích cùng dấu đẩy nhau, khác dấu (trái dấu) hút nhau. (Đáp án đúng: D)
+                    </div>
+                </div>
+
+                <!-- Câu 3 -->
+                <div class="p-4 bg-gray-50 border rounded">
+                    <p class="font-bold mb-2">Câu 3: Nếu tăng khoảng cách giữa hai điện tích điểm lên 3 lần thì lực tương tác tĩnh điện giữa chúng sẽ:</p>
+                    <div class="space-y-2">
+                        <label class="block cursor-pointer"><input type="radio" name="q3" value="A"> A. tăng 3 lần.</label>
+                        <label class="block cursor-pointer"><input type="radio" name="q3" value="B"> B. giảm 3 lần.</label>
+                        <label class="block cursor-pointer"><input type="radio" name="q3" value="C"> C. tăng 9 lần.</label>
+                        <label class="block cursor-pointer"><input type="radio" name="q3" value="D"> D. giảm 9 lần.</label>
+                    </div>
+                    <div id="feedback-q3" class="mt-2 text-sm hidden"></div>
+                    <div id="exp-q3" class="mt-2 text-sm text-gray-600 italic bg-blue-50 p-2 rounded hidden">
+                        <strong>Giải thích:</strong> Lực tỉ lệ nghịch với bình phương khoảng cách. \( r \) tăng 3 thì \( r^2 \) tăng 9, do đó \( F \) giảm 9 lần. (Đáp án đúng: D)
+                    </div>
+                </div>
+
+                <!-- Câu 4 -->
+                <div class="p-4 bg-gray-50 border rounded">
+                    <p class="font-bold mb-2">Câu 4: Hằng số \( k \) trong định luật Coulomb ở hệ SI có giá trị xấp xỉ bằng:</p>
+                    <div class="space-y-2">
+                        <label class="block cursor-pointer"><input type="radio" name="q4" value="A"> A. \( 9.10^9 \ Nm^2/C^2 \)</label>
+                        <label class="block cursor-pointer"><input type="radio" name="q4" value="B"> B. \( 9.10^9 \ N/m^2 \)</label>
+                        <label class="block cursor-pointer"><input type="radio" name="q4" value="C"> C. \( 8,85.10^{-12} \ C^2/Nm^2 \)</label>
+                        <label class="block cursor-pointer"><input type="radio" name="q4" value="D"> D. \( 1,6.10^{-19} \ C \)</label>
+                    </div>
+                    <div id="feedback-q4" class="mt-2 text-sm hidden"></div>
+                    <div id="exp-q4" class="mt-2 text-sm text-gray-600 italic bg-blue-50 p-2 rounded hidden">
+                        <strong>Giải thích:</strong> Trong chân không, \( k = 9.10^9 \ Nm^2/C^2 \). (Đáp án đúng: A)
+                    </div>
+                </div>
+
+                <!-- Câu 5 -->
+                <div class="p-4 bg-gray-50 border rounded">
+                    <p class="font-bold mb-2">Câu 5: Khái niệm "điện tích điểm" là để chỉ:</p>
+                    <div class="space-y-2">
+                        <label class="block cursor-pointer"><input type="radio" name="q5" value="A"> A. một điểm toán học không có kích thước.</label>
+                        <label class="block cursor-pointer"><input type="radio" name="q5" value="B"> B. một vật mang điện tích rất lớn.</label>
+                        <label class="block cursor-pointer"><input type="radio" name="q5" value="C"> C. một vật tích điện có kích thước rất nhỏ so với khoảng cách tới điểm khảo sát.</label>
+                        <label class="block cursor-pointer"><input type="radio" name="q5" value="D"> D. hạt electron hoặc hạt proton.</label>
+                    </div>
+                    <div id="feedback-q5" class="mt-2 text-sm hidden"></div>
+                    <div id="exp-q5" class="mt-2 text-sm text-gray-600 italic bg-blue-50 p-2 rounded hidden">
+                        <strong>Giải thích:</strong> Điện tích điểm là vật tích điện có kích thước nhỏ so với khoảng cách tới điểm xét. (Đáp án đúng: C)
+                    </div>
+                </div>
+
+                <div class="text-center">
+                    <button type="button" onclick="checkQuiz()" class="bg-[#000080] text-white px-6 py-3 rounded-full font-bold shadow-lg hover:bg-blue-800 hover:scale-105 transition transform">NỘP BÀI TRẮC NGHIỆM</button>
+                    <p id="quiz-result" class="mt-4 text-xl font-bold"></p>
+                </div>
+            </form>
+        </div>
+
+        <!-- Tự luận tính toán -->
+        <div class="bg-white p-6 rounded-[12px] shadow-md border-t-4 border-[#000080]">
+            <h3 class="text-xl font-bold text-[#000080] mb-4">B. BÀI TẬP VẬN DỤNG TÍNH TOÁN</h3>
+
+            <div class="bg-[#edf2f7] border-l-4 border-[#000080] p-4 rounded-r-md mt-4">
+                <p><strong>Câu 1:</strong> Hai điện tích điểm \( q_1 = 2 \mu C \) và \( q_2 = -2 \mu C \) đặt cách nhau 10 cm trong chân không. Tính lực tương tác tĩnh điện giữa chúng và cho biết đó là lực hút hay đẩy?</p>
+                <button onclick="toggleAnswer('vd_1')" class="mt-2 bg-[#000080] text-white px-4 py-2 rounded shadow hover:bg-blue-800 transition">Xem lời giải</button>
+            </div>
+            <div id="vd_1" class="hidden bg-green-100 p-4 rounded-md mt-2 border border-green-300">
+                <p><strong>Lời giải:</strong></p>
+                <p>Đổi đơn vị: \( q_1 = 2.10^{-6} C \), \( q_2 = -2.10^{-6} C \), \( r = 0,1 m \).</p>
+                <p>Lực tương tác: \( F = k\frac{|q_1q_2|}{r^2} = 9.10^9 \frac{|2.10^{-6} \cdot (-2.10^{-6})|}{(0,1)^2} = 9.10^9 \frac{4.10^{-12}}{0,01} = 3,6 N \).</p>
+                <p>Vì \( q_1, q_2 \) trái dấu nên đây là <strong>lực hút</strong>.</p>
+            </div>
+
+            <div class="bg-[#edf2f7] border-l-4 border-[#000080] p-4 rounded-r-md mt-4">
+                <p><strong>Câu 2:</strong> Hai quả cầu nhỏ giống hệt nhau mang điện tích \( q_1, q_2 \) đặt trong không khí cách nhau 20 cm thì hút nhau một lực \( 0,36 N \). Biết \( |q_1| = 2|q_2| \). Tính độ lớn của các điện tích.</p>
+                <button onclick="toggleAnswer('vd_2')" class="mt-2 bg-[#000080] text-white px-4 py-2 rounded shadow hover:bg-blue-800 transition">Xem lời giải</button>
+            </div>
+            <div id="vd_2" class="hidden bg-green-100 p-4 rounded-md mt-2 border border-green-300">
+                <p><strong>Lời giải:</strong></p>
+                <p>Áp dụng: \( F = k\frac{|q_1q_2|}{r^2} \Rightarrow 0,36 = 9.10^9 \frac{2|q_2| \cdot |q_2|}{(0,2)^2} \)</p>
+                <p>\(\Rightarrow 0,36 = 9.10^9 \frac{2q_2^2}{0,04} \Rightarrow 2q_2^2 = \frac{0,36 \cdot 0,04}{9.10^9} = 1,6.10^{-12} \)</p>
+                <p>\(\Rightarrow q_2^2 = 0,8.10^{-12} \Rightarrow |q_2| \approx 0,89.10^{-6} C = 0,89 \mu C \).</p>
+                <p>Và \( |q_1| = 2|q_2| = 1,78 \mu C \).</p>
+            </div>
+
+            <div class="bg-[#edf2f7] border-l-4 border-[#000080] p-4 rounded-r-md mt-4">
+                <p><strong>Câu 3:</strong> Một điện tích điểm \( q = 10^{-7} C \) nằm tại một điểm. Tại điểm cách nó 5 cm, người ta đặt một điện tích \( q' \) thì lực tương tác đo được là \( 0,036 N \). Tìm độ lớn của điện tích \( q' \).</p>
+                <button onclick="toggleAnswer('vd_3')" class="mt-2 bg-[#000080] text-white px-4 py-2 rounded shadow hover:bg-blue-800 transition">Xem lời giải</button>
+            </div>
+            <div id="vd_3" class="hidden bg-green-100 p-4 rounded-md mt-2 border border-green-300">
+                <p><strong>Lời giải:</strong></p>
+                <p>Ta có: \( r = 0,05 m \), \( F = 0,036 N \).</p>
+                <p>Từ công thức \( F = k\frac{|q \cdot q'|}{r^2} \Rightarrow |q'| = \frac{F \cdot r^2}{k \cdot |q|} \)</p>
+                <p>\( |q'| = \frac{0,036 \cdot (0,05)^2}{9.10^9 \cdot 10^{-7}} = \frac{0,036 \cdot 0,0025}{900} = \frac{0,00009}{900} = 10^{-7} C \).</p>
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- JavaScript Functions -->
+    <script>
+        // Hàm ẩn/hiện lời giải
+        function toggleAnswer(id) {
+            var el = document.getElementById(id);
+            if (el.classList.contains('hidden')) {
+                el.classList.remove('hidden');
+            } else {
+                el.classList.add('hidden');
+            }
+        }
+
+        // Hàm kiểm tra bài trắc nghiệm
+        function checkQuiz() {
+            const correctAnswers = {
+                q1: 'C',
+                q2: 'D',
+                q3: 'D',
+                q4: 'A',
+                q5: 'C'
+            };
+            
+            let score = 0;
+            const total = Object.keys(correctAnswers).length;
+
+            for (let i = 1; i <= total; i++) {
+                const questionName = 'q' + i;
+                const radios = document.getElementsByName(questionName);
+                let selectedValue = null;
+                
+                for (let radio of radios) {
+                    if (radio.checked) {
+                        selectedValue = radio.value;
+                        break;
+                    }
+                }
+
+                const feedbackEl = document.getElementById('feedback-' + questionName);
+                const expEl = document.getElementById('exp-' + questionName);
+                
+                // Hiển thị phần giải thích
+                expEl.classList.remove('hidden');
+                feedbackEl.classList.remove('hidden');
+
+                if (selectedValue === correctAnswers[questionName]) {
+                    score++;
+                    feedbackEl.innerHTML = '<span class="text-green-600 font-bold">✔️ Đúng!</span>';
+                } else {
+                    if(selectedValue) {
+                        feedbackEl.innerHTML = '<span class="text-red-600 font-bold">❌ Sai! Đáp án đúng là ' + correctAnswers[questionName] + '</span>';
+                    } else {
+                        feedbackEl.innerHTML = '<span class="text-red-600 font-bold">⚠️ Bạn chưa chọn đáp án. Đáp án đúng là ' + correctAnswers[questionName] + '</span>';
+                    }
+                }
+            }
+
+            const resultEl = document.getElementById('quiz-result');
+            resultEl.innerText = `Kết quả: Bạn đạt ${score}/${total} điểm.`;
+            if (score === total) {
+                resultEl.className = "mt-4 text-xl font-bold text-green-600";
+            } else {
+                resultEl.className = "mt-4 text-xl font-bold text-red-600";
+            }
+        }
+    </script>
+</body>
+</html>
