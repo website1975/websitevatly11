@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mô phỏng Thí nghiệm Điện trường 3D</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { margin: 0; overflow: hidden; font-family: sans-serif; background-color: #1a1a1a; }
+        canvas { display: block; }
+        #ui-container {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 20px;
+            border-radius: 12px;
+            width: 320px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+            z-index: 100; /* Đảm bảo UI luôn nằm trên */
+        }
+        .label { font-weight: bold; color: #333; margin-top: 12px; display: block; font-size: 0.9rem; }
+        .value { color: #2563eb; font-family: monospace; float: right; }
+        input[type=range] { width: 100%; cursor: pointer; margin-top: 4px; }
+        .formula {
+            background: #f0f4ff;
+            padding: 12px;
+            border-left: 4px solid #2563eb;
+            margin-top: 20px;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+
+<div id="ui-container">
+    <h2 class="text-xl font-bold mb-2 text-gray-800 border-b pb-2">Điều khiển Thí nghiệm</h2>
+    
+    <label class="label">Hiệu điện thế U: <span id="u-val" class="value">5.0</span> kV</label>
+    <input type="range" id="u-slider" min="0" max="30" step="0.5" value="5">
+
+    <label class="label">Khoảng cách d: <span id="d-val" class="value">10.0</span> cm</label>
+    <input type="range" id="d-slider" min="5" max="25" step="0.5" value="10">
+
+    <label class="label">Điện tích q: <span id="q-val" class="value">-15.0</span> nC</label>
+    <input type="range" id="q-slider" min="-50" max="50" step="1" value="-15">
+
+    <div class="formula">
+        <p class="text-sm font-semibold text-gray-700">Kết quả đo đạc:</p>
+        <p class="text-lg">E = <span id="e-calc" class="font-mono text-blue-700">50000</span> V/m</p>
+        <p class="text-lg">Góc lệch θ ≈ <span id="angle-calc" class="font-mono text-red-600">0.0</span>°</p>
+    </div>
+
+    <div class="mt-4 text-[10px] text-gray-500 italic">
+        * Kéo chuột trên vùng trống để xoay camera.
+        * Bản đỏ (+), Bản xanh (-).
+    </div>
+</div>
+
+<script>
+    let scene, camera, renderer, ball, string, plateLeft, plateRight;
+    let u = 5000;      // Volts
+    let d = 0.1;       // Meters
+    let q = -15e-9;    // Coulombs
+    let mass = 0.001;  // 1 gram
+    const g = 9.81;
+    const L = 0.35;    // Chiều dài dây treo
+
+    function init() {
+        scene = new THREE.Scene();
+        scene.background = new THREE.Color(0xf0f0f0);
+
+        camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(0.6, 0.3, 0.8);
+        camera.lookAt(0, 0.1, 0);
+
+        renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.shadowMap.enabled = true;
+        document.body.appendChild(renderer.domElement);
+
+        // Ánh sáng
+        scene.add(new THREE.AmbientLight(0xffffff, 0.7));
+        const dirLight = new THREE.DirectionalLight(0xffffff, 0.6);
+        dirLight.position.set(2, 4, 3);
+        dirLight.castShadow = true;
+        scene.add(dirLight);
+
+        // Chân đế và giá treo
+        const matGray = new THREE.MeshStandardMaterial({ color: 0x444444 });
+        const base = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.02, 0.4), matGray);
+        base.position.y = -0.2;
+        scene.add(base);
+
+        const stand = new THREE.Mesh(new THREE.CylinderGeometry(0.01, 0.01, 0.6), matGray);
+        stand.position.set(-0.25, 0.1, 0);
+        scene.add(stand);
+
+        const arm = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.015, 0.015), matGray);
+        arm.position.set(-0.1, 0.4, 0);
+        scene.add(arm);
+
+        // Hai bản cực tụ điện
+        const plateGeo = new THREE.CylinderGeometry(0.12, 0.12, 0.01, 40);
+        plateLeft = new THREE.Mesh(plateGeo, new THREE.MeshStandardMaterial({ color: 0x3b82f6 })); // Blue (-)
+        plateLeft.rotation.z = Math.PI / 2;
+        scene.add(plateLeft);
+
+        plateRight = new THREE.Mesh(plateGeo, new THREE.MeshStandardMaterial({ color: 0xef4444 })); // Red (+)
+        plateRight.rotation.z = Math.PI / 2;
+        scene.add(plateRight);
+
+        // Quả cầu và dây treo
+        ball = new THREE.Mesh(
+            new THREE.SphereGeometry(0.015, 32, 32),
+            new THREE.MeshStandardMaterial({ color: 0x2d3748, roughness: 0.3 })
+        );
+        scene.add(ball);
+
+        const stringMat = new THREE.LineBasicMaterial({ color: 0x333333 });
+        const stringGeo = new THREE.BufferGeometry().setFromPoints([
+            new THREE.Vector3(0, 0.4, 0),
+            new THREE.Vector3(0, 0.1, 0)
+        ]);
+        string = new THREE.Line(stringGeo, stringMat);
+        scene.add(string);
+
+        // Lưới nền
+        const grid = new THREE.GridHelper(2, 20, 0xcccccc, 0xeeeeee);
+        grid.position.y = -0.21;
+        scene.add(grid);
+
+        window.addEventListener('resize', onWindowResize, false);
+        setupInteraction();
+        updatePhysics();
+        animate();
+    }
+
+    function setupInteraction() {
+        const uS = document.getElementById('u-slider');
+        const dS = document.getElementById('d-slider');
+        const qS = document.getElementById('q-slider');
+
+        // Ngăn sự kiện kéo thanh trượt lan tỏa ra Canvas
+        const stopProp = (e) => e.stopPropagation();
+        [uS, dS, qS].forEach(el => {
+            el.addEventListener('mousedown', stopProp);
+            el.addEventListener('touchstart', stopProp);
+        });
+
+        uS.oninput = function() {
+            u = parseFloat(this.value) * 1000;
+            document.getElementById('u-val').innerText = this.value;
+            updatePhysics();
+        };
+
+        dS.oninput = function() {
+            d = parseFloat(this.value) / 100;
+            document.getElementById('d-val').innerText = this.value;
+            updatePhysics();
+        };
+
+        qS.oninput = function() {
+            q = parseFloat(this.value) * 1e-9;
+            document.getElementById('q-val').innerText = this.value;
+            updatePhysics();
+        };
+
+        // Điều khiển xoay Camera
+        let isMoving = false;
+        document.addEventListener('mousedown', (e) => {
+            if (e.target.tagName !== 'INPUT') isMoving = true;
+        });
+        document.addEventListener('mouseup', () => isMoving = false);
+        document.addEventListener('mousemove', (e) => {
+            if (isMoving) {
+                scene.rotation.y += e.movementX * 0.005;
+                // Giới hạn góc xoay dọc để không bị lộn ngược
+                let newRotX = scene.rotation.x + e.movementY * 0.005;
+                if (newRotX > -0.5 && newRotX < 0.5) scene.rotation.x = newRotX;
+            }
+        });
+    }
+
+    function updatePhysics() {
+        const E = u / d;
+        const F_electric = q * E; // Lực điện trường
+        const weight = mass * g;
+        
+        // tan(theta) = F / P. Lưu ý: q âm thì lệch sang bản dương
+        const angleRad = Math.atan(F_electric / weight);
+        const angleDeg = Math.abs(angleRad * (180 / Math.PI));
+
+        document.getElementById('e-calc').innerText = Math.round(E).toLocaleString();
+        document.getElementById('angle-calc').innerText = angleDeg.toFixed(1);
+
+        // Cập nhật vị trí 2 bản cực
+        plateLeft.position.x = -d / 2;
+        plateRight.position.x = d / 2;
+
+        // Cập nhật vị trí quả cầu (con lắc đơn trong điện trường)
+        const targetX = L * Math.sin(angleRad);
+        const targetY = 0.4 - L * Math.cos(angleRad);
+
+        ball.position.set(targetX, targetY, 0);
+        
+        // Cập nhật dây treo
+        const positions = string.geometry.attributes.position.array;
+        positions[3] = ball.position.x;
+        positions[4] = ball.position.y;
+        positions[5] = ball.position.z;
+        string.geometry.attributes.position.needsUpdate = true;
+    }
+
+    function onWindowResize() {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+    }
+
+    function animate() {
+        requestAnimationFrame(animate);
+        renderer.render(scene, camera);
+    }
+
+    window.onload = init;
+</script>
+</body>
+</html>
