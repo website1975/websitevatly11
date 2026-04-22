@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bài 19: Thế năng điện</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#000080',
+                        bodybg: '#f4f7f9',
+                        qbg: '#edf2f7',
+                        abg: '#dcfce7', // light green for answers
+                        tableBorder: '#cbd5e0',
+                        tableHeader: '#e2e8f0',
+                    },
+                    borderRadius: {
+                        '12px': '12px',
+                    },
+                    fontFamily: {
+                        sans: ['Segoe UI', 'Roboto', 'Helvetica', 'Arial', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- MathJax for rendering math formulas -->
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <style>
+        body {
+            background-color: #f4f7f9;
+        }
+    </style>
+</head>
+<body class="text-gray-800 p-4 md:p-8">
+
+    <div class="max-w-4xl mx-auto space-y-6">
+
+        <!-- Header -->
+        <div class="bg-primary text-white p-6 rounded-12px shadow-md text-center">
+            <p class="text-lg font-semibold tracking-wider">CHƯƠNG III - ĐIỆN TRƯỜNG</p><hr>
+            <h1 class="text-3xl font-bold uppercase mt-2">Bài 19: Thế năng điện</h1>
+        </div>
+
+        <!-- Intro Box -->
+        <div class="bg-white border border-black p-5 rounded-12px shadow-md italic">
+            <div class="flex flex-col md:flex-row items-center gap-4">
+                <div class="md:w-1/3">
+                    <img src="h1.png" alt="Quỹ đạo chuyển động" class="w-full object-cover rounded border" onerror="this.src='https://via.placeholder.com/300x200?text=H%C3%ACnh+Minh+H%E1%BB%8Da+Đ%E1%BA%A7u+B%C3%A0i'">
+                    <p class="text-sm text-center mt-2 not-italic text-gray-600">Quỹ đạo chuyển động của điện tích thử \( q > 0 \) khi bay vào điện trường đều theo phương vuông góc với đường sức.</p>
+                </div>
+                <div class="md:w-2/3">
+                    <p>Chúng ta đã biết, có sự tương tự giữa chuyển động của một điện tích q trong điện trường đều với chuyển động của một vật khối lượng m trong trường trọng lực. Như vậy thì điện tích q trong điện trường có tồn tại thế năng tương tự như vật khối lượng m trong trọng trường không?</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section I -->
+        <div class="bg-white p-6 rounded-12px shadow-md">
+            <h2 class="text-2xl font-bold uppercase text-primary border-b-4 border-primary inline-block mb-4">I. CÔNG CỦA LỰC ĐIỆN</h2>
+            
+            <p class="mb-4">Một điện tích dương q dịch chuyển trong điện trường đều từ điểm M tới điểm N luôn chịu tác dụng của lực điện không đổi (Hình 19.1). Để tính công của lực điện trong dịch chuyển này ta có thể xét chuyển động theo các quỹ đạo khác nhau như theo đường thẳng MN, theo một đường gấp khúc MPN,... Kết quả cho thấy: </p>
+
+	    <div class="bg-blue-50 border border-blue-200 p-4 rounded-lg text-center font-semibold text-main-blue my-4 shadow-sm"><p>Công của lực điện làm dịch chuyển của điện tích q từ điểm M đến điểm N trong điện trường đều bằng qEd, không phụ thuộc vào hình dạng của đường đi mà chỉ phụ thuộc vào vị trí của điểm đầu M và vị trí của điểm cuối N của độ dịch chuyển trong điện trường.</p></div>
+            
+            <div class="text-center my-4">
+                <p class="text-xl font-semibold text-primary">\( A_{MN} = q \cdot E \cdot d \)</p>
+            </div>
+
+            <div class="flex justify-center my-6">
+                <div class="text-center w-full max-w-md">
+                    <img src="h2.png" alt="Hình 19.1" class="w-full object-cover border" onerror="this.src='https://via.placeholder.com/400x300?text=H%C3%ACnh+19.1'">
+                    <p class="text-sm mt-2 text-gray-600 italic">Hình 19.1. Chuyển động của điện tích dương q từ điểm M đến điểm N trong điện trường đều</p>
+                </div>
+            </div>
+
+            <p class="mb-4">trong đó: d là độ dài đại số của đoạn MM', là hình chiếu của đoạn MN trên một đường sức điện.</p>
+            <p class="mb-4">Với điện trường bất kì, người ta cũng chứng minh được rằng:</p>
+		<div class="bg-blue-50 border border-blue-200 p-4 rounded-lg text-center font-semibold text-main-blue my-4 shadow-sm"> công của lực điện trường làm dịch chuyển của điện tích q không phụ thuộc vào hình dạng của đường đi mà chỉ phụ thuộc vào vị trí của điểm đầu M và vị trí của điểm cuối N của độ dịch chuyển. Đây là tính chất chung của một số trường lực như trường tĩnh điện, trường trọng lực,...</p></div>
+            <p>Vì lực điện tỉ lệ với điện tích q nên công của lực điện làm dịch chuyển điện tích q từ điểm M đến điểm N cũng tỉ lệ với điện tích q.</p>
+        </div>
+
+        <!-- Section II -->
+        <div class="bg-white p-6 rounded-12px shadow-md">
+            <h2 class="text-2xl font-bold uppercase text-primary border-b-4 border-primary inline-block mb-4">II. THẾ NĂNG CỦA MỘT ĐIỆN TÍCH TRONG ĐIỆN TRƯỜNG</h2>
+            
+            <h3 class="text-xl font-bold text-gray-800 mt-4 mb-2">1. Thế năng của một điện tích trong điện trường đều</h3>
+            <div class="bg-blue-50 border border-blue-200 p-4 rounded-lg text-center font-semibold text-main-blue my-4 shadow-sm"><p class="mb-4">Thế năng của một điện tích q trong điện trường đều đặc trưng cho khả năng sinh công của điện trường đều khi đặt điện tích q tại điểm ta xét. Số đo thể năng của điện tích q trong điện trường đều của một tụ điện được tính bằng công mà điện trường đều có thể sinh ra khi dịch chuyển điện tích q từ điểm ta xét tới bản cực âm của tụ điện.</p></div>
+
+            <!-- Question Box inside II.1 -->
+            <div class="bg-qbg border-l-4 border-primary p-4 rounded-lg my-6 shadow-sm">
+                <div class="flex flex-col md:flex-row gap-4">
+                    <div class="md:w-1/3">
+                        <img src="h3.png" alt="Hình 19.2" class="w-full object-cover border bg-white" onerror="this.src='https://via.placeholder.com/200x250?text=H%C3%ACnh+19.2'">
+                        <p class="text-xs text-center mt-1 text-gray-600 italic">Hình 19.2. Điện tích dương q trong điện trường đều của tụ điện</p>
+                    </div>
+                    <div class="md:w-2/3">
+                        <p class="font-semibold text-primary mb-2">Một điện tích dương q được đặt tại điểm M trong điện trường đều của một tụ điện có độ lớn của cường độ điện trường là E (Hình 19.2).</p>
+                        <p class="mb-1">1. Chứng minh rằng công mà điện trường đều của tụ điện có thể sinh ra khi dịch chuyển điện tích dương q từ điểm M tới bản cực âm là \( A = qEd \)</p>
+                        <p class="mb-4">2. Hãy nhận xét về công A khi ta thay q bằng một điện tích âm</p>
+                        
+                        <button onclick="toggleAnswer('ans_q1')" class="bg-primary hover:bg-blue-800 text-white font-medium py-2 px-4 rounded transition duration-300">Xem lời giải</button>
+                    </div>
+                </div>
+                
+                <div id="ans_q1" class="hidden mt-4 bg-abg p-4 rounded border border-green-300 text-gray-800">
+                    <p class="font-bold">Hướng dẫn giải:</p>
+                    <p class="mt-2"><strong>1.</strong> Lực điện tác dụng lên điện tích q là \( F = qE \). Điện tích q di chuyển cùng chiều đường sức điện từ M đến bản cực âm (quãng đường d).<br>
+                    Công của lực điện là: \( A = F \cdot d \cdot \cos(0^\circ) = qEd \).</p>
+                    <p class="mt-2"><strong>2.</strong> Khi thay q bằng một điện tích âm (\( q < 0 \)): Lực điện trường tác dụng lên điện tích sẽ ngược chiều đường sức điện (hướng về bản dương). Nếu điện tích dịch chuyển từ M về bản âm (cùng chiều đường sức), lực điện sinh công âm (công cản). Giá trị đại số của công vẫn tính bằng công thức \( A = qEd \) (với q < 0 nên A < 0).</p>
+                </div>
+            </div>
+
+            <div class="bg-blue-50 border border-blue-200 p-4 rounded-lg text-center font-semibold text-main-blue my-4 shadow-sm"><p class="mb-4">Bản cực âm của tụ điện thường được chọn làm mốc để tính thế năng. Với điện trường của một điện tích hoặc của một hệ điện tích bất kì, người ta thường chọn điểm mốc ở vô cực vì ở đó điện trường và lực điện trường đều bằng không.</p></div>
+            <div class="bg-blue-50 border border-blue-200 p-4 rounded-lg text-center font-semibold text-main-blue my-4 shadow-sm"><p class="mb-4 font-semibold">Thế năng của điện tích trong điện trường còn gọi là thế năng điện. Thế năng của một điện tích q trong điện trường đều đặc trưng cho khả năng sinh công của điện trường đều khi đặt điện tích q tại điểm đang xét.</p></div>
+            <div class="bg-blue-50 border border-blue-200 p-4 rounded-lg text-center font-semibold text-main-blue my-4 shadow-sm"><p class="mb-4">Số đo thế năng của điện tích q tại điểm M trong điện trường đều bằng công của lực điện có thể sinh ra khi điện tích q di chuyển từ điểm M tới điểm mốc để tính thế năng:</p></div>
+            
+            <div class="text-center my-4">
+                <p class="text-xl font-semibold text-primary">\( W_{M} = qEd \) &nbsp;&nbsp;&nbsp; <span class="text-sm font-normal text-gray-500">(19.2)</span></p>
+            </div>
+            <p class="mb-6">trong đó d là khoảng cách từ M đến bản cực âm, \( W_{M} \) là thế năng điện của điện tích q tại điểm M.</p>
+
+            <h3 class="text-xl font-bold text-gray-800 mt-6 mb-2">2. Thế năng của một điện tích trong điện trường bất kì</h3>
+            <p class="mb-4">Tương tự như trường hợp điện trường đều, với điện trường bất kì ta có thể phát biểu: Thế năng của một điện tích q trong điện trường đặc trưng cho khả năng sinh công của điện trường khi đặt điện tích q tại điểm đang xét.</p>
+            <div class="bg-blue-50 border border-blue-200 p-4 rounded-lg text-center font-semibold text-main-blue my-4 shadow-sm"><p class="mb-4 font-semibold">Số đo thế năng của điện tích q tại điểm M trong điện trường bằng công của lực điện có thể sinh ra khi điện tích q di chuyển từ điểm M tới điểm mốc để tính thế năng.</p></div>
+            <p class="mb-4">Chú ý rằng, khi chọn mốc thế năng tại vô cực, ta có số đo thế năng của điện tích q tại điểm M trong điện trường bằng công của lực điện trong dịch chuyển của điện tích q từ điểm M tới vô cực:</p>
+            
+            <div class="text-center my-4">
+                <p class="text-xl font-semibold text-primary">\( W_{M} = A_{M\infty} \) &nbsp;&nbsp;&nbsp; <span class="text-sm font-normal text-gray-500">(19.3)</span></p>
+            </div>
+
+            <p class="mb-4">Vì độ lớn của lực điện tỉ lệ thuận với điện tích q nên thế năng tại điểm M cũng tỉ lệ với điện tích q:</p>
+
+            <div class="text-center my-4">
+                <p class="text-xl font-semibold text-primary">\( W_{M} = V_{M}q \) &nbsp;&nbsp;&nbsp; <span class="text-sm font-normal text-gray-500">(19.4)</span></p>
+            </div>
+
+            <p>Hệ số tỉ lệ V không phụ thuộc vào điện tích q mà chỉ phụ thuộc vào điện trường và vị trí của điểm M.</p>
+        </div>
+
+        <!-- Questions Section (?) -->
+        <div class="bg-white p-6 rounded-12px shadow-md">
+            <div class="flex items-center gap-2 mb-4">
+                <div class="bg-orange-500 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold text-xl">?</div>
+                <h2 class="text-xl font-bold uppercase text-gray-800">CÂU HỎI VÀ THẢO LUẬN</h2>
+            </div>
+
+            <!-- Question 1 -->
+            <div class="bg-qbg border-l-4 border-primary p-4 rounded-lg mb-4">
+                <p class="mb-4"><strong>1.</strong> Chứng tỏ rằng, công của lực điện trong sự dịch chuyển của điện tích q từ điểm M đến điểm N sẽ bằng độ giảm thể năng của điện tích q trong điện trường. Hãy mở rộng cho trường hợp M ở xa vô cùng.</p>
+                <button onclick="toggleAnswer('ans_q2')" class="bg-primary hover:bg-blue-800 text-white font-medium py-1 px-4 rounded text-sm transition duration-300">Xem lời giải</button>
+                <div id="ans_q2" class="hidden mt-4 bg-abg p-4 rounded border border-green-300 text-gray-800">
+                    <p><strong>Trả lời:</strong></p>
+                    <p>Theo định lí động năng và tính chất của trường lực thế, công của lực điện làm điện tích di chuyển từ M đến N bằng độ giảm thế năng của điện tích trong điện trường: <br>
+                    \( A_{MN} = W_M - W_N \)</p>
+                    <p class="mt-2">Mở rộng khi điểm cuối N ở xa vô cùng (vô cực, chọn làm mốc thế năng nên \( W_\infty = 0 \)):<br>
+                    \( A_{M\infty} = W_M - W_\infty = W_M - 0 = W_M \).<br>
+                    Điều này hoàn toàn phù hợp với định nghĩa thế năng tại một điểm.</p>
+                </div>
+            </div>
+
+            <!-- Question 2 -->
+            <div class="bg-qbg border-l-4 border-primary p-4 rounded-lg">
+                <p class="mb-4"><strong>2.</strong> Trong điện trường bất kì, khi chọn mốc là ở xa vô cùng, có trường hợp mà số đo thế năng sẽ có giá trị âm không? Hãy vẽ hình minh hoạ.</p>
+                <button onclick="toggleAnswer('ans_q3')" class="bg-primary hover:bg-blue-800 text-white font-medium py-1 px-4 rounded text-sm transition duration-300">Xem lời giải</button>
+                <div id="ans_q3" class="hidden mt-4 bg-abg p-4 rounded border border-green-300 text-gray-800">
+                    <p><strong>Trả lời:</strong></p>
+                    <p>CÓ trường hợp số đo thế năng có giá trị âm.</p>
+                    <p>Giả sử xét từ trường của một điện tích điểm âm \( Q < 0 \). Mốc thế năng ở vô cực (\( W_\infty = 0 \)).<br>
+                    Khi đưa một điện tích thử dương \( q > 0 \) từ vô cực vào điểm M gần Q, lực hút giữa chúng sinh công dương. Do đó công để đưa q từ M ra vô cực sẽ là công âm (\( A_{M\infty} < 0 \)). <br>
+                    Vì \( W_M = A_{M\infty} \) nên \( W_M < 0 \).</p>
+                    <div class="mt-2 text-center text-sm italic text-gray-600">
+                        (Học sinh tự vẽ hình một điện tích Q < 0 và điểm M xung quanh với các đường sức hướng vào Q).
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Em Đã Học & Em Có Thể -->
+        <div class="grid md:grid-cols-2 gap-6">
+            <!-- Em Đã Học -->
+            <div class="bg-orange-50 border border-orange-200 p-6 rounded-12px shadow-md relative">
+                <div class="absolute -top-4 left-6 bg-orange-500 text-white px-4 py-1 rounded-full font-bold uppercase shadow">Em đã học</div>
+                <ul class="list-disc pl-5 mt-4 space-y-2 text-gray-800">
+                    <li>Công của lực điện trường trong sự dịch chuyển của điện tích q không phụ thuộc vào hình dạng của đường đi mà chỉ phụ thuộc vào vị trí của điểm đầu M và điểm cuối N của chuyển động.</li>
+                    <li>Thế năng của một điện tích q trong điện trường đặc trưng cho khả năng sinh công của điện trường khi đặt điện tích q tại điểm đang xét.
+                        <ul class="list-none pl-2 mt-1">
+                            <li>■ Trong điện trường đều: \( W_{M} = qEd \)</li>
+                            <li>■ Trong điện trường bất kì: \( W_{M} = A_{M\infty} \)</li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Em Có Thể -->
+            <div class="bg-teal-50 border border-teal-200 p-6 rounded-12px shadow-md relative">
+                <div class="absolute -top-4 left-6 bg-teal-500 text-white px-4 py-1 rounded-full font-bold uppercase shadow">Em có thể</div>
+                <ul class="list-disc pl-5 mt-4 space-y-2 text-gray-800">
+                    <li>Xác định được thế năng điện của quả cầu tích điện đều đặt trong điện trường đều của Trái Đất.</li>
+                    <li>Xác định được công dịch chuyển một điện tích giữa hai điểm trong điện trường đều của Trái Đất.</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Exercises Section -->
+        <div class="bg-white p-6 rounded-12px shadow-md mt-8 border-t-8 border-primary">
+            <h2 class="text-2xl font-bold uppercase text-primary mb-6 text-center">BÀI TẬP CỦNG CỐ & VẬN DỤNG</h2>
+            
+            <!-- Trắc nghiệm -->
+            <h3 class="text-xl font-bold text-gray-800 border-b-2 border-gray-200 pb-2 mb-4">A. Trắc nghiệm (5 câu)</h3>
+            <form id="quizForm" class="space-y-6">
+                
+                <!-- Q1 -->
+                <div class="quiz-question" data-answer="A">
+                    <p class="font-semibold mb-2">Câu 1: Công của lực điện làm dịch chuyển một điện tích q từ điểm M đến điểm N trong điện trường đều \(E\) được tính bằng công thức nào sau đây?</p>
+                    <div class="space-y-1">
+                        <label class="block"><input type="radio" name="q1" value="A" class="mr-2"> A. \( A = qEd \)</label>
+                        <label class="block"><input type="radio" name="q1" value="B" class="mr-2"> B. \( A = qE/d \)</label>
+                        <label class="block"><input type="radio" name="q1" value="C" class="mr-2"> C. \( A = E/(qd) \)</label>
+                        <label class="block"><input type="radio" name="q1" value="D" class="mr-2"> D. \( A = q^2Ed \)</label>
+                    </div>
+                    <div class="quiz-explanation hidden mt-2 text-sm bg-blue-50 p-3 rounded border border-blue-200">
+                        <strong>Giải thích:</strong> Theo bài học, công của lực điện trong điện trường đều là \( A = qEd \) (trong đó d là hình chiếu độ dời lên phương đường sức). Đáp án A đúng.
+                    </div>
+                </div>
+
+                <!-- Q2 -->
+                <div class="quiz-question" data-answer="B">
+                    <p class="font-semibold mb-2">Câu 2: Khi một điện tích q di chuyển trong điện trường, công của lực điện không phụ thuộc vào:</p>
+                    <div class="space-y-1">
+                        <label class="block"><input type="radio" name="q2" value="A" class="mr-2"> A. Vị trí điểm đầu.</label>
+                        <label class="block"><input type="radio" name="q2" value="B" class="mr-2"> B. Hình dạng đường đi.</label>
+                        <label class="block"><input type="radio" name="q2" value="C" class="mr-2"> C. Vị trí điểm cuối.</label>
+                        <label class="block"><input type="radio" name="q2" value="D" class="mr-2"> D. Độ lớn điện tích q.</label>
+                    </div>
+                    <div class="quiz-explanation hidden mt-2 text-sm bg-blue-50 p-3 rounded border border-blue-200">
+                        <strong>Giải thích:</strong> Lực điện là lực thế, công của nó chỉ phụ thuộc điểm đầu và điểm cuối, KHÔNG phụ thuộc hình dạng đường đi. Đáp án B đúng.
+                    </div>
+                </div>
+
+                <!-- Q3 -->
+                <div class="quiz-question" data-answer="A">
+                    <p class="font-semibold mb-2">Câu 3: Đơn vị của thế năng điện là gì?</p>
+                    <div class="space-y-1">
+                        <label class="block"><input type="radio" name="q3" value="A" class="mr-2"> A. Jun (J).</label>
+                        <label class="block"><input type="radio" name="q3" value="B" class="mr-2"> B. Vôn (V).</label>
+                        <label class="block"><input type="radio" name="q3" value="C" class="mr-2"> C. Culông (C).</label>
+                        <label class="block"><input type="radio" name="q3" value="D" class="mr-2"> D. Vôn trên mét (V/m).</label>
+                    </div>
+                    <div class="quiz-explanation hidden mt-2 text-sm bg-blue-50 p-3 rounded border border-blue-200">
+                        <strong>Giải thích:</strong> Thế năng là một dạng năng lượng nên có đơn vị chuẩn là Jun (J). Đáp án A đúng.
+                    </div>
+                </div>
+
+                <!-- Q4 -->
+                <div class="quiz-question" data-answer="C">
+                    <p class="font-semibold mb-2">Câu 4: Thường người ta chọn mốc thế năng điện của một điện tích hoặc hệ điện tích bất kì ở đâu?</p>
+                    <div class="space-y-1">
+                        <label class="block"><input type="radio" name="q4" value="A" class="mr-2"> A. Tại bản cực dương.</label>
+                        <label class="block"><input type="radio" name="q4" value="B" class="mr-2"> B. Tại bản cực âm.</label>
+                        <label class="block"><input type="radio" name="q4" value="C" class="mr-2"> C. Ở vô cực.</label>
+                        <label class="block"><input type="radio" name="q4" value="D" class="mr-2"> D. Tại tâm của điện tích.</label>
+                    </div>
+                    <div class="quiz-explanation hidden mt-2 text-sm bg-blue-50 p-3 rounded border border-blue-200">
+                        <strong>Giải thích:</strong> Theo bài học, với hệ điện tích bất kì, người ta thường chọn mốc ở vô cực vì ở đó điện trường bằng 0. Đáp án C đúng.
+                    </div>
+                </div>
+
+                <!-- Q5 -->
+                <div class="quiz-question" data-answer="B">
+                    <p class="font-semibold mb-2">Câu 5: Công của lực điện trường dịch chuyển điện tích \(q\) từ M đến vô cực được gọi là:</p>
+                    <div class="space-y-1">
+                        <label class="block"><input type="radio" name="q5" value="A" class="mr-2"> A. Cường độ điện trường tại M.</label>
+                        <label class="block"><input type="radio" name="q5" value="B" class="mr-2"> B. Thế năng điện của điện tích q tại M.</label>
+                        <label class="block"><input type="radio" name="q5" value="C" class="mr-2"> C. Lực điện trường tác dụng lên q.</label>
+                        <label class="block"><input type="radio" name="q5" value="D" class="mr-2"> D. Điện thế tại M.</label>
+                    </div>
+                    <div class="quiz-explanation hidden mt-2 text-sm bg-blue-50 p-3 rounded border border-blue-200">
+                        <strong>Giải thích:</strong> Theo mục II.2, số đo thế năng tại M bằng công của lực điện sinh ra khi dịch chuyển q từ M tới vô cực (\( W_M = A_{M\infty} \)). Đáp án B đúng.
+                    </div>
+                </div>
+
+                <div class="text-center mt-6">
+                    <button type="button" onclick="checkQuiz()" class="bg-primary hover:bg-blue-900 text-white font-bold py-3 px-8 rounded-full shadow-lg transition duration-300">NỘP BÀI</button>
+                </div>
+                
+                <div id="quizResult" class="mt-4 text-center text-lg font-bold"></div>
+            </form>
+
+            <!-- Tự luận -->
+            <h3 class="text-xl font-bold text-gray-800 border-b-2 border-gray-200 pb-2 mt-10 mb-4">B. Bài tập vận dụng tính toán (3 câu)</h3>
+            
+            <div class="space-y-6">
+                <!-- VD 1 -->
+                <div class="bg-qbg border-l-4 border-indigo-500 p-4 rounded">
+                    <p class="font-semibold mb-2">Bài 1: Một điện tích \( q = +2 \cdot 10^{-6} \text{ C} \) di chuyển đoạn đường dài 5 cm dọc theo một đường sức của điện trường đều có cường độ \( E = 4000 \text{ V/m} \). Tính công của lực điện trường.</p>
+                    <button onclick="toggleAnswer('vd1')" class="bg-indigo-600 hover:bg-indigo-700 text-white py-1 px-4 rounded text-sm mb-2">Xem lời giải</button>
+                    <div id="vd1" class="hidden bg-white p-4 border border-indigo-200 rounded mt-2">
+                        <p><strong>Giải:</strong></p>
+                        <p>Đổi: \( d = 5 \text{ cm} = 0.05 \text{ m} \).</p>
+                        <p>Vì điện tích di chuyển dọc theo đường sức nên góc hợp bởi độ dời và véc-tơ cường độ điện trường là \( \alpha = 0^\circ \).</p>
+                        <p>Công của lực điện: \( A = qEd = 2 \cdot 10^{-6} \cdot 4000 \cdot 0.05 \)</p>
+                        <p>\( A = 4 \cdot 10^{-4} \text{ (J)} \).</p>
+                        <p><strong>Đáp số:</strong> \( 4 \cdot 10^{-4} \text{ J} \).</p>
+                    </div>
+                </div>
+
+                <!-- VD 2 -->
+                <div class="bg-qbg border-l-4 border-indigo-500 p-4 rounded">
+                    <p class="font-semibold mb-2">Bài 2: Tính thế năng của một electron (\( q = -1.6 \cdot 10^{-19} \text{ C} \)) đặt tại điểm M trong điện trường, biết điện thế tại M là \( V_M = 500 \text{ V} \).</p>
+                    <button onclick="toggleAnswer('vd2')" class="bg-indigo-600 hover:bg-indigo-700 text-white py-1 px-4 rounded text-sm mb-2">Xem lời giải</button>
+                    <div id="vd2" class="hidden bg-white p-4 border border-indigo-200 rounded mt-2">
+                        <p><strong>Giải:</strong></p>
+                        <p>Dựa vào công thức liên hệ giữa thế năng và điện thế: \( W_M = q \cdot V_M \)</p>
+                        <p>Thay số ta có: \( W_M = (-1.6 \cdot 10^{-19}) \cdot 500 \)</p>
+                        <p>\( W_M = -8 \cdot 10^{-17} \text{ (J)} \).</p>
+                        <p><strong>Đáp số:</strong> \( -8 \cdot 10^{-17} \text{ J} \).</p>
+                    </div>
+                </div>
+
+                <!-- VD 3 -->
+                <div class="bg-qbg border-l-4 border-indigo-500 p-4 rounded">
+                    <p class="font-semibold mb-2">Bài 3: Một điện tích \( q = 5 \mu\text{C} \) dịch chuyển từ điểm M có thế năng \( 0.2 \text{ J} \) đến điểm N có thế năng \( 0.05 \text{ J} \). Tính công mà lực điện đã thực hiện trong quá trình dịch chuyển đó.</p>
+                    <button onclick="toggleAnswer('vd3')" class="bg-indigo-600 hover:bg-indigo-700 text-white py-1 px-4 rounded text-sm mb-2">Xem lời giải</button>
+                    <div id="vd3" class="hidden bg-white p-4 border border-indigo-200 rounded mt-2">
+                        <p><strong>Giải:</strong></p>
+                        <p>Công của lực điện trường bằng độ giảm thế năng của điện tích trong điện trường:</p>
+                        <p>\( A_{MN} = W_M - W_N \)</p>
+                        <p>Thay số vào ta được: \( A_{MN} = 0.2 - 0.05 = 0.15 \text{ (J)} \).</p>
+                        <p><strong>Đáp số:</strong> \( 0.15 \text{ J} \).</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- JavaScript Functions -->
+    <script>
+        // Toggle Answer Function
+        function toggleAnswer(id) {
+            const el = document.getElementById(id);
+            if (el.classList.contains('hidden')) {
+                el.classList.remove('hidden');
+            } else {
+                el.classList.add('hidden');
+            }
+        }
+
+        // Quiz Logic
+        function checkQuiz() {
+            let score = 0;
+            const totalQuestions = 5;
+            const questions = document.querySelectorAll('.quiz-question');
+
+            questions.forEach((q, index) => {
+                const correctAnswer = q.getAttribute('data-answer');
+                const qName = 'q' + (index + 1);
+                const selectedOption = document.querySelector(`input[name="${qName}"]:checked`);
+                const explanation = q.querySelector('.quiz-explanation');
+
+                // Clear previous styling
+                q.classList.remove('bg-red-50', 'bg-green-50');
+
+                if (selectedOption) {
+                    if (selectedOption.value === correctAnswer) {
+                        score++;
+                        q.classList.add('bg-green-50');
+                    } else {
+                        q.classList.add('bg-red-50');
+                    }
+                } else {
+                    // Not answered
+                    q.classList.add('bg-red-50');
+                }
+                
+                // Show explanation
+                explanation.classList.remove('hidden');
+            });
+
+            const resultDiv = document.getElementById('quizResult');
+            if (score === totalQuestions) {
+                resultDiv.innerHTML = `<span class="text-green-600">Tuyệt vời! Bạn đã làm đúng ${score}/${totalQuestions} câu.</span>`;
+            } else {
+                resultDiv.innerHTML = `<span class="text-red-600">Bạn làm đúng ${score}/${totalQuestions} câu. Hãy xem kĩ lại các phần giải thích nhé!</span>`;
+            }
+        }
+    </script>
+</body>
+</html>
