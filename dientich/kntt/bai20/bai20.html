@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bài 20: ĐIỆN THẾ</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <style>
+        body {
+            background-color: #f4f7f9;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #333;
+        }
+        .main-color { color: #000080; }
+        .bg-main { background-color: #000080; }
+        .rounded-12px { border-radius: 12px; }
+        .shadow-md { box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); }
+        
+        .section-header {
+            text-transform: uppercase;
+            font-weight: bold;
+            border-bottom: 3px solid #000080;
+            display: inline-block;
+            margin-bottom: 1rem;
+            color: #000080;
+        }
+        .intro-box {
+            border: 1px solid #ccc;
+            background-color: white;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        .question-box {
+            background-color: #edf2f7;
+            border-left: 5px solid #000080;
+            padding: 1rem;
+            margin: 1rem 0;
+        }
+        .answer-box {
+            background-color: #f0fff4;
+            border: 1px dashed #48bb78;
+            padding: 1rem;
+            margin-top: 0.5rem;
+            display: none;
+        }
+        .info-box { padding: 1.5rem; margin: 1.5rem 0; border-radius: 12px; }
+        .em-co-biet { background-color: #fffaf0; border: 1px solid #feebc8; }
+        .em-co-the { background-color: #ebf8ff; border: 1px solid #bee3f8; }
+        .em-da-hoc { background-color: #f0fff4; border: 1px solid #c6f6d5; }
+        
+        .btn-view {
+            background-color: #000080;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            margin-top: 10px;
+            transition: 0.3s;
+        }
+        .btn-view:hover { opacity: 0.8; }
+        
+        .image-placeholder {
+            background-color: #e2e8f0;
+            border: 1px solid #cbd5e0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 200px;
+            margin: 1rem 0;
+            font-style: italic;
+            color: #4a5568;
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+
+    <div class="max-w-4xl mx-auto">
+        <!-- Header -->
+        <header class="bg-main text-white rounded-12px overflow-hidden shadow-md mb-8">
+            <div class="p-2 text-sm text-center border-b border-blue-800">CHƯƠNG III – ĐIỆN TRƯỜNG</div>
+            <div class="p-6 text-center">
+                <h1 class="text-3xl font-bold">BÀI 20: ĐIỆN THẾ</h1>
+            </div>
+        </header>
+
+        <!-- Intro Box -->
+        <div class="intro-box rounded-12px shadow-md">
+            <div class="grid md:grid-cols-2 gap-6 items-center">
+                <div>
+                    <img src="h1.png" alt="Đường dây điện cao thế" class="w-full rounded shadow-sm mb-2">
+                    <p class="text-center text-sm italic">Đường dây điện cao thế.</p>
+                </div>
+                <div>
+                    <p class="italic text-lg">
+                        Trong thực tế chúng ta gặp những đường dây dẫn điện cao thế, trung thế, hạ thế. Từ "thế" ở đây được hiểu như thế nào? Có liên quan tới điện thế năng đã học ở Bài 19 hay không?
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- I. ĐIỆN THẾ TẠI MỘT ĐIỂM TRONG ĐIỆN TRƯỜNG -->
+        <section class="bg-white p-8 rounded-12px shadow-md mb-8">
+            <h2 class="section-header">I. ĐIỆN THẾ TẠI MỘT ĐIỂM TRONG ĐIỆN TRƯỜNG</h2>
+            
+            <div class="question-box">
+                <p><strong>1.</strong> Để đặt một điện tích \( q \) vào điểm M trong điện trường chúng ta cần cung cấp thế năng \( W_M \) cho điện tích \( q \). Điều này tương ứng với việc thực hiện một công \( A \) dịch chuyển điện tích \( q \) từ vô cực về điểm M. Hãy vận dụng công thức (19.4) và (19.5) để thu được công thức:
+                \[ V = \frac{A}{q} \]</p>
+                <button class="btn-view" onclick="toggleAnswer('sol-1')">Xem hướng giải quyết</button>
+                <div id="sol-1" class="answer-box">
+                    Theo định nghĩa thế năng điện tại M: \( W_M = A_{\infty M} \). <br>
+                    Mặt khác, thế năng tỉ lệ thuận với điện tích \( q \): \( W_M = V \cdot q \). <br>
+                    Từ đó suy ra: \( V = \frac{W_M}{q} = \frac{A}{q} \).
+                </div>
+            </div>
+
+            <div class="question-box">
+                <p><strong>2.</strong> Tỉ số \( V = \frac{A}{q} \) như trên được gọi là điện thế của điện trường tại điểm M.</p>
+                <p>a) Hãy dự đoán điện thế \( V \) đặc trưng cho đại lượng nào của điện trường.</p>
+                <p>b) Xác định độ lớn điện tích \( q \) khi điện thế \( V \) có giá trị bằng công \( A \) thực hiện để dịch chuyển điện tích \( q \) từ vô cực về điểm M.</p>
+                <button class="btn-view" onclick="toggleAnswer('sol-2')">Xem hướng giải quyết</button>
+                <div id="sol-2" class="answer-box">
+                    a) Điện thế \( V \) đặc trưng cho điện trường về phương diện tạo ra thế năng tại một điểm. <br>
+                    b) Khi \( V = A \), từ công thức \( V = \frac{A}{q} \Rightarrow 1 = \frac{1}{q} \Rightarrow q = 1 \text{ (C)} \). Vậy độ lớn điện tích là 1 đơn vị điện tích dương.
+                </div>
+            </div>
+
+            <div class="my-4">
+                <p class="italic text-gray-700">Điện thế tại một điểm trong điện trường đặc trưng cho điện trường tại điểm đó về thế năng, được xác định bằng công dịch chuyển một đơn vị điện tích dương từ vô cực về điểm đó.</p>
+                <div class="bg-gray-50 p-4 text-center border rounded my-2">
+                    \( V = \frac{A}{q} \) <span class="ml-10">(20.1)</span>
+                </div>
+                <p>Đơn vị của điện thế là vôn (kí hiệu là V), ngoài ra người ta còn dùng đơn vị kilôvôn (kV): 1 kV = 1 000 V.</p>
+            </div>
+
+            <div class="bg-blue-50 border-l-4 border-blue-500 p-4 italic my-4">
+                <p>a) Điện thế có giá trị đại số, dấu của điện thế phụ thuộc vào dấu của công A và dấu của điện tích q.</p>
+                <p>b) Cũng như chọn mốc thế năng, ngoài việc chọn mốc điện thế ở vô cực thì trong điện trường đều giữa hai bản phẳng người ta thường chọn mốc điện thế là bản nhiễm điện âm, còn mặt đất thường được chọn là mốc điện thế trong thực tiễn cuộc sống và kĩ thuật.</p>
+            </div>
+
+            <p>Chúng ta đã được học và đo hiệu điện thế. Hiệu điện thế \( U_{MN} \) mà chúng ta đo được chính là giá trị của hiệu giữa điện thế tại M và điện thế tại N:</p>
+            <div class="bg-gray-50 p-4 text-center border rounded my-2">
+                \( U_{MN} = V_M - V_N \) <span class="ml-10">(20.2)</span>
+            </div>
+            <p>Vì vậy U và V đều có chung đơn vị là vôn.</p>
+        </section>
+
+        <!-- Em có biết 1 -->
+        <div class="info-box em-co-biet shadow-md">
+            <h3 class="font-bold mb-2">EM CÓ BIẾT</h3>
+            <ol class="list-decimal ml-5 space-y-2">
+                <li>Hiệu điện thế còn được gọi là <strong>điện áp</strong>. Thiết bị dùng để biến đổi hiệu điện thế được gọi là biến áp.</li>
+                <li>Theo quy định của mạng lưới truyền tải điện ở Việt Nam, các lưới điện có điện áp nhỏ hơn 1 kV gọi là hạ thế, từ 1 kV đến 66 kV gọi là trung thế, lớn hơn 66 kV gọi là cao thế. Còn theo quy định của hành lang an toàn lưới điện thì điện áp lớn hơn 1 kV đã được gọi là cao thế.</li>
+            </ol>
+        </div>
+
+        <!-- II. MỐI LIÊN HỆ GIỮA ĐIỆN THẾ VÀ CƯỜNG ĐỘ ĐIỆN TRƯỜNG -->
+        <section class="bg-white p-8 rounded-12px shadow-md mb-8">
+            <h2 class="section-header">II. MỐI LIÊN HỆ GIỮA ĐIỆN THẾ VÀ CƯỜNG ĐỘ ĐIỆN TRƯỜNG</h2>
+            <p>Trong thực tế người ta thường xét sự dịch chuyển một điện tích q từ điểm N tới điểm M nào đó trong điện trường.</p>
+
+            <div class="question-box">
+                <div class="flex items-start">
+                    <span class="mr-2">🖐️</span>
+                    <p>Hãy vận dụng công thức \( V = \frac{A}{q} \) để chứng tỏ rằng công thực hiện để dịch chuyển điện tích q từ điểm N đến điểm M bằng:
+                    \[ A_{NM} = (V_M - V_N)q = U_{MN}q \] <span class="float-right">(20.3)</span></p>
+                </div>
+                <button class="btn-view" onclick="toggleAnswer('sol-3')">Xem hướng giải quyết</button>
+                <div id="sol-3" class="answer-box">
+                    Công dịch chuyển điện tích từ N đến M là hiệu thế năng: \( A_{NM} = W_M - W_N \). <br>
+                    Thay \( W_M = V_M \cdot q \) và \( W_N = V_N \cdot q \), ta được: <br>
+                    \( A_{NM} = V_M \cdot q - V_N \cdot q = (V_M - V_N)q = U_{MN}q \).
+                </div>
+            </div>
+
+            <div class="bg-blue-50 border-l-4 border-blue-500 p-4 italic my-4">
+                Để dịch chuyển một điện tích dương q ngược chiều điện trường từ điểm N tới điểm M, ta cần cung cấp một lực ít nhất bằng với lực điện và ngược chiều. Trong dịch chuyển này, công ta bỏ ra có độ lớn bằng nhưng trái dấu với công của lực điện trường.
+            </div>
+
+            <div class="question-box bg-pink-50" style="border-left-color: #d53f8c;">
+                <p class="font-bold text-pink-700">?</p>
+                <p>Tế bào quang điện chân không (Hình 20.1) gồm một ống hình trụ có một cửa sổ trong suốt, được hút chân không (áp suất trong khoảng \( 10^{-8} \) mmHg đến \( 10^{-6} \) mmHg). Trong ống đặt một catôt (cực âm) có khả năng phát xạ electron khi được chiếu sáng và một anôt (cực dương). Electron trong điện trường giữa hai cực sẽ dịch chuyển về phía anôt nếu \( U_{AK} > 0 \).</p>
+                <div class="image-placeholder">
+                    <img src="h2.png" alt="Hình 20.1: Cấu tạo tế bào quang điện" class="max-h-full">
+                    <p class="text-xs mt-1">Hình 20.1. Cấu tạo của tế bào quang điện chân không</p>
+                </div>
+                <p>Cho hiệu điện thế \( U_{AK} = 45 \text{ V} \) được đặt vào giữa hai cực của tế bào quang điện. Khi chiếu xạ ánh sáng phù hợp để catôt phát xạ electron vào vùng điện trường giữa hai cực. Hãy tính công của điện trường trong dịch chuyển của electron từ catôt tới anôt.</p>
+                <button class="btn-view" onclick="toggleAnswer('sol-4')" style="background-color: #d53f8c;">Xem lời giải</button>
+                <div id="sol-4" class="answer-box">
+                    Công của điện trường: \( A = q \cdot U_{KA} = (-e) \cdot (V_K - V_A) = e \cdot (V_A - V_K) = e \cdot U_{AK} \). <br>
+                    Với \( e \approx 1,6 \cdot 10^{-19} \text{ C} \) và \( U_{AK} = 45 \text{ V} \). <br>
+                    \( A = 1,6 \cdot 10^{-19} \cdot 45 = 7,2 \cdot 10^{-18} \text{ J} \).
+                </div>
+            </div>
+
+            <div class="my-6">
+                <p>Điện thế là một đại lượng gắn với điện trường, còn thế năng điện là đại lượng gắn với điện tích đặt trong điện trường. Trong công thức (20.1), công A mà chúng ta sử dụng để dịch chuyển điện tích q từ vô cực về điểm M cũng chính bằng thế năng \( W_M \) của điện tích q đặt tại M trong điện trường. Như vậy, thế năng điện và điện thế liên hệ với nhau bởi công thức:</p>
+                <div class="bg-gray-50 p-4 text-center border rounded my-2">
+                    \( W_M = V_M \cdot q \) <span class="ml-10">(20.4)</span>
+                </div>
+            </div>
+
+            <div class="question-box bg-pink-50" style="border-left-color: #d53f8c;">
+                <p class="font-bold text-pink-700">?</p>
+                <p>Tính thế năng điện của một electron đặt tại điểm M có điện thế bằng 1 000 V.</p>
+                <button class="btn-view" onclick="toggleAnswer('sol-5')" style="background-color: #d53f8c;">Xem lời giải</button>
+                <div id="sol-5" class="answer-box">
+                    Thế năng điện: \( W_M = q \cdot V_M \). <br>
+                    Với \( q = -1,6 \cdot 10^{-19} \text{ C} \) và \( V_M = 1 000 \text{ V} \). <br>
+                    \( W_M = -1,6 \cdot 10^{-19} \cdot 1000 = -1,6 \cdot 10^{-16} \text{ J} \).
+                </div>
+            </div>
+
+            <p class="mt-4">Trong điện trường đều, xét một điện tích thử dương chuyển động dọc theo một đường sức điện từ điểm M đến điểm N. Ta thấy, chiều của vectơ cường độ điện trường E hướng theo chiều giảm của điện thế. Chọn chiều dương của trục tọa độ là chiều đường sức (Hình 20.2). Áp dụng công thức (18.1) ta có:</p>
+            <div class="bg-gray-50 p-4 text-center border rounded my-2">
+                \( E_M = E_N = E = \frac{U}{d} = \frac{V_M - V_N}{MN} \) <span class="ml-10">(20.5)</span>
+            </div>
+            
+            <div class="grid md:grid-cols-2 gap-4 items-center my-4">
+                <p>Kết quả trên cho thấy: trong điện trường đều, độ lớn cường độ điện trường bằng độ giảm của điện thế dọc theo một đơn vị độ dài đường sức.</p>
+                <div class="text-center">
+                    <img src="h3.png" alt="Chuyển động điện tích" class="mx-auto max-h-48">
+                    <p class="text-xs italic">Hình 20.2. Chuyển động của điện tích thử dọc theo một đường sức</p>
+                </div>
+            </div>
+            
+            <p>Với điện trường bất kì, công thức (20.5) vẫn được áp dụng trong trường hợp hai điểm M và N ở rất gần nhau.</p>
+            <p class="italic">Cường độ điện trường tại một điểm M có độ lớn bằng thương của hiệu điện thế giữa hai điểm M và N trên một đoạn nhỏ đường sức chia cho độ dài đại số của đoạn đường sức đó.</p>
+
+            <!-- Bài tập ví dụ -->
+            <div class="bg-gray-50 p-6 rounded border my-6">
+                <h4 class="font-bold underline mb-2">Bài tập ví dụ:</h4>
+                <p>Có hai bản phẳng song song cách nhau một khoảng d (Hình 20.3), được nối vào nguồn điện một chiều có hiệu điện thế 48 V. Chọn bản nhiễm điện âm làm mốc điện thế.</p>
+                <div class="text-center my-4">
+                    <img src="h4.png" alt="Hai bản phẳng song song" class="mx-auto max-h-48">
+                    <p class="text-xs italic">Hình 20.3</p>
+                </div>
+                <p>a) Xác định mối liên hệ giữa điện thế và cường độ điện trường tại một điểm trong điện trường đều giữa hai bản phẳng.</p>
+                <p>b) Áp dụng kết quả câu a để tính điện thế tại M nằm chính giữa khe hở của hai bản phẳng.</p>
+                
+                <div class="mt-4">
+                    <p class="font-bold">Giải:</p>
+                    <p>a) Gọi N là điểm giao của đường sức đi qua M với bản nhiễm điện âm (Hình 20.3). \( V_N = 0 \) do điểm N nằm trên bản phẳng nhiễm điện âm được chọn làm mốc điện thế; \( MN = h > 0 \) vì MN thuận theo chiều đường sức, h chính là khoảng cách từ M tới bản nhiễm điện âm. Vận dụng công thức (20.5) vào điện trường đều giữa hai bản phẳng ta tìm được mối liên hệ giữa điện thế và cường độ điện trường tại điểm M:</p>
+                    <p class="text-center">\( E_M = \frac{V_M - V_N}{MN} \Rightarrow V_M = E_M \cdot h \)</p>
+                    <p>b) Trường hợp điểm M nằm chính giữa khe hở hai bản phẳng tức là \( h = \frac{d}{2} \), ta có:</p>
+                    <p class="text-center">\( V_M = E \cdot h = \frac{U}{d} \cdot \frac{d}{2} = \frac{48}{2} = 24 \text{ V} \)</p>
+                </div>
+            </div>
+
+            <div class="question-box bg-pink-50" style="border-left-color: #d53f8c;">
+                <p class="font-bold text-pink-700">?</p>
+                <p>Vận dụng mối liên hệ giữa điện thế và cường độ điện trường để xác định điện thế tại một điểm cách mặt đất 5 m ở nơi có điện trường của Trái Đất là 114 V/m.</p>
+                <button class="btn-view" onclick="toggleAnswer('sol-6')" style="background-color: #d53f8c;">Xem lời giải</button>
+                <div id="sol-6" class="answer-box">
+                    Chọn mốc điện thế tại mặt đất (\( V_{đất} = 0 \)). <br>
+                    Điện trường của Trái Đất hướng từ trên xuống dưới. <br>
+                    Khoảng cách \( h = 5 \text{ m} \), cường độ \( E = 114 \text{ V/m} \). <br>
+                    Áp dụng \( V = E \cdot h = 114 \cdot 5 = 570 \text{ V} \).
+                </div>
+            </div>
+        </section>
+
+        <!-- Em đã học -->
+        <div class="info-box em-da-hoc shadow-md">
+            <h3 class="font-bold mb-2">EM ĐÃ HỌC</h3>
+            <ul class="list-disc ml-5 space-y-2">
+                <li>Điện thế tại một điểm trong điện trường đặc trưng cho điện trường tại điểm đó về thế năng, được xác định bằng công dịch chuyển một đơn vị điện tích dương từ vô cực về điểm đó: \( V = \frac{A}{q} \).</li>
+                <li>Điện thế có mối liên hệ với thế năng điện: \( V_M = \frac{W_M}{q} \).</li>
+                <li>Mối liên hệ giữa cường độ điện trường và điện thế của hai điểm M và N trong điện trường đều dọc theo đường sức điện: \( E_M = E_N = \frac{V_M - V_N}{MN} \).</li>
+            </ul>
+        </div>
+
+        <!-- Em có thể -->
+        <div class="info-box em-co-the shadow-md">
+            <h3 class="font-bold mb-2">EM CÓ THỂ</h3>
+            <ul class="list-disc ml-5 space-y-2">
+                <li>Giải thích được ý nghĩa của hiệu điện thế giữa hai điểm.</li>
+                <li>Vận dụng được mối liên hệ thế năng điện với điện thế để tính được thế năng điện của điện tích nằm trong điện trường.</li>
+                <li>Tính được công dịch chuyển một điện tích q từ điểm N đến điểm M trong điện trường.</li>
+            </ul>
+        </div>
+
+        <!-- CỦNG CỐ & VẬN DỤNG -->
+        <section class="bg-white p-8 rounded-12px shadow-md mb-8">
+            <h2 class="text-2xl font-bold text-center mb-6 main-color">BÀI TẬP CỦNG CỐ</h2>
+            
+            <div id="quiz-container">
+                <!-- Câu 1 -->
+                <div class="mb-6 p-4 border rounded">
+                    <p class="font-bold">Câu 1: Đơn vị của điện thế là:</p>
+                    <div class="mt-2">
+                        <label class="block"><input type="radio" name="q1" value="A"> A. Cu-lông (C)</label>
+                        <label class="block"><input type="radio" name="q1" value="B"> B. Vôn (V)</label>
+                        <label class="block"><input type="radio" name="q1" value="C"> C. Jun (J)</label>
+                        <label class="block"><input type="radio" name="q1" value="D"> D. Oát (W)</label>
+                    </div>
+                </div>
+
+                <!-- Câu 2 -->
+                <div class="mb-6 p-4 border rounded">
+                    <p class="font-bold">Câu 2: Công thức liên hệ giữa hiệu điện thế \( U_{MN} \) và điện thế \( V_M, V_N \) là:</p>
+                    <div class="mt-2">
+                        <label class="block"><input type="radio" name="q2" value="A"> A. \( U_{MN} = V_M + V_N \)</label>
+                        <label class="block"><input type="radio" name="q2" value="B"> B. \( U_{MN} = V_N - V_M \)</label>
+                        <label class="block"><input type="radio" name="q2" value="C"> C. \( U_{MN} = V_M - V_N \)</label>
+                        <label class="block"><input type="radio" name="q2" value="D"> D. \( U_{MN} = V_M / V_N \)</label>
+                    </div>
+                </div>
+
+                <!-- Câu 3 -->
+                <div class="mb-6 p-4 border rounded">
+                    <p class="font-bold">Câu 3: Điện thế tại một điểm trong điện trường đặc trưng cho:</p>
+                    <div class="mt-2">
+                        <label class="block"><input type="radio" name="q3" value="A"> A. Tác dụng lực của điện trường.</label>
+                        <label class="block"><input type="radio" name="q3" value="B"> B. Tốc độ dịch chuyển điện tích.</label>
+                        <label class="block"><input type="radio" name="q3" value="C"> C. Phương diện tạo ra thế năng của điện trường.</label>
+                        <label class="block"><input type="radio" name="q3" value="D"> D. Độ mạnh yếu của dòng điện.</label>
+                    </div>
+                </div>
+
+                <!-- Câu 4 -->
+                <div class="mb-6 p-4 border rounded">
+                    <p class="font-bold">Câu 4: Một điện tích \( q = 2 \cdot 10^{-6} \text{ C} \) dịch chuyển từ vô cực về điểm M làm công của lực điện là \( 4 \cdot 10^{-4} \text{ J} \). Điện thế tại M là:</p>
+                    <div class="mt-2">
+                        <label class="block"><input type="radio" name="q4" value="A"> A. 200 V</label>
+                        <label class="block"><input type="radio" name="q4" value="B"> B. 800 V</label>
+                        <label class="block"><input type="radio" name="q4" value="C"> C. 0,5 V</label>
+                        <label class="block"><input type="radio" name="q4" value="D"> D. 2 V</label>
+                    </div>
+                </div>
+
+                <!-- Câu 5 -->
+                <div class="mb-6 p-4 border rounded">
+                    <p class="font-bold">Câu 5: Trong điện trường đều, nếu khoảng cách giữa hai điểm dọc theo đường sức tăng 2 lần thì cường độ điện trường:</p>
+                    <div class="mt-2">
+                        <label class="block"><input type="radio" name="q5" value="A"> A. Tăng 2 lần.</label>
+                        <label class="block"><input type="radio" name="q5" value="B"> B. Giảm 2 lần.</label>
+                        <label class="block"><input type="radio" name="q5" value="C"> C. Không đổi.</label>
+                        <label class="block"><input type="radio" name="q5" value="D"> D. Tăng 4 lần.</label>
+                    </div>
+                </div>
+
+                <button onclick="checkQuiz()" class="bg-main text-white px-6 py-2 rounded font-bold hover:opacity-90">NỘP BÀI</button>
+                <div id="quiz-result" class="mt-4 font-bold"></div>
+            </div>
+
+            <hr class="my-8">
+
+            <h2 class="text-2xl font-bold text-center mb-6 main-color">BÀI TẬP VẬN DỤNG TÍNH TOÁN</h2>
+            
+            <div class="space-y-6">
+                <!-- Vận dụng 1 -->
+                <div class="p-4 border rounded bg-gray-50">
+                    <p><strong>Bài 1:</strong> Tính công của lực điện khi một proton (\( q = 1,6 \cdot 10^{-19} \text{ C} \)) dịch chuyển từ điểm A có điện thế 500 V đến điểm B có điện thế 200 V.</p>
+                    <button class="btn-view" onclick="toggleAnswer('app-1')">Xem lời giải chi tiết</button>
+                    <div id="app-1" class="answer-box">
+                        Công của lực điện: \( A_{AB} = q(V_A - V_B) \) <br>
+                        \( A_{AB} = 1,6 \cdot 10^{-19} \cdot (500 - 200) \) <br>
+                        \( A_{AB} = 1,6 \cdot 10^{-19} \cdot 300 = 4,8 \cdot 10^{-17} \text{ J} \).
+                    </div>
+                </div>
+
+                <!-- Vận dụng 2 -->
+                <div class="p-4 border rounded bg-gray-50">
+                    <p><strong>Bài 2:</strong> Hai bản kim loại song song tích điện trái dấu tạo ra điện trường đều \( E = 2000 \text{ V/m} \). Khoảng cách giữa hai bản là 5 cm. Tính hiệu điện thế giữa hai bản.</p>
+                    <button class="btn-view" onclick="toggleAnswer('app-2')">Xem lời giải chi tiết</button>
+                    <div id="app-2" class="answer-box">
+                        Hiệu điện thế: \( U = E \cdot d \) <br>
+                        Đổi \( d = 5 \text{ cm} = 0,05 \text{ m} \). <br>
+                        \( U = 2000 \cdot 0,05 = 100 \text{ V} \).
+                    </div>
+                </div>
+
+                <!-- Vận dụng 3 -->
+                <div class="p-4 border rounded bg-gray-50">
+                    <p><strong>Bài 3:</strong> Một hạt bụi có điện tích \( q = -10^{-8} \text{ C} \) nằm cân bằng trong điện trường đều giữa hai bản nằm ngang. Biết \( V_{bản trên} = 500 \text{ V} \), \( V_{bản dưới} = 0 \text{ V} \), khoảng cách \( d = 2 \text{ cm} \). Tính khối lượng hạt bụi (lấy \( g = 10 \text{ m/s}^2 \)).</p>
+                    <button class="btn-view" onclick="toggleAnswer('app-3')">Xem lời giải chi tiết</button>
+                    <div id="app-3" class="answer-box">
+                        Cường độ điện trường: \( E = \frac{U}{d} = \frac{500 - 0}{0,02} = 25000 \text{ V/m} \). <br>
+                        Vì hạt bụi cân bằng nên Lực điện = Trọng lực: \( |q|E = mg \). <br>
+                        \( \Rightarrow m = \frac{|q|E}{g} = \frac{10^{-8} \cdot 25000}{10} = 2,5 \cdot 10^{-5} \text{ kg} = 25 \text{ mg} \).
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        function toggleAnswer(id) {
+            const element = document.getElementById(id);
+            if (element.style.display === "none" || element.style.display === "") {
+                element.style.display = "block";
+            } else {
+                element.style.display = "none";
+            }
+        }
+
+        function checkQuiz() {
+            const answers = { q1: "B", q2: "C", q3: "C", q4: "A", q5: "C" };
+            const explanations = {
+                q1: "Đơn vị điện thế là Vôn (V).",
+                q2: "Theo định nghĩa \( U_{MN} = V_M - V_N \).",
+                q3: "Điện thế đặc trưng cho khả năng tạo ra thế năng.",
+                q4: "V = A/q = 4.10^-4 / 2.10^-6 = 200 V.",
+                q5: "Trong điện trường đều, E là hằng số tại mọi điểm, không phụ thuộc vào d."
+            };
+            
+            let score = 0;
+            let resultHtml = "";
+            
+            for (let i = 1; i <= 5; i++) {
+                const qName = "q" + i;
+                const selected = document.querySelector(`input[name="${qName}"]:checked`);
+                
+                if (selected) {
+                    if (selected.value === answers[qName]) {
+                        score++;
+                        resultHtml += `<p class="text-green-600">Câu ${i}: Đúng. ${explanations[qName]}</p>`;
+                    } else {
+                        resultHtml += `<p class="text-red-600">Câu ${i}: Sai. Đáp án đúng là ${answers[qName]}. ${explanations[qName]}</p>`;
+                    }
+                } else {
+                    resultHtml += `<p class="text-gray-500">Câu ${i}: Chưa trả lời.</p>`;
+                }
+            }
+            
+            const finalResult = document.getElementById("quiz-result");
+            finalResult.innerHTML = `<div class="p-4 border-2 rounded mt-4 ${score === 5 ? 'border-green-500 text-green-700' : 'border-red-500 text-red-700'}">
+                Kết quả: ${score}/5 câu đúng. <br><br> ${resultHtml}
+            </div>`;
+        }
+    </script>
+</body>
+</html>
