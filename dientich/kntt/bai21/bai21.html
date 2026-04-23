@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bài 21: Tụ Điện - Vật Lí</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <style>
+        body {
+            background-color: #f4f7f9;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #333;
+        }
+        .header-gradient {
+            background-color: #000080;
+        }
+        .section-title {
+            color: #000080;
+            border-bottom: 4px solid #000080;
+            display: inline-block;
+            margin-top: 1.5rem;
+            margin-bottom: 1rem;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        .content-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+        .intro-box {
+            border: 1px solid #000;
+            padding: 1rem;
+            background-color: #fff;
+            font-style: italic;
+        }
+        .image-container {
+            background-color: #f8fafc;
+            border: 1px solid #e2e8f0;
+            padding: 10px;
+            text-align: center;
+            margin: 1rem 0;
+        }
+        .em-co-biet {
+            background-color: #fff4e6;
+            border-left: 5px solid #fb923c;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            border-radius: 0 8px 8px 0;
+        }
+        .em-co-the {
+            background-color: #f0fdf4;
+            border-left: 5px solid #22c55e;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            border-radius: 0 8px 8px 0;
+        }
+        .luu-y {
+            background-color: #fef2f2;
+            border-left: 5px solid #ef4444;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            border-radius: 0 8px 8px 0;
+        }
+        .question-box {
+            background-color: #edf2f7;
+            border-left: 5px solid #000080;
+            padding: 1rem;
+            margin: 1rem 0;
+        }
+        .answer-box {
+            display: none;
+            background-color: #f0fdf4;
+            border: 1px dashed #22c55e;
+            padding: 1rem;
+            margin-top: 0.5rem;
+            border-radius: 8px;
+        }
+        .btn-view {
+            background-color: #000080;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 5px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .btn-view:hover { opacity: 0.8; }
+        table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
+        th, td { border: 1px solid #cbd5e0; padding: 12px; text-align: center; }
+        th { background-color: #e2e8f0; }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+
+    <div class="max-w-5xl mx-auto">
+        <!-- Header -->
+        <div class="header-gradient text-white p-8 rounded-t-xl shadow-lg text-center">
+            <p class="text-lg uppercase tracking-widest opacity-80">Chương III - Điện Trường</p>
+            <h1 class="text-4xl font-bold mt-2">BÀI 21: TỤ ĐIỆN</h1>
+        </div>
+
+        <!-- Mở đầu -->
+        <div class="content-card rounded-t-none">
+            <div class="intro-box">
+                Nếu một chiếc quạt điện gặp trục trặc như: cánh quạt quay chậm hoặc không quay dù vẫn cắm điện; động cơ nóng, rung và có âm thanh bất thường, thì nguyên nhân mà chúng ta cần xem xét là hỏng tụ điện. Vậy tụ điện có cấu tạo như thế nào?
+            </div>
+            <div class="image-container">
+                <img src="h1.png" alt="Tụ điện trong quạt" class="mx-auto max-h-64">
+                <p class="text-sm italic mt-2">Tụ điện trong một chiếc quạt điện dân dụng</p>
+            </div>
+        </div>
+
+        <!-- I. Tụ điện -->
+        <div class="content-card">
+            <h2 class="section-title text-2xl">I. TỤ ĐIỆN</h2>
+            <ul class="list-disc ml-6 space-y-2">
+                <li>Tụ điện được sử dụng trong các thiết bị điện như quạt điện, tủ lạnh, ti vi, động cơ... với các hình dạng khác nhau.</li>
+            </ul>
+            <div class="image-container">
+                <center><img src="h2.png" alt="Một số tụ điện" class="mx-auto max-h-48"></center>
+                <p class="text-sm italic mt-2">Hình 21.1. Một số tụ điện</p>
+            </div>
+            <ul class="list-disc ml-6 space-y-2 mt-4">
+		<li><strong>Tụ điện là một loại linh kiện điện tử gồm hai vật dẫn đặt gần nhau và ngăn cách nhau bởi môi trường cách điện (điện môi). Mỗi vật dẫn được gọi là một bản tụ điện.</strong></li>
+                <li>Mật độ điện tích tự do trong điện môi là rất nhỏ do đó điện môi là những chất không dẫn điện. Khi điện trường ngoài đặt vào điện môi lớn hơn một giới hạn nhất định thì các liên kết giữa các điện tích trái dấu trong nguyên tử của chất điện môi sẽ bị phá vỡ, điện tích tự do xuất hiện. Lúc này điện môi trở thành dẫn điện (điện môi bị đánh thủng).</li>
+                <li>Khi vẽ mạch điện, tụ điện được kí hiệu như Hình 21.2.</li>
+            </ul>
+            <div class="image-container">
+                <img src="h3.png" alt="Kí hiệu tụ điện" class="mx-auto">
+                <p class="text-sm italic mt-2">Hình 21.2. Kí hiệu tụ điện trong sơ đồ mạch điện</p>
+            </div>
+            <p class="mt-4">Trong mạch điện, tụ điện có nhiệm vụ <b>tích điện</b> và <b>phóng điện</b>. Ta có thể hình dung quá trình này như sau:</p>
+            <ul class="list-none ml-6 space-y-2 mt-2">
+                <li><b>+ Để tích điện:</b> nối hai bản cực với nguồn điện một chiều. Bản nối cực dương tích điện dương, bản nối cực âm tích điện âm.</li>
+                <li><b>+ Để phóng điện:</b> nối hai bản tụ với một điện trở (hoặc bóng đèn), điện tích trên tụ giảm nhanh tạo ra dòng điện.</li>
+            </ul>
+            <div class="image-container">
+                <img src="h4.png" alt="Tích điện cho tụ điện" class="mx-auto max-h-48">
+                <p class="text-sm italic mt-2">Hình 21.3. Tích điện cho tụ điện</p>
+            </div>
+
+            <!-- Em có biết 1 -->
+            <div class="em-co-biet">
+                <h3 class="font-bold text-orange-700">EM CÓ BIẾT</h3>
+                <ul class="list-disc ml-6 mt-2">
+                    <li>Tụ điện phẳng gồm hai bản phẳng kim loại song song, giữa là điện môi (Hình 21.4).</li>
+                    <li>Trong thực tế, để giảm kích thước, người ta cuộn các bản (giấy thiếc, nhôm...) lại và đặt trong vỏ kim loại hình trụ (Hình 21.5).</li>
+                </ul>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                    <div class="image-container bg-white"><center><img src="h5.png" alt="Tụ phẳng"></center><p class="text-xs">Hình 21.4. Cấu tạo tụ điện phẳng</p></div>
+                    <div class="image-container bg-white"><center><img src="h6.png" alt="Tụ hình trụ"></center><p class="text-xs">Hình 21.5. Cấu tạo tụ điện hình trụ</p></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- II. Điện dung -->
+        <div class="content-card">
+            <h2 class="section-title text-2xl">II. ĐIỆN DUNG CỦA TỤ ĐIỆN</h2>
+            <h3 class="font-bold text-lg mt-4">1. Điện dung</h3>
+            <p>Độ lớn điện tích \( Q \) mà tụ điện tích được tỉ lệ thuận với hiệu điện thế \( U \) đặt vào hai bản của nó:</p>
+            <p class="text-center font-bold text-xl my-4">\( Q = CU \) <span class="text-sm font-normal">(21.1)</span></p>
+            <p>Đại lượng \( C \) được gọi là <b>điện dung</b> của tụ điện, đặc trưng cho khả năng tích điện của tụ ở một hiệu điện thế xác định.</p>
+            <p class="text-center font-bold text-xl my-4">\( C = \frac{Q}{U} \) <span class="text-sm font-normal">(21.2)</span></p>
+            <p>Đơn vị của điện dung là <b>fara (kí hiệu là F)</b>. Các đơn vị nhỏ hơn thường dùng:</p>
+            <ul class="grid grid-cols-1 md:grid-cols-3 gap-2 mt-2 ml-6 italic">
+                <li>1 microfara (\( 1 \mu F = 10^{-6} F \))</li>
+                <li>1 nanofara (\( 1 nF = 10^{-9} F \))</li>
+                <li>1 picofara (\( 1 pF = 10^{-12} F \))</li>
+            </ul>
+
+            <div class="em-co-biet mt-6">
+                <h3 class="font-bold">EM CÓ BIẾT (Tụ xoay)</h3>
+                <p>Ngoài các tụ điện cố định, còn có tụ điện xoay có thể thay đổi điện dung.</p>
+                <div class="image-container bg-white"><center><img src="h7.png" alt="Tụ xoay"></center><p class="text-xs">Hình 21.6. Tụ xoay</p></div>
+            </div>
+
+            <!-- Câu hỏi ? trang 85 -->
+            <div class="question-box">
+                <p class="font-bold">? Câu hỏi (Trang 85):</p>
+                <ol class="list-decimal ml-6 mt-2 space-y-4">
+                    <li>Một tụ điện có ghi \( 2 \mu F - 200 V \). 
+                        <br>a) Hiệu điện thế 36V. Tính điện tích tụ? 
+                        <br>b) Tính điện tích tối đa?
+                    </li>
+                    <li>So sánh tụ A (\( 2 \mu F - 350 V \)) và tụ B (\( 2,3 \mu F - 300 V \)). 
+                        <br>a) Ở cùng hiệu điện thế, tụ nào tích điện tốt hơn? 
+                        <br>b) Ở mức tối đa, tụ nào có điện tích lớn hơn?
+                    </li>
+                </ol>
+                <button class="btn-view mt-3" onclick="toggle('ans1')">Xem câu trả lời</button>
+                <div id="ans1" class="answer-box">
+                    <b>Câu 1:</b><br>
+                    a) \( Q = C \cdot U = 2 \cdot 10^{-6} \cdot 36 = 7,2 \cdot 10^{-5} C \).<br>
+                    b) \( Q_{max} = C \cdot U_{max} = 2 \cdot 10^{-6} \cdot 200 = 4 \cdot 10^{-4} C \).<br><br>
+                    <b>Câu 2:</b><br>
+                    a) Tụ B vì \( C_B > C_A \).<br>
+                    b) \( Q_{A,max} = 2 \cdot 350 = 700 \mu C \); \( Q_{B,max} = 2,3 \cdot 300 = 690 \mu C \). Vậy tụ A tích điện lớn hơn.
+                </div>
+            </div>
+
+            <h3 class="font-bold text-lg mt-8">2. Điện dung của bộ tụ điện</h3>
+            <p class="font-bold mt-4">a) Ghép nối tiếp:</p>
+            <div class="image-container"><center><img src="h8.png" alt="Ghép nối tiếp"></center><p class="text-xs">Hình 21.7. Bộ tụ ghép nối tiếp</p></div>
+            <p class="text-center font-bold">\( \frac{1}{C_{nt}} = \frac{1}{C_1} + \frac{1}{C_2} + ... \); \( Q_{nt} = Q_1 = Q_2 = ... \); \( U_{nt} = U_1 + U_2 + ... \)</p>
+
+            <p class="font-bold mt-6">b) Ghép song song:</p>
+            <div class="image-container"><center><img src="h9.png" alt="Ghép song song"></center><p class="text-xs">Hình 21.8. Bộ tụ ghép song song</p></div>
+            <p class="text-center font-bold">\( C_{ss} = C_1 + C_2 + ... \); \( Q_{ss} = Q_1 + Q_2 + ... \); \( U_{ss} = U_1 = U_2 = ... \)</p>
+
+            <div class="question-box mt-4">
+                <p class="font-bold italic">Bài tập ví dụ (Trang 86):</p>
+                <p>Cho \( C_1 = 2 \mu F, C_2 = 3 \mu F, C_3 = 4 \mu F \). Tính \( C \) khi ghép nối tiếp và song song?</p>
+                <button class="btn-view mt-2" onclick="toggle('ans_vd')">Xem lời giải</button>
+                <div id="ans_vd" class="answer-box">
+                    + Nối tiếp: \( \frac{1}{C_{nt}} = \frac{1}{2} + \frac{1}{3} + \frac{1}{4} = \frac{13}{12} \Rightarrow C_{nt} \approx 0,92 \mu F \).<br>
+                    + Song song: \( C_{ss} = 2 + 3 + 4 = 9 \mu F \).
+                </div>
+            </div>
+        </div>
+
+        <!-- III. Năng lượng -->
+        <div class="content-card">
+            <h2 class="section-title text-2xl">III. NĂNG LƯỢNG CỦA TỤ ĐIỆN</h2>
+            <p>Năng lượng của tụ điện khi được tích điện với điện tích Q:</p>
+            <p class="text-center font-bold text-xl my-4">\( W = \frac{QU}{2} = \frac{Q^2}{2C} = \frac{CU^2}{2} \) <span class="text-sm font-normal">(21.9)</span></p>
+            <div class="image-container">
+                <center><img src="h10.png" alt="Đồ thị U-Q" class="mx-auto max-h-48"></center>
+                <p class="text-sm italic mt-2">Hình 21.9. Sự biến thiên của hiệu điện thế theo điện tích</p>
+            </div>
+            
+            <div class="question-box">
+                <p class="font-bold">? Câu hỏi (Trang 88):</p>
+                <p>Tính năng lượng tối đa của tụ D (\( 2 mF - 450 V \)) và tụ E (\( 2,5 \mu F - 350 V \))?</p>
+                <button class="btn-view mt-2" onclick="toggle('ans_w')">Xem câu trả lời</button>
+                <div id="ans_w" class="answer-box">
+                    \( W_D = \frac{1}{2} \cdot 2 \cdot 10^{-3} \cdot 450^2 = 202,5 J \).<br>
+                    \( W_E = \frac{1}{2} \cdot 2,5 \cdot 10^{-6} \cdot 350^2 \approx 0,153 J \).
+                </div>
+            </div>
+        </div>
+
+        <!-- IV. Ứng dụng & Hoạt động -->
+        <div class="content-card">
+            <h2 class="section-title text-2xl">IV. ỨNG DỤNG CỦA TỤ ĐIỆN</h2>
+            <p>Tụ điện dùng để tích trữ và cung cấp năng lượng, lọc dòng điện, mạch khuếch đại, máy hàn bu-lông...</p>
+            
+            <div class="em-co-biet">
+                <h3 class="font-bold">HÀN BU-LÔNG</h3>
+                <p>Dùng bộ tụ điện công suất lớn để tạo nhiệt làm nóng chảy bề mặt vật liệu và bu-lông.</p>
+                <div class="image-container bg-white"><center><img src="h11.png" alt="Hàn bu-lông"></center><p class="text-xs">Hình 21.10. Một máy hàn bu-lông</p></div>
+            </div>
+
+            <div class="mt-8">
+                <p class="font-bold flex items-center">
+                    <span class="mr-2">✋</span> BÁO CÁO: Một số ứng dụng của tụ điện
+                </p>
+                <div class="overflow-x-auto">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>STT</th>
+                                <th>Điện dung - điện áp</th>
+                                <th>Hình dạng</th>
+                                <th>Thiết bị sử dụng</th>
+                                <th>Mục đích</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr><td>1</td><td>...</td><td>...</td><td>...</td><td>...</td></tr>
+                            <tr><td>2</td><td>...</td><td>...</td><td>...</td><td>...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <button class="btn-view" onclick="toggle('report_help')">Xem hướng dẫn</button>
+                <div id="report_help" class="answer-box">
+                    Học sinh cần sưu tập thông tin từ sách, internet. Ví dụ: Tụ quạt (hình hộp, đen, 2uF-450V) dùng để khởi động động cơ. Tụ trong bếp từ dùng để lọc nhiễu.
+                </div>
+            </div>
+        </div>
+
+        <!-- Tổng kết -->
+        <div class="content-card">
+            <div class="em-co-the mb-4">
+                <h3 class="font-bold">EM CÓ THỂ</h3>
+                <ul class="list-disc ml-6">
+                    <li>Đọc thông số kĩ thuật cơ bản trên vỏ tụ.</li>
+                    <li>Thực hành ghép nối tiếp và song song.</li>
+                    <li>Giải thích nguyên lí tia sét, máy hàn điện.</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- BÀI TẬP CỦNG CỐ -->
+        <div class="content-card bg-gray-50 border-2 border-navy">
+            <h2 class="section-title text-2xl">V. BÀI TẬP CỦNG CỐ</h2>
+            
+            <!-- Trắc nghiệm -->
+            <div class="space-y-6 mt-4" id="quizForm">
+                <div class="p-4 bg-white rounded shadow-sm">
+                    <p class="font-bold">Câu 1: Đơn vị của điện dung là gì?</p>
+                    <label class="block cursor-pointer mt-2"><input type="radio" name="q1" value="a"> A. Vôn (V)</label>
+                    <label class="block cursor-pointer"><input type="radio" name="q1" value="b"> B. Coulomb (C)</label>
+                    <label class="block cursor-pointer"><input type="radio" name="q1" value="c"> C. Fara (F)</label>
+                    <label class="block cursor-pointer"><input type="radio" name="q1" value="d"> D. Ohm (Ω)</label>
+                </div>
+                <div class="p-4 bg-white rounded shadow-sm">
+                    <p class="font-bold">Câu 2: Công thức tính điện dung của tụ điện là:</p>
+                    <label class="block cursor-pointer mt-2"><input type="radio" name="q2" value="a"> A. C = U/Q</label>
+                    <label class="block cursor-pointer"><input type="radio" name="q2" value="b"> B. C = Q/U</label>
+                    <label class="block cursor-pointer"><input type="radio" name="q2" value="c"> C. C = Q.U</label>
+                    <label class="block cursor-pointer"><input type="radio" name="q2" value="d"> D. C = U.Q²</label>
+                </div>
+                <div class="p-4 bg-white rounded shadow-sm">
+                    <p class="font-bold">Câu 3: Khi ghép nối tiếp 2 tụ điện giống nhau \( C_1 = C_2 = C \), điện dung bộ là:</p>
+                    <label class="block cursor-pointer mt-2"><input type="radio" name="q3" value="a"> A. 2C</label>
+                    <label class="block cursor-pointer"><input type="radio" name="q3" value="b"> B. C/2</label>
+                    <label class="block cursor-pointer"><input type="radio" name="q3" value="c"> C. C</label>
+                    <label class="block cursor-pointer"><input type="radio" name="q3" value="d"> D. C²</label>
+                </div>
+                <div class="p-4 bg-white rounded shadow-sm">
+                    <p class="font-bold">Câu 4: Năng lượng của tụ điện được tích trữ dưới dạng nào?</p>
+                    <label class="block cursor-pointer mt-2"><input type="radio" name="q4" value="a"> A. Nhiệt năng</label>
+                    <label class="block cursor-pointer"><input type="radio" name="q4" value="b"> B. Cơ năng</label>
+                    <label class="block cursor-pointer"><input type="radio" name="q4" value="c"> C. Năng lượng điện trường</label>
+                    <label class="block cursor-pointer"><input type="radio" name="q4" value="d"> D. Hóa năng</label>
+                </div>
+                <div class="p-4 bg-white rounded shadow-sm">
+                    <p class="font-bold">Câu 5: Nếu hiệu điện thế đặt vào tụ tăng 2 lần thì năng lượng tụ tăng mấy lần?</p>
+                    <label class="block cursor-pointer mt-2"><input type="radio" name="q5" value="a"> A. 2 lần</label>
+                    <label class="block cursor-pointer"><input type="radio" name="q5" value="b"> B. 4 lần</label>
+                    <label class="block cursor-pointer"><input type="radio" name="q5" value="c"> C. Không đổi</label>
+                    <label class="block cursor-pointer"><input type="radio" name="q5" value="d"> D. 8 lần</label>
+                </div>
+                <button onclick="checkQuiz()" class="bg-blue-900 text-white px-8 py-3 rounded-lg font-bold hover:bg-blue-800">NỘP BÀI</button>
+                <div id="quizResult" class="mt-4 p-4 rounded hidden"></div>
+            </div>
+
+            <!-- Tự luận -->
+            <div class="mt-10 space-y-8">
+                <h3 class="font-bold text-xl border-b-2 border-gray-300">BÀI TẬP VẬN DỤNG</h3>
+                
+                <div class="bg-white p-4 rounded shadow-sm">
+                    <p><b>Bài 1:</b> Một tụ điện \( 10 \mu F \) được tích điện đến hiệu điện thế 50V. Tính năng lượng của tụ.</p>
+                    <button class="btn-view mt-2" onclick="toggle('sol1')">Xem giải</button>
+                    <div id="sol1" class="answer-box">
+                        Áp dụng: \( W = \frac{1}{2} C U^2 = \frac{1}{2} \cdot 10 \cdot 10^{-6} \cdot 50^2 = 0,0125 J \).
+                    </div>
+                </div>
+
+                <div class="bg-white p-4 rounded shadow-sm">
+                    <p><b>Bài 2:</b> Hai tụ \( C_1 = 2 \mu F, C_2 = 4 \mu F \) ghép song song. Tính \( C \) của bộ?</p>
+                    <button class="btn-view mt-2" onclick="toggle('sol2')">Xem giải</button>
+                    <div id="sol2" class="answer-box">
+                        Ghép song song: \( C_{ss} = C_1 + C_2 = 2 + 4 = 6 \mu F \).
+                    </div>
+                </div>
+
+                <div class="bg-white p-4 rounded shadow-sm">
+                    <p><b>Bài 3:</b> Một tụ điện phẳng có hằng số điện môi là 2, diện tích bản tụ 10cm², khoảng cách 1mm. Tính điện dung?</p>
+                    <button class="btn-view mt-2" onclick="toggle('sol3')">Xem giải</button>
+                    <div id="sol3" class="answer-box">
+                        Sử dụng công thức tụ phẳng: \( C = \frac{\varepsilon S}{4 \pi k d} \approx 1,77 \cdot 10^{-11} F = 17,7 pF \).
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function toggle(id) {
+            const el = document.getElementById(id);
+            el.style.display = (el.style.display === 'block') ? 'none' : 'block';
+        }
+
+        function checkQuiz() {
+            const answers = { q1: 'c', q2: 'b', q3: 'b', q4: 'c', q5: 'b' };
+            const solutions = {
+                q1: "Đơn vị chuẩn của điện dung là Fara (F).",
+                q2: "Định nghĩa C = Q/U.",
+                q3: "1/C = 1/C + 1/C = 2/C => Cnt = C/2.",
+                q4: "Tụ tích lũy năng lượng dưới dạng điện trường giữa 2 bản.",
+                q5: "W tỉ lệ với U bình phương (U^2), nên U tăng 2 thì W tăng 4."
+            };
+            
+            let score = 0;
+            let feedback = "";
+            const form = document.getElementById('quizForm');
+            const resultDiv = document.getElementById('quizResult');
+            
+            for(let key in answers) {
+                const selected = document.querySelector(`input[name="${key}"]:checked`);
+                if(selected && selected.value === answers[key]) {
+                    score++;
+                    feedback += `<p class="text-green-600"><b>Câu ${key.slice(1)}: Đúng.</b> ${solutions[key]}</p>`;
+                } else {
+                    feedback += `<p class="text-red-600"><b>Câu ${key.slice(1)}: Sai.</b> Đáp án đúng là ${answers[key].toUpperCase()}. ${solutions[key]}</p>`;
+                }
+            }
+            
+            resultDiv.innerHTML = `<h3 class="text-xl font-bold">Kết quả: ${score}/5</h3>` + feedback;
+            resultDiv.classList.remove('hidden');
+            resultDiv.style.backgroundColor = (score === 5) ? '#dcfce7' : '#fee2e2';
+            window.scrollTo({ top: resultDiv.offsetTop, behavior: 'smooth' });
+        }
+    </script>
+</body>
+</html>
