@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thí nghiệm Vật lý: Đo suất điện động và Điện trở trong</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-color: #f8fafc;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .canvas-container {
+            position: relative;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+        }
+        .control-panel {
+            background: #ffffff;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+        }
+        .circuit-element {
+            stroke: #1e293b;
+            stroke-width: 3;
+            fill: none;
+        }
+        .measurement-table th {
+            background-color: #3b82f6;
+            color: white;
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+    <div class="max-w-5xl mx-auto">
+        <header class="text-center mb-8">
+            <h1 class="text-3xl font-bold text-slate-800">Thí nghiệm: Đo suất điện động và điện trở trong của nguồn</h1>
+            <p class="text-slate-600 mt-2">Xác định $\mathcal{E}$ và $r$ qua 5 lần đo biến trở $R$</p>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <!-- Left Side: Simulation & Controls -->
+            <div class="space-y-6">
+                <div class="canvas-container p-4">
+                    <h3 class="text-lg font-semibold mb-4 text-slate-700 text-center">Sơ đồ mạch điện</h3>
+                    <svg id="circuit-svg" viewBox="0 0 400 250" class="w-full h-auto">
+                        <!-- Battery/Source -->
+                        <line x1="50" y1="100" x2="100" y2="100" class="circuit-element" />
+                        <line x1="100" y1="80" x2="100" y2="120" class="circuit-element" stroke-width="4" />
+                        <line x1="115" y1="90" x2="115" y2="110" class="circuit-element" stroke-width="2" />
+                        <line x1="115" y1="100" x2="140" y2="100" class="circuit-element" />
+                        <text x="85" y="70" class="fill-slate-600 text-sm font-bold">Pin (E, r)</text>
+
+                        <!-- Protection Resistor R0 -->
+                        <rect x="140" y="90" width="30" height="20" class="fill-white stroke-slate-800" />
+                        <text x="142" y="85" class="fill-red-600 text-xs font-bold">R₀ = 10Ω</text>
+                        <line x1="170" y1="100" x2="200" y2="100" class="circuit-element" />
+
+                        <!-- Voltmeter -->
+                        <path d="M 75 100 L 75 50 L 125 50" class="circuit-element" stroke-dasharray="4" />
+                        <path d="M 155 50 L 205 50 L 205 100" class="circuit-element" stroke-dasharray="4" />
+                        <circle cx="140" cy="50" r="15" class="fill-white stroke-blue-500" stroke-width="2" />
+                        <text x="135" y="55" class="fill-blue-600 font-bold text-sm">V</text>
+
+                        <!-- Switch -->
+                        <line x1="200" y1="100" x2="230" y2="100" class="circuit-element" />
+                        <line id="switch-lever" x1="230" y1="100" x2="260" y2="80" class="circuit-element" stroke="#ef4444" />
+                        <line x1="260" y1="100" x2="290" y2="100" class="circuit-element" />
+
+                        <!-- Ammeter -->
+                        <circle cx="315" cy="100" r="15" class="fill-white stroke-red-500" stroke-width="2" />
+                        <text x="310" y="105" class="fill-red-600 font-bold text-sm">A</text>
+                        <line x1="330" y1="100" x2="350" y2="100" class="circuit-element" />
+                        
+                        <!-- Rheostat -->
+                        <line x1="350" y1="100" x2="350" y2="200" class="circuit-element" />
+                        <rect x="330" y="150" width="40" height="20" class="fill-white stroke-slate-800" />
+                        <line x1="330" y1="170" x2="370" y2="150" class="circuit-element" stroke-width="1" />
+                        <text x="300" y="220" class="fill-slate-600 text-xs italic">Biến trở R</text>
+                        
+                        <line x1="350" y1="200" x2="50" y2="200" class="circuit-element" />
+                        <line x1="50" y1="200" x2="50" y2="100" class="circuit-element" />
+                    </svg>
+                </div>
+
+                <div class="control-panel space-y-4">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="flex flex-col">
+                            <span class="text-xs text-slate-500 font-bold uppercase">Điện trở bảo vệ R₀:</span>
+                            <span class="text-lg font-mono font-bold text-red-600">10.0 Ω</span>
+                        </div>
+                        <div class="flex flex-col items-end">
+                            <span class="text-xs text-slate-500 font-bold uppercase">Công tắc K:</span>
+                            <button id="toggle-switch" class="mt-1 px-4 py-1 bg-red-500 text-white rounded-md font-bold hover:bg-red-600 transition text-sm">
+                                ĐÓNG MẠCH
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="space-y-2 border-t pt-4">
+                        <div class="flex justify-between text-sm text-slate-600 font-medium">
+                            <span>Thay đổi biến trở R:</span>
+                            <span id="r-value-display" class="bg-blue-100 text-blue-700 px-2 rounded font-bold">25.0 Ω</span>
+                        </div>
+                        <input type="range" id="rheostat-slider" min="5" max="150" step="1" value="25" class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600">
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4 pt-4 border-t border-slate-100">
+                        <div class="text-center p-3 bg-blue-50 rounded-lg border border-blue-200">
+                            <span class="block text-[10px] text-blue-600 font-bold uppercase">Vôn kế U (V)</span>
+                            <span id="voltmeter-val" class="text-3xl font-mono font-bold text-blue-900">0.00</span>
+                        </div>
+                        <div class="text-center p-3 bg-red-50 rounded-lg border border-red-200">
+                            <span class="block text-[10px] text-red-600 font-bold uppercase">Ampe kế I (A)</span>
+                            <span id="ammeter-val" class="text-3xl font-mono font-bold text-red-900">0.000</span>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-col gap-2">
+                        <button id="record-data" class="w-full py-4 bg-emerald-600 text-white rounded-xl font-bold hover:bg-emerald-700 transition transform active:scale-95 shadow-md">
+                            GHI SỐ LIỆU (LẦN 1-5)
+                        </button>
+                        <div class="flex gap-2">
+                            <button id="export-excel" class="flex-1 py-2 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 transition shadow-sm text-sm">
+                                📊 XUẤT EXCEL (CSV)
+                            </button>
+                            <button id="reset-data" class="px-4 py-2 bg-slate-200 text-slate-700 rounded-lg font-medium hover:bg-slate-300 transition text-sm">
+                                XÓA HẾT
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Side -->
+            <div class="space-y-6">
+                <div class="bg-white rounded-xl p-4 shadow-sm border border-slate-200 overflow-hidden">
+                    <h3 class="text-lg font-semibold mb-4 text-slate-700">Bảng kết quả đo</h3>
+                    <div class="overflow-hidden rounded-lg border border-slate-100">
+                        <table class="measurement-table w-full text-sm text-center border-collapse">
+                            <thead>
+                                <tr>
+                                    <th class="p-2 border-b">STT</th>
+                                    <th class="p-2 border-b">I (A)</th>
+                                    <th class="p-2 border-b">U (V)</th>
+                                    <th class="p-2 border-b">Ghi chú</th>
+                                </tr>
+                            </thead>
+                            <tbody id="data-table-body">
+                                <tr class="text-slate-400 italic"><td colspan="4" class="p-4">Nhấn nút ghi để lấy 5 giá trị khác nhau.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl p-4 shadow-sm border border-slate-200">
+                    <h3 class="text-lg font-semibold mb-2 text-slate-700">Đồ thị U = f(I)</h3>
+                    <div class="h-64">
+                        <canvas id="analysisChart"></canvas>
+                    </div>
+                    <div id="results-panel" class="mt-4 p-4 bg-indigo-50 rounded-lg border border-indigo-100 hidden">
+                        <p class="text-xs font-bold text-indigo-800 uppercase mb-2 text-center underline">Kết quả từ đồ thị Excel/Phần mềm:</p>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="bg-white p-2 rounded shadow-sm text-center">
+                                <span class="text-[10px] text-slate-500 block uppercase">Suất điện động (E)</span>
+                                <p id="calc-e" class="text-xl font-bold text-indigo-700">-- V</p>
+                            </div>
+                            <div class="bg-white p-2 rounded shadow-sm text-center">
+                                <span class="text-[10px] text-slate-500 block uppercase">Điện trở trong (r)</span>
+                                <p id="calc-r" class="text-xl font-bold text-indigo-700">-- Ω</p>
+                                <span class="text-[9px] text-slate-400 italic">Sau khi đã trừ R₀=10Ω</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const ACTUAL_E = 1.52; // Suất điện động thực tế
+        const ACTUAL_r = 0.48; // Điện trở trong thực tế
+        const R0 = 10.0;       // Điện trở bảo vệ cố định
+        const VOLTMETER_R = 15000; 
+        const METER_ERROR = 0.006;
+
+        let isClosed = false;
+        let measurements = [];
+        let currentR = 25;
+        let chart;
+
+        function initChart() {
+            const ctx = document.getElementById('analysisChart').getContext('2d');
+            chart = new Chart(ctx, {
+                type: 'scatter',
+                data: {
+                    datasets: [{
+                        label: 'Số liệu đo',
+                        data: [],
+                        backgroundColor: '#ef4444',
+                        borderColor: '#ef4444',
+                        pointRadius: 5
+                    }, {
+                        label: 'Đường hồi quy',
+                        data: [],
+                        type: 'line',
+                        borderColor: '#3b82f6',
+                        borderWidth: 2,
+                        pointRadius: 0,
+                        fill: false,
+                        showLine: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: { title: { display: true, text: 'I (A)' }, min: 0, max: 0.2 },
+                        y: { title: { display: true, text: 'U (V)' }, min: 0, max: 1.6 }
+                    }
+                }
+            });
+        }
+
+        function getReading() {
+            const noise = (Math.random() - 0.5) * METER_ERROR;
+            if (!isClosed) {
+                const U_open = ACTUAL_E * VOLTMETER_R / (VOLTMETER_R + ACTUAL_r + R0);
+                return { u: U_open + noise, i: 0 };
+            }
+            const I = ACTUAL_E / (currentR + R0 + ACTUAL_r);
+            const U = ACTUAL_E - I * (ACTUAL_r + R0);
+            return { u: Math.max(0, U + noise), i: Math.max(0, I + noise/20) };
+        }
+
+        function updateDisplay() {
+            const read = getReading();
+            document.getElementById('voltmeter-val').innerText = read.u.toFixed(2);
+            document.getElementById('ammeter-val').innerText = read.i.toFixed(3);
+        }
+
+        function toggleSwitch() {
+            isClosed = !isClosed;
+            const btn = document.getElementById('toggle-switch');
+            const lever = document.getElementById('switch-lever');
+            if (isClosed) {
+                btn.innerText = "NGẮT MẠCH";
+                btn.classList.replace('bg-red-500', 'bg-slate-700');
+                lever.setAttribute('x2', '260');
+                lever.setAttribute('y2', '100');
+            } else {
+                btn.innerText = "ĐÓNG MẠCH";
+                btn.classList.replace('bg-slate-700', 'bg-red-500');
+                lever.setAttribute('x2', '260');
+                lever.setAttribute('y2', '80');
+            }
+            updateDisplay();
+        }
+
+        function recordData() {
+            if (!isClosed) {
+                alert("Hãy đóng mạch để có dòng điện I!");
+                return;
+            }
+            const u = parseFloat(document.getElementById('voltmeter-val').innerText);
+            const i = parseFloat(document.getElementById('ammeter-val').innerText);
+            
+            measurements.push({ x: i, y: u });
+            updateTable();
+            updateChart();
+        }
+
+        function updateTable() {
+            const body = document.getElementById('data-table-body');
+            if (measurements.length === 0) {
+                body.innerHTML = '<tr class="text-slate-400 italic"><td colspan="4" class="p-4">Chưa có số liệu...</td></tr>';
+                return;
+            }
+            body.innerHTML = measurements.map((m, idx) => `
+                <tr class="hover:bg-slate-50 transition">
+                    <td class="p-2 border-b font-bold">${idx + 1}</td>
+                    <td class="p-2 border-b font-mono text-red-600">${m.x.toFixed(3)}</td>
+                    <td class="p-2 border-b font-mono text-blue-700">${m.y.toFixed(2)}</td>
+                    <td class="p-2 border-b text-xs text-slate-400 italic">R = ${ (m.y/m.x - R0).toFixed(1) } Ω</td>
+                </tr>
+            `).join('');
+        }
+
+        function updateChart() {
+            chart.data.datasets[0].data = measurements;
+            if (measurements.length >= 2) {
+                const n = measurements.length;
+                let sX = 0, sY = 0, sXY = 0, sX2 = 0;
+                measurements.forEach(m => {
+                    sX += m.x; sY += m.y; sXY += m.x * m.y; sX2 += m.x * m.x;
+                });
+                const slope = (n * sXY - sX * sY) / (n * sX2 - sX * sX);
+                const intercept = (sY - slope * sX) / n;
+
+                chart.data.datasets[1].data = [{ x: 0, y: intercept }, { x: 0.2, y: intercept + slope * 0.2 }];
+
+                document.getElementById('results-panel').classList.remove('hidden');
+                document.getElementById('calc-e').innerText = intercept.toFixed(3) + " V";
+                const r_inner = Math.abs(slope) - R0;
+                document.getElementById('calc-r').innerText = r_inner.toFixed(2) + " Ω";
+            }
+            chart.update();
+        }
+
+        function exportToCSV() {
+            if (measurements.length === 0) {
+                alert("Bảng dữ liệu đang trống, không thể xuất file!");
+                return;
+            }
+            let csvContent = "data:text/csv;charset=utf-8,STT,I (A),U (V),R_total (Ohm)\n";
+            measurements.forEach((m, idx) => {
+                const rTotal = (m.y / m.x).toFixed(2);
+                csvContent += `${idx + 1},${m.x.toFixed(3)},${m.y.toFixed(2)},${rTotal}\n`;
+            });
+
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", "du_lieu_thi_nghiem_vat_ly.csv");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        document.getElementById('toggle-switch').addEventListener('click', toggleSwitch);
+        document.getElementById('rheostat-slider').addEventListener('input', (e) => {
+            currentR = parseFloat(e.target.value);
+            document.getElementById('r-value-display').innerText = currentR.toFixed(1) + " Ω";
+            if (isClosed) updateDisplay();
+        });
+        document.getElementById('record-data').addEventListener('click', recordData);
+        document.getElementById('export-excel').addEventListener('click', exportToCSV);
+        document.getElementById('reset-data').addEventListener('click', () => {
+            measurements = [];
+            updateTable();
+            chart.data.datasets[0].data = [];
+            chart.data.datasets[1].data = [];
+            chart.update();
+            document.getElementById('results-panel').classList.add('hidden');
+        });
+
+        window.onload = () => {
+            initChart();
+            updateDisplay();
+            setInterval(() => { if(isClosed) updateDisplay(); }, 1000);
+        };
+    </script>
+</body>
+</html>
