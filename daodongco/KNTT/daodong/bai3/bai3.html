@@ -77,10 +77,12 @@
                 <button onclick="toggleAnswer('act1')" class="bg-[#454545] text-white px-4 py-2 rounded mt-3 hover:bg-gray-700 transition">Xem hướng giải quyết</button>
                 <div id="act1" class="bg-green-100 hidden p-4 mt-3 rounded border border-green-300">
                     <strong>Hướng dẫn:</strong><br>
-                    - Điểm C: Thước có độ dốc âm, độ lớn vận tốc vừa.<br>
+                    - Điểm C: Thước có độ dốc âm, vận tốc có giá trị âm, độ lớn vận tốc vừa.<br>
+                    - Điểm D: Thước có độ dốc âm nhiều nhất, độ lớn vận tốc lớn nhất.<br>
                     - Điểm E: Vị trí biên âm, đồ thị đi ngang, độ dốc bằng 0 \( \Rightarrow \) Vận tốc bằng 0.<br>
+                    - Điểm G: Vị trí có độ dốc dương, giá trị vận tốc dương, độ lớn vừa.<br>
                     - Điểm H: Vị trí biên dương, đồ thị đi ngang, độ dốc bằng 0 \( \Rightarrow \) Vận tốc bằng 0.<br>
-                    \( \Rightarrow \) Độ lớn vận tốc tại C lớn hơn tại E và H.
+                    \( \Rightarrow \) Độ lớn vận tốc tại C,G nhỏ hơn D và lớn hơn tại E và H.
                 </div>
             </div>
 
@@ -93,10 +95,10 @@
                     <strong>Lời giải:</strong><br>
                     1. Từ phương trình \( v = -\omega A \sin(\omega t + \varphi) = \omega A \cos(\omega t + \varphi + \frac{\pi}{2}) \). Ta thấy vận tốc <strong>sớm pha \( \frac{\pi}{2} \)</strong> so với li độ.<br>
                     2. Sự thay đổi vận tốc:<br>
-                    - \( 0 \rightarrow \frac{T}{4} \): Vật đi từ VTCB ra biên dương, độ lớn vận tốc giảm từ cực đại về 0 (vận tốc mang dấu âm, giảm từ 0 đến \(-\omega A\)).<br>
-                    - \( \frac{T}{4} \rightarrow \frac{T}{2} \): Vật đi từ biên dương về VTCB, độ lớn vận tốc tăng từ 0 đến cực đại (vận tốc mang dấu âm, tăng từ \(-\omega A\) về 0).<br>
-                    - \( \frac{T}{2} \rightarrow \frac{3T}{4} \): Vật đi từ VTCB ra biên âm, độ lớn vận tốc giảm từ cực đại về 0 (vận tốc mang dấu dương, tăng từ 0 lên \(\omega A\)).<br>
-                    - \( \frac{3T}{4} \rightarrow T \): Vật đi từ biên âm về VTCB, độ lớn vận tốc tăng từ 0 đến cực đại (vận tốc mang dấu dương, giảm từ \(\omega A\) về 0).
+                    - \( 0 \rightarrow \frac{T}{4} \): Vật đi từ biên dương về VTCB, độ lớn vận tốc tăng từ 0 đến cực đại (vận tốc mang dấu âm từ giảm 0 đến \(-A\omega\))<br>
+                    - \( \frac{T}{4} \rightarrow \frac{T}{2} \): Vật đi từ VTCB về biên âm, độ lớn vận tốc giảm từ CĐại đến 0 (vận tốc mang dấu âm, tăng từ  \(-\omega A\) đến 0).<br>
+                    - \( \frac{T}{2} \rightarrow \frac{3T}{4} \): Vật đi từ VTCB biên âm về VTCB, độ lớn vận tốc tăng từ 0 đến cực đại(vận tốc mang dấu dương, tăng từ 0 lên \(\omega A\)).<br>
+                    - \( \frac{3T}{4} \rightarrow T \): Vật đi từ VTCB về biên dương, độ lớn vận tốc giảm từ cực đại đến 0 (vận tốc mang dấu dương, giảm từ \(\omega A\) về 0).
                 </div>
             </div>
         </div>
@@ -140,8 +142,8 @@
                     - Độ dốc đồ thị \( (v-t) \) cực đại tại các điểm cắt trục hoành (vận tốc bằng 0), tương ứng độ lớn gia tốc đạt cực đại trên đồ thị \( (a-t) \).<br>
                     2. <br>
                     - Phương trình li độ: \( x = 5\cos(4\pi t) \) (cm)<br>
-                    - Phương trình vận tốc: \( v = x' = -20\pi \sin(4\pi t) \) (cm/s)<br>
-                    - Phương trình gia tốc: \( a = v' = -80\pi^2 \cos(4\pi t) \) (cm/s²)
+                    - Phương trình vận tốc: \( v = -A\omega.sin(\omega.t+\varphi) = -20\pi \sin(4\pi t) \) (cm/s)<br>
+                    - Phương trình gia tốc: \( a = -A\omega^2.cos(\omega.t+\varphi) = -80\pi^2 \cos(4\pi t) \) (cm/s²)
                 </div>
             </div>
 
