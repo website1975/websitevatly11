@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thí nghiệm Đo Tốc độ Truyền âm</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-color: #f8fafc;
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+        }
+        .tube-container {
+            position: relative;
+            width: 70px;
+            height: 500px;
+            background: linear-gradient(to right, #cbd5e1, #f8fafc, #cbd5e1);
+            border: 2px solid #475569;
+            border-bottom: 4px solid #1e293b;
+            overflow: visible;
+        }
+        .piston {
+            position: absolute;
+            width: 100%;
+            height: 12px;
+            background: #0f172a;
+            top: 0;
+            z-index: 10;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+        .air-column {
+            position: absolute;
+            width: 100%;
+            background: rgba(186, 230, 253, 0.2);
+            top: 0;
+            left: 0;
+        }
+        .ruler {
+            position: absolute;
+            right: -40px;
+            height: 500px;
+            width: 30px;
+            border-left: 1px solid #94a3b8;
+            display: flex;
+            flex-direction: column; 
+            justify-content: space-between;
+            font-size: 9px;
+            color: #64748b;
+        }
+        .wave-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+        .speaker-top {
+            width: 100px;
+            height: 40px;
+            background: #334155;
+            margin-top: -5px;
+            border-radius: 8px 8px 0 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-size: 12px;
+            font-weight: bold;
+            z-index: 20;
+        }
+        .speaker-top.active {
+            background: #2563eb;
+            box-shadow: 0 0 15px rgba(37, 99, 235, 0.5);
+        }
+    </style>
+</head>
+<body class="p-4">
+
+    <div class="max-w-6xl mx-auto bg-white rounded-3xl shadow-xl overflow-hidden border border-slate-200">
+        <div class="bg-slate-900 p-6 text-white text-center">
+            <h1 class="text-2xl font-bold tracking-tight uppercase italic">Thí nghiệm Hình 15.1: Đo tốc độ truyền âm</h1>
+            <p class="text-slate-400 text-xs mt-1">Cộng hưởng khi miệng ống là bụng: $L = (n + 0,5)\frac{\lambda}{2}$</p>
+        </div>
+
+        <div class="p-6 grid grid-cols-1 lg:grid-cols-12 gap-8">
+            
+            <div class="lg:col-span-3 space-y-6">
+                <div class="bg-slate-50 p-5 rounded-2xl border border-slate-100">
+                    <h3 class="text-xs font-bold text-slate-800 mb-4 uppercase tracking-wider">Thông số nguồn âm</h3>
+                    
+                    <div class="mb-6">
+                        <div class="flex justify-between text-xs mb-2">
+                            <span class="text-slate-500 font-medium">Tần số (f)</span>
+                            <span class="text-blue-600 font-bold"><span id="f-val">500</span> Hz</span>
+                        </div>
+                        <input type="range" id="freq-slider" min="300" max="1000" step="10" value="500" class="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600">
+                    </div>
+
+                    <div class="mb-6">
+                        <div class="flex justify-between text-xs mb-2">
+                            <span class="text-slate-500 font-medium">Pít-tông (L)</span>
+                            <span class="text-slate-900 font-bold"><span id="l-val">10.0</span> cm</span>
+                        </div>
+                        <input type="range" id="piston-slider" min="0" max="66" step="0.1" value="10" class="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-slate-800">
+                    </div>
+
+                    <button id="btn-audio-toggle" class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-lg transition-all active:scale-95 text-sm uppercase">
+                        Bật máy phát âm
+                    </button>
+                </div>
+
+                <div class="bg-slate-50 p-5 rounded-2xl border border-slate-100">
+                    <h3 class="text-xs font-bold text-slate-800 mb-4 uppercase tracking-wider italic">Kết quả đo l (cm)</h3>
+                    <div class="space-y-2">
+                        <button id="btn-record-1" class="w-full py-2 bg-emerald-600 text-white text-xs font-bold rounded-lg hover:bg-emerald-700 transition">Ghi vị trí $l_1$</button>
+                        <button id="btn-record-2" class="w-full py-2 bg-indigo-600 text-white text-xs font-bold rounded-lg hover:bg-indigo-700 transition">Ghi vị trí $l_2$</button>
+                        <div class="pt-4 mt-2 border-t border-slate-200">
+                            <div class="flex justify-between text-xs py-1"><span>$l_1$:</span> <span id="res-l1" class="font-bold">--</span></div>
+                            <div class="flex justify-between text-xs py-1"><span>$l_2$:</span> <span id="res-l2" class="font-bold">--</span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="lg:col-span-5 flex flex-col items-center">
+                <div class="speaker-top" id="speaker-box">LOA</div>
+                <div class="tube-container">
+                    <div class="ruler" id="ruler-ticks"></div>
+                    <div id="air-column" class="air-column"></div>
+                    <canvas id="wave-canvas" class="wave-canvas"></canvas>
+                    <div id="piston" class="piston"></div>
+                </div>
+                
+                <div class="w-full mt-10 px-8 text-center">
+                    <p class="text-[10px] font-bold text-slate-400 uppercase mb-2">Trạng thái cộng hưởng</p>
+                    <div id="node-info" class="text-xs font-mono text-blue-600 bg-blue-50 py-1 px-3 rounded-full inline-block">
+                        Số bó sóng: 0.0
+                    </div>
+                    <div class="w-full h-3 bg-slate-100 rounded-full mt-4 border border-slate-200 overflow-hidden">
+                        <div id="sound-bar" class="h-full bg-blue-500 transition-all duration-75" style="width: 0%"></div>
+                    </div>
+                    <p class="text-[10px] text-slate-400 mt-1 uppercase italic">Âm to nhất khi miệng ống là BỤNG</p>
+                </div>
+            </div>
+
+            <div class="lg:col-span-4 space-y-6">
+                <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm text-center">
+                    <h3 class="text-sm font-bold text-slate-800 mb-4 uppercase">Giá trị xác định</h3>
+                    <div class="text-4xl font-mono font-bold text-slate-900" id="res-v">--</div>
+                    <div class="text-[10px] text-slate-400 font-bold uppercase mt-1">m/s (Tốc độ truyền âm)</div>
+                    
+                    <div class="mt-6 grid grid-cols-2 gap-4">
+                        <div class="p-3 bg-slate-50 rounded-xl">
+                            <div class="text-[10px] text-slate-500 uppercase">Bước sóng $\lambda$</div>
+                            <div id="res-lambda" class="font-bold text-blue-600">-- cm</div>
+                        </div>
+                        <div class="p-3 bg-slate-50 rounded-xl">
+                            <div class="text-[10px] text-slate-500 uppercase">Khoảng cách $d$</div>
+                            <div id="res-d" class="font-bold text-blue-600">-- cm</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <button id="btn-reset" class="w-full py-2 text-slate-400 hover:text-slate-600 text-xs font-bold uppercase transition underline">Làm lại từ đầu</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const V_SOUND_REAL = 340; 
+        const TUBE_MAX_L_CM = 66; 
+        
+        let audioCtx = null;
+        let oscillator = null;
+        let gainNode = null;
+        let isAudioPlaying = false;
+
+        const fSlider = document.getElementById('freq-slider');
+        const pSlider = document.getElementById('piston-slider');
+        const fDisp = document.getElementById('f-val');
+        const lDisp = document.getElementById('l-val');
+        const piston = document.getElementById('piston');
+        const airCol = document.getElementById('air-column');
+        const sBar = document.getElementById('sound-bar');
+        const canvas = document.getElementById('wave-canvas');
+        const ctx = canvas.getContext('2d');
+        const nodeInfo = document.getElementById('node-info');
+        const audioBtn = document.getElementById('btn-audio-toggle');
+
+        let data = { l1: null, l2: null };
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                oscillator = audioCtx.createOscillator();
+                gainNode = audioCtx.createGain();
+                oscillator.type = 'sine';
+                oscillator.connect(gainNode);
+                gainNode.connect(audioCtx.destination);
+                oscillator.start();
+            }
+        }
+
+        function toggleAudio() {
+            initAudio();
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            isAudioPlaying = !isAudioPlaying;
+            
+            if (isAudioPlaying) {
+                audioBtn.innerText = "Tắt máy phát âm";
+                audioBtn.classList.replace('bg-blue-600', 'bg-red-600');
+                document.getElementById('speaker-box').classList.add('active');
+            } else {
+                audioBtn.innerText = "Bật máy phát âm";
+                audioBtn.classList.replace('bg-red-600', 'bg-blue-600');
+                document.getElementById('speaker-box').classList.remove('active');
+                gainNode.gain.setTargetAtTime(0, audioCtx.currentTime, 0.05);
+            }
+            update();
+        }
+
+        function update() {
+            const f = parseFloat(fSlider.value);
+            const L_cm = parseFloat(pSlider.value);
+            const L_m = L_cm / 100;
+            const lambda = V_SOUND_REAL / f;
+            const lambda_cm = lambda * 100;
+
+            fDisp.innerText = f;
+            lDisp.innerText = L_cm.toFixed(1);
+
+            const pistonY = (L_cm / TUBE_MAX_L_CM) * 500;
+            piston.style.top = pistonY + "px";
+            airCol.style.height = pistonY + "px";
+
+            const k = L_cm / (lambda_cm / 2);
+            nodeInfo.innerText = `Số bó sóng: ${k.toFixed(2)}`;
+
+            const rawIntensity = Math.abs(Math.sin((2 * Math.PI * L_m) / lambda));
+            const volume = Math.pow(rawIntensity, 20) * 100; 
+
+            sBar.style.width = volume + "%";
+            sBar.style.backgroundColor = `hsl(${210 - volume * 1.5}, 80%, 50%)`;
+
+            if (isAudioPlaying && gainNode) {
+                oscillator.frequency.setTargetAtTime(f, audioCtx.currentTime, 0.05);
+                gainNode.gain.setTargetAtTime((volume / 100) * 0.3, audioCtx.currentTime, 0.05);
+            }
+
+            drawWave(pistonY, lambda_cm, rawIntensity);
+        }
+
+        function drawWave(pistonY, lambda_cm, intensity) {
+            canvas.width = canvas.offsetWidth;
+            canvas.height = 500;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            if (pistonY < 5) return;
+
+            const centerX = canvas.width / 2;
+            const maxAmp = 25;
+            const pixelPerCm = 500 / TUBE_MAX_L_CM;
+
+            ctx.beginPath();
+            ctx.strokeStyle = `rgba(37, 99, 235, ${0.3 + intensity * 0.7})`;
+            ctx.lineWidth = 2.5;
+
+            for (let side = -1; side <= 1; side += 2) {
+                ctx.moveTo(centerX, pistonY); 
+                for (let y = pistonY; y >= 0; y -= 1) {
+                    const d = (pistonY - y) / pixelPerCm;
+                    const amp = Math.sin((2 * Math.PI * d) / lambda_cm) * maxAmp;
+                    ctx.lineTo(centerX + side * amp, y);
+                }
+            }
+            ctx.stroke();
+        }
+
+        audioBtn.addEventListener('click', toggleAudio);
+        fSlider.addEventListener('input', update);
+        pSlider.addEventListener('input', update);
+
+        document.getElementById('btn-record-1').addEventListener('click', () => {
+            data.l1 = parseFloat(pSlider.value);
+            document.getElementById('res-l1').innerText = data.l1.toFixed(1) + " cm";
+            calc();
+        });
+
+        document.getElementById('btn-record-2').addEventListener('click', () => {
+            // Đã sửa lỗi: đổi từ pistonSlider sang pSlider
+            data.l2 = parseFloat(pSlider.value);
+            document.getElementById('res-l2').innerText = data.l2.toFixed(1) + " cm";
+            calc();
+        });
+
+        document.getElementById('btn-reset').addEventListener('click', () => {
+            data = { l1: null, l2: null };
+            document.getElementById('res-l1').innerText = "--";
+            document.getElementById('res-l2').innerText = "--";
+            document.getElementById('res-lambda').innerText = "-- cm";
+            document.getElementById('res-d').innerText = "-- cm";
+            document.getElementById('res-v').innerText = "--";
+        });
+
+        function calc() {
+            if (data.l1 !== null && data.l2 !== null) {
+                const d = Math.abs(data.l2 - data.l1);
+                const lambda = 2 * d;
+                const f = parseFloat(fSlider.value);
+                const v = (lambda / 100) * f;
+                document.getElementById('res-d').innerText = d.toFixed(1) + " cm";
+                document.getElementById('res-lambda').innerText = lambda.toFixed(1) + " cm";
+                document.getElementById('res-v').innerText = Math.round(v);
+            }
+        }
+
+        function initRuler() {
+            const ruler = document.getElementById('ruler-ticks');
+            ruler.innerHTML = '';
+            for(let i=0; i<=66; i+=5) {
+                const tick = document.createElement('div');
+                tick.innerHTML = `<span>- ${i}</span>`;
+                ruler.appendChild(tick);
+            }
+        }
+        window.onload = () => { initRuler(); update(); };
+    </script>
+</body>
+</html>
