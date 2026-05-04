@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bài 24: Nguồn Điện - Vật Lý 11</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- MathJax -->
+    <script>
+        window.MathJax = {
+            tex: { inlineMath: [['\\(', '\\)'], ['$', '$']] },
+            svg: { fontCache: 'global' }
+        };
+    </script>
+    <script type="text/javascript" id="MathJax-script" async
+        src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
+    </script>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f9; }
+        .navy-bg { background-color: #000080; }
+        .navy-text { color: #000080; }
+        .navy-border { border-color: #000080; }
+        .section-header { border-bottom: 4px solid #00001a; text-transform: uppercase; font-weight: bold; }
+        .answer-content { display: none; }
+        .rounded-12 { border-radius: 12px; }
+    </style>
+</head>
+<body class="p-4 md:p-10">
+
+    <div class="max-w-5xl mx-auto">
+        <!-- Header -->
+        <header class="navy-bg text-white p-8 rounded-12 shadow-md mb-10 text-center">
+            <p class="text-xl font-medium tracking-widest mb-2 uppercase">Chương IV - Dòng điện. Mạch điện</p>
+            <h1 class="text-4xl font-extrabold uppercase">Bài 24: NGUỒN ĐIỆN</h1>
+        </header>
+
+        <!-- Intro Box -->
+        <div class="bg-white border border-gray-300 p-6 rounded-12 shadow-sm mb-10 italic text-gray-700">
+            Em đã biết nguồn điện có khả năng cung cấp năng lượng điện để tạo ra dòng điện sử dụng trong đời sống. Vậy nguồn điện là gì? Vì sao nguồn điện có thể tạo ra dòng điện?
+        </div>
+
+        <!-- I. NGUỒN ĐIỆN. SUẤT ĐIỆN ĐỘNG CỦA NGUỒN ĐIỆN -->
+        <section class="bg-white p-8 rounded-12 shadow-md mb-8">
+            <h2 class="text-2xl navy-text mb-6 section-header">I. NGUỒN ĐIỆN. SUẤT ĐIỆN ĐỘNG CỦA NGUỒN ĐIỆN</h2>
+            
+            <h3 class="text-xl font-bold mb-4">1. Điều kiện để duy trì dòng điện</h3>
+            <p class="mb-4">Giả sử có hai quả cầu kim loại A và B giống nhau, quả cầu A mang điện tích +q và quả cầu B mang điện tích -q. Giữa quả cầu A và B có một hiệu điện thế \( V_A \neq V_B \)</p>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 text-center">
+                <div class="border p-2"><img src="h1.png" alt="Hình 24.1a" class="mx-auto mb-2"><p class="text-xs italic">Hình 24.1a</p></div>
+                <div class="border p-2"><img src="h2.png" alt="Hình 24.1b" class="mx-auto mb-2"><p class="text-xs italic">Hình 24.1b</p></div>
+                <div class="border p-2"><img src="h3.png" alt="Hình 24.1c" class="mx-auto mb-2"><p class="text-xs italic">Hình 24.1c</p></div>
+            </div>
+
+            <!-- Question Box ? -->
+            <div class="bg-[#edf2f7] border-l-8 navy-border p-6 mb-6">
+                <p class="font-bold navy-text mb-2 text-lg">? Câu hỏi thảo luận (Trang 102)</p>
+                <p class="mb-2">1. Tại sao dòng điện trong trường hợp mô tả ở Hình 24.1 chỉ tồn tại trong khoảng thời gian rất ngắn?</p>
+                <p>2. Làm thế nào để duy trì dòng điện trong trường hợp này lâu dài?</p>
+                <button onclick="toggleAnswer('ans-q1')" class="mt-4 navy-bg text-white px-6 py-2 rounded-lg hover:bg-blue-900 transition">Xem lời giải</button>
+                <div id="ans-q1" class="answer-content bg-green-50 p-4 mt-4 rounded-lg border border-green-200">
+                    <p><b>Lời giải:</b><br>
+                    1. Vì khi các điện tích dịch chuyển, hiệu điện thế giữa hai quả cầu giảm nhanh về 0 (\( V_A = V_B \)). Khi không còn sự chênh lệch điện thế, lực điện không còn để đẩy các electron.<br>
+                    2. Để duy trì dòng điện lâu dài, cần một thiết bị (nguồn điện) liên tục thực hiện công để tách và đưa các điện tích trở lại hai cực, duy trì hiệu điện thế ổn định.</p>
+                </div>
+            </div>
+
+            <h3 class="text-xl font-bold mb-4">2. Nguồn điện</h3>
+            <p class="mb-4">Nguồn điện là thiết bị để tạo ra và duy trì hiệu điện thế, nhằm duy trì dòng điện trong mạch. Mỗi nguồn điện đều có hai cực là cực dương (+) và cực âm (-).</p>
+            
+            <div class="flex justify-center mb-6">
+                <div class="text-center">
+                    <img src="h4.png" alt="Kí hiệu nguồn điện" class="border p-4 mb-2">
+                    <p class="text-sm italic">Hình 24.2. Kí hiệu nguồn điện</p>
+                </div>
+            </div>
+
+            <div class="bg-blue-50 p-4 rounded-lg border-l-4 border-blue-400 mb-6 italic">
+                Lưu ý: Trong nguồn điện phải có <b>lực lạ</b> (bản chất khác lực điện) để tách các electron ra khỏi nguyên tử và duy trì sự tích điện khác nhau ở các cực.
+            </div>
+
+            <h3 class="text-xl font-bold mb-4">3. Suất điện động của nguồn điện</h3>
+            <div class="flex flex-col md:flex-row gap-6 mb-6">
+                <div class="flex-1">
+                    <p class="mb-4">Suất điện động \(\mathscr{E}\) của nguồn điện là đại lượng đặc trưng cho khả năng thực hiện công của nguồn điện:</p>
+                    <div class="bg-blue-50 p-6 rounded-lg text-center text-2xl navy-text font-bold mb-4">
+                        \[ \mathscr{E} = \frac{A}{q} \quad (24.1) \]
+                    </div>
+                    <p>Đơn vị của suất điện động là <b>vôn (V)</b>.</p>
+                </div>
+                <div class="flex-1 text-center border p-4 rounded-lg bg-white">
+                    <img src="h5.png" alt="Dịch chuyển điện tích" class="mx-auto mb-2">
+                    <p class="text-xs italic">Hình 24.3. Sự di chuyển của điện tích bên trong nguồn</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- II. ẢNH HƯỞNG CỦA ĐIỆN TRỞ TRONG -->
+        <section class="bg-white p-8 rounded-12 shadow-md mb-8">
+            <h2 class="text-2xl navy-text mb-6 section-header">II. ẢNH HƯỞNG CỦA ĐIỆN TRỞ TRONG CỦA NGUỒN ĐIỆN LÊN HIỆU ĐIỆN THẾ</h2>
+            
+            <h3 class="text-xl font-bold mb-4">1. Điện trở trong của nguồn</h3>
+            <p class="mb-4">Nguồn điện cũng là một vật dẫn và có điện trở, gọi là <b>điện trở trong (r)</b> của nguồn. Mỗi nguồn điện đặc trưng bằng suất điện động \(\mathscr{E}\) và điện trở trong \(r\).</p>
+
+            <h3 class="text-xl font-bold mb-4">2. Ảnh hưởng của điện trở trong</h3>
+            <div class="flex justify-center mb-6">
+                <div class="text-center">
+                    <img src="h6.png" alt="Sơ đồ mạch điện" class="border p-4 mb-2">
+                    <p class="text-sm italic">Hình 24.4. Điện trở trong r trong sơ đồ mạch điện</p>
+                </div>
+            </div>
+
+            <p class="mb-4">Theo định luật bảo toàn năng lượng, công của nguồn điện cung cấp bằng tổng nhiệt lượng tỏa ra trên toàn mạch:</p>
+            <div class="bg-gray-100 p-4 rounded-lg mb-6">
+                \[ \mathscr{E}It = RI^2t + rI^2t \Rightarrow \mathscr{E} = I(R + r) \]
+            </div>
+
+            <!-- Em Có Biết Box -->
+            <div class="bg-orange-50 border border-orange-200 p-6 rounded-12 mb-8">
+                <h4 class="font-bold text-orange-800 uppercase mb-2">Định luật Ôm đối với toàn mạch</h4>
+                <p class="text-lg">\[ I = \frac{\mathscr{E}}{R + r} \]</p>
+                <p>Cường độ dòng điện chạy trong mạch kín tỉ lệ thuận với suất điện động và tỉ lệ nghịch với điện trở toàn phần.</p>
+            </div>
+
+            <p class="mb-4">Hiệu điện thế mạch ngoài (giữa hai cực của nguồn):</p>
+            <div class="bg-blue-50 p-4 rounded-lg text-xl font-bold text-center navy-text mb-6">
+                \[ U = \mathscr{E} - Ir \quad (24.5) \]
+            </div>
+
+            <!-- Question Box ? -->
+            <div class="bg-[#edf2f7] border-l-8 navy-border p-6">
+                <p class="font-bold navy-text mb-2 italic">? Thảo luận (Trang 104)</p>
+                <p>1. Mô tả ảnh hưởng của r lên U khi dòng điện tăng?</p>
+                <p>2. Khi nào thì \( U = \mathscr{E} \)?</p>
+                <button onclick="toggleAnswer('ans-q2')" class="mt-4 navy-bg text-white px-6 py-2 rounded-lg hover:bg-blue-900 transition">Xem trả lời</button>
+                <div id="ans-q2" class="answer-content bg-green-50 p-4 mt-4 rounded-lg">
+                    <p>1. Khi I tăng, độ giảm thế \(Ir\) tăng, dẫn đến hiệu điện thế mạch ngoài \(U\) giảm xuống.<br>
+                    2. Khi mạch hở (\(I = 0\)) hoặc khi điện trở trong không đáng kể (\(r = 0\)).</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- III. BÀI TẬP LUYỆN TẬP -->
+        <section class="bg-white p-8 rounded-12 shadow-md mb-8">
+            <h2 class="text-2xl navy-text mb-6 section-header">III. BÀI TẬP VẬN DỤNG TÍNH TOÁN</h2>
+            
+            <div class="mb-10 border-b pb-6">
+                <p class="font-bold mb-4">Bài 1: Cho mạch điện Hình 24.5. \(\mathscr{E} = 10V\), \(r = 0\). \(R_1 = 20\Omega, R_2 = 40\Omega, R_3 = 50\Omega\). Tính cường độ mạch chính.</p>
+                <img src="h7.png" alt="Hình 24.5" class="mb-4 mx-auto border">
+                <button onclick="toggleAnswer('sol-1')" class="navy-bg text-white px-4 py-2 rounded">Xem giải chi tiết</button>
+                <div id="sol-1" class="answer-content bg-green-50 p-4 mt-4 rounded-lg">
+                    <p>Vì bỏ qua \(r\), hiệu điện thế hai đầu các điện trở mắc song song bằng \(\mathscr{E}\).<br>
+                    \( I_1 = U/R_1 = 10/20 = 0,5A \)<br>
+                    \( I_2 = 10/40 = 0,25A \); \( I_3 = 10/50 = 0,2A \)<br>
+                    \( I = I_1 + I_2 + I_3 = 0,5 + 0,25 + 0,2 = 0,95A \).</p>
+                </div>
+            </div>
+
+            <div class="mb-6">
+                <p class="font-bold mb-4">Bài 2: Cho mạch Hình 24.6. \(\mathscr{E} = 12V, r = 0,6\Omega\). \(R_1 = 3\Omega, R_2 = 4\Omega, R_3 = 6\Omega\).</p>
+                <img src="h8.png" alt="Hình 24.6" class="mb-4 mx-auto border">
+                <button onclick="toggleAnswer('sol-2')" class="navy-bg text-white px-4 py-2 rounded">Xem giải chi tiết</button>
+                <div id="sol-2" class="answer-content bg-green-50 p-4 mt-4 rounded-lg">
+                    <p>\( R_{23} = (4 \times 6)/(4+6) = 2,4\Omega \)<br>
+                    \( R_{AB} = R_1 + R_{23} = 3 + 2,4 = 5,4\Omega \)<br>
+                    Cường độ mạch chính: \( I = \mathscr{E}/(R_{AB} + r) = 12/(5,4 + 0,6) = 2A \).<br>
+                    \( U_1 = I \times R_1 = 2 \times 3 = 6V \).<br>
+                    \( U_{23} = U_2 = U_3 = I \times R_{23} = 2 \times 2,4 = 4,8V \).<br>
+                    \( I_2 = 4,8/4 = 1,2A \); \( I_3 = 4,8/6 = 0,8A \).</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Trắc nghiệm củng cố -->
+        <section class="bg-white p-8 rounded-12 shadow-md mb-8">
+            <h2 class="text-2xl navy-text mb-6 section-header">TRẮC NGHIỆM CỦNG CỐ</h2>
+            <div id="quiz" class="space-y-6">
+                <div class="p-4 border rounded-lg">
+                    <p class="font-bold">Câu 1: Đại lượng nào đặc trưng cho khả năng thực hiện công của nguồn điện?</p>
+                    <div class="mt-2 space-y-2">
+                        <label class="block"><input type="radio" name="q1" value="A"> A. Điện trở trong</label>
+                        <label class="block"><input type="radio" name="q1" value="B"> B. Suất điện động</label>
+                        <label class="block"><input type="radio" name="q1" value="C"> C. Hiệu điện thế</label>
+                        <label class="block"><input type="radio" name="q1" value="D"> D. Công suất</label>
+                    </div>
+                </div>
+                <div class="p-4 border rounded-lg">
+                    <p class="font-bold">Câu 2: Đơn vị của suất điện động là:</p>
+                    <div class="mt-2 space-y-2">
+                        <label class="block"><input type="radio" name="q2" value="A"> A. Ampe (A)</label>
+                        <label class="block"><input type="radio" name="q2" value="B"> B. Ohm (\(\Omega\))</label>
+                        <label class="block"><input type="radio" name="q2" value="C"> C. Vôn (V)</label>
+                        <label class="block"><input type="radio" name="q2" value="D"> D. Cu-lông (C)</label>
+                    </div>
+                </div>
+                <div class="p-4 border rounded-lg">
+                    <p class="font-bold">Câu 3: Công thức định luật Ôm cho toàn mạch là:</p>
+                    <div class="mt-2 space-y-2">
+                        <label class="block"><input type="radio" name="q3" value="A"> A. \( I = U/R \)</label>
+                        <label class="block"><input type="radio" name="q3" value="B"> B. \( I = \mathscr{E}/(R+r) \)</label>
+                        <label class="block"><input type="radio" name="q3" value="C"> C. \( I = (R+r)/\mathscr{E} \)</label>
+                        <label class="block"><input type="radio" name="q3" value="D"> D. \( I = \mathscr{E}/r \)</label>
+                    </div>
+                </div>
+                <div class="p-4 border rounded-lg">
+                    <p class="font-bold">Câu 4: Hiện tượng đoản mạch xảy ra khi:</p>
+                    <div class="mt-2 space-y-2">
+                        <label class="block"><input type="radio" name="q4" value="A"> A. \( R_{ ngoài} \) rất lớn</label>
+                        <label class="block"><input type="radio" name="q4" value="B"> B. \( R_{ ngoài} = 0 \)</label>
+                        <label class="block"><input type="radio" name="q4" value="C"> C. Nguồn hở mạch</label>
+                        <label class="block"><input type="radio" name="q4" value="D"> D. \( r = 0 \)</label>
+                    </div>
+                </div>
+                <div class="p-4 border rounded-lg">
+                    <p class="font-bold">Câu 5: Số vôn ghi trên nguồn điện cho biết giá trị nào khi mạch hở?</p>
+                    <div class="mt-2 space-y-2">
+                        <label class="block"><input type="radio" name="q5" value="A"> A. Điện trở trong</label>
+                        <label class="block"><input type="radio" name="q5" value="B"> B. Công suất</label>
+                        <label class="block"><input type="radio" name="q5" value="C"> C. Suất điện động</label>
+                        <label class="block"><input type="radio" name="q5" value="D"> D. Cường độ dòng điện</label>
+                    </div>
+                </div>
+            </div>
+            <button onclick="checkQuiz()" class="mt-8 navy-bg text-white font-bold py-4 px-10 rounded-lg shadow-lg hover:bg-black transition w-full md:w-auto">NỘP BÀI</button>
+            <div id="quizResult" class="mt-6 p-4 rounded-lg hidden"></div>
+        </section>
+
+        <!-- Footer Summary Boxes -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
+            <div class="bg-blue-900 text-white p-6 rounded-12">
+                <h4 class="font-bold mb-2">EM ĐÃ HỌC</h4>
+                <ul class="list-disc ml-5 text-sm space-y-2">
+                    <li>Định nghĩa suất điện động: \( \mathscr{E} = A/q \).</li>
+                    <li>Mối liên hệ: \( U = \mathscr{E} - Ir \).</li>
+                    <li>Định luật Ôm toàn mạch: \( I = \mathscr{E}/(R+r) \).</li>
+                </ul>
+            </div>
+            <div class="bg-green-700 text-white p-6 rounded-12">
+                <h4 class="font-bold mb-2">EM CÓ THỂ</h4>
+                <p class="text-sm">Mô tả ảnh hưởng của điện trở trong lên hiệu điện thế hai cực. Xác định được suất điện động của các loại pin khác nhau.</p>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        function toggleAnswer(id) {
+            const element = document.getElementById(id);
+            element.style.display = (element.style.display === "block") ? "none" : "block";
+        }
+
+        function checkQuiz() {
+            const answers = { q1: 'B', q2: 'C', q3: 'B', q4: 'B', q5: 'C' };
+            const solutions = {
+                q1: "Suất điện động đặc trưng cho khả năng thực hiện công của lực lạ bên trong nguồn.",
+                q2: "Đơn vị đo suất điện động là Vôn (V).",
+                q3: "Theo định luật Ôm toàn mạch: \( I = \mathscr{E}/(R+r) \).",
+                q4: "Đoản mạch xảy ra khi cực âm nối trực tiếp cực dương với điện trở không đáng kể.",
+                q5: "Khi mạch hở, hiệu điện thế giữa hai cực bằng suất điện động của nguồn."
+            };
+            
+            let score = 0;
+            let resultHTML = '<h3 class="text-xl font-bold mb-4">KẾT QUẢ CHI TIẾT:</h3>';
+            
+            for (let i = 1; i <= 5; i++) {
+                const qName = 'q' + i;
+                const selected = document.querySelector(`input[name="${qName}"]:checked`);
+                const isCorrect = selected && selected.value === answers[qName];
+                
+                if (isCorrect) score++;
+                
+                resultHTML += `
+                    <div class="mb-3 p-3 border-l-4 ${isCorrect ? 'border-green-500 bg-green-50' : 'border-red-500 bg-red-50'}">
+                        <p><b>Câu ${i}:</b> ${isCorrect ? 'Đúng' : 'Sai'}</p>
+                        <p class="text-sm italic">${solutions[qName]}</p>
+                    </div>
+                `;
+            }
+            
+            const resultDiv = document.getElementById('quizResult');
+            resultDiv.classList.remove('hidden');
+            resultDiv.innerHTML = `<div class="text-2xl font-bold mb-4 ${score === 5 ? 'text-green-600' : 'text-navy-700'}">Điểm của bạn: ${score}/5</div>` + resultHTML;
+            resultDiv.scrollIntoView({ behavior: 'smooth' });
+        }
+    </script>
+</body>
+</html>
