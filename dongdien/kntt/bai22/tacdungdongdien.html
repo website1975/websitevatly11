@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mô phỏng Tác dụng của Dòng điện</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-color: #f0f2f5;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .tab-active {
+            border-bottom: 3px solid #2563eb;
+            color: #2563eb;
+            font-weight: bold;
+        }
+        canvas {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+            touch-action: none;
+        }
+        .control-panel {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+    <div class="max-w-4xl mx-auto">
+        <h1 class="text-2xl md:text-3xl font-bold text-center mb-6 text-gray-800">Mô phỏng Tác dụng của Dòng điện</h1>
+
+        <!-- Tab Navigation -->
+        <div class="flex border-b border-gray-300 mb-6 bg-white rounded-t-lg">
+            <button id="tab1" class="flex-1 py-3 text-center tab-active transition-all" onclick="switchTab(1)">
+                a) Tác dụng phát sáng (Đèn)
+            </button>
+            <button id="tab2" class="flex-1 py-3 text-center text-gray-500 transition-all hover:bg-gray-50" onclick="switchTab(2)">
+                b) Tác dụng từ (Nam châm điện)
+            </button>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="md:col-span-2 relative">
+                <canvas id="simCanvas" width="600" height="400" class="w-full h-auto"></canvas>
+                <div id="statusLabel" class="absolute top-4 left-4 bg-white/80 px-3 py-1 rounded text-sm font-semibold border border-gray-200">
+                    Trạng thái: Đang ngắt mạch
+                </div>
+            </div>
+
+            <div class="control-panel flex flex-col gap-6">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Công tắc K</label>
+                    <button id="switchK" onclick="toggleSwitch()" class="w-full py-2 px-4 bg-red-500 text-white rounded-lg font-bold shadow-md hover:bg-red-600 active:scale-95 transition-all">
+                        ĐÓNG MẠCH (K)
+                    </button>
+                </div>
+
+                <div>
+                    <label for="resistorRange" class="block text-sm font-medium text-gray-700 mb-2">
+                        Điều chỉnh vị trí mũi tên R
+                    </label>
+                    <input type="range" id="resistorRange" min="0" max="100" value="50" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600">
+                    <div class="flex justify-between text-xs mt-1 text-gray-500">
+                        <span>Lên (R tăng - I giảm)</span>
+                        <span>Xuống (R giảm - I tăng)</span>
+                    </div>
+                </div>
+
+                <div class="bg-blue-50 p-4 rounded-lg border border-blue-100">
+                    <h3 class="text-blue-800 font-bold mb-1 font-sans">Ampe kế (A)</h3>
+                    <div id="ampeValue" class="text-3xl font-mono text-blue-600">0.00 A</div>
+                </div>
+
+                <div class="text-sm text-gray-600 italic leading-relaxed">
+                    <p id="instructionText">Kéo mũi tên xuống dưới: <br> 
+                    <strong>R giảm $\rightarrow$ I tăng mạnh</strong> $\rightarrow$ Nam châm hút nhiều kẹp giấy hơn.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('simCanvas');
+        const ctx = canvas.getContext('2d');
+        const ampeDisplay = document.getElementById('ampeValue');
+        const switchBtn = document.getElementById('switchK');
+        const resistorRange = document.getElementById('resistorRange');
+        const statusLabel = document.getElementById('statusLabel');
+
+        let currentTab = 1;
+        let isClosed = false;
+        let currentI = 0;
+        let animationFrame;
+
+        const batteryPos = { x: 450, y: 50 };
+        const switchPos = { x: 250, y: 50 };
+        const resistorPos = { x: 100, y: 150 };
+        const ampePos = { x: 300, y: 350 };
+        const loadPos = { x: 500, y: 200 };
+
+        // Tạo danh sách kẹp giấy
+        let paperClips = [];
+        const numClips = 20;
+        for(let i=0; i<numClips; i++) {
+            paperClips.push({
+                x: 440 + Math.random() * 120,
+                y: 350 + Math.random() * 30,
+                baseX: 440 + Math.random() * 120,
+                baseY: 350 + Math.random() * 30,
+                angle: Math.random() * Math.PI,
+                targetY: 350,
+                isAttached: false,
+                id: i
+            });
+        }
+
+        function switchTab(tab) {
+            currentTab = tab;
+            document.getElementById('tab1').className = tab === 1 ? 'flex-1 py-3 text-center tab-active transition-all' : 'flex-1 py-3 text-center text-gray-500 transition-all';
+            document.getElementById('tab2').className = tab === 2 ? 'flex-1 py-3 text-center tab-active transition-all' : 'flex-1 py-3 text-center text-gray-500 transition-all';
+            if(!isClosed) resetPaperClips();
+        }
+
+        function toggleSwitch() {
+            isClosed = !isClosed;
+            switchBtn.innerText = isClosed ? "NGẮT MẠCH (K)" : "ĐÓNG MẠCH (K)";
+            switchBtn.className = isClosed 
+                ? "w-full py-2 px-4 bg-gray-500 text-white rounded-lg font-bold shadow-md hover:bg-gray-600 transition-all"
+                : "w-full py-2 px-4 bg-red-500 text-white rounded-lg font-bold shadow-md hover:bg-red-600 transition-all";
+            statusLabel.innerText = isClosed ? "Trạng thái: Mạch kín" : "Trạng thái: Đang ngắt mạch";
+            if(!isClosed) {
+                paperClips.forEach(p => p.isAttached = false);
+            }
+        }
+
+        function resetPaperClips() {
+            paperClips.forEach(p => { 
+                p.isAttached = false;
+            });
+        }
+
+        function drawCircuit() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            let sliderVal = parseInt(resistorRange.value); 
+            if (isClosed) {
+                currentI = 0.5 + (sliderVal / 20); // Dòng điện từ 0.5A đến 5.5A
+            } else {
+                currentI = 0;
+            }
+            ampeDisplay.innerText = currentI.toFixed(2) + " A";
+
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            
+            // Vẽ dây dẫn chính
+            ctx.moveTo(switchPos.x + 50, 50); 
+            ctx.lineTo(batteryPos.x - 20, 50);
+            ctx.moveTo(batteryPos.x + 20, 50); 
+            ctx.lineTo(loadPos.x, 50);
+            ctx.lineTo(loadPos.x, loadPos.y - 40);
+            ctx.moveTo(loadPos.x, loadPos.y + 40); 
+            ctx.lineTo(loadPos.x, 350);
+            ctx.lineTo(ampePos.x + 30, 350);
+            ctx.moveTo(ampePos.x - 30, 350);
+            ctx.lineTo(100, 350);
+            ctx.lineTo(100, resistorPos.y + 100);
+            ctx.moveTo(switchPos.x - 50, 50);
+            ctx.lineTo(100, 50);
+            ctx.lineTo(100, resistorPos.y - 20); 
+            ctx.stroke();
+
+            // Nguồn (Pin)
+            ctx.fillStyle = '#333';
+            ctx.fillRect(batteryPos.x - 2, 35, 4, 30);
+            ctx.fillRect(batteryPos.x + 8, 25, 6, 50);
+            ctx.font = 'bold 14px Arial';
+            ctx.fillText('+', batteryPos.x + 18, 40);
+            ctx.fillText('-', batteryPos.x - 15, 40);
+
+            // Khóa K
+            ctx.save();
+            ctx.translate(switchPos.x - 50, 50);
+            ctx.fillStyle = '#333';
+            ctx.beginPath(); ctx.arc(0, 0, 5, 0, Math.PI * 2); ctx.arc(100, 0, 5, 0, Math.PI * 2); ctx.fill();
+            ctx.lineWidth = 4; ctx.beginPath();
+            if (isClosed) { ctx.moveTo(0, 0); ctx.lineTo(100, 0); }
+            else { ctx.moveTo(0, 0); ctx.lineTo(80, -30); }
+            ctx.stroke();
+            ctx.restore();
+            ctx.fillText('K', switchPos.x, 30);
+
+            // BIẾN TRỞ Rbt
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(resistorPos.x - 15, resistorPos.y, 30, 100);
+            ctx.fillStyle = '#f8f8f8';
+            ctx.fillRect(resistorPos.x - 14, resistorPos.y + 1, 28, 98);
+            ctx.strokeStyle = '#ddd';
+            ctx.lineWidth = 1;
+            for(let i = 5; i < 100; i += 4) {
+                ctx.beginPath(); ctx.moveTo(resistorPos.x - 15, resistorPos.y + i); ctx.lineTo(resistorPos.x + 15, resistorPos.y + i); ctx.stroke();
+            }
+            ctx.strokeStyle = '#444'; ctx.lineWidth = 4; ctx.beginPath();
+            ctx.moveTo(resistorPos.x - 20, resistorPos.y - 20); ctx.lineTo(resistorPos.x + 5, resistorPos.y - 20); ctx.stroke();
+
+            // MŨI TÊN DI ĐỘNG
+            let arrowY = resistorPos.y + (sliderVal * 0.9) + 5; 
+            ctx.strokeStyle = 'red'; ctx.lineWidth = 2; ctx.beginPath();
+            ctx.moveTo(resistorPos.x - 20, resistorPos.y - 20); ctx.lineTo(resistorPos.x - 20, arrowY); ctx.lineTo(resistorPos.x - 5, arrowY); ctx.stroke();
+            ctx.fillStyle = 'red'; ctx.beginPath();
+            ctx.moveTo(resistorPos.x - 5, arrowY - 7); ctx.lineTo(resistorPos.x + 10, arrowY); ctx.lineTo(resistorPos.x - 5, arrowY + 7); ctx.fill();
+            ctx.fillStyle = '#333'; ctx.font = 'bold 16px Arial'; ctx.textAlign = 'right'; ctx.fillText('Rbt', resistorPos.x - 30, resistorPos.y + 50);
+
+            // AMPE KẾ
+            ctx.beginPath(); ctx.arc(ampePos.x, ampePos.y, 30, 0, Math.PI * 2);
+            ctx.fillStyle = 'white'; ctx.fill(); ctx.strokeStyle = '#333'; ctx.lineWidth = 2; ctx.stroke();
+            ctx.fillStyle = '#333'; ctx.font = 'bold 20px Arial'; ctx.textAlign = 'center'; ctx.fillText('A', ampePos.x, ampePos.y - 40);
+            ctx.save(); ctx.translate(ampePos.x, ampePos.y);
+            let ampeAngle = (currentI / 6) * Math.PI - (Math.PI/2);
+            ctx.rotate(ampeAngle); ctx.strokeStyle = 'red'; ctx.lineWidth = 2;
+            ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(0, -25); ctx.stroke();
+            ctx.restore();
+
+            // THIẾT BỊ (Tab 1 hoặc 2)
+            if (currentTab === 1) drawBulb(loadPos.x, loadPos.y, currentI);
+            else drawSolenoid(loadPos.x, loadPos.y, currentI);
+
+            animationFrame = requestAnimationFrame(drawCircuit);
+        }
+
+        function drawBulb(x, y, intensity) {
+            if (isClosed && intensity > 0) {
+                ctx.save();
+                let glowRadius = 25 + intensity * 15;
+                let gradient = ctx.createRadialGradient(x, y - 10, 5, x, y - 10, glowRadius);
+                gradient.addColorStop(0, `rgba(255, 255, 0, ${Math.min(intensity * 0.2, 0.6)})`);
+                gradient.addColorStop(1, 'rgba(255, 255, 0, 0)');
+                ctx.fillStyle = gradient;
+                ctx.beginPath(); ctx.arc(x, y - 10, glowRadius, 0, Math.PI * 2); ctx.fill();
+                ctx.restore();
+            }
+            ctx.beginPath(); ctx.arc(x, y - 10, 25, 0, Math.PI * 2);
+            let colorAlpha = Math.min(intensity * 0.1, 0.8);
+            ctx.fillStyle = isClosed ? `rgba(255, 255, 200, ${0.5 + colorAlpha})` : '#fff';
+            ctx.fill(); ctx.strokeStyle = '#333'; ctx.lineWidth = 2; ctx.stroke();
+            if (isClosed) {
+                ctx.strokeStyle = intensity > 2 ? 'orange' : '#555'; ctx.lineWidth = 2; ctx.beginPath();
+                ctx.moveTo(x - 10, y - 20); ctx.lineTo(x + 10, y); ctx.moveTo(x + 10, y - 20); ctx.lineTo(x - 10, y); ctx.stroke();
+            }
+            ctx.fillStyle = '#888'; ctx.fillRect(x - 12, y + 15, 24, 15);
+            ctx.fillStyle = '#333'; ctx.font = 'bold 24px Arial'; ctx.textAlign = 'left'; ctx.fillText('Đ', x + 35, y);
+        }
+
+        function drawSolenoid(x, y, intensity) {
+            // Lõi nam châm
+            ctx.fillStyle = '#d2691e';
+            ctx.fillRect(x - 15, y - 60, 30, 120);
+            
+            // Vẽ các vòng dây
+            ctx.strokeStyle = '#0077be';
+            ctx.lineWidth = 3;
+            for(let i = -50; i < 50; i += 10) {
+                ctx.beginPath(); ctx.ellipse(x, y + i, 20, 5, 0, 0, Math.PI * 2); ctx.stroke();
+            }
+
+            // Logic hút kẹp giấy dựa trên intensity (currentI)
+            let maxClipsToAttach = isClosed ? Math.floor(currentI * 3.5) : 0;
+            
+            paperClips.forEach((p, index) => {
+                ctx.save();
+                
+                if (isClosed) {
+                    // Nếu kẹp giấy chưa được hút và vẫn còn suất hút
+                    if (!p.isAttached && index < maxClipsToAttach) {
+                        p.isAttached = true;
+                        // Điểm hút ngẫu nhiên quanh đáy nam châm
+                        p.targetX = x + (Math.random() * 40 - 20);
+                        p.targetY = y + 50 + (Math.random() * 25);
+                    } 
+                    // Nếu I giảm xuống thấp hơn chỉ số của kẹp này -> Rơi
+                    else if (p.isAttached && index >= maxClipsToAttach) {
+                        p.isAttached = false;
+                    }
+                } else {
+                    p.isAttached = false;
+                }
+
+                // Cập nhật vị trí mượt mà
+                if (p.isAttached) {
+                    p.x += (p.targetX - p.x) * 0.1;
+                    p.y += (p.targetY - p.y) * 0.1;
+                } else {
+                    // Trở về vị trí khay ban đầu
+                    if (p.y < p.baseY) {
+                        p.y += 4; // Rơi xuống
+                    }
+                    p.x += (p.baseX - p.x) * 0.05;
+                }
+
+                ctx.translate(p.x, p.y);
+                ctx.rotate(p.angle);
+                ctx.strokeStyle = '#555';
+                ctx.lineWidth = 1.5;
+                // Vẽ hình kẹp giấy đơn giản
+                ctx.beginPath(); ctx.ellipse(0, 0, 10, 4, 0, 0, Math.PI * 2); ctx.stroke();
+                ctx.beginPath(); ctx.ellipse(0, 0, 6, 2, 0, 0, Math.PI * 2); ctx.stroke();
+                ctx.restore();
+            });
+
+            // Khay đựng kẹp giấy
+            ctx.fillStyle = 'rgba(200, 200, 200, 0.3)';
+            ctx.fillRect(430, 340, 140, 50);
+            ctx.strokeStyle = '#aaa';
+            ctx.strokeRect(430, 340, 140, 50);
+
+            ctx.fillStyle = '#333';
+            ctx.font = 'bold 24px Arial';
+            ctx.textAlign = 'left';
+            ctx.fillText('N', x + 35, y);
+        }
+
+        window.onload = () => { drawCircuit(); };
+    </script>
+</body>
+</html>

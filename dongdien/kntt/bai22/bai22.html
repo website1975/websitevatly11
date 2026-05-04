@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bài 22: CƯỜNG ĐỘ DÒNG ĐIỆN</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- MathJax for Math Formulas -->
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#000080',
+                        bglight: '#f4f7f9',
+                        qbg: '#edf2f7',
+                        ansbg: '#d1fae5', // Xanh lá nhạt
+                        tableborder: '#cbd5e0',
+                        tablehead: '#e2e8f0'
+                    },
+                    fontFamily: {
+                        sans: ['Segoe UI', 'Tahoma', 'Geneva', 'Verdana', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { background-color: #f4f7f9; }
+        .section-header { 
+            border-bottom: 4px solid #000080; 
+            padding-bottom: 0.5rem; 
+            margin-bottom: 1.5rem; 
+        }
+        table { width: 100%; text-align: center; border-collapse: collapse; }
+        th, td { border: 1px solid #cbd5e0; padding: 8px; }
+        th { background-color: #e2e8f0; font-weight: bold; }
+    </style>
+</head>
+<body class="font-sans text-gray-800 p-4 md:p-8">
+
+    <div class="max-w-4xl mx-auto space-y-6">
+
+        <!-- Header -->
+        <div class="bg-primary text-white p-6 rounded-[12px] shadow-md text-center">
+            <div class="text-sm md:text-lg opacity-90 mb-1">CHƯƠNG IV - DÒNG ĐIỆN MẠCH ĐIỆN</div>
+            <h1 class="text-2xl md:text-4xl font-bold uppercase tracking-wide">Bài 22: CƯỜNG ĐỘ DÒNG ĐIỆN</h1>
+        </div>
+
+        <!-- Intro Box -->
+        <div class="bg-white border border-black p-4 rounded-[12px] shadow-md italic text-center text-lg">
+            Cường độ dòng điện là gì và đặc trưng cho tính chất nào của dòng điện?
+        </div>
+
+        <!-- Section I -->
+        <div class="bg-white p-6 rounded-[12px] shadow-md">
+            <h2 class="text-xl md:text-2xl font-bold uppercase text-primary section-header">I. CƯỜNG ĐỘ DÒNG ĐIỆN</h2>
+            
+            <h3 class="font-bold text-lg mb-2">1. Thí nghiệm</h3>
+            
+            <!-- Thí nghiệm 1 -->
+            <div class="mb-6">
+                <p class="font-semibold underline">Thí nghiệm 1.</p>
+                <p><strong>Chuẩn bị:</strong> 1 ampe kế, 1 biến trở, 1 bóng đèn, Nguồn điện, Dây nối, Khoá K, Nam châm điện.</p>
+                <p><strong>Tiến hành:</strong></p>
+                <ul class="list-disc ml-6 mb-4 space-y-1">
+                    <li>Bố trí thí nghiệm như Hình 22.1a.</li>
+                    <li>Đóng khoá K, dịch chuyển con chạy của biến trở \( R_{bt} \) để số chỉ của ampe kế tăng dần.</li>
+                </ul>
+                
+                <div class="text-center my-4">
+                    <img src="h1.png" alt="Hình 22.1: Sơ đồ thí nghiệm" class="mx-auto max-w-full rounded border">
+                    <p class="text-sm text-gray-500 mt-2">Hình 22.1. Sơ đồ thí nghiệm khảo sát độ mạnh của dòng điện</p>
+                </div>
+
+                <!-- Câu hỏi Thí nghiệm 1 -->
+                <div class="bg-qbg border-l-4 border-primary p-4 rounded-r-md mt-4">
+                    <div class="flex items-start gap-2">
+                        <span class="text-primary font-bold text-xl">?</span>
+                        <div>
+                            <p>1. Hãy nhận xét về độ sáng của bóng đèn Đ khi số chỉ của ampe kế tăng dần.</p>
+                            <p>2. Theo em, thí nghiệm trên cho thấy cường độ dòng điện đặc trưng cho tính chất nào của dòng điện?</p>
+                        </div>
+                    </div>
+                    <button onclick="toggleAnswer('ans_tn1')" class="mt-3 bg-primary hover:bg-blue-800 text-white px-4 py-2 rounded text-sm font-semibold transition-colors">Xem lời giải</button>
+                    <div id="ans_tn1" class="hidden mt-4 p-4 bg-ansbg rounded text-gray-800">
+                        <p><strong>1.</strong> Khi số chỉ của ampe kế tăng dần, độ sáng của bóng đèn Đ cũng tăng lên (đèn sáng mạnh hơn).</p>
+                        <p><strong>2.</strong> Thí nghiệm cho thấy cường độ dòng điện đặc trưng cho <strong>độ mạnh yếu</strong> của dòng điện.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Thí nghiệm 2 -->
+            <div class="mb-6">
+                <p class="font-semibold underline">Thí nghiệm 2.</p>
+                <ul class="list-disc ml-6 mb-4 space-y-1">
+                    <li>Thay đèn Đ bằng một nam châm điện N (Hình 22.1b).</li>
+                    <li>Đóng khoá K, quan sát số lượng ghim giấy bằng sắt mà nam châm hút được.</li>
+                    <li>Đóng khoá K, điều chỉnh biến trở để số chỉ ampe kế chỉ giá trị lớn hơn giá trị ban đầu, quan sát số lượng ghim giấy bằng sắt mà nam châm hút được. So sánh với số lượng ghim giấy bằng sắt mà nam châm điện hút được trong hai trường hợp.</li>
+                </ul>
+
+                <!-- Câu hỏi Thí nghiệm 2 -->
+                <div class="bg-qbg border-l-4 border-primary p-4 rounded-r-md mt-4">
+                    <div class="flex items-start gap-2">
+                        <span class="text-primary font-bold text-xl">?</span>
+                        <div>
+                            <p>1. Hãy nhận xét về số ghim giấy mà nam châm hút được khi chỉ số của ampe kế tăng.</p>
+                            <p>2. Từ kết quả thí nghiệm cho thấy cường độ dòng điện đặc trưng cho tính chất nào của dòng điện.</p>
+                        </div>
+                    </div>
+                    <button onclick="toggleAnswer('ans_tn2')" class="mt-3 bg-primary hover:bg-blue-800 text-white px-4 py-2 rounded text-sm font-semibold transition-colors">Xem lời giải</button>
+                    <div id="ans_tn2" class="hidden mt-4 p-4 bg-ansbg rounded text-gray-800">
+                        <p><strong>1.</strong> Khi chỉ số ampe kế tăng, số lượng ghim giấy mà nam châm hút được nhiều hơn so với ban đầu.</p>
+                        <p><strong>2.</strong> Từ kết quả thí nghiệm cho thấy cường độ dòng điện đặc trưng cho <strong>tác dụng từ</strong> (tác dụng mạnh yếu) của dòng điện.</p>
+                    </div>
+                </div>
+            </div>
+
+            <h3 class="font-bold text-lg mb-2 mt-8">2. Công thức tính cường độ dòng điện</h3>
+            <p class="mb-3">Lượng điện tích chuyển qua tiết diện thẳng của dây dẫn trong một đơn vị thời gian càng lớn thì dòng điện chạy qua dây dẫn càng mạnh (Hình 22.2).</p>
+            <p class="mb-3">Trong vật lí, người ta gọi độ lớn của điện lượng chuyển qua tiết diện thẳng của một dây dẫn trong một đơn vị thời gian là cường độ dòng điện chạy qua dây dẫn, được xác định bằng công thức:</p>
+            
+            <div class="text-center my-4 font-bold text-xl">
+                \( I=\frac{\Delta q}{\Delta t} \) <span class="text-sm font-normal float-right mt-1">(22.1)</span>
+            </div>
+
+            <p class="mb-3">Trong công thức trên, đơn vị của cường độ dòng điện là ampe (kí hiệu là A), của điện lượng là Cu-lông (kí hiệu là C), của thời gian là giây (kí hiệu là s).</p>
+            <p class="mb-2">Từ công thức (22.1), ta rút ra:</p>
+            
+            <div class="text-center my-4 font-bold text-xl">
+                \( \Delta q=I.\Delta t \) <span class="text-sm font-normal float-right mt-1">(22.2)</span>
+            </div>
+
+            <p class="mb-3">Công thức (22.2) cho thấy ý nghĩa của đơn vị điện lượng Cu-lông: 1 Cu-lông là tổng điện lượng của các hạt mang điện chạy qua tiết diện thẳng của dây dẫn trong 1 s bởi dòng điện có cường độ 1 A.</p>
+            <p class="font-bold text-center mb-4">Đơn vị của điện lượng: \( 1 \text{ C} = 1 \text{ A.s} \).</p>
+
+            <div class="text-center my-4">
+                <img src="h2.png" alt="Hình 22.2" class="mx-auto max-w-sm rounded border">
+                <p class="text-sm text-gray-500 mt-2">Hình 22.2. Các điện tích dịch chuyển qua tiết diện thẳng của vật dẫn theo phương vuông góc với tiết diện của vật dẫn</p>
+            </div>
+
+            <!-- Câu hỏi mở rộng -->
+            <div class="bg-qbg border-l-4 border-primary p-4 rounded-r-md mt-6">
+                <div class="flex items-start gap-2">
+                    <span class="text-primary font-bold text-xl">?</span>
+                    <p>Trên một thiết bị dùng để nạp điện cho điện thoại di động có ghi thông số 10 000 mAh. Thông số 10 000 mAh cho biết điều gì?</p>
+                </div>
+                <button onclick="toggleAnswer('ans_mah')" class="mt-3 bg-primary hover:bg-blue-800 text-white px-4 py-2 rounded text-sm font-semibold transition-colors">Xem lời giải</button>
+                <div id="ans_mah" class="hidden mt-4 p-4 bg-ansbg rounded text-gray-800">
+                    <p>Thông số <strong>10 000 mAh</strong> (miliampe giờ) cho biết <strong>tổng điện lượng (dung lượng)</strong> mà thiết bị (sạc dự phòng) có thể cung cấp. Cụ thể, thiết bị có thể cung cấp một dòng điện có cường độ 10 000 mA (tương đương 10A) liên tục trong 1 giờ, hoặc dòng điện 1000 mA liên tục trong 10 giờ, trước khi cạn pin.</p>
+                </div>
+            </div>
+	<div class="bg-orange-100 text-gray-700 border-l-4 border-primary p-4 rounded-r-md mt-6">
+    	<strong>Kết luận :</strong> Cường độ dòng điện (ký hiệu là I) là một đại lượng vật lý đặc trưng cho độ mạnh yếu của dòng điện trong mạch. Nó được định nghĩa là lượng điện tích (Q) dịch chuyển qua tiết diện của một dây dẫn trong một đơn vị thời gian (t). Cụ thể, cường độ dòng điện được tính bằng công thức:<br>
+		<center>\( I = \frac{\Delta q}{\Delta t}\)</center>
+	</div>
+        </div>
+
+        <!-- Section II -->
+        <div class="bg-white p-6 rounded-[12px] shadow-md">
+            <h2 class="text-xl md:text-2xl font-bold uppercase text-primary section-header">II. LIÊN HỆ GIỮA CƯỜNG ĐỘ DÒNG ĐIỆN VỚI MẬT ĐỘ VÀ TỐC ĐỘ CỦA CÁC HẠT MANG ĐIỆN</h2>
+            
+            <h3 class="font-bold text-lg mb-2">1. Dòng điện chạy trong dây dẫn kim loại</h3>
+            <p class="mb-3">Trong kim loại tồn tại các electron không liên kết với nguyên tử, được gọi là electron tự do vì chúng có thể chuyển động tự do về mọi hướng. Khi dây dẫn được nối với nguồn điện thì trong dây dẫn xuất hiện điện trường. Dưới tác dụng của lực điện trường, các electron mang điện tích âm dịch chuyển có hướng ngược với hướng của điện trường, tạo ra dòng điện (Hình 22.3).</p>
+            <p class="mb-3">Người ta quy ước chiều dòng điện trong mạch là chiều từ cực dương sang cực âm của nguồn điện. Trong kim loại các electron tạo ra dòng điện dịch chuyển ngược chiều với chiều quy ước của dòng điện.</p>
+
+            <div class="text-center my-4">
+                <img src="h3.png" alt="Hình 22.3" class="mx-auto max-w-full rounded border">
+                <p class="text-sm text-gray-500 mt-2">Hình 22.3. Sự tạo thành dòng điện trong kim loại</p>
+            </div>
+
+            <h3 class="font-bold text-lg mb-2 mt-8">2. Biểu thức liên hệ giữa cường độ dòng điện với mật độ và tốc độ của các hạt mang điện</h3>
+            <p class="mb-2">Nếu gọi:</p>
+            <ul class="list-disc ml-6 mb-4 space-y-1">
+                <li>\( S \) là diện tích tiết diện thẳng của dây dẫn.</li>
+                <li>\( n \) là mật độ hạt mang điện (ở đây là số electron tự do trong một đơn vị thể tích của dây dẫn).</li>
+                <li>\( v \) là tốc độ dịch chuyển có hướng của electron.</li>
+                <li>\( e \) là độ lớn điện tích của electron.</li>
+            </ul>
+
+            <p class="mb-3">Trong khoảng thời gian \( \Delta t \), số electron \( N \) chạy qua tiết diện thẳng của dây dẫn là: \( N=n \cdot S \cdot h \), trong đó \( h=v \cdot \Delta t \)</p>
+            <div class="text-center my-2 font-bold text-lg">
+                \( N=n \cdot S \cdot v \cdot \Delta t \)
+            </div>
+
+            <div class="text-center my-4">
+                <img src="h4.png" alt="Hình 22.4" class="mx-auto max-w-sm rounded border">
+                <p class="text-sm text-gray-500 mt-2">Hình 22.4. Electron chạy qua tiết diện thẳng của dây dẫn</p>
+            </div>
+
+            <p class="mb-3">Do vậy, điện lượng chuyển qua tiết diện thẳng của dây dẫn trong khoảng thời gian \( \Delta t \) là:</p>
+            <div class="text-center my-2 font-bold text-lg">
+                \( \Delta q = N \cdot e = S \cdot n \cdot v \cdot e \cdot \Delta t \)
+            </div>
+
+            <p class="mb-3">Theo định nghĩa cường độ dòng điện ở công thức (22.1), ta xác định được cường độ dòng điện chạy qua một dây dẫn kim loại như sau:</p>
+            <div class="text-center my-4 font-bold text-xl">
+                \( I = S \cdot n \cdot v \cdot e \) <span class="text-sm font-normal float-right mt-1">(22.3)</span>
+            </div>
+
+            <h3 class="font-bold text-lg mb-2 mt-8">3. Bài tập vận dụng</h3>
+            <div class="bg-gray-50 p-4 rounded border border-gray-200">
+                <p>Một dây dẫn bằng kim loại, tiết diện tròn, có đường kính tiết diện là \( d=2 \text{ mm} \) có dòng điện \( I=5 \text{ A} \) chạy qua. Cho biết mật độ electron tự do là \( n=8,45 \cdot 10^{28} \text{ electron/m}^3 \). Hãy tính tốc độ dịch chuyển có hướng của các electron trong dây dẫn.</p>
+                <button onclick="toggleAnswer('ans_btvd')" class="mt-3 bg-primary hover:bg-blue-800 text-white px-4 py-2 rounded text-sm font-semibold transition-colors">Xem lời giải</button>
+                <div id="ans_btvd" class="hidden mt-4 p-4 bg-ansbg rounded text-gray-800">
+                    <p class="font-bold mb-2">Giải:</p>
+                    <p>Áp dụng công thức (22.3) ta có:</p>
+                    <p class="my-2">\( I = S \cdot n \cdot v \cdot e \)</p>
+                    <p class="my-2 overflow-x-auto">
+                        \( \Rightarrow v = \frac{I}{n \cdot S \cdot e} = \frac{I}{n \cdot \frac{\pi d^2}{4} \cdot e} = \frac{4I}{n \cdot \pi \cdot d^2 \cdot e} \)
+                    </p>
+                    <p class="mt-2">Thay số ta được:</p>
+                    <p>\( v \approx 1,2 \cdot 10^{-4} \text{ m/s} = 0,12 \text{ mm/s}. \)</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Khung Em đã học / Em có thể / Em có biết -->
+        <div class="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r-md shadow-sm">
+            <h3 class="font-bold text-lg mb-2 text-blue-800">EM ĐÃ HỌC</h3>
+            <ul class="list-disc ml-6 space-y-1">
+                <li>Cường độ dòng điện là đại lượng đặc trưng cho tác dụng mạnh, yếu của dòng điện và được xác định bằng công thức: \( I=\frac{\Delta q}{\Delta t} \).</li>
+                <li>Biểu thức liên hệ giữa cường độ dòng điện trong dây dẫn kim loại với mật độ hạt mang điện, tốc độ dịch chuyển có hướng của các hạt mang điện là: \( I = S \cdot n \cdot v \cdot e \).</li>
+            </ul>
+        </div>
+
+        <div class="bg-purple-50 border-l-4 border-purple-500 p-4 rounded-r-md shadow-sm">
+            <h3 class="font-bold text-lg mb-2 text-purple-800">EM CÓ THỂ</h3>
+            <ul class="list-disc ml-6 space-y-1">
+                <li>Ước tính được cường độ dòng điện của tia sét trong các cơn dông.</li>
+                <li>Hiểu được ý nghĩa của thông số mAh ghi trên pin, ac quy và sạc dự phòng.</li>
+                <li>Giải thích được nguyên tắc đo điện tâm đồ.</li>
+            </ul>
+        </div>
+
+        <div class="bg-yellow-50 border-l-4 border-yellow-500 p-4 rounded-r-md shadow-sm">
+            <h3 class="font-bold text-lg mb-2 text-yellow-800">EM CÓ BIẾT</h3>
+            <p class="mb-4">Trong dung dịch điện phân tồn tại các ion dương và ion âm. Khi đóng mạch điện trong bình điện phân, các ion trong dung dịch chính là các hạt mang điện (Hình 22.5).</p>
+            <img src="h5.png" alt="Hình 22.5" class="mx-auto max-w-sm rounded border">
+            <p class="text-sm text-center text-gray-500 mt-2">Hình 22.5. Ion dương và ion âm dịch chuyển trong dung dịch tạo ra dòng điện</p>
+        </div>
+
+        <hr class="border-t-2 border-gray-300 my-8">
+
+        <!-- Bài tập cuối bài -->
+        <div class="bg-white p-6 rounded-[12px] shadow-md">
+            <h2 class="text-xl md:text-2xl font-bold uppercase text-primary section-header">BÀI TẬP CỦNG CỐ & VẬN DỤNG</h2>
+
+            <!-- TRẮC NGHIỆM -->
+            <div class="mb-8">
+                <h3 class="font-bold text-lg mb-4 text-primary bg-qbg p-2 rounded inline-block">A. Trắc nghiệm (5 câu)</h3>
+                
+                <form id="quizForm" class="space-y-6">
+                    <!-- Câu 1 -->
+                    <div class="bg-gray-50 p-4 rounded border">
+                        <p class="font-bold mb-2">Câu 1: Cường độ dòng điện cho ta biết điều gì?</p>
+                        <div class="space-y-2">
+                            <label class="block"><input type="radio" name="q1" value="A"> A. Độ mạnh yếu của dòng điện.</label>
+                            <label class="block"><input type="radio" name="q1" value="B"> B. Chiều chuyển động của electron.</label>
+                            <label class="block"><input type="radio" name="q1" value="C"> C. Bản chất của vật dẫn điện.</label>
+                            <label class="block"><input type="radio" name="q1" value="D"> D. Tốc độ chuyển động của các ion.</label>
+                        </div>
+                        <div id="exp_q1" class="hidden mt-3 text-sm bg-green-100 p-2 rounded text-green-800">
+                            <strong>Đúng: A.</strong> Cường độ dòng điện là đại lượng đặc trưng cho tác dụng mạnh, yếu của dòng điện.
+                        </div>
+                    </div>
+
+                    <!-- Câu 2 -->
+                    <div class="bg-gray-50 p-4 rounded border">
+                        <p class="font-bold mb-2">Câu 2: Công thức định nghĩa cường độ dòng điện là gì?</p>
+                        <div class="space-y-2">
+                            <label class="block"><input type="radio" name="q2" value="A"> A. \( I = q \cdot t \)</label>
+                            <label class="block"><input type="radio" name="q2" value="B"> B. \( I = \frac{\Delta q}{\Delta t} \)</label>
+                            <label class="block"><input type="radio" name="q2" value="C"> C. \( I = \frac{\Delta t}{\Delta q} \)</label>
+                            <label class="block"><input type="radio" name="q2" value="D"> D. \( I = \Delta q + \Delta t \)</label>
+                        </div>
+                        <div id="exp_q2" class="hidden mt-3 text-sm bg-green-100 p-2 rounded text-green-800">
+                            <strong>Đúng: B.</strong> Theo công thức (22.1) trong bài.
+                        </div>
+                    </div>
+
+                    <!-- Câu 3 -->
+                    <div class="bg-gray-50 p-4 rounded border">
+                        <p class="font-bold mb-2">Câu 3: Đơn vị của điện lượng là gì?</p>
+                        <div class="space-y-2">
+                            <label class="block"><input type="radio" name="q3" value="A"> A. Ampe (A).</label>
+                            <label class="block"><input type="radio" name="q3" value="B"> B. Vôn (V).</label>
+                            <label class="block"><input type="radio" name="q3" value="C"> C. Ôm (\( \Omega \)).</label>
+                            <label class="block"><input type="radio" name="q3" value="D"> D. Cu-lông (C).</label>
+                        </div>
+                        <div id="exp_q3" class="hidden mt-3 text-sm bg-green-100 p-2 rounded text-green-800">
+                            <strong>Đúng: D.</strong> Đơn vị của điện lượng là Cu-lông (C).
+                        </div>
+                    </div>
+
+                    <!-- Câu 4 -->
+                    <div class="bg-gray-50 p-4 rounded border">
+                        <p class="font-bold mb-2">Câu 4: Hạt tải điện trong kim loại là gì?</p>
+                        <div class="space-y-2">
+                            <label class="block"><input type="radio" name="q4" value="A"> A. Ion dương và ion âm.</label>
+                            <label class="block"><input type="radio" name="q4" value="B"> B. Electron tự do.</label>
+                            <label class="block"><input type="radio" name="q4" value="C"> C. Lỗ trống.</label>
+                            <label class="block"><input type="radio" name="q4" value="D"> D. Nguyên tử bị ion hóa.</label>
+                        </div>
+                        <div id="exp_q4" class="hidden mt-3 text-sm bg-green-100 p-2 rounded text-green-800">
+                            <strong>Đúng: B.</strong> Trong kim loại tồn tại các electron không liên kết với nguyên tử được gọi là electron tự do đóng vai trò tải điện.
+                        </div>
+                    </div>
+
+                    <!-- Câu 5 -->
+                    <div class="bg-gray-50 p-4 rounded border">
+                        <p class="font-bold mb-2">Câu 5: Biểu thức liên hệ giữa cường độ dòng điện trong dây dẫn kim loại với mật độ electron và tốc độ dịch chuyển có hướng là:</p>
+                        <div class="space-y-2">
+                            <label class="block"><input type="radio" name="q5" value="A"> A. \( I = \frac{S \cdot n \cdot e}{v} \)</label>
+                            <label class="block"><input type="radio" name="q5" value="B"> B. \( I = S \cdot n \cdot v \cdot e \)</label>
+                            <label class="block"><input type="radio" name="q5" value="C"> C. \( I = \frac{v \cdot e}{S \cdot n} \)</label>
+                            <label class="block"><input type="radio" name="q5" value="D"> D. \( I = \frac{S \cdot n \cdot v}{e} \)</label>
+                        </div>
+                        <div id="exp_q5" class="hidden mt-3 text-sm bg-green-100 p-2 rounded text-green-800">
+                            <strong>Đúng: B.</strong> Theo công thức (22.3) trong bài: \( I = S \cdot n \cdot v \cdot e \).
+                        </div>
+                    </div>
+
+                    <button type="button" onclick="checkQuiz()" class="bg-primary hover:bg-blue-800 text-white font-bold py-3 px-8 rounded mt-4 w-full md:w-auto transition-colors">NỘP BÀI</button>
+                    <div id="quizResult" class="mt-4 text-xl font-bold hidden"></div>
+                </form>
+            </div>
+
+            <!-- BÀI TẬP VẬN DỤNG -->
+            <div>
+                <h3 class="font-bold text-lg mb-4 text-primary bg-qbg p-2 rounded inline-block">B. Bài tập vận dụng tự luận (3 câu)</h3>
+                
+                <!-- BT 1 -->
+                <div class="mb-4 bg-white border border-gray-300 p-4 rounded">
+                    <p><strong>Bài 1:</strong> Tính điện lượng chuyển qua tiết diện thẳng của một dây dẫn trong thời gian 2 phút, biết cường độ dòng điện không đổi chạy qua dây dẫn là 0,5 A.</p>
+                    <button onclick="toggleAnswer('tl1')" class="mt-3 bg-primary text-white px-3 py-1.5 rounded text-sm font-semibold transition-colors">Xem lời giải</button>
+                    <div id="tl1" class="hidden mt-4 p-4 bg-ansbg rounded">
+                        <p>Đổi \( \Delta t = 2 \text{ phút} = 120 \text{ s} \).</p>
+                        <p>Áp dụng công thức \( \Delta q = I \cdot \Delta t \)</p>
+                        <p>\( \Rightarrow \Delta q = 0,5 \cdot 120 = 60 \text{ (C)} \).</p>
+                        <p>Vậy điện lượng chuyển qua là 60 C.</p>
+                    </div>
+                </div>
+
+                <!-- BT 2 -->
+                <div class="mb-4 bg-white border border-gray-300 p-4 rounded">
+                    <p><strong>Bài 2:</strong> Dòng điện chạy qua một dây dẫn có cường độ 1,6 A. Tính số electron dịch chuyển qua tiết diện thẳng của dây dẫn đó trong thời gian 1 giây. (Biết điện tích của electron \( e = 1,6 \cdot 10^{-19} \text{ C} \)).</p>
+                    <button onclick="toggleAnswer('tl2')" class="mt-3 bg-primary text-white px-3 py-1.5 rounded text-sm font-semibold transition-colors">Xem lời giải</button>
+                    <div id="tl2" class="hidden mt-4 p-4 bg-ansbg rounded">
+                        <p>Điện lượng chuyển qua tiết diện thẳng của dây dẫn trong 1 giây là:</p>
+                        <p>\( \Delta q = I \cdot \Delta t = 1,6 \cdot 1 = 1,6 \text{ (C)} \).</p>
+                        <p>Số electron chuyển qua tiết diện thẳng là:</p>
+                        <p>\( N = \frac{\Delta q}{e} = \frac{1,6}{1,6 \cdot 10^{-19}} = 10^{19} \text{ (hạt)} \).</p>
+                    </div>
+                </div>
+
+                <!-- BT 3 -->
+                <div class="mb-4 bg-white border border-gray-300 p-4 rounded">
+                    <p><strong>Bài 3:</strong> Một dây dẫn bằng đồng có tiết diện thẳng \( S = 1 \text{ mm}^2 \), có dòng điện cường độ \( I = 1,5 \text{ A} \) chạy qua. Cho mật độ electron tự do của đồng là \( n = 8,45 \cdot 10^{28} \text{ m}^{-3} \). Tính tốc độ dịch chuyển có hướng của các electron tự do trong dây dẫn đồng đó.</p>
+                    <button onclick="toggleAnswer('tl3')" class="mt-3 bg-primary text-white px-3 py-1.5 rounded text-sm font-semibold transition-colors">Xem lời giải</button>
+                    <div id="tl3" class="hidden mt-4 p-4 bg-ansbg rounded">
+                        <p>Đổi \( S = 1 \text{ mm}^2 = 10^{-6} \text{ m}^2 \).</p>
+                        <p>Áp dụng công thức: \( I = S \cdot n \cdot v \cdot e \)</p>
+                        <p>\( \Rightarrow v = \frac{I}{S \cdot n \cdot e} \)</p>
+                        <p>\( \Rightarrow v = \frac{1,5}{10^{-6} \cdot 8,45 \cdot 10^{28} \cdot 1,6 \cdot 10^{-19}} \approx 1,1 \cdot 10^{-4} \text{ (m/s)} \).</p>
+                        <p>Vậy tốc độ dịch chuyển có hướng là xấp xỉ \( 0,11 \text{ mm/s} \).</p>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+
+    <!-- JavaScript Xử Lý -->
+    <script>
+        // Hàm ẩn/hiện lời giải
+        function toggleAnswer(id) {
+            const el = document.getElementById(id);
+            if(el.classList.contains('hidden')) {
+                el.classList.remove('hidden');
+            } else {
+                el.classList.add('hidden');
+            }
+        }
+
+        // Hàm kiểm tra đáp án Trắc nghiệm
+        function checkQuiz() {
+            const answers = {
+                q1: 'A',
+                q2: 'B',
+                q3: 'D',
+                q4: 'B',
+                q5: 'B'
+            };
+            
+            let score = 0;
+            let total = Object.keys(answers).length;
+            let unAnswered = false;
+
+            for (let q in answers) {
+                const selected = document.querySelector(`input[name="${q}"]:checked`);
+                const expDiv = document.getElementById(`exp_${q}`);
+                
+                if (selected) {
+                    if (selected.value === answers[q]) {
+                        score++;
+                    }
+                    // Hiển thị giải thích sau khi bấm nộp
+                    expDiv.classList.remove('hidden');
+                } else {
+                    unAnswered = true;
+                }
+            }
+
+            const resultDiv = document.getElementById('quizResult');
+            resultDiv.classList.remove('hidden');
+
+            if (unAnswered) {
+                resultDiv.innerHTML = `<span class="text-red-500">Bạn chưa trả lời hết các câu hỏi. Số câu đúng tạm thời: ${score}/${total}</span>`;
+            } else {
+                if (score === total) {
+                    resultDiv.innerHTML = `<span class="text-green-600">Xuất sắc! Bạn đã trả lời đúng ${score}/${total} câu.</span>`;
+                } else {
+                    resultDiv.innerHTML = `<span class="text-red-600">Bạn trả lời đúng ${score}/${total} câu. Hãy xem lại lời giải chi tiết bên trên nhé!</span>`;
+                }
+            }
+        }
+    </script>
+</body>
+</html>

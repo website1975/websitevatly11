@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mô phỏng Dòng điện trong các môi trường</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-color: #f0f4f8;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .canvas-container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            position: relative;
+            overflow: hidden;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .tab-active {
+            border-bottom: 3px solid #3b82f6;
+            color: #3b82f6;
+            font-weight: bold;
+        }
+        canvas {
+            width: 100%;
+            height: 320px;
+            display: block;
+        }
+        .control-panel {
+            background: #ffffff;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+    <div class="max-w-5xl mx-auto">
+        <h1 class="text-3xl font-bold text-center text-gray-800 mb-6">Mô phỏng Dòng điện trong các môi trường</h1>
+
+        <!-- Tabs -->
+        <div class="flex justify-center space-x-4 mb-6">
+            <button onclick="switchTab('metal')" id="tab-metal" class="px-6 py-2 transition-all tab-active">Kim loại</button>
+            <button onclick="switchTab('electrolyte')" id="tab-electrolyte" class="px-6 py-2 transition-all">Chất điện phân</button>
+            <button onclick="switchTab('gas')" id="tab-gas" class="px-6 py-2 transition-all">Chất khí</button>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div class="lg:col-span-2">
+                <div class="canvas-container">
+                    <canvas id="simCanvas"></canvas>
+                </div>
+                <div id="info-box" class="mt-4 p-4 bg-blue-50 border-l-4 border-blue-500 rounded text-sm text-blue-800"></div>
+            </div>
+
+            <div class="control-panel">
+                <h2 class="text-xl font-semibold mb-4 border-bottom pb-2 text-gray-700">Điều khiển</h2>
+                
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Trạng thái mạch (Khóa K)</label>
+                    <button id="switchBtn" onclick="toggleSwitch()" class="w-full py-2 px-4 bg-red-500 hover:bg-red-600 text-white font-bold rounded-lg transition-colors">
+                        NGẮT MẠCH (K Mở)
+                    </button>
+                </div>
+
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Điện thế (U): <span id="uValue">50</span>V</label>
+                    <input type="range" id="voltageSlider" min="0" max="100" value="50" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                </div>
+
+                <div class="p-4 bg-gray-100 rounded-lg">
+                    <p class="text-sm text-gray-600">Thông số môi trường:</p>
+                    <p class="text-lg font-mono font-bold text-blue-600">R = <span id="rValue">---</span> Ω</p>
+                    <p class="text-lg font-mono font-bold text-green-600">I = <span id="iValue">0.00</span> A</p>
+                </div>
+
+                <div class="mt-6 text-xs text-gray-500 leading-relaxed">
+                    <p><strong>Ghi chú:</strong></p>
+                    <ul id="legend" class="list-disc ml-4 mt-2 text-gray-600"></ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('simCanvas');
+        const ctx = canvas.getContext('2d');
+        const uSlider = document.getElementById('voltageSlider');
+        const uLabel = document.getElementById('uValue');
+        const rLabel = document.getElementById('rValue');
+        const iLabel = document.getElementById('iValue');
+        const switchBtn = document.getElementById('switchBtn');
+        const infoBox = document.getElementById('info-box');
+        const legend = document.getElementById('legend');
+
+        let currentTab = 'metal';
+        let isClosed = false;
+        let particles = [];
+        let fixedIons = [];
+        
+        const configs = {
+            metal: {
+                r: 2,
+                info: "Dòng điện trong kim loại: Các ion dương dao động nhiệt quanh nút mạng. Khi K đóng, các electron tự do dịch chuyển ngược chiều điện trường.",
+                legend: "<li>Hạt đỏ: Ion dương (rung tại chỗ)</li><li>Hạt xanh nhỏ: Electron tự do</li>"
+            },
+            electrolyte: {
+                r: 10,
+                info: "Dòng điện trong chất điện phân: Dòng dịch chuyển có hướng của các ion dương (+) và ion âm (-).",
+                legend: "<li>Hạt đỏ (+): Cation</li><li>Hạt xanh (-): Anion</li>"
+            },
+            gas: {
+                r: 50,
+                info: "Dòng điện trong chất khí: Dòng dịch chuyển của ion dương, ion âm và electron sinh ra do ion hóa.",
+                legend: "<li>Hạt đỏ: Ion dương</li><li>Hạt xanh đậm: Ion âm</li><li>Hạt xanh nhạt: Electron</li>"
+            }
+        };
+
+        function resize() {
+            canvas.width = canvas.offsetWidth;
+            canvas.height = canvas.offsetHeight;
+            initParticles();
+        }
+
+        window.addEventListener('resize', resize);
+        uSlider.addEventListener('input', () => {
+            uLabel.innerText = uSlider.value;
+            updateCalculations();
+        });
+
+        function switchTab(tab) {
+            currentTab = tab;
+            document.querySelectorAll('button[id^="tab-"]').forEach(btn => btn.classList.remove('tab-active'));
+            document.getElementById('tab-' + tab).classList.add('tab-active');
+            infoBox.innerText = configs[tab].info;
+            legend.innerHTML = configs[tab].legend;
+            initParticles();
+            updateCalculations();
+        }
+
+        function toggleSwitch() {
+            isClosed = !isClosed;
+            switchBtn.innerText = isClosed ? "ĐANG ĐÓNG (K Đóng)" : "NGẮT MẠCH (K Mở)";
+            switchBtn.className = `w-full py-2 px-4 ${isClosed ? 'bg-green-500' : 'bg-red-500'} text-white font-bold rounded-lg`;
+            updateCalculations();
+        }
+
+        function updateCalculations() {
+            const u = parseFloat(uSlider.value);
+            const r = configs[currentTab].r;
+            rLabel.innerText = r;
+            iLabel.innerText = isClosed ? (u / r).toFixed(2) : "0.00";
+        }
+
+        class Particle {
+            constructor(type) {
+                this.type = type;
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * (canvas.height - 100) + 50;
+                // Vận tốc nhiệt ngẫu nhiên cho mọi hạt
+                this.vx = (Math.random() - 0.5) * 3;
+                this.vy = (Math.random() - 0.5) * 3;
+                this.driftBase = Math.random() * 0.5 + 0.5;
+            }
+
+            update() {
+                const u = parseFloat(uSlider.value) / 100;
+                
+                // Luôn có thành phần chuyển động nhiệt
+                this.x += this.vx;
+                this.y += this.vy;
+
+                // Nếu mạch đóng, thêm thành phần dịch chuyển có hướng (drift)
+                if (isClosed) {
+                    if (currentTab === 'metal' && this.type === 'electron') {
+                        this.x -= this.driftBase * u * 10;
+                    } else if (currentTab === 'electrolyte') {
+                        if (this.type === 'pos-ion') this.x += this.driftBase * u * 4;
+                        if (this.type === 'neg-ion') this.x -= this.driftBase * u * 4;
+                    } else if (currentTab === 'gas') {
+                        if (this.type === 'pos-ion') this.x += this.driftBase * u * 4;
+                        if (this.type === 'neg-ion') this.x -= this.driftBase * u * 4;
+                        if (this.type === 'electron') this.x -= this.driftBase * u * 12;
+                    }
+                }
+
+                // Giới hạn biên
+                if (this.x < 0) this.x = canvas.width;
+                if (this.x > canvas.width) this.x = 0;
+                if (this.y < 55 || this.y > canvas.height - 55) this.vy *= -1;
+            }
+
+            draw() {
+                ctx.beginPath();
+                if (this.type === 'electron') {
+                    ctx.fillStyle = '#60a5fa';
+                    ctx.arc(this.x, this.y, 2.5, 0, Math.PI * 2);
+                } else {
+                    ctx.fillStyle = this.type === 'pos-ion' ? '#ef4444' : '#1d4ed8';
+                    ctx.arc(this.x, this.y, 7, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.fillStyle = 'white';
+                    ctx.font = 'bold 9px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(this.type === 'pos-ion' ? '+' : '-', this.x, this.y);
+                    return;
+                }
+                ctx.fill();
+            }
+        }
+
+        function initParticles() {
+            particles = [];
+            fixedIons = [];
+            if (currentTab === 'metal') {
+                for (let i = 40; i < canvas.width; i += 50) {
+                    for (let j = 70; j < canvas.height - 60; j += 50) {
+                        fixedIons.push({
+                            baseX: i, baseY: j,
+                            offX: Math.random() * 100, // lệch pha ngẫu nhiên
+                            offY: Math.random() * 100
+                        });
+                    }
+                }
+                for (let i = 0; i < 50; i++) particles.push(new Particle('electron'));
+            } else {
+                let count = currentTab === 'electrolyte' ? 15 : 10;
+                for (let i = 0; i < count; i++) {
+                    particles.push(new Particle('pos-ion'));
+                    particles.push(new Particle('neg-ion'));
+                    if (currentTab === 'gas') particles.push(new Particle('electron'));
+                }
+            }
+        }
+
+        function animate(time) {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Vẽ biên môi trường dẫn điện
+            ctx.strokeStyle = '#cbd5e1';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(0, 50, canvas.width, canvas.height - 100);
+
+            if (currentTab === 'metal') {
+                fixedIons.forEach(ion => {
+                    // Dao động rung lắc ngẫu nhiên tại chỗ (Vibration)
+                    // Tăng cường độ rung khi có dòng điện (mô phỏng tác dụng nhiệt)
+                    const tempFactor = isClosed ? (1 + uSlider.value/100) : 1;
+                    const rx = (Math.sin(time * 0.01 + ion.offX) * 2) * tempFactor;
+                    const ry = (Math.cos(time * 0.015 + ion.offY) * 2) * tempFactor;
+                    
+                    const x = ion.baseX + rx;
+                    const y = ion.baseY + ry;
+
+                    ctx.beginPath();
+                    ctx.fillStyle = '#fca5a5';
+                    ctx.arc(x, y, 9, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.fillStyle = '#b91c1c';
+                    ctx.font = 'bold 10px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.fillText('+', x, y + 1);
+                });
+            }
+
+            particles.forEach(p => {
+                p.update();
+                p.draw();
+            });
+
+            // Hiển thị Vector E khi đóng mạch
+            if (isClosed && uSlider.value > 0) {
+                ctx.fillStyle = '#d97706';
+                ctx.font = 'italic 12px Arial';
+                ctx.fillText('Chiều điện trường E →', 100, 30);
+            }
+
+            requestAnimationFrame(animate);
+        }
+
+        window.onload = () => { resize(); switchTab('metal'); requestAnimationFrame(animate); };
+    </script>
+</body>
+</html>
