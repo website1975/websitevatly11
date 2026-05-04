@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bài 23: Điện trở. Định luật Ôm</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#000080',
+                        bglight: '#f4f7f9',
+                        qbg: '#edf2f7',
+                        abg: '#dcfce7',
+                        tableborder: '#cbd5e0',
+                        tablehead: '#e2e8f0'
+                    },
+                    borderRadius: {
+                        '12px': '12px',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- MathJax -->
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['\\(', '\\)']],
+                displayMath: [['$$', '$$']]
+            }
+        };
+    </script>
+
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        .section-header {
+            text-transform: uppercase;
+            font-weight: bold;
+            border-bottom: 4px solid #000080;
+            display: inline-block;
+            margin-bottom: 1rem;
+            padding-bottom: 0.25rem;
+        }
+    </style>
+</head>
+<body class="bg-bglight text-gray-800 p-4 md:p-8">
+
+    <div class="max-w-5xl mx-auto space-y-8">
+
+        <!-- Header -->
+        <div class="bg-primary text-white rounded-12px p-6 shadow-md text-center">
+            <h2 class="text-xl font-medium tracking-wide">CHƯƠNG IV - DÒNG ĐIỆN. MẠCH ĐIỆN</h2>
+            <h1 class="text-3xl font-bold uppercase mt-3">BÀI 23: ĐIỆN TRỞ. ĐỊNH LUẬT ÔM</h1>
+        </div>
+
+        <!-- Intro Box -->
+        <div class="bg-white border border-gray-400 p-5 rounded-12px shadow-md italic text-lg">
+            Các thiết bị điện thông thường mà chúng ta dùng hằng ngày đều có các điện trở. Vậy điện trở đặc trưng cho tính chất nào của vật dẫn và tại sao một vật dẫn lại có điện trở?
+        </div>
+
+        <!-- Section I -->
+        <div class="bg-white rounded-12px shadow-md p-6 lg:p-8">
+            <h2 class="section-header text-2xl text-primary">I. ĐIỆN TRỞ</h2>
+            
+            <h3 class="text-xl font-bold mt-4 mb-2 text-gray-900">1. Thí nghiệm</h3>
+            <p class="font-semibold mt-2">Chuẩn bị:</p>
+            <ul class="list-disc ml-6 mb-4">
+                <li>1 ampe kế.</li>
+                <li>1 vôn kế.</li>
+                <li>1 nguồn có thể điều chỉnh thay đổi được hiệu điện thế.</li>
+                <li>Hai vật dẫn X và Y khác nhau.</li>
+                <li>Dây nối.</li>
+                <li>Khoá K.</li>
+            </ul>
+
+            <div class="flex justify-center my-6">
+                <div class="text-center">
+                    <img src="h1.png" alt="Sơ đồ thí nghiệm" class="max-w-full h-auto mx-auto border border-gray-200 rounded p-2">
+                    <p class="text-sm mt-2 italic text-gray-600">Hình 23.1. Sơ đồ thí nghiệm đo cường độ dòng điện và hiệu điện thế ứng với các vật dẫn khác nhau</p>
+                </div>
+            </div>
+
+            <p class="font-semibold mt-2">Tiến hành:</p>
+            <ul class="list-disc ml-6 mb-4">
+                <li>Mắc mạch điện như Hình vẽ 23.1.</li>
+                <li>Đóng khoá K. Điều chỉnh hiệu điện thế của nguồn ta thu được các giá trị của cường độ dòng điện \(I_1\) chạy qua vật dẫn X, ghi kết quả vào mẫu Bảng 23.1.</li>
+                <li>Thay vật dẫn Y vào vị trí của vật dẫn X và lặp lại thí nghiệm, ta thu được các giá trị của cường độ dòng điện \(I_2\) chạy qua vật dẫn Y, ghi kết quả vào mẫu Bảng 23.1.</li>
+            </ul>
+
+            <div class="overflow-x-auto mb-6">
+                <table class="w-full border-collapse border border-tableborder text-center">
+                    <caption class="font-semibold mb-2">Bảng 23.1</caption>
+                    <thead>
+                        <tr class="bg-tablehead">
+                            <th class="border border-tableborder p-2"></th>
+                            <th class="border border-tableborder p-2">Vật dẫn X</th>
+                            <th class="border border-tableborder p-2">Vật dẫn Y</th>
+                        </tr>
+                        <tr class="bg-tablehead">
+                            <th class="border border-tableborder p-2">U (V)</th>
+                            <th class="border border-tableborder p-2">\(I_1\) (mA)</th>
+                            <th class="border border-tableborder p-2">\(I_2\) (mA)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td class="border border-tableborder p-2">?</td><td class="border border-tableborder p-2">?</td><td class="border border-tableborder p-2">?</td></tr>
+                        <tr><td class="border border-tableborder p-2">?</td><td class="border border-tableborder p-2">?</td><td class="border border-tableborder p-2">?</td></tr>
+                        <tr><td class="border border-tableborder p-2">?</td><td class="border border-tableborder p-2">?</td><td class="border border-tableborder p-2">?</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Question Box -->
+            <div class="bg-qbg border-l-4 border-primary p-4 mb-4 rounded-r-12px">
+                <div class="flex items-start gap-2">
+                    <span class="text-xl font-bold text-primary">?</span>
+                    <div class="w-full">
+                        <p>1. Hãy nhận xét về tỉ số \( \frac{U}{I} \) đối với từng vật dẫn X và vật dẫn Y.</p>
+                        <p>2. Đối với hai vật dẫn X và vật dẫn Y thì tỉ số \( \frac{U}{I} \) có khác nhau không?</p>
+                        <p>3. Nếu đặt cùng một hiệu điện thế vào hai đầu vật dẫn X và vật dẫn Y thì cường độ dòng điện chạy qua vật dẫn nào có giá trị nhỏ hơn?</p>
+                        
+                        <button onclick="toggleAnswer('ans_exp1')" class="mt-3 bg-primary text-white px-4 py-2 rounded shadow hover:bg-blue-800 transition">Xem câu trả lời</button>
+                        
+                        <div id="ans_exp1" class="hidden mt-4 p-4 bg-abg rounded text-gray-800 border border-green-300">
+                            <p><strong>Trả lời:</strong></p>
+                            <p>1. Đối với mỗi vật dẫn X hoặc Y, tỉ số \( \frac{U}{I} \) có giá trị không đổi (là một hằng số).</p>
+                            <p>2. Đối với hai vật dẫn X và Y khác nhau thì tỉ số \( \frac{U}{I} \) là khác nhau.</p>
+                            <p>3. Nếu đặt cùng một hiệu điện thế \( U \), vật dẫn nào có tỉ số \( \frac{U}{I} \) lớn hơn thì cường độ dòng điện \( I \) chạy qua nó sẽ nhỏ hơn và ngược lại.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <hr class="my-6 border-gray-300">
+
+            <h3 class="text-xl font-bold mt-4 mb-2 text-gray-900">2. Định nghĩa điện trở</h3>
+            <p class="mb-4">Từ kết quả tính tỉ số \( \frac{U}{I} \) của thí nghiệm ở trên cho thấy, ứng với mỗi vật dẫn thì tỉ số \( \frac{U}{I} \) là một hằng số.</p>
+            <p class="mb-4">Kí hiệu hằng số trên là R, ta có: 
+                <span class="bg-gray-100 px-3 py-1 rounded font-semibold text-lg inline-block my-2">\( R = \frac{U}{I} \Rightarrow I = \frac{U}{R} \) (23.1)</span>
+            </p>
+            <p class="mb-4">Biểu thức (23.1) cho thấy với cùng một hiệu điện thế, R càng lớn thì cường độ dòng điện I càng nhỏ. Điều này chứng tỏ vật dẫn đã cản trở sự dịch chuyển của các điện tích trong dây dẫn càng lớn.</p> 
+            <div class"bg-blue-50"><strong>Định nghĩa: </strong> Đại lượng đặc trưng cho mức độ cản trở dòng điện của vật dẫn và được gọi là <strong>điện trở</strong>.</div><br>
+            <p class="mb-4">Điện trở của dây dẫn được kí hiệu là R (R là chữ cái đầu của từ tiếng Anh Resistance - cản trở).</p>
+            <p class="mb-4">Trong công thức (23.1), hiệu điện thế U đo bằng vôn, cường độ dòng điện I đo bằng ampe thì điện trở đo bằng ohm (ôm), kí hiệu là \( \Omega \).</p>
+            <p class="text-center font-bold text-lg mb-4">\( 1 \Omega = \frac{1 V}{1 A} \)</p>
+            <p class="mb-4">Một số bội số của ôm:</p>
+            <ul class="list-disc ml-6 mb-6 font-semibold">
+                <li>\( 1 \text{ k}\Omega = 1\,000 \, \Omega \)</li>
+                <li>\( 1 \text{ M}\Omega = 1\,000 \text{ k}\Omega = 1\,000\,000 \, \Omega \)</li>
+            </ul>
+
+            <div class="overflow-x-auto mb-6">
+                <table class="w-full border-collapse border border-tableborder text-center">
+                    <caption class="font-semibold mb-2">Bảng 23.2. Kết quả thí nghiệm</caption>
+                    <thead>
+                        <tr class="bg-tablehead">
+                            <th class="border border-tableborder p-2"></th>
+                            <th class="border border-tableborder p-2">Điện trở \( R_1 \)</th>
+                            <th class="border border-tableborder p-2">Điện trở \( R_2 \)</th>
+                        </tr>
+                        <tr class="bg-tablehead">
+                            <th class="border border-tableborder p-2">U (V)</th>
+                            <th class="border border-tableborder p-2">\( I_1 \) (mA)</th>
+                            <th class="border border-tableborder p-2">\( I_2 \) (mA)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td class="border border-tableborder p-2">0,00</td><td class="border border-tableborder p-2">0,00</td><td class="border border-tableborder p-2">0,00</td></tr>
+                        <tr><td class="border border-tableborder p-2">1,0</td><td class="border border-tableborder p-2">0,43</td><td class="border border-tableborder p-2">0,21</td></tr>
+                        <tr><td class="border border-tableborder p-2">2,0</td><td class="border border-tableborder p-2">0,86</td><td class="border border-tableborder p-2">0,43</td></tr>
+                        <tr><td class="border border-tableborder p-2">4,0</td><td class="border border-tableborder p-2">1,73</td><td class="border border-tableborder p-2">0,87</td></tr>
+                        <tr><td class="border border-tableborder p-2">6,0</td><td class="border border-tableborder p-2">2,60</td><td class="border border-tableborder p-2">1,31</td></tr>
+                        <tr><td class="border border-tableborder p-2">8,0</td><td class="border border-tableborder p-2">3,45</td><td class="border border-tableborder p-2">1,75</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <hr class="my-6 border-gray-300">
+
+            <h3 class="text-xl font-bold mt-4 mb-2 text-gray-900">3. Đường đặc trưng vôn - ampe</h3>
+            <p class="mb-4">Đường đặc trưng vôn - ampe là đồ thị biểu diễn sự phụ thuộc giữa hiệu điện thế đặt vào và dòng điện chạy qua linh kiện đang xét.</p>
+            <p class="mb-4">Bảng 23.2 là kết quả thí nghiệm đối với hai điện trở \( R_1 \) và \( R_2 \) theo thí nghiệm ở Mục 1. Từ bảng số liệu ta vẽ được đường đặc trưng vôn - ampe của hai điện trở \( R_1 \) và điện trở \( R_2 \) như Hình 23.2.</p>
+            
+            <div class="flex flex-col md:flex-row gap-6 items-center my-6">
+                <div class="flex-1 text-center">
+                    <img src="h2.png" alt="Đường đặc trưng vôn ampe R1 R2" class="max-w-full h-auto mx-auto border border-gray-200 rounded p-2">
+                    <p class="text-sm mt-2 italic text-gray-600">Hình 23.2. Đường đặc trưng vôn-ampe của hai điện trở \( R_1 \) và \( R_2 \)</p>
+                </div>
+                <div class="flex-1">
+                    <p class="mb-4">Từ đường đặc trưng vôn - ampe ở Hình 23.2, ta thấy đồ thị là một đường thẳng, U tăng thì I cũng tăng. Như vậy đường đặc trưng vôn - ampe của điện trở là hàm bậc nhất xuất phát từ gốc toạ độ, ta có công thức:</p>
+                    <p class="text-center font-bold text-lg mb-2">\( I = kU \) (23.2)</p>
+                    <p>với \( k = \frac{1}{R} \) là hằng số không đổi gọi là độ dẫn điện.</p>
+                </div>
+            </div>
+
+            <div class="flex flex-col md:flex-row gap-6 items-center my-6">
+                <div class="flex-1">
+                    <p class="mb-4">Trường hợp đơn giản nhất là đặc trưng vôn – ampe của một điện trở R. Từ công thức \( I = \frac{U}{R} \), đường đặc trưng vôn - ampe là đường thẳng đi qua gốc toạ độ, có độ dốc càng lớn khi điện trở R càng nhỏ (Hình 23.3).</p>
+                </div>
+                <div class="flex-1 text-center">
+                    <img src="h3.png" alt="Đường đặc trưng độ dốc" class="max-w-full h-auto mx-auto border border-gray-200 rounded p-2">
+                    <p class="text-sm mt-2 italic text-gray-600">Hình 23.3. Đường đặc trưng vôn-ampe của điện trở R</p>
+                </div>
+            </div>
+
+            <!-- Question Box -->
+            <div class="bg-qbg border-l-4 border-primary p-4 mb-4 rounded-r-12px">
+                <div class="flex items-start gap-2">
+                    <span class="text-xl font-bold text-primary">?</span>
+                    <div class="w-full">
+                        <p>1. Đường đặc trưng vôn-ampe của điện trở có đặc điểm gì? Đặc điểm này nói lên điều gì về mối quan hệ giữa hiệu điện thế U và cường độ dòng điện I.</p>
+                        <p>2. Độ dốc của đường đặc trưng vôn-ampe của điện trở liên quan đến điện trở như thế nào?</p>
+                        
+                        <button onclick="toggleAnswer('ans_q2')" class="mt-3 bg-primary text-white px-4 py-2 rounded shadow hover:bg-blue-800 transition">Xem câu trả lời</button>
+                        
+                        <div id="ans_q2" class="hidden mt-4 p-4 bg-abg rounded text-gray-800 border border-green-300">
+                            <p><strong>Trả lời:</strong></p>
+                            <p>1. Đường đặc trưng vôn - ampe của điện trở là một đường thẳng đi qua gốc toạ độ. Đặc điểm này cho thấy cường độ dòng điện \( I \) tỉ lệ thuận với hiệu điện thế \( U \) đặt vào hai đầu điện trở.</p>
+                            <p>2. Độ dốc của đồ thị \( k = \tan(\alpha) = \frac{1}{R} \). Do đó, độ dốc của đường đặc trưng vôn - ampe tỉ lệ nghịch với điện trở. Độ dốc càng lớn thì điện trở R càng nhỏ và ngược lại.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Section II -->
+        <div class="bg-white rounded-12px shadow-md p-6 lg:p-8">
+            <h2 class="section-header text-2xl text-primary">II. ĐỊNH LUẬT OHM</h2>
+            <p class="mb-4">Mối quan hệ giữa hiệu điện thế U, cường độ dòng điện I và điện trở R của vật dẫn kim loại đã được nhà bác học người Đức Georg Simon Ohm (1789-1854) xác định bằng thực nghiệm và phát biểu thành định luật, gọi là định luật Ohm:</p>
+            
+            <div class="bg-blue-50 border border-blue-200 rounded p-4 mb-4">
+                <p class="font-bold text-lg text-primary mb-2">Định luật Ohm:</p>
+                <p class="italic text-lg text-gray-800">Cường độ dòng điện chạy qua vật dẫn kim loại tỉ lệ thuận với hiệu điện thế ở hai đầu vật dẫn, tỉ lệ nghịch điện trở của vật dẫn.</p>
+            </div>
+
+            <p class="text-center font-bold text-2xl my-6">\( I = \frac{U}{R} \) (23.3)</p>
+            
+            <p class="mb-2">trong đó:</p>
+            <ul class="list-disc ml-8 mb-4">
+                <li>I là cường độ dòng điện chạy qua vật dẫn, đơn vị là ampe, kí hiệu là (A).</li>
+                <li>U là hiệu điện thế giữa hai đầu vật dẫn, đơn vị là vôn, kí hiệu là (V).</li>
+                <li>R là điện trở của vật dẫn, đơn vị là ohm, kí hiệu là (\( \Omega \)).</li>
+            </ul>
+        </div>
+
+        <!-- Section III -->
+        <div class="bg-white rounded-12px shadow-md p-6 lg:p-8">
+            <h2 class="section-header text-2xl text-primary">III. NGUYÊN NHÂN GÂY RA ĐIỆN TRỞ VÀ ẢNH HƯỞNG CỦA NHIỆT ĐỘ LÊN ĐIỆN TRỞ</h2>
+            
+            <h3 class="text-xl font-bold mt-4 mb-2 text-gray-900">1. Nguyên nhân gây ra điện trở trong vật dẫn kim loại</h3>
+            <p class="mb-4">Trong kim loại, các nguyên tử bị mất electron hoá trị trở thành các ion dương. Các ion dương liên kết với nhau một cách trật tự tạo nên mạng tinh thể kim loại. Chuyển động nhiệt của các ion có thể phá vỡ trật tự này. Nhiệt độ càng cao dao động nhiệt càng mạnh, mạng tinh thể càng trở nên mất trật tự. Sự mất trật tự của mạng tinh thể cản trở chuyển động của electron tự do, là nguyên nhân gây ra điện trở của kim loại (Hình 23.4).</p>
+
+            <div class="text-center my-6">
+                <img src="h4.png" alt="Mô hình nguyên nhân gây ra điện trở" class="max-w-full md:max-w-2xl h-auto mx-auto border border-gray-200 rounded p-2">
+                <p class="text-sm mt-2 italic text-gray-600">Hình 23.4. Mô hình nguyên nhân gây ra điện trở trong kim loại<br>
+                a) Ở nhiệt độ thấp; b) Ở nhiệt độ cao; c) Do nguyên tử tạp chất.</p>
+            </div>
+
+            <!-- Question Box -->
+            <div class="bg-qbg border-l-4 border-primary p-4 mb-6 rounded-r-12px">
+                <div class="flex items-start gap-2">
+                    <span class="text-xl font-bold text-primary">?</span>
+                    <div class="w-full">
+                        <p>Vận dụng công thức \( I = Snve \) để giải thích tại sao điện trở R của vật dẫn kim loại lại phụ thuộc vào chiều dài \( l \), tiết diện S và điện trở suất \( \rho \) của dây theo công thức \( R = \frac{\rho l}{S} \)</p>
+                        
+                        <button onclick="toggleAnswer('ans_q3')" class="mt-3 bg-primary text-white px-4 py-2 rounded shadow hover:bg-blue-800 transition">Xem câu trả lời</button>
+                        
+                        <div id="ans_q3" class="hidden mt-4 p-4 bg-abg rounded text-gray-800 border border-green-300">
+                            <p><strong>Trả lời:</strong></p>
+                            <p>Theo công thức \( I = Snve \), ta có \( v = \frac{I}{Sne} \). Vận tốc trôi \( v \) cũng phụ thuộc vào điện trường \( E \), với \( E = \frac{U}{l} \). Sự cản trở chuyển động của electron (điện trở suất \( \rho \)) làm giảm vận tốc trôi.</p>
+                            <p>Kết hợp với định luật Ohm \( I = \frac{U}{R} \), ta có thể rút ra mối liên hệ tỉ lệ thuận của R với chiều dài dây \( l \) (càng dài va chạm càng nhiều), tỉ lệ nghịch với tiết diện S (đường đi rộng hơn) và phụ thuộc bản chất vật liệu \( \rho \).</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <h3 class="text-xl font-bold mt-4 mb-2 text-gray-900">2. Ảnh hưởng của nhiệt độ lên điện trở</h3>
+            
+            <p class="font-bold mt-4 text-primary">a) Điện trở của đèn sợi đốt</p>
+            <p class="mb-4">Dòng điện chạy qua điện trở có tác dụng làm nóng điện trở. Nguyên lí này này được sử dụng trong các bộ phận sưởi ấm, và cả trong dây tóc của bóng đèn sợi đốt. Hiệu ứng đốt nóng xảy ra do các electron va chạm với các nguyên tử. Khi electron chạy qua một vật dẫn điện, electron bị mất năng lượng. Các nguyên tử thu được năng lượng và dao động nhanh hơn. Sự dao động xảy ra nhanh hơn có nghĩa là nhiệt độ cao hơn.</p>
+
+            <div class="flex flex-col md:flex-row gap-6 items-center my-6">
+                <div class="flex-1 text-center">
+                    <img src="h5.png" alt="Đường đặc trưng đèn sợi đốt" class="max-w-full h-auto mx-auto border border-gray-200 rounded p-2">
+                    <p class="text-sm mt-2 italic text-gray-600">Hình 23.5. Đường đặc trưng vôn-ampe của điện trở dây tóc bóng đèn</p>
+                </div>
+                <div class="flex-1">
+                    <p class="mb-4">Dòng điện chạy qua dây tóc của bóng đèn sinh nhiệt, làm cho dây tóc nóng lên do đó điện trở của dây tóc thay đổi trong quá trình khảo sát. Khi dòng điện và hiệu điện thế nhỏ, đường đặc trưng vôn-ampe gần đúng là đường thẳng. Ở hiệu điện thế cao hơn, đường đặc trưng bắt đầu cong (Hình 23.5). Điều này cho thấy rằng điện trở của dây tóc bóng đèn tăng lên vì tỉ số \( \frac{U}{I} \) tăng lên.</p>
+                    <p>Trên đường đặc trưng, khi dây tóc bóng đèn phát sáng thì đường đặc trưng có độ dốc nhỏ nên điện trở lớn. Do vậy, ta thấy điện trở của dây tóc bóng đèn phụ thuộc vào nhiệt độ.</p>
+                </div>
+            </div>
+
+            <p class="font-bold mt-6 text-primary">b) Điện trở nhiệt</p>
+            <p class="mb-4">Điện trở nhiệt (thermistor) là linh kiện có điện trở thay đổi một cách rõ rệt theo nhiệt độ. Điện trở nhiệt được ứng dụng rộng rãi trong kĩ thuật điện tử, làm cảm biến nhiệt (Hình 23.6).</p>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-start my-6">
+                <div>
+                    <p class="mb-2 font-semibold">Để khảo sát sự phụ thuộc của nhiệt điện trở NTC vào nhiệt độ người ta làm thí nghiệm như sau:</p>
+                    <ul class="list-disc ml-6 mb-4">
+                        <li>Bố trí thí nghiệm như Hình 23.7.</li>
+                        <li>Đặt nhiệt điện trở vào giữa bình, đặt nhiệt kế vào trong bình, cạnh nhiệt điện trở.</li>
+                        <li>Đổ nước mát vào bình cách nhiệt. Sau khoảng 2 phút, đo nhiệt độ của nước và điện trở của nhiệt điện trở. Tăng nhiệt độ của nước trong bình bằng cách thêm từ từ nước sôi vào nước trong bình. Chờ nhiệt độ của nước trong bình ổn định. Đo nhiệt độ của nước và điện trở của nhiệt điện trở.</li>
+                        <li>Lặp lại thao tác để đo nhiệt độ và điện trở của nhiệt điện trở ở các nhiệt độ khác.</li>
+                    </ul>
+                </div>
+                <div class="flex justify-center gap-4">
+                    <div class="text-center w-1/2">
+                        <img src="h6.png" alt="Điện trở nhiệt NTC PTC" class="max-w-full h-auto mx-auto">
+                        <p class="text-sm mt-2 italic text-gray-600">Hình 23.6. Điện trở nhiệt</p>
+                    </div>
+                    <div class="text-center w-1/2">
+                        <img src="h7.png" alt="Sơ đồ thí nghiệm NTC" class="max-w-full h-auto mx-auto border border-gray-200 rounded p-1">
+                        <p class="text-sm mt-2 italic text-gray-600">Hình 23.7. Sơ đồ thí nghiệm</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="text-center my-6">
+                <img src="h8.png" alt="Đồ thị NTC" class="max-w-full h-auto mx-auto border border-gray-200 rounded p-2">
+                <p class="text-sm mt-2 italic text-gray-600">Hình 23.8. Đường đặc trưng của nhiệt điện trở NTC theo nhiệt độ</p>
+            </div>
+
+            <p class="mb-4">Ngoài nhiệt điện trở NTC, trong thực tế còn có loại nhiệt điện trở PTC (Positive Temperature Coefficient). Điện trở của nhiệt điện trở PTC tăng khi nhiệt độ tăng.</p>
+
+            <!-- Question Box -->
+            <div class="bg-qbg border-l-4 border-primary p-4 mb-4 rounded-r-12px">
+                <div class="flex items-start gap-2">
+                    <span class="text-xl font-bold text-primary">?</span>
+                    <div class="w-full">
+                        <p>Từ kết quả thí nghiệm em rút ra nhận xét gì về sự phụ thuộc của nhiệt điện trở NTC vào nhiệt độ?</p>
+                        
+                        <button onclick="toggleAnswer('ans_q4')" class="mt-3 bg-primary text-white px-4 py-2 rounded shadow hover:bg-blue-800 transition">Xem câu trả lời</button>
+                        
+                        <div id="ans_q4" class="hidden mt-4 p-4 bg-abg rounded text-gray-800 border border-green-300">
+                            <p><strong>Trả lời:</strong></p>
+                            <p>Dựa vào đồ thị Hình 23.8, ta thấy đối với nhiệt điện trở NTC (Negative Temperature Coefficient), khi nhiệt độ tăng thì điện trở của nó giảm mạnh.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Exercises Section -->
+        <div class="bg-white rounded-12px shadow-md p-6 lg:p-8">
+            <h2 class="section-header text-2xl text-primary">BÀI TẬP VẬN DỤNG TỪ BÀI HỌC</h2>
+            
+            <!-- Ex 1 -->
+            <div class="bg-qbg border-l-4 border-primary p-4 mb-6 rounded-r-12px">
+                <p class="font-bold text-lg mb-2">Bài tập 1:</p>
+                <p>Hai đồ thị trong Hình 23.9a, b mô tả đường đặc trưng vôn - ampe của một dây kim loại ở hai nhiệt độ khác nhau \( t_1 \) và \( t_2 \)</p>
+                <div class="text-center my-4">
+                    <img src="h9.png" alt="Đồ thị Hình 23.9" class="max-w-full md:max-w-xl h-auto mx-auto border border-gray-200 rounded p-2">
+                    <p class="text-sm mt-2 italic text-gray-600">Hình 23.9</p>
+                </div>
+                <p>a) Tính điện trở của dây kim loại ứng với mỗi nhiệt độ \( t_1 \) và \( t_2 \).</p>
+                <p>b) Dây kim loại ở đồ thị nào có nhiệt độ cao hơn?</p>
+                
+                <button onclick="toggleAnswer('ans_ex1')" class="mt-3 bg-primary text-white px-4 py-2 rounded shadow hover:bg-blue-800 transition">Xem lời giải</button>
+                
+                <div id="ans_ex1" class="hidden mt-4 p-4 bg-abg rounded text-gray-800 border border-green-300 space-y-2">
+                    <p><strong>Giải chi tiết:</strong></p>
+                    <p>a) Từ đồ thị Hình 23.9a (nhiệt độ \( t_1 \)): Lấy điểm \( U = 30V \), \( I = 2.4A \) (ước lượng từ đồ thị). <br>
+                    \( R_1 = \frac{U}{I} = \frac{30}{2.4} = 12.5 \, \Omega \) </p>
+                    <p>Từ đồ thị Hình 23.9b (nhiệt độ \( t_2 \)): Lấy điểm \( U = 15V \), \( I = 1.5A \). <br>
+                    \( R_2 = \frac{U}{I} = \frac{15}{1.5} = 10 \, \Omega \)</p>
+                    <p>b) Ta có \( R_1 > R_2 \). Vì điện trở của kim loại tăng khi nhiệt độ tăng, nên \( t_1 > t_2 \). Dây kim loại ở đồ thị a) có nhiệt độ cao hơn.</p>
+                </div>
+            </div>
+
+            <!-- Ex 2 -->
+            <div class="bg-qbg border-l-4 border-primary p-4 mb-4 rounded-r-12px">
+                <p class="font-bold text-lg mb-2">Bài tập 2:</p>
+                <p>Đồ thị Hình 23.10 thể hiện đường đặc trưng vôn-ampe của hai linh kiện là dây tóc bóng đèn và dây kim loại.</p>
+                <div class="text-center my-4">
+                    <img src="h10.png" alt="Đồ thị Hình 23.10" class="max-w-full md:max-w-sm h-auto mx-auto border border-gray-200 rounded p-2">
+                    <p class="text-sm mt-2 italic text-gray-600">Hình 23.10</p>
+                </div>
+                <p>a) Xác định đường nào là của dây tóc bóng đèn, đường nào là của dây kim loại.</p>
+                <p>b) Xác định hiệu điện thế mà tại đó dây tóc bóng đèn và dây kim loại có điện trở như nhau.</p>
+                <p>c) Xác định điện trở ứng với hiệu điện thế xác định được ở câu b.</p>
+                
+                <button onclick="toggleAnswer('ans_ex2')" class="mt-3 bg-primary text-white px-4 py-2 rounded shadow hover:bg-blue-800 transition">Xem lời giải</button>
+                
+                <div id="ans_ex2" class="hidden mt-4 p-4 bg-abg rounded text-gray-800 border border-green-300 space-y-2">
+                    <p><strong>Giải chi tiết:</strong></p>
+                    <p>a) Dây kim loại (nhiệt độ không đổi hoặc tăng rất ít) có đặc trưng là đường thẳng \( \Rightarrow \) Đường X là dây kim loại.<br>
+                    Dây tóc bóng đèn nóng lên nhiều, điện trở tăng làm đồ thị cong xuống \( \Rightarrow \) Đường Y là của dây tóc bóng đèn.</p>
+                    <p>b) Hai linh kiện có điện trở như nhau khi tỉ số \( U/I \) bằng nhau, tức là điểm giao nhau của hai đồ thị. Giao điểm nằm ở tọa độ \( U \approx 8V \).</p>
+                    <p>c) Tại \( U = 8V \), ta dóng sang trục tung thấy cường độ dòng điện \( I \approx 3.2A \).<br>
+                    Điện trở tại điểm đó là: \( R = \frac{U}{I} = \frac{8}{3.2} = 2.5 \, \Omega \).</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Summary Boxes -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            
+            <!-- EM ĐÃ HỌC -->
+            <div class="bg-blue-50 border-2 border-blue-300 rounded-12px p-6 shadow-sm">
+                <h3 class="text-xl font-bold text-blue-800 mb-3 uppercase">Em đã học</h3>
+                <ul class="list-disc ml-5 space-y-2">
+                    <li>Điện trở là đại lượng đặc trưng cho mức độ cản trở dòng điện của vật dẫn. Đơn vị của điện trở là (ôm), kí hiệu là \( \Omega \).</li>
+                    <li>Định luật Ôm: Cường độ dòng điện chạy qua vật dẫn kim loại tỉ lệ thuận với hiệu điện thế ở hai đầu vật dẫn, tỉ lệ nghịch điện trở của vật dẫn: \( I = \frac{U}{R} \)</li>
+                    <li>Điện trở kim loại phụ thuộc vào nhiệt độ theo gần đúng là hàm bậc nhất \( R = R_0[1 + \alpha(t - t_0)] \).</li>
+                    <li>Nhiệt điện trở là loại điện trở có giá trị thay đổi đáng kể theo nhiệt độ. Có hai loại nhiệt điện trở NTC và PTC.</li>
+                </ul>
+            </div>
+
+            <!-- EM CÓ THỂ -->
+            <div class="bg-amber-50 border-2 border-amber-300 rounded-12px p-6 shadow-sm">
+                <h3 class="text-xl font-bold text-amber-800 mb-3 uppercase">Em có thể</h3>
+                <ul class="list-disc ml-5 space-y-2">
+                    <li>Giải thích được nguyên nhân gây ra điện trở trong kim loại.</li>
+                    <li>Hiểu được tại sao khi sử dụng đèn LED lại tiết kiệm năng lượng điện hơn so với bóng đèn dây tóc.</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- EM CÓ BIẾT -->
+        <div class="bg-purple-50 border-2 border-purple-300 rounded-12px p-6 shadow-sm">
+            <h3 class="text-xl font-bold text-purple-800 mb-3 uppercase">Em có biết: Hiện tượng siêu dẫn</h3>
+            <div class="flex flex-col md:flex-row gap-6">
+                <div class="flex-1">
+                    <p class="mb-3">Hiện tượng siêu dẫn là hiện tượng một số kim loại và hợp kim khi nhiệt độ thấp hơn một nhiệt độ tới hạn \( T_c \) thì điện trở của nó đột ngột giảm xuống bằng 0.</p>
+                    <p>Khi vật dẫn ở trạng thái siêu dẫn, điện trở của nó gần bằng 0. Vì vậy, nếu trong một vòng dây siêu dẫn có dòng điện chạy qua thì dòng điện này có thể duy trì rất lâu, sau khi bỏ nguồn điện đi. Các vật siêu dẫn có nhiều ứng dụng trong thực tế. Người ta chế tạo ra những nam châm điện có cuộn dây bằng vật liệu siêu dẫn, có thể tạo ra từ trường mạnh trong thời gian dài mà không hao phí năng lượng vì toả nhiệt.</p>
+                </div>
+                <div class="flex-1">
+                    <table class="w-full border-collapse border border-purple-300 text-center bg-white">
+                        <caption class="font-semibold mb-2">Bảng 23.4. Giá trị \( T_c \) (K) của một số kim loại, hợp kim</caption>
+                        <thead class="bg-purple-100">
+                            <tr>
+                                <th class="border border-purple-300 p-2">Vật liệu</th>
+                                <th class="border border-purple-300 p-2">\( T_c \) (K)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr><td class="border border-purple-300 p-2">Thuỷ ngân</td><td class="border border-purple-300 p-2">4,15</td></tr>
+                            <tr><td class="border border-purple-300 p-2">Kẽm</td><td class="border border-purple-300 p-2">0,85</td></tr>
+                            <tr><td class="border border-purple-300 p-2">Nhôm</td><td class="border border-purple-300 p-2">1,19</td></tr>
+                            <tr><td class="border border-purple-300 p-2">Chì</td><td class="border border-purple-300 p-2">7,19</td></tr>
+                            <tr><td class="border border-purple-300 p-2">\( Nb_3Sn \)</td><td class="border border-purple-300 p-2">18</td></tr>
+                            <tr><td class="border border-purple-300 p-2">\( Nb_3Ge \)</td><td class="border border-purple-300 p-2">23</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- QUIZ & EXERCISES SECTION -->
+        <div class="bg-white rounded-12px shadow-md p-6 lg:p-8 mt-10">
+            <h2 class="section-header text-2xl text-primary">CỦNG CỐ & VẬN DỤNG</h2>
+            
+            <h3 class="text-xl font-bold mt-4 mb-4 text-gray-900 bg-gray-100 p-2 rounded">A. Trắc nghiệm (5 Câu)</h3>
+            <div id="quiz-container" class="space-y-6">
+                
+                <!-- Q1 -->
+                <div class="quiz-question border-b pb-4">
+                    <p class="font-semibold mb-2">Câu 1: Đại lượng đặc trưng cho mức độ cản trở dòng điện của vật dẫn là gì?</p>
+                    <div class="space-y-1 ml-4">
+                        <label class="block cursor-pointer"><input type="radio" name="q1" value="A" class="mr-2">A. Hiệu điện thế.</label>
+                        <label class="block cursor-pointer"><input type="radio" name="q1" value="B" class="mr-2">B. Cường độ dòng điện.</label>
+                        <label class="block cursor-pointer"><input type="radio" name="q1" value="C" class="mr-2">C. Điện trở.</label>
+                        <label class="block cursor-pointer"><input type="radio" name="q1" value="D" class="mr-2">D. Điện dẫn suất.</label>
+                    </div>
+                    <div id="exp-q1" class="hidden mt-2 p-3 bg-abg rounded text-sm text-green-800">Giải thích: R là đại lượng đặc trưng cho mức độ cản trở dòng điện của vật dẫn và được gọi là điện trở (Đáp án C).</div>
+                </div>
+
+                <!-- Q2 -->
+                <div class="quiz-question border-b pb-4">
+                    <p class="font-semibold mb-2">Câu 2: Biểu thức đúng của định luật Ohm là?</p>
+                    <div class="space-y-1 ml-4">
+                        <label class="block cursor-pointer"><input type="radio" name="q2" value="A" class="mr-2">A. \( U = \frac{I}{R} \)</label>
+                        <label class="block cursor-pointer"><input type="radio" name="q2" value="B" class="mr-2">B. \( I = \frac{U}{R} \)</label>
+                        <label class="block cursor-pointer"><input type="radio" name="q2" value="C" class="mr-2">C. \( R = \frac{I}{U} \)</label>
+                        <label class="block cursor-pointer"><input type="radio" name="q2" value="D" class="mr-2">D. \( I = U \cdot R \)</label>
+                    </div>
+                    <div id="exp-q2" class="hidden mt-2 p-3 bg-abg rounded text-sm text-green-800">Giải thích: Theo định luật Ohm, \( I = \frac{U}{R} \) (Đáp án B).</div>
+                </div>
+
+                <!-- Q3 -->
+                <div class="quiz-question border-b pb-4">
+                    <p class="font-semibold mb-2">Câu 3: Đơn vị của điện trở là gì?</p>
+                    <div class="space-y-1 ml-4">
+                        <label class="block cursor-pointer"><input type="radio" name="q3" value="A" class="mr-2">A. Vôn (V)</label>
+                        <label class="block cursor-pointer"><input type="radio" name="q3" value="B" class="mr-2">B. Ampe (A)</label>
+                        <label class="block cursor-pointer"><input type="radio" name="q3" value="C" class="mr-2">C. Ôm (\( \Omega \))</label>
+                        <label class="block cursor-pointer"><input type="radio" name="q3" value="D" class="mr-2">D. Oát (W)</label>
+                    </div>
+                    <div id="exp-q3" class="hidden mt-2 p-3 bg-abg rounded text-sm text-green-800">Giải thích: Đơn vị của điện trở là Ôm, kí hiệu \( \Omega \) (Đáp án C).</div>
+                </div>
+
+                <!-- Q4 -->
+                <div class="quiz-question border-b pb-4">
+                    <p class="font-semibold mb-2">Câu 4: Khi nhiệt độ của dây dẫn kim loại tăng thì điện trở của nó thay đổi như thế nào?</p>
+                    <div class="space-y-1 ml-4">
+                        <label class="block cursor-pointer"><input type="radio" name="q4" value="A" class="mr-2">A. Giảm đi.</label>
+                        <label class="block cursor-pointer"><input type="radio" name="q4" value="B" class="mr-2">B. Không thay đổi.</label>
+                        <label class="block cursor-pointer"><input type="radio" name="q4" value="C" class="mr-2">C. Tăng lên.</label>
+                        <label class="block cursor-pointer"><input type="radio" name="q4" value="D" class="mr-2">D. Có thể tăng hoặc giảm.</label>
+                    </div>
+                    <div id="exp-q4" class="hidden mt-2 p-3 bg-abg rounded text-sm text-green-800">Giải thích: Điện trở kim loại tăng khi nhiệt độ tăng do sự mất trật tự của mạng tinh thể tăng lên (Đáp án C).</div>
+                </div>
+
+                <!-- Q5 -->
+                <div class="quiz-question pb-4">
+                    <p class="font-semibold mb-2">Câu 5: Đường đặc trưng vôn - ampe của điện trở kim loại ở nhiệt độ không đổi có dạng là gì?</p>
+                    <div class="space-y-1 ml-4">
+                        <label class="block cursor-pointer"><input type="radio" name="q5" value="A" class="mr-2">A. Đường parabol.</label>
+                        <label class="block cursor-pointer"><input type="radio" name="q5" value="B" class="mr-2">B. Đường thẳng đi qua gốc tọa độ.</label>
+                        <label class="block cursor-pointer"><input type="radio" name="q5" value="C" class="mr-2">C. Đường cong đi qua gốc tọa độ.</label>
+                        <label class="block cursor-pointer"><input type="radio" name="q5" value="D" class="mr-2">D. Đường thẳng song song trục hoành.</label>
+                    </div>
+                    <div id="exp-q5" class="hidden mt-2 p-3 bg-abg rounded text-sm text-green-800">Giải thích: Đường đặc trưng vôn-ampe của điện trở là hàm bậc nhất xuất phát từ gốc tọa độ \( I = kU \) (Đáp án B).</div>
+                </div>
+                
+                <button onclick="checkQuiz()" class="bg-primary text-white font-bold py-3 px-8 rounded shadow-lg hover:bg-blue-800 transition w-full md:w-auto">NỘP BÀI</button>
+                <div id="quiz-result" class="font-bold text-lg mt-4 hidden"></div>
+            </div>
+
+            <hr class="my-8 border-gray-300">
+
+            <h3 class="text-xl font-bold mt-4 mb-4 text-gray-900 bg-gray-100 p-2 rounded">B. Bài tập tính toán (3 Câu)</h3>
+            
+            <div class="space-y-6">
+                <!-- Calc 1 -->
+                <div class="bg-qbg border-l-4 border-primary p-4 rounded-r-12px">
+                    <p class="font-semibold mb-2">Câu 1: Đặt vào hai đầu điện trở \( R = 24 \, \Omega \) một hiệu điện thế \( U = 12 \, V \). Tính cường độ dòng điện chạy qua điện trở đó.</p>
+                    <button onclick="toggleAnswer('ans_calc1')" class="mt-2 bg-primary text-white px-4 py-2 rounded text-sm shadow hover:bg-blue-800 transition">Xem lời giải chi tiết</button>
+                    <div id="ans_calc1" class="hidden mt-4 p-4 bg-abg rounded text-gray-800 border border-green-300">
+                        <p><strong>Giải:</strong></p>
+                        <p>Áp dụng định luật Ohm: \( I = \frac{U}{R} \)</p>
+                        <p>Thay số: \( I = \frac{12}{24} = 0,5 \, (A) \)</p>
+                        <p>Vậy cường độ dòng điện là 0,5 A.</p>
+                    </div>
+                </div>
+
+                <!-- Calc 2 -->
+                <div class="bg-qbg border-l-4 border-primary p-4 rounded-r-12px">
+                    <p class="font-semibold mb-2">Câu 2: Khi đặt hiệu điện thế \( U = 6 \, V \) vào hai đầu một vật dẫn thì cường độ dòng điện chạy qua là \( I = 0,2 \, A \). Tính điện trở của vật dẫn.</p>
+                    <button onclick="toggleAnswer('ans_calc2')" class="mt-2 bg-primary text-white px-4 py-2 rounded text-sm shadow hover:bg-blue-800 transition">Xem lời giải chi tiết</button>
+                    <div id="ans_calc2" class="hidden mt-4 p-4 bg-abg rounded text-gray-800 border border-green-300">
+                        <p><strong>Giải:</strong></p>
+                        <p>Từ biểu thức định luật Ohm, ta có: \( R = \frac{U}{I} \)</p>
+                        <p>Thay số: \( R = \frac{6}{0,2} = 30 \, (\Omega) \)</p>
+                        <p>Vậy điện trở của vật dẫn là \( 30 \, \Omega \).</p>
+                    </div>
+                </div>
+
+                <!-- Calc 3 -->
+                <div class="bg-qbg border-l-4 border-primary p-4 rounded-r-12px">
+                    <p class="font-semibold mb-2">Câu 3: Một dây đồng có điện trở \( 10 \, \Omega \) ở nhiệt độ \( 20^\circ C \). Tính điện trở của dây đồng này ở \( 50^\circ C \). Biết hệ số nhiệt điện trở của đồng là \( \alpha = 4,3 \cdot 10^{-3} \, K^{-1} \).</p>
+                    <button onclick="toggleAnswer('ans_calc3')" class="mt-2 bg-primary text-white px-4 py-2 rounded text-sm shadow hover:bg-blue-800 transition">Xem lời giải chi tiết</button>
+                    <div id="ans_calc3" class="hidden mt-4 p-4 bg-abg rounded text-gray-800 border border-green-300">
+                        <p><strong>Giải:</strong></p>
+                        <p>Áp dụng công thức sự phụ thuộc điện trở vào nhiệt độ: \( R = R_0[1 + \alpha(t - t_0)] \)</p>
+                        <p>Thay các giá trị: \( R_0 = 10 \, \Omega \), \( t = 50^\circ C \), \( t_0 = 20^\circ C \), \( \alpha = 4,3 \cdot 10^{-3} \)</p>
+                        <p>\( R = 10 \cdot [1 + 4,3 \cdot 10^{-3} \cdot (50 - 20)] \)</p>
+                        <p>\( R = 10 \cdot [1 + 4,3 \cdot 10^{-3} \cdot 30] = 10 \cdot [1 + 0,129] = 10 \cdot 1,129 = 11,29 \, (\Omega) \)</p>
+                        <p>Vậy điện trở ở \( 50^\circ C \) là \( 11,29 \, \Omega \).</p>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- JavaScript Functions -->
+    <script>
+        // Hàm ẩn/hiện lời giải
+        function toggleAnswer(id) {
+            const el = document.getElementById(id);
+            if (el.classList.contains('hidden')) {
+                el.classList.remove('hidden');
+            } else {
+                el.classList.add('hidden');
+            }
+        }
+
+        // Hàm kiểm tra trắc nghiệm
+        function checkQuiz() {
+            const correctAnswers = {
+                q1: 'C',
+                q2: 'B',
+                q3: 'C',
+                q4: 'C',
+                q5: 'B'
+            };
+
+            let score = 0;
+            let total = 5;
+
+            for (let i = 1; i <= total; i++) {
+                const qName = 'q' + i;
+                const selected = document.querySelector(`input[name="${qName}"]:checked`);
+                const expDiv = document.getElementById('exp-q' + i);
+                
+                // Show explanations for all
+                expDiv.classList.remove('hidden');
+
+                if (selected) {
+                    if (selected.value === correctAnswers[qName]) {
+                        score++;
+                        // Highlight correct answer background
+                        selected.parentElement.classList.add('text-green-600', 'font-bold');
+                    } else {
+                        // Highlight wrong answer
+                        selected.parentElement.classList.add('text-red-600', 'font-bold');
+                    }
+                }
+            }
+
+            const resultDiv = document.getElementById('quiz-result');
+            resultDiv.classList.remove('hidden');
+            
+            if (score === total) {
+                resultDiv.innerHTML = `Tuyệt vời! Bạn làm đúng ${score}/${total} câu.`;
+                resultDiv.className = "font-bold text-xl mt-4 text-primary block text-center bg-blue-100 p-4 rounded";
+            } else {
+                resultDiv.innerHTML = `Bạn làm đúng ${score}/${total} câu. Hãy xem lại giải thích chi tiết bên dưới nhé!`;
+                resultDiv.className = "font-bold text-lg mt-4 text-red-600 block text-center bg-red-50 p-4 rounded border border-red-200";
+            }
+        }
+    </script>
+</body>
+</html>

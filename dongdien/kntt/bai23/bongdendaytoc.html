@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mô phỏng Thí nghiệm Đèn Sợi Đốt - Đa đối tượng</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { background-color: #f0f2f5; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        canvas { background-color: white; border-radius: 8px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); }
+        .control-panel { background-color: #ffffff; border-left: 4px solid #3b82f6; }
+        .bulb-select { transition: all 0.2s; }
+        .bulb-active { border-color: #2563eb; background-color: #eff6ff; }
+    </style>
+</head>
+<body class="h-screen overflow-hidden flex flex-col">
+
+    <!-- Header -->
+    <header class="bg-blue-700 text-white p-4 shadow-md flex justify-between items-center">
+        <h1 class="text-xl font-bold flex items-center">
+            <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+            Khảo sát Đặc tính Vôn - Ampe
+        </h1>
+        <span class="text-xs bg-blue-800 px-2 py-1 rounded">Hệ thống lưu vết đa điểm</span>
+    </header>
+
+    <main class="flex-1 flex flex-row p-4 gap-4 overflow-hidden">
+        
+        <!-- PANEL 1: Hiển thị mạch và đồ thị -->
+        <div class="flex-[3] flex flex-col gap-4">
+            <!-- Khu vực Mạch điện -->
+            <div class="relative flex-[1.2] bg-white rounded-lg shadow p-2 overflow-hidden border border-gray-200">
+                <h2 class="text-xs font-semibold text-gray-400 absolute top-2 left-2 uppercase tracking-wider">Sơ đồ mạch điện (Vôn kế mắc song song dưới)</h2>
+                <canvas id="circuitCanvas" class="w-full h-full"></canvas>
+            </div>
+
+            <!-- Khu vực Đồ thị -->
+            <div class="relative flex-1 bg-white rounded-lg shadow p-2 overflow-hidden border border-gray-200">
+                <h2 class="text-xs font-semibold text-gray-400 absolute top-2 left-2 uppercase tracking-wider">Đồ thị I - U</h2>
+                <canvas id="graphCanvas" class="w-full h-full"></canvas>
+            </div>
+        </div>
+
+        <!-- PANEL 2: Hệ thống điều khiển -->
+        <div class="flex-1 control-panel rounded-lg shadow p-6 flex flex-col gap-5 overflow-y-auto">
+            <!-- Lựa chọn bóng đèn -->
+            <div>
+                <h3 class="text-sm font-bold text-gray-700 mb-2 uppercase tracking-tight italic text-blue-600">Đối tượng thí nghiệm</h3>
+                <div class="grid grid-cols-3 gap-2" id="bulbSelector">
+                    <button data-type="0" class="bulb-select bulb-active border-2 p-2 rounded text-xs font-bold text-blue-700">ĐÈN 1<br><span class="font-normal opacity-70">α₁</span></button>
+                    <button data-type="1" class="bulb-select border-2 p-2 rounded text-xs font-bold text-green-700">ĐÈN 2<br><span class="font-normal opacity-70">α₂</span></button>
+                    <button data-type="2" class="bulb-select border-2 p-2 rounded text-xs font-bold text-purple-700">ĐÈN 3<br><span class="font-normal opacity-70">α₃</span></button>
+                </div>
+            </div>
+
+            <div class="border-t pt-4">
+                <label class="block text-sm font-bold text-gray-700 mb-2 italic">Điều chỉnh Điện áp (U)</label>
+                <input type="range" id="voltageSlider" min="0" max="8" step="0.05" value="0" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600">
+                <div class="flex justify-between text-2xl font-mono font-bold text-gray-800 mt-2">
+                    <span id="voltageDisplay" class="bg-gray-100 px-3 py-1 rounded shadow-inner">0.0 V</span>
+                    <span id="currentDisplay" class="text-red-600 bg-red-50 px-3 py-1 rounded shadow-inner">0.000 A</span>
+                </div>
+            </div>
+
+            <div class="border-t pt-4">
+                <div class="grid grid-cols-1 gap-2">
+                    <button id="addPointBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded transition flex items-center justify-center shadow-lg active:transform active:scale-95">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                        Ghi dữ liệu lên đồ thị
+                    </button>
+                    <button id="clearDataBtn" class="bg-red-50 hover:bg-red-100 text-red-600 font-bold py-2 px-4 rounded transition flex items-center justify-center border border-red-200">
+                        Làm mới đồ thị
+                    </button>
+                </div>
+            </div>
+
+            <div class="flex-1 flex flex-col border-t pt-4 min-h-0">
+                <h3 class="text-sm font-bold text-gray-800 mb-2 italic">Số liệu ghi nhận (R = U/I)</h3>
+                <div class="flex-1 overflow-y-auto border rounded bg-gray-50 shadow-inner">
+                    <table class="min-w-full text-center text-xs">
+                        <thead class="bg-gray-200 sticky top-0">
+                            <tr>
+                                <th class="p-2 border-b">U (V)</th>
+                                <th class="p-2 border-b">I (A)</th>
+                                <th class="p-2 border-b">Đèn</th>
+                                <th class="p-2 border-b">R (Ω)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="dataTable"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const circuitCanvas = document.getElementById('circuitCanvas');
+        const graphCanvas = document.getElementById('graphCanvas');
+        const ctxC = circuitCanvas.getContext('2d');
+        const ctxG = graphCanvas.getContext('2d');
+        
+        const voltageSlider = document.getElementById('voltageSlider');
+        const voltageDisplay = document.getElementById('voltageDisplay');
+        const currentDisplay = document.getElementById('currentDisplay');
+        const dataTable = document.getElementById('dataTable');
+        const addPointBtn = document.getElementById('addPointBtn');
+        const clearDataBtn = document.getElementById('clearDataBtn');
+        const bulbButtons = document.querySelectorAll('.bulb-select');
+
+        // Cấu hình vật lý 3 loại đèn
+        const bulbConfigs = [
+            { id: 0, name: "Đèn 1", k: 0.15, n: 0.45, color: "#2563eb" }, 
+            { id: 1, name: "Đèn 2", k: 0.10, n: 0.58, color: "#16a34a" }, 
+            { id: 2, name: "Đèn 3", k: 0.06, n: 0.72, color: "#9333ea" }  
+        ];
+
+        let activeBulbIdx = 0;
+        let traces = [[], [], []]; 
+        let currentU = 0;
+        let currentI = 0;
+
+        function getI(U, config) {
+            if (U <= 0) return 0;
+            return config.k * Math.pow(U, config.n);
+        }
+
+        function resize() {
+            circuitCanvas.width = circuitCanvas.parentElement.clientWidth;
+            circuitCanvas.height = circuitCanvas.parentElement.clientHeight;
+            graphCanvas.width = graphCanvas.parentElement.clientWidth;
+            graphCanvas.height = graphCanvas.parentElement.clientHeight;
+            draw();
+        }
+
+        function drawCircuit() {
+            ctxC.clearRect(0, 0, circuitCanvas.width, circuitCanvas.height);
+            const w = circuitCanvas.width;
+            const h = circuitCanvas.height;
+            const cx = w / 2;
+            const cy = h / 2 - 20; // Đẩy mạch lên một chút để nhường chỗ cho vôn kế phía dưới
+            const config = bulbConfigs[activeBulbIdx];
+
+            const intensity = Math.min(255, (currentU / 6) * 255);
+            ctxC.lineWidth = 2.5;
+            ctxC.strokeStyle = "#4b5563";
+
+            // Vẽ khung mạch chính
+            ctxC.beginPath();
+            ctxC.strokeRect(cx - 120, cy - 40, 240, 80);
+            
+            // Xóa các đoạn để chèn linh kiện
+            ctxC.clearRect(cx - 20, cy - 45, 40, 10); // Đèn 1 (phía trên)
+            ctxC.clearRect(cx - 125, cy - 15, 10, 30); // Nguồn (bên trái)
+            ctxC.clearRect(cx + 115, cy - 15, 10, 30); // Ampe kế (bên phải)
+
+            // Nguồn điện
+            ctxC.beginPath();
+            ctxC.moveTo(cx - 140, cy); ctxC.lineTo(cx - 100, cy);
+            ctxC.moveTo(cx - 130, cy + 8); ctxC.lineTo(cx - 110, cy + 8);
+            ctxC.stroke();
+
+            // Ampe kế
+            ctxC.beginPath(); ctxC.arc(cx + 120, cy, 16, 0, Math.PI * 2);
+            ctxC.fillStyle = "white"; ctxC.fill(); ctxC.stroke();
+            ctxC.fillStyle = "black"; ctxC.font = "bold 12px Arial";
+            ctxC.fillText("A", cx + 115, cy + 4);
+
+            // Vôn kế (Mắc song song XUỐNG DƯỚI bóng đèn theo yêu cầu)
+            ctxC.beginPath();
+            // Dây dẫn xuống
+            ctxC.moveTo(cx - 60, cy - 40); ctxC.lineTo(cx - 60, cy + 60);
+            ctxC.lineTo(cx + 60, cy + 60); ctxC.lineTo(cx + 60, cy - 40);
+            ctxC.stroke();
+            // Thân vôn kế
+            ctxC.beginPath(); ctxC.arc(cx, cy + 60, 16, 0, Math.PI * 2);
+            ctxC.fillStyle = "white"; ctxC.fill(); ctxC.stroke();
+            ctxC.fillStyle = "black"; ctxC.fillText("V", cx - 4, cy + 64);
+
+            // Bóng đèn (Đặt ở cạnh trên của mạch)
+            const bulbY = cy - 40;
+            if (currentU > 0) {
+                ctxC.beginPath();
+                const grd = ctxC.createRadialGradient(cx, bulbY, 5, cx, bulbY, 35);
+                grd.addColorStop(0, `rgba(255, 255, 150, ${currentU / 8})`);
+                grd.addColorStop(1, "transparent");
+                ctxC.fillStyle = grd;
+                ctxC.arc(cx, bulbY, 35, 0, Math.PI * 2);
+                ctxC.fill();
+            }
+
+            ctxC.beginPath();
+            ctxC.arc(cx, bulbY, 15, 0, Math.PI * 2);
+            ctxC.fillStyle = currentU > 0 ? `rgb(255, 255, ${255 - intensity})` : "#f8f8f8";
+            ctxC.fill();
+            ctxC.strokeStyle = config.color;
+            ctxC.stroke();
+            
+            // Sợi đốt (X)
+            ctxC.beginPath();
+            ctxC.moveTo(cx - 6, bulbY - 6); ctxC.lineTo(cx + 6, bulbY + 6);
+            ctxC.moveTo(cx + 6, bulbY - 6); ctxC.lineTo(cx - 6, bulbY + 6);
+            ctxC.strokeStyle = currentU > 0.5 ? "orange" : "#999";
+            ctxC.stroke();
+            
+            ctxC.fillStyle = config.color;
+            ctxC.font = "bold 11px Arial";
+            ctxC.fillText(config.name, cx - 18, bulbY - 20);
+        }
+
+        function drawGraph() {
+            const w = graphCanvas.width;
+            const h = graphCanvas.height;
+            const padding = 45;
+            const originX = padding;
+            const originY = h - padding;
+            const maxX = 8; 
+            const maxY = 0.5;
+
+            const scaleX = (w - 2 * padding) / maxX;
+            const scaleY = (h - 2 * padding) / maxY;
+
+            ctxG.clearRect(0, 0, w, h);
+
+            // Lưới mảnh
+            ctxG.strokeStyle = "#f3f4f6";
+            ctxG.lineWidth = 1;
+            for(let u=0; u<=maxX; u++) {
+                let x = originX + u * scaleX;
+                ctxG.beginPath(); ctxG.moveTo(x, padding); ctxG.lineTo(x, originY); ctxG.stroke();
+                ctxG.fillStyle = "#9ca3af"; ctxG.font = "9px Arial";
+                ctxG.fillText(u + "V", x - 5, originY + 12);
+            }
+            for(let i=0; i<=maxY; i+=0.1) {
+                let y = originY - i * scaleY;
+                ctxG.beginPath(); ctxG.moveTo(originX, y); ctxG.lineTo(w - padding, y); ctxG.stroke();
+                ctxG.fillText(i.toFixed(1) + "A", originX - 25, y + 3);
+            }
+
+            // Trục tọa độ
+            ctxG.strokeStyle = "#4b5563";
+            ctxG.lineWidth = 1.5;
+            ctxG.beginPath();
+            ctxG.moveTo(originX, padding - 10); ctxG.lineTo(originX, originY); ctxG.lineTo(w - padding + 10, originY);
+            ctxG.stroke();
+
+            // Mũi tên trục
+            ctxG.beginPath();
+            ctxG.moveTo(originX - 4, padding); ctxG.lineTo(originX, padding - 12); ctxG.lineTo(originX + 4, padding);
+            ctxG.moveTo(w - padding, originY - 4); ctxG.lineTo(w - padding + 12, originY); ctxG.lineTo(w - padding, originY + 4);
+            ctxG.fill();
+
+            // Vẽ Dữ liệu Đã Lưu (Các vết)
+            bulbConfigs.forEach((config, idx) => {
+                const points = traces[idx];
+                if (points.length === 0) return;
+
+                ctxG.strokeStyle = config.color;
+                ctxG.fillStyle = config.color;
+                ctxG.lineWidth = 2.5;
+                
+                ctxG.beginPath();
+                points.forEach((p, i) => {
+                    const x = originX + p.u * scaleX;
+                    const y = originY - p.i * scaleY;
+                    if(i === 0) ctxG.moveTo(x, y); else ctxG.lineTo(x, y);
+                });
+                ctxG.stroke();
+
+                points.forEach(p => {
+                    ctxG.beginPath();
+                    ctxG.arc(originX + p.u * scaleX, originY - p.i * scaleY, 3.5, 0, Math.PI * 2);
+                    ctxG.fill();
+                });
+            });
+
+            // Con trỏ tức thời (Red Dot)
+            if (currentU > 0) {
+                const curX = originX + currentU * scaleX;
+                const curY = originY - currentI * scaleY;
+                ctxG.fillStyle = "red";
+                ctxG.beginPath(); ctxG.arc(curX, curY, 4, 0, Math.PI * 2); ctxG.fill();
+                
+                // Vết di chuyển tức thời (nét đứt)
+                ctxG.beginPath();
+                ctxG.strokeStyle = bulbConfigs[activeBulbIdx].color;
+                ctxG.setLineDash([2, 2]);
+                ctxG.globalAlpha = 0.4;
+                for(let u=0; u<=currentU; u+=0.2) {
+                    let i = getI(u, bulbConfigs[activeBulbIdx]);
+                    let x = originX + u * scaleX;
+                    let y = originY - i * scaleY;
+                    if(u === 0) ctxG.moveTo(x, y); else ctxG.lineTo(x, y);
+                }
+                ctxG.stroke();
+                ctxG.setLineDash([]);
+                ctxG.globalAlpha = 1.0;
+            }
+        }
+
+        function draw() {
+            drawCircuit();
+            drawGraph();
+        }
+
+        function updateValues() {
+            currentU = parseFloat(voltageSlider.value);
+            currentI = getI(currentU, bulbConfigs[activeBulbIdx]);
+            voltageDisplay.innerText = currentU.toFixed(1) + " V";
+            currentDisplay.innerText = currentI.toFixed(3) + " A";
+            draw();
+        }
+
+        bulbButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                bulbButtons.forEach(b => b.classList.remove('bulb-active'));
+                btn.classList.add('bulb-active');
+                activeBulbIdx = parseInt(btn.dataset.type);
+                updateValues();
+            });
+        });
+
+        addPointBtn.addEventListener('click', () => {
+            if (currentU === 0) return;
+            const config = bulbConfigs[activeBulbIdx];
+            const existing = traces[activeBulbIdx].find(p => Math.abs(p.u - currentU) < 0.05);
+            if (!existing) {
+                traces[activeBulbIdx].push({u: currentU, i: currentI, bulbName: config.name});
+                traces[activeBulbIdx].sort((a, b) => a.u - b.u);
+                renderTable();
+            }
+            draw();
+        });
+
+        clearDataBtn.addEventListener('click', () => {
+            traces = [[], [], []];
+            renderTable();
+            voltageSlider.value = 0;
+            updateValues();
+        });
+
+        function renderTable() {
+            let allPoints = [];
+            traces.forEach(t => allPoints = allPoints.concat(t));
+            allPoints.sort((a, b) => b.u - a.u);
+
+            dataTable.innerHTML = allPoints.map(p => `
+                <tr class="border-b">
+                    <td class="p-2">${p.u.toFixed(1)}</td>
+                    <td class="p-2">${p.i.toFixed(3)}</td>
+                    <td class="p-2 font-bold" style="color: ${bulbConfigs.find(c=>c.name==p.bulbName).color}">${p.bulbName}</td>
+                    <td class="p-2 font-mono">${(p.u/p.i).toFixed(1)}</td>
+                </tr>
+            `).join('');
+        }
+
+        voltageSlider.addEventListener('input', updateValues);
+        window.addEventListener('resize', resize);
+        setTimeout(resize, 100);
+    </script>
+</body>
+</html>

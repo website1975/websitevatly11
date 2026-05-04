@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mô phỏng Định luật Ohm - Trực quan</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .electron {
+            fill: #fbbf24;
+            filter: drop-shadow(0 0 2px #f59e0b);
+        }
+        .wire {
+            stroke: #4b5563;
+            stroke-width: 4;
+            fill: none;
+        }
+        .component-label {
+            font-size: 12px;
+            font-weight: bold;
+            fill: #1f2937;
+        }
+        .meter-bg {
+            fill: #f3f4f6;
+            stroke: #374151;
+            stroke-width: 2;
+        }
+        .digital-display {
+            font-family: 'Courier New', Courier, monospace;
+            font-weight: bold;
+            fill: #059669;
+        }
+    </style>
+</head>
+<body class="bg-slate-100 min-h-screen p-4 font-sans">
+
+    <div class="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        <!-- PANEL 1: MẠCH ĐIỆN VÀ ĐỒ THỊ -->
+        <div class="lg:col-span-8 space-y-6">
+            <div class="bg-white p-6 rounded-xl shadow-lg border border-slate-200">
+                <h2 class="text-xl font-bold text-slate-800 mb-4 flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-blue-600"><path d="M18 12h-5"/><path d="M2 12h5"/><path d="M10 12h4"/><circle cx="12" cy="12" r="10"/><path d="M10 12h4"/></svg>
+                    Sơ đồ thí nghiệm trực quan
+                </h2>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Mạch Vật dẫn X -->
+                    <div class="border rounded-lg p-2 bg-slate-50 relative">
+                        <p class="text-center font-bold text-blue-700">Vật dẫn X (R = 50 Ω)</p>
+                        <svg id="svgX" viewBox="0 0 300 200" class="w-full h-auto">
+                            <!-- Wires -->
+                            <path class="wire" d="M 50 50 L 250 50 L 250 150 L 50 150 Z" />
+                            <!-- Source -->
+                            <rect x="130" y="40" width="40" height="20" fill="white" stroke="#374151" stroke-width="2"/>
+                            <text x="142" y="55" class="component-label">U</text>
+                            <!-- Ammeter -->
+                            <circle cx="80" cy="150" r="15" class="meter-bg" />
+                            <text x="75" y="155" class="component-label">A</text>
+                            <text x="65" y="185" id="valA1" class="digital-display text-xs">0 mA</text>
+                            <!-- Voltmeter -->
+                            <path class="wire" d="M 180 150 L 180 185 L 220 185 L 220 150" />
+                            <circle cx="200" cy="185" r="15" class="meter-bg" />
+                            <text x="195" y="190" class="component-label">V</text>
+                            <text x="185" y="215" id="valV1" class="digital-display text-xs">0 V</text>
+                            <!-- Resistor X -->
+                            <rect x="180" y="140" width="40" height="20" fill="#3b82f6" />
+                            <text x="185" y="135" class="component-label" style="font-size: 10px;">Vật dẫn X</text>
+                            
+                            <!-- Electrons Container -->
+                            <g id="electronsX"></g>
+                        </svg>
+                    </div>
+
+                    <!-- Mạch Vật dẫn Y -->
+                    <div class="border rounded-lg p-2 bg-slate-50">
+                        <p class="text-center font-bold text-green-700">Vật dẫn Y (R = 100 Ω)</p>
+                        <svg id="svgY" viewBox="0 0 300 200" class="w-full h-auto">
+                            <path class="wire" d="M 50 50 L 250 50 L 250 150 L 50 150 Z" />
+                            <rect x="130" y="40" width="40" height="20" fill="white" stroke="#374151" stroke-width="2"/>
+                            <text x="142" y="55" class="component-label">U</text>
+                            <circle cx="80" cy="150" r="15" class="meter-bg" />
+                            <text x="75" y="155" class="component-label">A</text>
+                            <text x="65" y="185" id="valA2" class="digital-display text-xs">0 mA</text>
+                            <path class="wire" d="M 180 150 L 180 185 L 220 185 L 220 150" />
+                            <circle cx="200" cy="185" r="15" class="meter-bg" />
+                            <text x="195" y="190" class="component-label">V</text>
+                            <text x="185" y="215" id="valV2" class="digital-display text-xs">0 V</text>
+                            <rect x="180" y="140" width="40" height="20" fill="#10b981" />
+                            <text x="185" y="135" class="component-label" style="font-size: 10px;">Vật dẫn Y</text>
+                            <g id="electronsY"></g>
+                        </svg>
+                    </div>
+                </div>
+
+                <div class="mt-6 border-t pt-4">
+                    <h3 class="text-lg font-semibold mb-2">Đồ thị đặc tuyến Vôn - Ampe</h3>
+                    <canvas id="mainChart" style="max-height: 300px;"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- PANEL 2: ĐIỀU KHIỂN -->
+        <div class="lg:col-span-4 space-y-6">
+            <div class="bg-white p-6 rounded-xl shadow-lg border border-slate-200">
+                <h2 class="text-xl font-bold text-slate-800 mb-6">Điều khiển</h2>
+                
+                <div class="space-y-8">
+                    <div>
+                        <div class="flex justify-between mb-2">
+                            <label class="font-semibold text-slate-700">Điện áp nguồn (U):</label>
+                            <span class="text-blue-600 font-bold text-xl"><span id="uDisp">0</span> V</span>
+                        </div>
+                        <input type="range" id="uInput" min="0" max="15" step="0.5" value="0" 
+                               class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600">
+                    </div>
+
+                    <div class="flex gap-2">
+                        <button id="resetBtn" class="flex-1 py-2 bg-slate-200 hover:bg-slate-300 rounded-lg font-semibold transition">Xóa dữ liệu</button>
+                    </div>
+                </div>
+
+                <div class="mt-8">
+                    <h3 class="font-bold text-slate-700 mb-2">Bảng số liệu ghi được:</h3>
+                    <div class="overflow-y-auto max-h-60 border rounded">
+                        <table class="w-full text-sm text-center">
+                            <thead class="bg-slate-100 sticky top-0">
+                                <tr>
+                                    <th class="p-2 border">U(V)</th>
+                                    <th class="p-2 border text-blue-600">I₁(mA)</th>
+                                    <th class="p-2 border text-green-600">I₂(mA)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="dataTableBody">
+                                <tr id="emptyRow"><td colspan="3" class="p-4 text-slate-400 italic">Kéo thanh trượt để lấy dữ liệu</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-blue-50 p-4 rounded-xl border border-blue-100 text-sm leading-relaxed text-blue-900">
+                <p><strong>Hướng dẫn:</strong> Thay đổi <b>U</b> và quan sát:</p>
+                <ul class="list-disc ml-4 mt-2">
+                    <li>Độ sáng và tốc độ các electron.</li>
+                    <li>Sự thay đổi của I tương ứng với U.</li>
+                    <li>So sánh độ dốc của hai đường thẳng trên đồ thị.</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        const R1 = 50;  // Vật dẫn X
+        const R2 = 120; // Vật dẫn Y (Tăng lên để thấy sự khác biệt rõ)
+        
+        const uInput = document.getElementById('uInput');
+        const uDisp = document.getElementById('uDisp');
+        const tableBody = document.getElementById('dataTableBody');
+        const resetBtn = document.getElementById('resetBtn');
+
+        // Khởi tạo Chart.js
+        const ctx = document.getElementById('mainChart').getContext('2d');
+        const chart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [
+                    {
+                        label: 'Vật dẫn X (R=50Ω)',
+                        data: [],
+                        borderColor: '#3b82f6',
+                        backgroundColor: '#3b82f6',
+                        tension: 0.1,
+                        pointRadius: 4
+                    },
+                    {
+                        label: 'Vật dẫn Y (R=120Ω)',
+                        data: [],
+                        borderColor: '#10b981',
+                        backgroundColor: '#10b981',
+                        tension: 0.1,
+                        pointRadius: 4
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    x: { title: { display: true, text: 'Hiệu điện thế U (V)' }, min: 0, max: 15 },
+                    y: { title: { display: true, text: 'Cường độ I (mA)' }, min: 0 }
+                }
+            }
+        });
+
+        // Tạo Electron di chuyển
+        function createElectrons(containerId) {
+            const container = document.getElementById(containerId);
+            for(let i=0; i<20; i++) {
+                const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+                circle.setAttribute("r", 3);
+                circle.setAttribute("class", "electron");
+                container.appendChild(circle);
+            }
+        }
+        createElectrons('electronsX');
+        createElectrons('electronsY');
+
+        let animationFrame;
+        let offsetX = 0;
+        let offsetY = 0;
+
+        function animate() {
+            const U = parseFloat(uInput.value);
+            // Tốc độ tỉ lệ với cường độ dòng điện
+            const speed1 = U / R1 * 5;
+            const speed2 = U / R2 * 5;
+
+            updateElectronPositions('electronsX', speed1);
+            updateElectronPositions('electronsY', speed2);
+
+            animationFrame = requestAnimationFrame(animate);
+        }
+
+        function updateElectronPositions(containerId, speed) {
+            const container = document.getElementById(containerId);
+            const electrons = container.children;
+            const pathLen = 600; // Tổng chiều dài chu vi mạch (50,50 -> 250,50 -> 250,150 -> 50,150 -> 50,50)
+            
+            if (!container.dataset.offset) container.dataset.offset = 0;
+            let currentOffset = parseFloat(container.dataset.offset);
+            currentOffset = (currentOffset + speed) % pathLen;
+            container.dataset.offset = currentOffset;
+
+            for(let i=0; i<electrons.length; i++) {
+                let pos = (currentOffset + (i * (pathLen / electrons.length))) % pathLen;
+                let x, y;
+
+                // Logic đơn giản di chuyển theo hình chữ nhật
+                if (pos < 200) { // Top edge (50,50 to 250,50)
+                    x = 50 + pos; y = 50;
+                } else if (pos < 300) { // Right edge (250,50 to 250,150)
+                    x = 250; y = 50 + (pos - 200);
+                } else if (pos < 500) { // Bottom edge (250,150 to 50,150)
+                    x = 250 - (pos - 300); y = 150;
+                } else { // Left edge (50,150 to 50,50)
+                    x = 50; y = 150 - (pos - 500);
+                }
+                
+                electrons[i].setAttribute("cx", x);
+                electrons[i].setAttribute("cy", y);
+                electrons[i].style.opacity = speed > 0 ? 1 : 0;
+            }
+        }
+
+        uInput.addEventListener('input', () => {
+            const U = parseFloat(uInput.value);
+            uDisp.innerText = U;
+            
+            const I1 = (U / R1 * 1000).toFixed(1);
+            const I2 = (U / R2 * 1000).toFixed(1);
+
+            // Cập nhật số chỉ trên hình
+            document.getElementById('valV1').textContent = U + " V";
+            document.getElementById('valV2').textContent = U + " V";
+            document.getElementById('valA1').textContent = I1 + " mA";
+            document.getElementById('valA2').textContent = I2 + " mA";
+
+            // Thêm vào bảng và đồ thị (chỉ khi dừng kéo hoặc sau mỗi bước)
+            if (U > 0) {
+                document.getElementById('emptyRow').style.display = 'none';
+                
+                // Kiểm tra xem giá trị U này đã tồn tại chưa để tránh trùng lặp điểm
+                if (!chart.data.labels.includes(U)) {
+                    // Thêm vào bảng
+                    const row = document.createElement('tr');
+                    row.innerHTML = `<td class="p-2 border font-bold">${U}</td><td class="p-2 border text-blue-600">${I1}</td><td class="p-2 border text-green-600">${I2}</td>`;
+                    tableBody.prepend(row);
+
+                    // Thêm vào đồ thị
+                    chart.data.labels.push(U);
+                    // Sắp xếp label để đường vẽ không bị rối
+                    chart.data.labels.sort((a, b) => a - b);
+                    
+                    // Tính lại data tương ứng với label đã sắp xếp
+                    chart.data.datasets[0].data = chart.data.labels.map(val => (val / R1 * 1000).toFixed(1));
+                    chart.data.datasets[1].data = chart.data.labels.map(val => (val / R2 * 1000).toFixed(1));
+                    
+                    chart.update();
+                }
+            }
+        });
+
+        resetBtn.addEventListener('click', () => {
+            uInput.value = 0;
+            uDisp.innerText = "0";
+            tableBody.innerHTML = '<tr id="emptyRow"><td colspan="3" class="p-4 text-slate-400 italic">Kéo thanh trượt để lấy dữ liệu</td></tr>';
+            chart.data.labels = [];
+            chart.data.datasets[0].data = [];
+            chart.data.datasets[1].data = [];
+            chart.update();
+            document.getElementById('valV1').textContent = "0 V";
+            document.getElementById('valV2').textContent = "0 V";
+            document.getElementById('valA1').textContent = "0 mA";
+            document.getElementById('valA2').textContent = "0 mA";
+        });
+
+        window.onload = animate;
+    </script>
+</body>
+</html>
