@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bài 26: Thực hành đo suất điện động và điện trở trong</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <style>
+        body {
+            background-color: #f4f7f9;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #333;
+        }
+        .header-bg {
+            background-color: #336633;
+        }
+        .section-header {
+            color: #336633;
+            border-bottom: 3px solid #336633;
+            display: inline-block;
+            margin-bottom: 1rem;
+            text-transform: uppercase;
+            font-weight: bold;
+        }
+        .intro-box {
+            border: 1px solid #000;
+            background-color: #fff;
+            padding: 1.5rem;
+            font-style: italic;
+            border-radius: 8px;
+        }
+        .question-box {
+            background-color: #edf2f7;
+            border-left: 4px solid #336633;
+            padding: 1rem;
+            margin: 1rem 0;
+        }
+        .answer-box {
+            background-color: #f0fff4;
+            border-left: 4px solid #48bb78;
+            padding: 1rem;
+            margin: 1rem 0;
+            display: none;
+        }
+        .em-co-biet {
+            background-color: #fffaf0;
+            border: 2px solid #ed8936;
+            padding: 1rem;
+            border-radius: 12px;
+            margin: 1rem 0;
+        }
+        .em-co-the {
+            background-color: #ebf8ff;
+            border: 2px solid #4299e1;
+            padding: 1rem;
+            border-radius: 12px;
+            margin: 1rem 0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+        }
+        th, td {
+            border: 1px solid #cbd5e0;
+            padding: 8px;
+            text-align: center;
+        }
+        th {
+            background-color: #e2e8f0;
+        }
+        .btn-view {
+            background-color: #336633;
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: opacity 0.3s;
+        }
+        .btn-view:hover {
+            opacity: 0.8;
+        }
+        .quiz-container {
+            background-color: white;
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+
+    <div class="max-w-4xl mx-auto">
+        <!-- Header -->
+        <header class="header-bg text-white p-6 rounded-t-xl text-center shadow-lg">
+            <p class="text-sm uppercase tracking-widest mb-2">Chương IV - Dòng điện. Mạch điện</p>
+            <h1 class="text-2xl md:text-3xl font-bold">BÀI 26: THỰC HÀNH: ĐO SUẤT ĐIỆN ĐỘNG VÀ ĐIỆN TRỞ TRONG CỦA PIN ĐIỆN HOÁ</h1>
+        </header>
+
+        <div class="bg-white p-6 rounded-b-xl shadow-md mb-8">
+            <!-- Intro Box -->
+            <div class="intro-box mb-6">
+                Pin điện hoá khi sử dụng sau khoảng thời gian thì suất điện động và điện trở trong thay đổi và đến một mức nào đó sẽ cần thay pin mới. Làm thế nào đo được suất điện động và điện trở trong của pin điện hoá bằng dụng cụ thí nghiệm?
+            </div>
+
+            <!-- I. DỤNG CỤ THÍ NGHIỆM -->
+            <section class="mb-10">
+                <h2 class="section-header text-xl">I. DỤNG CỤ THÍ NGHIỆM</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+                    <ul class="list-disc pl-6 space-y-2">
+                        <li>Hai pin điện hoá loại 1,5 V (một pin cũ đã sử dụng gần hết điện, một pin mới chưa sử dụng) (1).</li>
+                        <li>Một biến trở \(100 \, \Omega\) (2).</li>
+                        <li>Hai đồng hồ đo điện đa năng hiện số (3).</li>
+                        <li>Dây nối (4).</li>
+                        <li>Công tắc điện K (5).</li>
+                        <li>Điện trở bảo vệ \(R_0\) (6).</li>
+                        <li>Bảng lắp mạch điện (7).</li>
+                    </ul>
+                    <div class="text-center">
+                        <img src="h1.png" alt="Bộ thí nghiệm" class="mx-auto rounded border shadow-sm mb-2" onerror="this.src='https://via.placeholder.com/400x250?text=Hinh+26.1+Bo+thi+nghiem'">
+                        <p class="text-sm italic text-gray-600">Hình 26.1. Bộ thí nghiệm đo suất điện động và điện trở trong của pin điện hoá</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- II. THIẾT KẾ PHƯƠNG ÁN THÍ NGHIỆM -->
+            <section class="mb-10">
+                <h2 class="section-header text-xl">II. THIẾT KẾ PHƯƠNG ÁN THÍ NGHIỆM</h2>
+                <p class="mb-4">Hãy trả lời các câu hỏi sau:</p>
+                
+                <div class="question-box">
+                    <strong>a)</strong> Có thể sử dụng đồng hồ đo điện đa năng để đo trực tiếp suất điện động của nguồn điện và điện trở trong của nguồn không? Tại sao?
+                    <div class="mt-2">
+                        <button onclick="toggleAnswer('ans-2a')" class="btn-view text-xs">Xem câu trả lời</button>
+                    </div>
+                    <div id="ans-2a" class="answer-box">
+                        - Suất điện động: Có thể đo gần đúng bằng cách dùng vôn kế có điện trở rất lớn mắc vào hai cực nguồn khi mạch ngoài hở.<br>
+                        - Điện trở trong: Không thể đo trực tiếp bằng đồng hồ đo đa năng (chế độ đo điện trở) vì nguồn điện đang hoạt động sẽ gây hỏng đồng hồ hoặc cho kết quả sai. Cần đo gián tiếp qua U và I.
+                    </div>
+                </div>
+
+                <div class="question-box">
+                    <strong>b)</strong> Để xác định suất điện động và điện trở trong của pin cần đo các đại lượng nào?
+                    <div class="mt-2">
+                        <button onclick="toggleAnswer('ans-2b')" class="btn-view text-xs">Xem câu trả lời</button>
+                    </div>
+                    <div id="ans-2b" class="answer-box">
+                        Cần đo cường độ dòng điện \(I\) chạy trong mạch và hiệu điện thế \(U\) giữa hai cực của nguồn điện. Dựa vào công thức định luật Ohm cho toàn mạch: \(U = \mathcal{E} - I \cdot r\).
+                    </div>
+                </div>
+
+                <div class="question-box">
+                    <strong>c)</strong> Thiết kế phương án thí nghiệm để đo suất điện động và điện trở trong của pin điện hoá.
+                    <div class="mt-2">
+                        <button onclick="toggleAnswer('ans-2c')" class="btn-view text-xs">Xem hướng giải quyết</button>
+                    </div>
+                    <div id="ans-2c" class="answer-box">
+                        Sử dụng mạch điện gồm nguồn pin nối tiếp với ampe kế, biến trở \(R\), điện trở bảo vệ \(R_0\) và công tắc K. Một vôn kế được mắc song song với hai cực của nguồn. Thay đổi giá trị biến trở để thu được các cặp giá trị (U, I), sau đó vẽ đồ thị \(U = f(I)\).
+                    </div>
+                </div>
+            </section>
+
+            <!-- III. TIẾN HÀNH THÍ NGHIỆM -->
+            <section class="mb-10">
+                <h2 class="section-header text-xl">III. TIẾN HÀNH THÍ NGHIỆM</h2>
+                <div class="flex flex-col md:flex-row gap-6 mb-6">
+                    <div class="flex-1">
+                        <h3 class="font-bold mb-2">A. Tiến hành thí nghiệm với nguồn điện là một pin cũ.</h3>
+                        <ol class="list-decimal pl-6 space-y-2 text-sm">
+                            <li>Bố trí thí nghiệm như Hình 26.2.</li>
+                            <li>Điều chỉnh biến trở đến giá trị \(100 \, \Omega\).</li>
+                            <li>Đóng khoá K, bật đồng hồ đo hiệu điện thế và cường độ dòng điện.</li>
+                            <li>Ghi giá trị hiệu điện thế \(U\) và cường độ dòng điện \(I\) vào mẫu Bảng 26.1. Ngắt khóa K.</li>
+                            <li>Lặp lại 4 lần các bước 2, 3, 4 với giá trị R giảm dần.</li>
+                            <li>Đánh dấu các điểm thực nghiệm lên hệ trục tọa độ và vẽ đường thẳng đi gần nhất các điểm thực nghiệm (Hình 26.3).</li>
+                            <li>Kéo dài đồ thị cắt trục tung tại \(U_0\).</li>
+                            <li>Xác định suất điện động \(\mathcal{E}\) của pin là giá trị \(U_0\).</li>
+                            <li>Chọn hai điểm M, N trên đồ thị xác định điện trở trong: \(r = \frac{U_M - U_N}{I_N - I_M}\).</li>
+                            <li>Ước lượng sai số.</li>
+                        </ol>
+                    </div>
+                    <div class="w-full md:w-1/3 text-center">
+                        <img src="h2.png" alt="Sơ đồ mạch điện" class="mx-auto rounded border mb-2" onerror="this.src='https://via.placeholder.com/300x200?text=Hinh+26.2+So+do+mach+dien'">
+                        <p class="text-xs italic">Hình 26.2. Sơ đồ mạch điện thí nghiệm</p>
+                    </div>
+                </div>
+
+                <h3 class="font-bold mb-2">B. Tiến hành thí nghiệm với nguồn điện là một pin mới.</h3>
+                <p class="text-sm mb-4 italic">Thực hiện tương tự như pin cũ để so sánh kết quả.</p>
+            </section>
+
+            <!-- IV. KẾT QUẢ THÍ NGHIỆM -->
+            <section class="mb-10">
+                <h2 class="section-header text-xl">IV. KẾT QUẢ THÍ NGHIỆM</h2>
+                <p class="font-semibold">Bảng 26.1. Kết quả đo với pin cũ</p>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Số thứ tự</th>
+                            <th>\(R \, (\Omega)\)</th>
+                            <th>\(U \, (V)\)</th>
+                            <th>\(I \, (mA)\)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>1</td><td>?</td><td>?</td><td>?</td></tr>
+                        <tr><td>2</td><td>?</td><td>?</td><td>?</td></tr>
+                        <tr><td>3</td><td>?</td><td>?</td><td>?</td></tr>
+                        <tr><td>4</td><td>?</td><td>?</td><td>?</td></tr>
+                        <tr><td>5</td><td>?</td><td>?</td><td>?</td></tr>
+                    </tbody>
+                </table>
+
+                <div class="my-6 text-center">
+                    <img src="h3.png" alt="Đồ thị U-I" class="mx-auto border p-2" onerror="this.src='https://via.placeholder.com/500x300?text=Hinh+26.3+Do+thi+quan+he+U-I'">
+                    <p class="text-xs italic">Hình 26.3. Đồ thị quan hệ U và I</p>
+                </div>
+
+                <p class="font-semibold mt-8">Bảng 26.2. Kết quả đo với pin mới</p>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Số thứ tự</th>
+                            <th>\(R \, (\Omega)\)</th>
+                            <th>\(U \, (V)\)</th>
+                            <th>\(I \, (mA)\)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>1</td><td>?</td><td>?</td><td>?</td></tr>
+                        <tr><td>2</td><td>?</td><td>?</td><td>?</td></tr>
+                        <tr><td>3</td><td>?</td><td>?</td><td>?</td></tr>
+                        <tr><td>4</td><td>?</td><td>?</td><td>?</td></tr>
+                        <tr><td>5</td><td>?</td><td>?</td><td>?</td></tr>
+                    </tbody>
+                </table>
+            </section>
+
+            <!-- Nhận xét & Đánh giá -->
+            <section class="mb-10">
+                <h2 class="section-header text-xl">NHẬN XÉT VÀ ĐÁNH GIÁ</h2>
+                <div class="question-box">
+                    1. Nhận xét về dạng đồ thị và mối quan hệ U và I đối với pin cũ và pin mới.
+                    <div class="mt-2">
+                        <button onclick="toggleAnswer('ans-nx1')" class="btn-view text-xs">Xem nhận xét</button>
+                    </div>
+                    <div id="ans-nx1" class="answer-box">
+                        - Đồ thị có dạng đường thẳng xiên xuống, chứng tỏ U tỉ lệ nghịch với I: \(U = \mathcal{E} - I \cdot r\).<br>
+                        - Pin cũ thường có độ dốc (đại diện cho r) lớn hơn so với pin mới, và suất điện động \(U_0\) nhỏ hơn.
+                    </div>
+                </div>
+            </section>
+
+            <!-- Special Boxes -->
+            <div class="em-co-biet">
+                <h3 class="font-bold text-orange-700 uppercase mb-2">Em có biết</h3>
+                <p class="text-sm">Pin lithium-ion là loại pin được dùng phổ biến trong điện thoại di động, máy tính xách tay... Công nghệ xe điện đang phát triển tại Việt Nam phần lớn sử dụng loại pin này. Mỗi pin có suất điện động khoảng 3,2 V được ghép thành bộ pin có suất điện động 48 V, 60 V, 72 V để sử dụng.</p>
+            </div>
+
+            <div class="em-co-the">
+                <h3 class="font-bold text-blue-700 uppercase mb-2">Em có thể</h3>
+                <p class="text-sm italic mb-2">Giải thích tại sao trong khi tiến hành thí nghiệm không nên đóng mạch điện trong thời gian dài?</p>
+                <button onclick="toggleAnswer('ans-the')" class="btn-view text-xs">Xem lời giải</button>
+                <div id="ans-the" class="answer-box">
+                    Vì khi đóng mạch lâu, dòng điện chạy qua pin sẽ gây ra tác dụng nhiệt, làm nóng pin. Việc nóng lên này làm thay đổi điện trở trong \(r\) và suất điện động \(\mathcal{E}\) của pin, dẫn đến kết quả đo không chính xác. Ngoài ra, việc đóng mạch lâu làm pin mau hết điện.
+                </div>
+            </div>
+
+            <!-- Củng cố: Trắc nghiệm -->
+            <section class="mt-12">
+                <h2 class="section-header text-xl">BÀI TẬP CỦNG CỐ</h2>
+                <div class="quiz-container space-y-6">
+                    <!-- Q1 -->
+                    <div>
+                        <p class="font-semibold">Câu 1: Trong thí nghiệm này, suất điện động của pin được xác định bằng cách nào trên đồ thị \(U = f(I)\)?</p>
+                        <div class="ml-4 space-y-1">
+                            <label class="block"><input type="radio" name="q1" value="A"> A. Là hệ số góc của đường thẳng.</label>
+                            <label class="block"><input type="radio" name="q1" value="B"> B. Là giao điểm của đồ thị với trục tung \(U\).</label>
+                            <label class="block"><input type="radio" name="q1" value="C"> C. Là giao điểm của đồ thị với trục hoành \(I\).</label>
+                            <label class="block"><input type="radio" name="q1" value="D"> D. Là giá trị trung bình của các điểm đo.</label>
+                        </div>
+                    </div>
+                    <!-- Q2 -->
+                    <div>
+                        <p class="font-semibold">Câu 2: Công thức tính điện trở trong \(r\) dựa trên đồ thị là:</p>
+                        <div class="ml-4 space-y-1">
+                            <label class="block"><input type="radio" name="q2" value="A"> A. \(r = \frac{U_M + U_N}{I_N + I_M}\)</label>
+                            <label class="block"><input type="radio" name="q2" value="B"> B. \(r = \frac{I_N - I_M}{U_M - U_N}\)</label>
+                            <label class="block"><input type="radio" name="q2" value="C"> C. \(r = \frac{U_M - U_N}{I_N - I_M}\)</label>
+                            <label class="block"><input type="radio" name="q2" value="D"> D. \(r = U_M \cdot I_M\)</label>
+                        </div>
+                    </div>
+                    <!-- Q3 -->
+                    <div>
+                        <p class="font-semibold">Câu 3: Mục đích của điện trở \(R_0\) trong sơ đồ mạch điện là gì?</p>
+                        <div class="ml-4 space-y-1">
+                            <label class="block"><input type="radio" name="q3" value="A"> A. Để làm tăng suất điện động của pin.</label>
+                            <label class="block"><input type="radio" name="q3" value="B"> B. Bảo vệ ampe kế và pin khỏi dòng điện quá lớn khi \(R = 0\).</label>
+                            <label class="block"><input type="radio" name="q3" value="C"> C. Thay thế cho biến trở.</label>
+                            <label class="block"><input type="radio" name="q3" value="D"> D. Để đo điện áp mạch ngoài.</label>
+                        </div>
+                    </div>
+                    <!-- Q4 -->
+                    <div>
+                        <p class="font-semibold">Câu 4: Khi pin bị "chai" (cũ), đại lượng nào sau đây thường thay đổi đáng kể nhất?</p>
+                        <div class="ml-4 space-y-1">
+                            <label class="block"><input type="radio" name="q4" value="A"> A. Chỉ có suất điện động tăng.</label>
+                            <label class="block"><input type="radio" name="q4" value="B"> B. Suất điện động giảm và điện trở trong tăng.</label>
+                            <label class="block"><input type="radio" name="q4" value="C"> C. Điện trở trong giảm mạnh.</label>
+                            <label class="block"><input type="radio" name="q4" value="D"> D. Kích thước của pin to ra.</label>
+                        </div>
+                    </div>
+                    <!-- Q5 -->
+                    <div>
+                        <p class="font-semibold">Câu 5: Đơn vị của suất điện động và điện trở trong lần lượt là:</p>
+                        <div class="ml-4 space-y-1">
+                            <label class="block"><input type="radio" name="q5" value="A"> A. Ampe (A) và Ôm (\(\Omega\)).</label>
+                            <label class="block"><input type="radio" name="q5" value="B"> B. Vôn (V) và Ampe (A).</label>
+                            <label class="block"><input type="radio" name="q5" value="C"> C. Vôn (V) và Ôm (\(\Omega\)).</label>
+                            <label class="block"><input type="radio" name="q5" value="D"> D. Ôm (\(\Omega\)) và Vôn (V).</label>
+                        </div>
+                    </div>
+
+                    <div class="text-center">
+                        <button onclick="checkQuiz()" class="bg-blue-900 text-white px-8 py-3 rounded-lg font-bold hover:bg-blue-800 transition">NỘP BÀI</button>
+                    </div>
+                    <div id="quiz-result" class="text-center font-bold mt-4"></div>
+                </div>
+            </section>
+
+            <!-- Vận dụng tính toán -->
+            <section class="mt-12">
+                <h2 class="section-header text-xl">BÀI TẬP VẬN DỤNG</h2>
+                
+                <div class="question-box">
+                    <strong>Bài 1:</strong> Một học sinh đo được \(U_1 = 1,4 \, V\) ứng với \(I_1 = 100 \, mA\) và \(U_2 = 1,2 \, V\) ứng với \(I_2 = 300 \, mA\). Tính điện trở trong của pin.
+                    <div class="mt-2">
+                        <button onclick="toggleAnswer('vd1')" class="btn-view text-xs">Xem lời giải</button>
+                    </div>
+                    <div id="vd1" class="answer-box">
+                        Áp dụng công thức: \(r = \frac{U_1 - U_2}{I_2 - I_1}\)<br>
+                        \(r = \frac{1,4 - 1,2}{0,3 - 0,1} = \frac{0,2}{0,2} = 1 \, \Omega\).
+                    </div>
+                </div>
+
+                <div class="question-box">
+                    <strong>Bài 2:</strong> Từ đồ thị Hình 26.3, nếu đường thẳng cắt trục \(U\) tại điểm có giá trị \(1,58 \, V\), hãy cho biết suất điện động của pin là bao nhiêu?
+                    <div class="mt-2">
+                        <button onclick="toggleAnswer('vd2')" class="btn-view text-xs">Xem lời giải</button>
+                    </div>
+                    <div id="vd2" class="answer-box">
+                        Theo lý thuyết, khi \(I = 0\) thì \(U = \mathcal{E}\). Vì vậy suất điện động của pin chính là tung độ gốc của đồ thị. <br>
+                        Đáp số: \(\mathcal{E} = 1,58 \, V\).
+                    </div>
+                </div>
+
+                <div class="question-box">
+                    <strong>Bài 3:</strong> Tại sao cần phải mắc thêm điện trở bảo vệ \(R_0 = 10 \, \Omega\) nối tiếp với biến trở?
+                    <div class="mt-2">
+                        <button onclick="toggleAnswer('vd3')" class="btn-view text-xs">Xem lời giải</button>
+                    </div>
+                    <div id="vd3" class="answer-box">
+                        Khi biến trở \(R\) được điều chỉnh về giá trị \(0 \, \Omega\), nếu không có \(R_0\), mạch sẽ xảy ra hiện tượng đoản mạch (\(I\) rất lớn). \(R_0\) đảm bảo cường độ dòng điện trong mạch không vượt quá giới hạn cho phép của ampe kế và bảo vệ pin không bị hỏng.
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <script>
+        function toggleAnswer(id) {
+            const el = document.getElementById(id);
+            if (el.style.display === 'block') {
+                el.style.display = 'none';
+            } else {
+                el.style.display = 'block';
+            }
+        }
+
+        function checkQuiz() {
+            const answers = {
+                q1: 'B',
+                q2: 'C',
+                q3: 'B',
+                q4: 'B',
+                q5: 'C'
+            };
+            
+            let score = 0;
+            let total = 5;
+            let resultHTML = "";
+
+            for (let i = 1; i <= total; i++) {
+                const qName = 'q' + i;
+                const selected = document.querySelector(`input[name="${qName}"]:checked`);
+                
+                if (selected) {
+                    if (selected.value === answers[qName]) {
+                        score++;
+                        resultHTML += `<p class="text-green-600">Câu ${i}: Đúng</p>`;
+                    } else {
+                        resultHTML += `<p class="text-red-600">Câu ${i}: Sai (Đáp án đúng: ${answers[qName]})</p>`;
+                    }
+                } else {
+                    resultHTML += `<p class="text-gray-500">Câu ${i}: Chưa chọn đáp án</p>`;
+                }
+            }
+
+            const resultDiv = document.getElementById('quiz-result');
+            resultDiv.innerHTML = `Kết quả: ${score}/${total}<br>` + resultHTML;
+            resultDiv.className = score === total ? "text-center font-bold mt-4 text-green-700" : "text-center font-bold mt-4 text-red-700";
+        }
+    </script>
+</body>
+</html>
