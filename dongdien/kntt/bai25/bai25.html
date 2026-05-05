@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bài 25: Năng lượng và công suất điện</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        main: '#000080',
+                        bglight: '#f4f7f9',
+                        qbg: '#edf2f7',
+                        tableborder: '#cbd5e0',
+                        tablehead: '#e2e8f0'
+                    },
+                    fontFamily: {
+                        sans: ['Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- MathJax for rendering math formulas -->
+    <script>
+        MathJax = {
+            tex: {
+                inlineMath: [['\\(', '\\)']],
+                displayMath: [['$$', '$$']]
+            }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <style>
+        body {
+            background-color: #f4f7f9;
+        }
+        .section-header {
+            color: #000080;
+            text-transform: uppercase;
+            font-weight: bold;
+            border-bottom: 4px solid #000080;
+            display: inline-block;
+            padding-bottom: 4px;
+            margin-bottom: 16px;
+        }
+        .content-box {
+            background-color: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 16px 0;
+        }
+        th, td {
+            border: 1px solid #cbd5e0;
+            padding: 10px;
+            text-align: center;
+        }
+        th {
+            background-color: #e2e8f0;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body class="text-gray-800 antialiased pb-20">
+
+    <!-- Header Box -->
+    <div class="bg-main text-white p-6 rounded-b-[12px] shadow-md text-center mb-8 mx-auto max-w-5xl">
+        <h2 class="text-xl uppercase tracking-wider opacity-90">Chương IV - Dòng điện mạch điện</h2>
+        <h1 class="text-3xl font-bold uppercase mt-2">Bài 25: Năng Lượng Và Công Suất Điện</h1>
+    </div>
+
+    <div class="max-w-5xl mx-auto px-4">
+
+        <!-- Intro Box -->
+        <div class="bg-white border border-gray-800 rounded-[12px] shadow-md p-6 mb-8 flex flex-col md:flex-row gap-6 items-center">
+            <div class="flex-1 overflow-x-auto">
+                <table class="text-sm">
+                    <thead>
+                        <tr>
+                            <th>CHỈ SỐ MỚI</th>
+                            <th>CHỈ SỐ CŨ</th>
+                            <th>HS NHÂN</th>
+                            <th>ĐIỆN TIÊU THỤ</th>
+                            <th>ĐƠN GIÁ</th>
+                            <th>THÀNH TIỀN</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>8.429</td><td>8.157</td><td>1</td><td>272</td><td></td><td></td></tr>
+                        <tr><td></td><td></td><td></td><td>50</td><td>1.549</td><td>77.450</td></tr>
+                        <tr><td></td><td></td><td></td><td>50</td><td>1.600</td><td>80.000</td></tr>
+                        <tr><td></td><td></td><td></td><td>100</td><td>1.858</td><td>185.800</td></tr>
+                        <tr><td></td><td></td><td></td><td>72</td><td>2.340</td><td>168.480</td></tr>
+                        <tr class="font-bold"><td colspan="3" class="text-right">Cộng</td><td>272</td><td></td><td>511.730</td></tr>
+                        <tr><td colspan="3" class="text-right">Thuế suất GTGT: 10%</td><td colspan="2">Thuế GTGT</td><td>51.173</td></tr>
+                        <tr class="font-bold text-main"><td colspan="5" class="text-right">Tổng cộng tiền thanh toán</td><td>562.903</td></tr>
+                    </tbody>
+                </table>
+                <p class="text-sm italic mt-2">Số tiền viết bằng chữ: Năm trăm sáu mươi hai nghìn chín trăm linh ba đồng.</p>
+            </div>
+            <div class="w-full md:w-1/3 bg-blue-50 p-4 rounded-lg border-l-4 border-blue-400">
+                <p class="font-medium italic text-gray-700">Bảng bên ghi một số nội dung trong Hoá đơn tiền điện giá trị gia tăng (GTGT) của Công ty điện lực. Em hãy cho biết ý nghĩa của các số liệu trong bảng.</p>
+            </div>
+        </div>
+
+        <!-- Section I -->
+        <div class="content-box">
+            <h2 class="section-header text-2xl">I. NĂNG LƯỢNG ĐIỆN</h2>
+            
+            <p class="mb-4">Khi đặt hiệu điện thế \(U\) vào hai đầu của một mạch tiêu thụ điện, dưới tác dụng của lực điện, các điện tích tự do trong mạch điện chuyển dời có hướng tạo ra dòng điện. Ta đã biết công của lực điện trong trường hợp này được tính bằng công thức: \(A=qU\).</p>
+            
+            <p class="mb-4">Nếu \(t\) là thời gian dòng điện chạy trong mạch thì cường độ dòng điện là \(I = \frac{q}{t}\), thì công của lực điện là:</p>
+            <p class="text-center font-bold text-lg mb-4">\(A=UIt\)</p>
+
+            <p class="mb-4">Ở đây \(A\) là số đo năng lượng điện mà đoạn mạch nhận được (tiêu thụ) từ nguồn điện và được gọi là năng lượng điện tiêu thụ của đoạn mạch. Do đó:</p>
+            
+            <div class="bg-yellow-50 border border-yellow-300 p-4 rounded-lg mb-4 text-center">
+                <p class="font-semibold text-main mb-2">Năng lượng điện tiêu thụ của đoạn mạch bằng công của lực điện thực hiện khi di chuyển các điện tích.</p>
+                <p class="font-bold text-xl">\(W = A = UIt \quad (25.2)\)</p>
+            </div>
+            
+            <p class="mb-4">Đơn vị của năng lượng điện tiêu thụ là jun, kí hiệu là J.</p>
+            <p class="mb-6">Dòng điện chạy trong đoạn mạch gây ra các tác dụng khác nhau và khi đó có sự chuyển hoá năng lượng điện tiêu thụ của đoạn mạch thành các dạng năng lượng khác.</p>
+
+            <!-- Hình ảnh -->
+            <p class="text-center font-bold mb-2">Hình 25.1. Một số thiết bị dùng điện</p>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                <div class="text-center"><img src="h1.png" alt="Xe đạp điện" class="w-full h-auto object-cover rounded shadow border border-gray-200 aspect-square"><p class="mt-2 text-sm italic">a) Xe đạp điện</p></div>
+                <div class="text-center"><img src="h2.png" alt="Ấm đun nước" class="w-full h-auto object-cover rounded shadow border border-gray-200 aspect-square"><p class="mt-2 text-sm italic">b) Ấm đun nước</p></div>
+                <div class="text-center"><img src="h3.png" alt="Bóng đèn sợi đốt" class="w-full h-auto object-cover rounded shadow border border-gray-200 aspect-square"><p class="mt-2 text-sm italic">c) Bóng đèn sợi đốt</p></div>
+                <div class="text-center"><img src="h4.png" alt="Bóng đèn LED" class="w-full h-auto object-cover rounded shadow border border-gray-200 aspect-square"><p class="mt-2 text-sm italic">d) Bóng đèn LED</p></div>
+            </div>
+
+            <!-- Câu hỏi 1 & 2 -->
+            <div class="bg-qbg border-l-4 border-main p-4 my-4 rounded-r-[8px]">
+                <div class="flex items-start gap-2 mb-2">
+                    <span class="text-xl">❓</span>
+                    <p class="font-semibold text-main">Câu hỏi thảo luận</p>
+                </div>
+                <ol class="list-decimal list-inside space-y-2 mb-4">
+                    <li>Năng lượng điện tiêu thụ trong dụng cụ, thiết bị dùng điện ở Hình 25.1 chuyển hoá thành dạng năng lượng nào là nhiều nhất?</li>
+                    <li>Hãy chứng minh rằng, nếu đoạn mạch chỉ có điện trở \(R\) (đoạn mạch thuần điện trở) thì nhiệt lượng đoạn mạch toả ra khi có dòng điện chạy qua được tính bằng công thức: <br><br> <span class="block text-center font-bold">\(Q = I^2Rt = \frac{U^2}{R}t \quad (25.3)\)</span></li>
+                </ol>
+                <button onclick="toggleAnswer('ans_i_1')" class="bg-main text-white px-4 py-2 rounded shadow hover:bg-blue-800 transition text-sm">Xem lời giải</button>
+                <div id="ans_i_1" class="hidden bg-green-100 p-4 mt-3 rounded border border-green-300">
+                    <p><strong>Lời giải:</strong></p>
+                    <ul class="list-disc list-inside space-y-2 mt-2">
+                        <li><strong>Câu 1:</strong> <br>
+                            - Xe đạp điện: Điện năng -> Cơ năng.<br>
+                            - Ấm đun nước: Điện năng -> Nhiệt năng.<br>
+                            - Bóng đèn sợi đốt: Điện năng -> Nhiệt năng (phần lớn) và quang năng.<br>
+                            - Bóng đèn LED: Điện năng -> Quang năng (phần lớn).
+                        </li>
+                        <li><strong>Câu 2:</strong> <br>
+                            Ta có công của dòng điện: \(A = UIt\).<br>
+                            Theo định luật Ohm cho đoạn mạch thuần điện trở: \(U = IR\).<br>
+                            Thay \(U = IR\) vào công thức trên ta được: \(A = (IR)It = I^2Rt\).<br>
+                            Hoặc thay \(I = \frac{U}{R}\) vào, ta được: \(A = U(\frac{U}{R})t = \frac{U^2}{R}t\).<br>
+                            Vì mạch thuần điện trở nên toàn bộ điện năng biến thành nhiệt năng: \(Q = A\). Suy ra điều phải chứng minh.
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Em có biết Box 1 -->
+            <div class="bg-orange-50 border border-orange-200 rounded-lg p-4 mt-6 flex flex-col md:flex-row gap-4 items-center">
+                <div class="flex-1">
+                    <h3 class="text-orange-600 font-bold uppercase mb-2">💡 Em có biết</h3>
+                    <p class="mb-2">Ngoài đơn vị Jun, người ta còn dùng đơn vị kilôoát giờ (kW.h) để đo năng lượng điện tiêu thụ. \(1 \text{ kW.h} = 3,6 \cdot 10^3 \text{ kJ}\).</p>
+                    <p>Người ta đo năng lượng điện tiêu thụ bằng một thiết bị gọi là <strong>công tơ điện</strong> (Hình 25.2). Khi các dụng cụ, thiết bị tiêu thụ năng lượng điện hoạt động thì đĩa của công tơ quay, số chỉ của công tơ tăng dần. Đơn vị của chỉ số trên công tơ là kW.h. Trong đời sống người ta thường gọi 1 kW.h là 1 số điện.</p>
+                </div>
+                <div class="w-full md:w-1/4 text-center">
+                    <img src="h5.png" alt="Công tơ điện" class="w-full max-w-[150px] mx-auto rounded shadow border border-gray-300">
+                    <p class="text-xs mt-1 italic">Hình 25.2. Công tơ điện</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section II -->
+        <div class="content-box">
+            <h2 class="section-header text-2xl">II. CÔNG SUẤT ĐIỆN</h2>
+            
+            <p class="mb-4">Công suất tiêu thụ năng lượng điện (gọi tắt là công suất điện) của một đoạn mạch là năng lượng điện mà mạch tiêu thụ trong một đơn vị thời gian:</p>
+            <p class="text-center font-bold text-xl mb-4">\(\mathcal{P} = \frac{A}{t} = UI \quad (25.4)\)</p>
+            <p class="mb-6">Đơn vị của công suất điện là Oát, kí hiệu là W.</p>
+
+            <div class="bg-qbg border-l-4 border-main p-4 my-4 rounded-r-[8px]">
+                <div class="flex items-start gap-2 mb-2">
+                    <span class="text-xl">❓</span>
+                    <p class="font-semibold text-main">Câu hỏi:</p>
+                </div>
+                <p class="mb-4">Hãy chứng minh rằng \(1 \text{ kW.h} = 3,6 \cdot 10^3 \text{ kJ}\).</p>
+                <button onclick="toggleAnswer('ans_ii_1')" class="bg-main text-white px-4 py-2 rounded shadow hover:bg-blue-800 transition text-sm">Xem lời giải</button>
+                <div id="ans_ii_1" class="hidden bg-green-100 p-4 mt-3 rounded border border-green-300">
+                    <p><strong>Lời giải:</strong></p>
+                    <p>Ta có: \(1 \text{ kW} = 1000 \text{ W}\) và \(1 \text{ h} = 3600 \text{ s}\).</p>
+                    <p>Năng lượng tương ứng với 1 kW.h là: \(1 \text{ kW.h} = 1000 \text{ W} \times 3600 \text{ s} = 3.600.000 \text{ J} = 3.600 \text{ kJ} = 3,6 \cdot 10^3 \text{ kJ}\). (ĐPCM)</p>
+                </div>
+            </div>
+
+            <p class="font-bold mb-2">Bảng 25.1. Công suất điện của một số thiết bị dùng điện</p>
+            <div class="overflow-x-auto mb-6">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Thiết bị</th>
+                            <th>Công suất điện</th>
+                            <th>Thiết bị</th>
+                            <th>Công suất điện</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>Đèn tuýp LED 1,2 m</td><td>25 W</td><td>Tủ lạnh</td><td>100 W</td></tr>
+                        <tr><td>Bóng đèn huỳnh quang 1,2 m</td><td>36 W</td><td>Máy giặt</td><td>470 W</td></tr>
+                        <tr><td>Bóng đèn sợi đốt</td><td>40 W</td><td>Nồi cơm điện</td><td>600 W</td></tr>
+                        <tr><td>Quạt cây</td><td>55 W</td><td>Bàn là</td><td>1000 W</td></tr>
+                        <tr><td>Tivi LED 32 inches</td><td>69 W</td><td>Điều hòa 9000BTU</td><td>2 638 W</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Em có biết Box 2 -->
+            <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                <h3 class="text-blue-800 font-bold uppercase mb-2">💡 Em có biết</h3>
+                <p>Nếu trên dụng cụ hoặc thiết bị dùng điện ghi 220 V - 100 W, thì phải hiểu là chỉ khi nào dụng cụ hoặc thiết bị được dùng ở đúng hiệu điện thế \(U = 220 \text{ V}\) (bằng với hiệu điện thế định mức) thì công suất điện của nó mới bằng 100 W. Công suất này được gọi là <strong>công suất định mức</strong>.</p>
+            </div>
+
+            <!-- Hoạt động / Vận dụng -->
+            <div class="bg-qbg border-l-4 border-main p-4 my-4 rounded-r-[8px]">
+                <div class="flex items-start gap-2 mb-2">
+                    <span class="text-xl">🤝</span>
+                    <p class="font-semibold text-main">Hoạt động / Thảo luận:</p>
+                </div>
+                <ol class="list-decimal list-inside space-y-4 mb-4">
+                    <li>Trên hoá đơn GTGT (tiền điện) ở đầu bài học, tiền điện được tính lũy tiến (càng dùng điện nhiều thì đơn giá của 1 kWh điện càng tăng). Theo em, cách tính này nhằm những mục đích gì? Tại sao?</li>
+                    <li>Cho các thông tin về bóng đèn sợi đốt và bóng đèn LED cùng có độ sáng như sau:
+                        <div class="overflow-x-auto mt-2">
+                            <table class="text-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Đặc điểm</th>
+                                        <th>Đèn sợi đốt (220V - 100W)</th>
+                                        <th>Đèn LED (220V - 20W)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td class="font-medium">Giản đồ phân phối năng lượng</td>
+                                        <td>Điện năng 100J -> Ánh sáng 5J, Nhiệt 95J</td>
+                                        <td>Điện năng 100J -> Ánh sáng 80J, Nhiệt 20J</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="font-medium">Thời gian hoạt động</td>
+                                        <td>1 000 h</td>
+                                        <td>30 000 h</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="font-medium">Giá tiền/bóng</td>
+                                        <td>8.000 đồng</td>
+                                        <td>48.000 đồng</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="font-medium">Giá tiền điện</td>
+                                        <td colspan="2" class="text-center text-main font-bold">2.000 đồng / kW.h</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <p class="mt-2">Giả sử trung bình mỗi bóng đèn sử dụng 5 h/ngày, em hãy tính tiền điện phải trả cho từng bóng đèn mỗi tháng và trong 30 000 h, từ đó lập luận để so sánh về hiệu quả kinh tế khi sử dụng hai loại bóng trên.</p>
+                    </li>
+                </ol>
+                <button onclick="toggleAnswer('ans_ii_2')" class="bg-main text-white px-4 py-2 rounded shadow hover:bg-blue-800 transition text-sm">Xem hướng giải quyết</button>
+                <div id="ans_ii_2" class="hidden bg-green-100 p-4 mt-3 rounded border border-green-300">
+                    <p><strong>Lời giải:</strong></p>
+                    <ul class="list-disc list-inside space-y-2 mt-2 text-sm">
+                        <li><strong>Câu 1:</strong> Tính giá điện lũy tiến nhằm khuyến khích người dân sử dụng điện tiết kiệm, hợp lý, tránh lãng phí. Những hộ dùng nhiều (thường là kinh doanh hoặc dùng thiết bị hao điện) sẽ phải trả đơn giá cao hơn để bù đắp chi phí và bảo vệ môi trường.</li>
+                        <li><strong>Câu 2:</strong><br>
+                            * Thời gian 1 tháng (30 ngày) = 30 x 5 = 150 giờ.<br>
+                            - <strong>Đèn sợi đốt (100W = 0.1kW):</strong><br>
+                              Điện năng 1 tháng: \(A = P \cdot t = 0.1 \times 150 = 15\) kWh. Tiền = \(15 \times 2000 = 30.000\) đ.<br>
+                              Tiền điện trong 30.000h: \(A = 0.1 \times 30000 = 3000\) kWh. Tiền = \(3000 \times 2000 = 6.000.000\) đ.<br>
+                              Chi phí mua bóng (cần 30 bóng cho 30.000h): \(30 \times 8000 = 240.000\) đ.<br>
+                              Tổng chi phí = 6.240.000 đ.<br>
+                            - <strong>Đèn LED (20W = 0.02kW):</strong><br>
+                              Điện năng 1 tháng: \(A = P \cdot t = 0.02 \times 150 = 3\) kWh. Tiền = \(3 \times 2000 = 6.000\) đ.<br>
+                              Tiền điện trong 30.000h: \(A = 0.02 \times 30000 = 600\) kWh. Tiền = \(600 \times 2000 = 1.200.000\) đ.<br>
+                              Chi phí mua bóng (cần 1 bóng): 48.000 đ.<br>
+                              Tổng chi phí = 1.248.000 đ.<br>
+                            <strong>Kết luận:</strong> Đèn LED ban đầu mua đắt hơn nhưng tuổi thọ cao và rất tiết kiệm điện, tổng chi phí rẻ hơn gần 5 lần so với đèn sợi đốt. Hiệu quả kinh tế cao hơn rõ rệt.
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section III -->
+        <div class="content-box">
+            <h2 class="section-header text-2xl">III. BÀI TẬP</h2>
+
+            <!-- Bài tập 1 -->
+            <div class="mb-6 border-b pb-6">
+                <h3 class="font-bold text-lg mb-2 text-gray-800">1. Bài tập ví dụ</h3>
+                <p class="mb-2">Trên nhãn của một ấm điện có ghi 220 V – 1000 W. Sử dụng ấm điện này ở hiệu điện thế 200 V để đun sôi 2 lít nước từ nhiệt độ \(20^\circ\text{C}\). Tính thời gian đun nước. Biết hiệu suất của ấm là 90%, nhiệt dung riêng của nước là \(4 190 \text{ J/kg.K}\), coi điện trở của ấm điện không thay đổi so với khi hoạt động ở chế độ bình thường.</p>
+                <div class="bg-gray-50 p-4 rounded border mt-3">
+                    <p class="font-bold mb-2">Giải:</p>
+                    <p>Nhiệt lượng cần để đun sôi 2 lít nước (tương đương 2 kg) từ \(20^\circ\text{C}\):</p>
+                    <p class="text-center my-2">\(Q = mc\Delta t = 2 \times 4190 \times (100 - 20) = 670 400 \text{ J}\)</p>
+                    <p>Hiệu suất của ấm \(H = 90\%\) nên năng lượng điện tiêu thụ của ấm là:</p>
+                    <p class="text-center my-2">\(A = \frac{Q}{H} = \frac{670 400}{0,9} \approx 744 889 \text{ J}\)</p>
+                    <p>Điện trở của ấm điện:</p>
+                    <p class="text-center my-2">\(R = \frac{U_{dm}^2}{\mathcal{P}_{dm}} = \frac{220^2}{1000} = 48,4 \ \Omega\)</p>
+                    <p>Từ công thức \(A = \frac{U^2}{R}t\), suy ra thời gian đun nước:</p>
+                    <p class="text-center my-2 font-bold text-main">\(t = \frac{A \cdot R}{U^2} = \frac{744 889 \times 48,4}{200^2} \approx 901 \text{ s}\)</p>
+                </div>
+            </div>
+
+            <!-- Bài tập 2 -->
+            <div>
+                <h3 class="font-bold text-lg mb-2 text-gray-800">2. Bài tập</h3>
+                
+                <div class="bg-qbg border-l-4 border-main p-4 my-4 rounded-r-[8px]">
+                    <p class="font-semibold mb-2">Câu 1:</p>
+                    <p class="mb-2">Trên nhãn của bóng đèn 1 có ghi 220 V - 20 W và bóng đèn 2 có ghi 220 V – 10 W. Coi điện trở của mỗi bóng đèn không thay đổi.</p>
+                    <ul class="list-[lower-alpha] list-inside mb-4 space-y-1">
+                        <li>Tính năng lượng điện tiêu thụ của mỗi bóng đèn khi sử dụng ở hiệu điện thế 200 V trong thời gian 2 giờ.</li>
+                        <li>Tính tổng công suất điện tiêu thụ của cả hai bóng đèn trong những trường hợp sau:
+                            <ul class="list-disc list-inside ml-6">
+                                <li>Mắc song song hai bóng đèn vào hiệu điện thế 220 V.</li>
+                                <li>Mắc nối tiếp hai bóng đèn vào hiệu điện thế 220 V.</li>
+                            </ul>
+                        </li>
+                        <li>Dùng cách mắc nào nêu trên để cả hai bóng đèn đều sáng bình thường? Tại sao?</li>
+                    </ul>
+                    <button onclick="toggleAnswer('ans_bt_1')" class="bg-main text-white px-4 py-2 rounded shadow hover:bg-blue-800 transition text-sm">Xem lời giải</button>
+                    <div id="ans_bt_1" class="hidden bg-green-100 p-4 mt-3 rounded border border-green-300 text-sm">
+                        <p><strong>Lời giải:</strong></p>
+                        <p>a) Điện trở mỗi đèn: \(R_1 = \frac{U_{dm}^2}{\mathcal{P}_{dm1}} = \frac{220^2}{20} = 2420 \ \Omega\); \(R_2 = \frac{220^2}{10} = 4840 \ \Omega\).</p>
+                        <p>Năng lượng tiêu thụ ở 200V, t=2h=7200s: <br>
+                        \(A_1 = \frac{U^2}{R_1}t = \frac{200^2}{2420} \times 7200 \approx 119008 \text{ J}\) <br>
+                        \(A_2 = \frac{U^2}{R_2}t = \frac{200^2}{4840} \times 7200 \approx 59504 \text{ J}\)</p>
+                        <p class="mt-2">b) Mắc song song ở 220V (đúng định mức): \(\mathcal{P}_{ss} = \mathcal{P}_1 + \mathcal{P}_2 = 20 + 10 = 30 \text{ W}\).</p>
+                        <p>Mắc nối tiếp: \(R_{nt} = R_1 + R_2 = 2420 + 4840 = 7260 \ \Omega\). Tổng công suất: \(\mathcal{P}_{nt} = \frac{U^2}{R_{nt}} = \frac{220^2}{7260} \approx 6,67 \text{ W}\).</p>
+                        <p class="mt-2">c) Phải dùng cách mắc <strong>song song</strong>. Vì khi mắc song song vào nguồn 220V, hiệu điện thế trên mỗi bóng bằng đúng hiệu điện thế định mức của chúng (220V), nên cả hai sáng bình thường.</p>
+                    </div>
+                </div>
+
+                <div class="bg-qbg border-l-4 border-main p-4 my-4 rounded-r-[8px]">
+                    <p class="font-semibold mb-2">Câu 2:</p>
+                    <p class="mb-4">Thông thường, ở nước ta hiệu điện thế mạng điện trong các gia đình, trường học,... là 220 V. Em hãy tìm hiểu về hiệu điện thế định mức, công suất định mức của mỗi thiết bị điện, cách mắc các thiết bị điện dùng trong lớp học của em và thời gian sử dụng trung bình của từng thiết bị mỗi tháng để làm các việc sau: a) Vẽ lại sơ đồ mạch điện; b) Áp dụng giá điện để dự tính tiền; c) Đề xuất phương án tiết kiệm.</p>
+                    <button onclick="toggleAnswer('ans_bt_2')" class="bg-main text-white px-4 py-2 rounded shadow hover:bg-blue-800 transition text-sm">Xem gợi ý giải</button>
+                    <div id="ans_bt_2" class="hidden bg-green-100 p-4 mt-3 rounded border border-green-300 text-sm">
+                        <p><strong>Gợi ý:</strong> Đây là bài tập thực hành cá nhân/nhóm.</p>
+                        <ul class="list-disc list-inside mt-2">
+                            <li><strong>Sơ đồ:</strong> Các thiết bị (đèn tuýp, quạt trần, máy chiếu) trong lớp luôn mắc song song với nhau vào lưới điện 220V, có công tắc riêng.</li>
+                            <li><strong>Tính tiền:</strong> Lập bảng liệt kê: số lượng bóng đèn, công suất (VD: 36W), số giờ bật/tháng -> Tính tổng \(A\) (kWh) -> Nhân đơn giá (VD: 2000đ).</li>
+                            <li><strong>Tiết kiệm:</strong> Tắt điện khi ra khỏi lớp, dùng ánh sáng tự nhiên, thay đèn huỳnh quang bằng đèn LED, vệ sinh quạt/đèn định kỳ.</li>
+                        </ul>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- EM ĐÃ HỌC -->
+        <div class="content-box bg-indigo-50 border-2 border-indigo-200">
+            <h2 class="text-indigo-800 font-bold text-xl uppercase mb-4 flex items-center"><span class="mr-2">🎓</span> EM ĐÃ HỌC</h2>
+            <ul class="list-disc list-inside space-y-3 text-indigo-900">
+                <li>Năng lượng điện tiêu thụ của đoạn mạch được đo bằng công của lực điện thực hiện khi dịch chuyển các điện tích. Công thức tính công của lực điện \(A=qU=UIt\). Đơn vị là Jun, kí hiệu là J.</li>
+                <li>Đối với đoạn mạch thuần điện trở, nhiệt lượng đoạn mạch toả ra khi dòng điện chạy qua được tính bằng công thức: \(Q=RI^2t\).</li>
+                <li>Công suất tiêu thụ năng lượng điện của một đoạn mạch là năng lượng điện mà đoạn mạch tiêu thụ trong một đơn vị thời gian. Công thức tính: \(\mathcal{P}=\frac{A}{t}=UI\). Đơn vị là Oát, kí hiệu là W.</li>
+            </ul>
+        </div>
+
+        <!-- EM CÓ THỂ -->
+        <div class="content-box bg-teal-50 border-2 border-teal-200">
+            <h2 class="text-teal-800 font-bold text-xl uppercase mb-4 flex items-center"><span class="mr-2">🌟</span> EM CÓ THỂ</h2>
+            <ul class="list-disc list-inside space-y-2 text-teal-900">
+                <li>Giải thích được nội dung ghi trong hoá đơn tiền điện và ý nghĩa của việc tính giá điện lũy tiến; lợi ích của việc thay đèn sợi đốt bằng đèn LED.</li>
+                <li>Ước tính được số tiền điện trung bình mỗi tháng phải trả cho các dụng cụ và thiết bị điện dùng trong nhà và các biện pháp tiết kiệm năng lượng điện tiêu thụ.</li>
+            </ul>
+        </div>
+
+        <!-- BỔ SUNG: TRẮC NGHIỆM -->
+        <div class="content-box border-2 border-gray-300">
+            <h2 class="section-header text-xl text-gray-800 border-gray-800">📝 CỦNG CỐ: BÀI TẬP TRẮC NGHIỆM</h2>
+            <form id="quiz-form" class="space-y-6">
+                
+                <div class="bg-white p-4 border rounded shadow-sm">
+                    <p class="font-semibold mb-2">Câu 1: Công thức nào sau đây dùng để tính năng lượng điện tiêu thụ của một đoạn mạch?</p>
+                    <label class="block mb-1"><input type="radio" name="q1" value="A" class="mr-2"> A. \(W = UIt\)</label>
+                    <label class="block mb-1"><input type="radio" name="q1" value="B" class="mr-2"> B. \(W = UI/t\)</label>
+                    <label class="block mb-1"><input type="radio" name="q1" value="C" class="mr-2"> C. \(W = U/It\)</label>
+                    <label class="block mb-1"><input type="radio" name="q1" value="D" class="mr-2"> D. \(W = I/Ut\)</label>
+                </div>
+
+                <div class="bg-white p-4 border rounded shadow-sm">
+                    <p class="font-semibold mb-2">Câu 2: Đơn vị của công suất điện là gì?</p>
+                    <label class="block mb-1"><input type="radio" name="q2" value="A" class="mr-2"> A. Jun (J)</label>
+                    <label class="block mb-1"><input type="radio" name="q2" value="B" class="mr-2"> B. Oát (W)</label>
+                    <label class="block mb-1"><input type="radio" name="q2" value="C" class="mr-2"> C. Vôn (V)</label>
+                    <label class="block mb-1"><input type="radio" name="q2" value="D" class="mr-2"> D. Ampe (A)</label>
+                </div>
+
+                <div class="bg-white p-4 border rounded shadow-sm">
+                    <p class="font-semibold mb-2">Câu 3: 1 kW.h (một số điện) tương đương với bao nhiêu Jun?</p>
+                    <label class="block mb-1"><input type="radio" name="q3" value="A" class="mr-2"> A. \(3,6 \cdot 10^3 \text{ J}\)</label>
+                    <label class="block mb-1"><input type="radio" name="q3" value="B" class="mr-2"> B. \(360 \text{ J}\)</label>
+                    <label class="block mb-1"><input type="radio" name="q3" value="C" class="mr-2"> C. \(3,6 \cdot 10^6 \text{ J}\)</label>
+                    <label class="block mb-1"><input type="radio" name="q3" value="D" class="mr-2"> D. \(1000 \text{ J}\)</label>
+                </div>
+
+                <div class="bg-white p-4 border rounded shadow-sm">
+                    <p class="font-semibold mb-2">Câu 4: Dụng cụ nào dùng để đo điện năng tiêu thụ (năng lượng điện) trong gia đình?</p>
+                    <label class="block mb-1"><input type="radio" name="q4" value="A" class="mr-2"> A. Ampe kế</label>
+                    <label class="block mb-1"><input type="radio" name="q4" value="B" class="mr-2"> B. Công tơ điện</label>
+                    <label class="block mb-1"><input type="radio" name="q4" value="C" class="mr-2"> C. Vôn kế</label>
+                    <label class="block mb-1"><input type="radio" name="q4" value="D" class="mr-2"> D. Công tơ mét</label>
+                </div>
+
+                <div class="bg-white p-4 border rounded shadow-sm">
+                    <p class="font-semibold mb-2">Câu 5: Trên một bóng đèn có ghi 220V - 100W. Con số 100W có ý nghĩa gì?</p>
+                    <label class="block mb-1"><input type="radio" name="q5" value="A" class="mr-2"> A. Công suất định mức của bóng đèn</label>
+                    <label class="block mb-1"><input type="radio" name="q5" value="B" class="mr-2"> B. Năng lượng điện tiêu thụ trong 1 giây ở mọi lúc</label>
+                    <label class="block mb-1"><input type="radio" name="q5" value="C" class="mr-2"> C. Nhiệt lượng tỏa ra của bóng đèn</label>
+                    <label class="block mb-1"><input type="radio" name="q5" value="D" class="mr-2"> D. Cường độ dòng điện định mức</label>
+                </div>
+
+                <button type="button" onclick="checkQuiz()" class="bg-main text-white px-8 py-3 rounded shadow-lg font-bold hover:bg-blue-800 transition text-lg w-full md:w-auto">NỘP BÀI</button>
+            </form>
+
+            <div id="quiz-result" class="hidden mt-6 text-center bg-gray-100 p-4 rounded border"></div>
+            
+            <div id="quiz-explanation" class="hidden mt-4 bg-blue-50 p-4 rounded border border-blue-200">
+                <h4 class="font-bold text-main mb-2">Giải thích chi tiết:</h4>
+                <ul class="text-sm space-y-2">
+                    <li><strong>Câu 1 - A:</strong> Theo công thức 25.2, \(W = A = UIt\).</li>
+                    <li><strong>Câu 2 - B:</strong> Đơn vị công suất là Oát (W). Jun là đơn vị của Năng lượng.</li>
+                    <li><strong>Câu 3 - C:</strong> \(1 \text{ kW.h} = 1000 \text{W} \times 3600 \text{s} = 3.600.000 \text{ J} = 3,6 \cdot 10^6 \text{ J}\).</li>
+                    <li><strong>Câu 4 - B:</strong> Theo mục "Em có biết", người ta đo năng lượng điện bằng công tơ điện.</li>
+                    <li><strong>Câu 5 - A:</strong> 100W là công suất định mức, đạt được khi sử dụng đúng hiệu điện thế định mức 220V.</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- BỔ SUNG: BÀI TẬP VẬN DỤNG TÍNH TOÁN -->
+        <div class="content-box">
+            <h2 class="section-header text-xl text-gray-800 border-gray-800">📐 BÀI TẬP VẬN DỤNG THÊM</h2>
+
+            <div class="bg-qbg border-l-4 border-main p-4 my-4 rounded-r-[8px]">
+                <p class="font-semibold mb-2">Bài 1:</p>
+                <p class="mb-4">Một bàn là điện ghi 220V - 1000W được sử dụng ở hiệu điện thế 220V. Trung bình mỗi ngày dùng 1 giờ. Tính tiền điện phải trả trong 30 ngày, biết giá điện là 2000 đồng/1 kW.h.</p>
+                <button onclick="toggleAnswer('ans_ext_1')" class="bg-main text-white px-4 py-2 rounded shadow hover:bg-blue-800 transition text-sm">Xem lời giải</button>
+                <div id="ans_ext_1" class="hidden bg-green-100 p-4 mt-3 rounded border border-green-300 text-sm">
+                    <p><strong>Lời giải:</strong></p>
+                    <p>Công suất bàn là: \(\mathcal{P} = 1000 \text{ W} = 1 \text{ kW}\).</p>
+                    <p>Thời gian sử dụng trong 30 ngày: \(t = 1 \text{ h/ngày} \times 30 \text{ ngày} = 30 \text{ h}\).</p>
+                    <p>Điện năng tiêu thụ: \(A = \mathcal{P} \cdot t = 1 \text{ kW} \times 30 \text{ h} = 30 \text{ kW.h}\).</p>
+                    <p>Tiền điện: \(T = 30 \times 2000 = 60.000 \text{ đồng}\).</p>
+                </div>
+            </div>
+
+            <div class="bg-qbg border-l-4 border-main p-4 my-4 rounded-r-[8px]">
+                <p class="font-semibold mb-2">Bài 2:</p>
+                <p class="mb-4">Một nồi cơm điện ghi 220V - 600W. Khi sử dụng bình thường ở 220V, tính cường độ dòng điện chạy qua điện trở của nồi và điện trở của nó.</p>
+                <button onclick="toggleAnswer('ans_ext_2')" class="bg-main text-white px-4 py-2 rounded shadow hover:bg-blue-800 transition text-sm">Xem lời giải</button>
+                <div id="ans_ext_2" class="hidden bg-green-100 p-4 mt-3 rounded border border-green-300 text-sm">
+                    <p><strong>Lời giải:</strong></p>
+                    <p>Vì dùng ở \(U = 220\text{V}\) đúng định mức nên \(\mathcal{P} = 600\text{W}\).</p>
+                    <p>Từ \(\mathcal{P} = UI \Rightarrow I = \frac{\mathcal{P}}{U} = \frac{600}{220} \approx 2,73 \text{ A}\).</p>
+                    <p>Điện trở của nồi: \(R = \frac{U}{I} = \frac{U^2}{\mathcal{P}} = \frac{220^2}{600} \approx 80,67 \ \Omega\).</p>
+                </div>
+            </div>
+
+            <div class="bg-qbg border-l-4 border-main p-4 my-4 rounded-r-[8px]">
+                <p class="font-semibold mb-2">Bài 3:</p>
+                <p class="mb-4">Hai điện trở \(R_1 = 10 \ \Omega\) và \(R_2 = 20 \ \Omega\) được mắc nối tiếp với nhau vào hiệu điện thế \(U = 12 \text{V}\). Tính công suất tiêu thụ của toàn mạch.</p>
+                <button onclick="toggleAnswer('ans_ext_3')" class="bg-main text-white px-4 py-2 rounded shadow hover:bg-blue-800 transition text-sm">Xem lời giải</button>
+                <div id="ans_ext_3" class="hidden bg-green-100 p-4 mt-3 rounded border border-green-300 text-sm">
+                    <p><strong>Lời giải:</strong></p>
+                    <p>Vì 2 điện trở mắc nối tiếp nên điện trở tương đương của mạch là: \(R_{td} = R_1 + R_2 = 10 + 20 = 30 \ \Omega\).</p>
+                    <p>Công suất tiêu thụ của toàn mạch: \(\mathcal{P} = \frac{U^2}{R_{td}} = \frac{12^2}{30} = \frac{144}{30} = 4,8 \text{ W}\).</p>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- JavaScript Functions -->
+    <script>
+        function toggleAnswer(id) {
+            const el = document.getElementById(id);
+            if (el.classList.contains('hidden')) {
+                el.classList.remove('hidden');
+                // Gọi render lại MathJax nếu khung bị ẩn lúc tải trang
+                MathJax.typesetPromise([el]);
+            } else {
+                el.classList.add('hidden');
+            }
+        }
+
+        function checkQuiz() {
+            const answers = { q1: 'A', q2: 'B', q3: 'C', q4: 'B', q5: 'A' };
+            let score = 0;
+            let answeredAll = true;
+
+            for (let q in answers) {
+                const selected = document.querySelector(`input[name="${q}"]:checked`);
+                if (selected) {
+                    if (selected.value === answers[q]) {
+                        score++;
+                    }
+                } else {
+                    answeredAll = false;
+                }
+            }
+
+            if (!answeredAll) {
+                alert("Vui lòng trả lời đầy đủ 5 câu hỏi trước khi nộp bài!");
+                return;
+            }
+
+            const resultDiv = document.getElementById('quiz-result');
+            resultDiv.classList.remove('hidden');
+            
+            if (score === 5) {
+                resultDiv.innerHTML = `<p class="text-main font-bold text-2xl mb-2">🎉 Xuất sắc! Bạn đã làm đúng ${score}/5 câu.</p>`;
+            } else {
+                resultDiv.innerHTML = `<p class="text-red-600 font-bold text-2xl mb-2">Oops! Bạn làm đúng ${score}/5 câu. Hãy xem lại kiến thức nhé.</p>`;
+            }
+
+            const explanationDiv = document.getElementById('quiz-explanation');
+            explanationDiv.classList.remove('hidden');
+            MathJax.typesetPromise([explanationDiv]);
+        }
+    </script>
+</body>
+</html>
