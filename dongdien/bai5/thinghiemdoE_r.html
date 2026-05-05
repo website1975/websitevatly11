@@ -37,8 +37,8 @@
 <body class="p-4 md:p-8">
     <div class="max-w-5xl mx-auto">
         <header class="text-center mb-8">
-            <h1 class="text-3xl font-bold text-slate-800">Thí nghiệm: Đo suất điện động và điện trở trong của nguồn</h1>
-            <p class="text-slate-600 mt-2">Xác định $\mathcal{E}$ và $r$ qua 5 lần đo biến trở $R$</p>
+            <h1 class="text-3xl font-bold text-slate-800">Thí nghiệm: Đo suất điện động và điện trở trong</h1>
+            <p class="text-slate-600 mt-2">So sánh đặc tính Pin mới ($r$ nhỏ) và Pin cũ ($r$ lớn)</p>
         </header>
 
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -52,7 +52,7 @@
                         <line x1="100" y1="80" x2="100" y2="120" class="circuit-element" stroke-width="4" />
                         <line x1="115" y1="90" x2="115" y2="110" class="circuit-element" stroke-width="2" />
                         <line x1="115" y1="100" x2="140" y2="100" class="circuit-element" />
-                        <text x="85" y="70" class="fill-slate-600 text-sm font-bold">Pin (E, r)</text>
+                        <text id="battery-label" x="75" y="70" class="fill-blue-600 text-sm font-bold">Pin mới (E, r nhỏ)</text>
 
                         <!-- Protection Resistor R0 -->
                         <rect x="140" y="90" width="30" height="20" class="fill-white stroke-slate-800" />
@@ -87,9 +87,18 @@
                 </div>
 
                 <div class="control-panel space-y-4">
+                    <!-- Pin Selection -->
+                    <div class="bg-slate-50 p-3 rounded-lg border border-slate-200">
+                        <span class="text-xs text-slate-500 font-bold uppercase block mb-2">Chọn trạng thái nguồn:</span>
+                        <div class="grid grid-cols-2 gap-2">
+                            <button id="btn-new-battery" class="py-2 bg-blue-600 text-white rounded-md text-sm font-bold shadow-sm ring-2 ring-blue-300">PIN MỚI</button>
+                            <button id="btn-old-battery" class="py-2 bg-slate-200 text-slate-700 rounded-md text-sm font-bold hover:bg-slate-300 transition">PIN CŨ</button>
+                        </div>
+                    </div>
+
                     <div class="grid grid-cols-2 gap-4">
                         <div class="flex flex-col">
-                            <span class="text-xs text-slate-500 font-bold uppercase">Điện trở bảo vệ R₀:</span>
+                            <span class="text-xs text-slate-500 font-bold uppercase">R₀ bảo vệ:</span>
                             <span class="text-lg font-mono font-bold text-red-600">10.0 Ω</span>
                         </div>
                         <div class="flex flex-col items-end">
@@ -102,7 +111,7 @@
 
                     <div class="space-y-2 border-t pt-4">
                         <div class="flex justify-between text-sm text-slate-600 font-medium">
-                            <span>Thay đổi biến trở R:</span>
+                            <span>Biến trở R:</span>
                             <span id="r-value-display" class="bg-blue-100 text-blue-700 px-2 rounded font-bold">25.0 Ω</span>
                         </div>
                         <input type="range" id="rheostat-slider" min="5" max="150" step="1" value="25" class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600">
@@ -121,7 +130,7 @@
 
                     <div class="flex flex-col gap-2">
                         <button id="record-data" class="w-full py-4 bg-emerald-600 text-white rounded-xl font-bold hover:bg-emerald-700 transition transform active:scale-95 shadow-md">
-                            GHI SỐ LIỆU (LẦN 1-5)
+                            GHI SỐ LIỆU (LẦN ĐO)
                         </button>
                         <div class="flex gap-2">
                             <button id="export-excel" class="flex-1 py-2 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 transition shadow-sm text-sm">
@@ -137,20 +146,20 @@
 
             <!-- Right Side -->
             <div class="space-y-6">
-                <div class="bg-white rounded-xl p-4 shadow-sm border border-slate-200 overflow-hidden">
+                <div class="bg-white rounded-xl p-4 shadow-sm border border-slate-200">
                     <h3 class="text-lg font-semibold mb-4 text-slate-700">Bảng kết quả đo</h3>
-                    <div class="overflow-hidden rounded-lg border border-slate-100">
+                    <div class="max-h-48 overflow-y-auto rounded-lg border border-slate-100">
                         <table class="measurement-table w-full text-sm text-center border-collapse">
                             <thead>
-                                <tr>
+                                <tr class="sticky top-0">
                                     <th class="p-2 border-b">STT</th>
+                                    <th class="p-2 border-b">Loại Pin</th>
                                     <th class="p-2 border-b">I (A)</th>
                                     <th class="p-2 border-b">U (V)</th>
-                                    <th class="p-2 border-b">Ghi chú</th>
                                 </tr>
                             </thead>
                             <tbody id="data-table-body">
-                                <tr class="text-slate-400 italic"><td colspan="4" class="p-4">Nhấn nút ghi để lấy 5 giá trị khác nhau.</td></tr>
+                                <tr class="text-slate-400 italic"><td colspan="4" class="p-4">Chưa có dữ liệu thí nghiệm...</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -162,16 +171,15 @@
                         <canvas id="analysisChart"></canvas>
                     </div>
                     <div id="results-panel" class="mt-4 p-4 bg-indigo-50 rounded-lg border border-indigo-100 hidden">
-                        <p class="text-xs font-bold text-indigo-800 uppercase mb-2 text-center underline">Kết quả từ đồ thị Excel/Phần mềm:</p>
+                        <p class="text-[10px] font-bold text-indigo-800 uppercase mb-2 text-center underline">Phân tích hồi quy (Gần nhất):</p>
                         <div class="grid grid-cols-2 gap-4">
                             <div class="bg-white p-2 rounded shadow-sm text-center">
-                                <span class="text-[10px] text-slate-500 block uppercase">Suất điện động (E)</span>
-                                <p id="calc-e" class="text-xl font-bold text-indigo-700">-- V</p>
+                                <span class="text-[10px] text-slate-500 block uppercase">E (Suất điện động)</span>
+                                <p id="calc-e" class="text-lg font-bold text-indigo-700">-- V</p>
                             </div>
                             <div class="bg-white p-2 rounded shadow-sm text-center">
-                                <span class="text-[10px] text-slate-500 block uppercase">Điện trở trong (r)</span>
-                                <p id="calc-r" class="text-xl font-bold text-indigo-700">-- Ω</p>
-                                <span class="text-[9px] text-slate-400 italic">Sau khi đã trừ R₀=10Ω</span>
+                                <span class="text-[10px] text-slate-500 block uppercase">r (Trong)</span>
+                                <p id="calc-r" class="text-lg font-bold text-indigo-700">-- Ω</p>
                             </div>
                         </div>
                     </div>
@@ -181,11 +189,14 @@
     </div>
 
     <script>
-        const ACTUAL_E = 1.52; // Suất điện động thực tế
-        const ACTUAL_r = 0.48; // Điện trở trong thực tế
-        const R0 = 10.0;       // Điện trở bảo vệ cố định
-        const VOLTMETER_R = 15000; 
-        const METER_ERROR = 0.006;
+        const R0 = 10.0;
+        const VOLTMETER_R = 15000;
+        const METER_ERROR = 0.005;
+
+        // Trạng thái nguồn
+        let activeE = 1.52;
+        let activer = 0.45; // Pin mới r nhỏ
+        let batteryType = "Pin mới";
 
         let isClosed = false;
         let measurements = [];
@@ -198,10 +209,9 @@
                 type: 'scatter',
                 data: {
                     datasets: [{
-                        label: 'Số liệu đo',
+                        label: 'Dữ liệu đo',
                         data: [],
                         backgroundColor: '#ef4444',
-                        borderColor: '#ef4444',
                         pointRadius: 5
                     }, {
                         label: 'Đường hồi quy',
@@ -218,7 +228,7 @@
                     responsive: true,
                     maintainAspectRatio: false,
                     scales: {
-                        x: { title: { display: true, text: 'I (A)' }, min: 0, max: 0.2 },
+                        x: { title: { display: true, text: 'I (A)' }, min: 0, max: 0.15 },
                         y: { title: { display: true, text: 'U (V)' }, min: 0, max: 1.6 }
                     }
                 }
@@ -228,18 +238,42 @@
         function getReading() {
             const noise = (Math.random() - 0.5) * METER_ERROR;
             if (!isClosed) {
-                const U_open = ACTUAL_E * VOLTMETER_R / (VOLTMETER_R + ACTUAL_r + R0);
+                const U_open = activeE * VOLTMETER_R / (VOLTMETER_R + activer + R0);
                 return { u: U_open + noise, i: 0 };
             }
-            const I = ACTUAL_E / (currentR + R0 + ACTUAL_r);
-            const U = ACTUAL_E - I * (ACTUAL_r + R0);
-            return { u: Math.max(0, U + noise), i: Math.max(0, I + noise/20) };
+            const I = activeE / (currentR + R0 + activer);
+            const U = activeE - I * (activer + R0);
+            return { u: Math.max(0, U + noise), i: Math.max(0, I + noise/30) };
         }
 
         function updateDisplay() {
             const read = getReading();
             document.getElementById('voltmeter-val').innerText = read.u.toFixed(2);
             document.getElementById('ammeter-val').innerText = read.i.toFixed(3);
+        }
+
+        function setBattery(type) {
+            batteryType = type;
+            const btnNew = document.getElementById('btn-new-battery');
+            const btnOld = document.getElementById('btn-old-battery');
+            const label = document.getElementById('battery-label');
+
+            if (type === "Pin mới") {
+                activeE = 1.52;
+                activer = 0.45;
+                btnNew.className = "py-2 bg-blue-600 text-white rounded-md text-sm font-bold shadow-sm ring-2 ring-blue-300";
+                btnOld.className = "py-2 bg-slate-200 text-slate-700 rounded-md text-sm font-bold hover:bg-slate-300 transition";
+                label.innerText = "Pin mới (E, r nhỏ)";
+                label.setAttribute('class', 'fill-blue-600 text-sm font-bold');
+            } else {
+                activeE = 1.48; // Pin cũ E giảm nhẹ
+                activer = 4.85; // Pin cũ r tăng mạnh
+                btnOld.className = "py-2 bg-amber-600 text-white rounded-md text-sm font-bold shadow-sm ring-2 ring-amber-300";
+                btnNew.className = "py-2 bg-slate-200 text-slate-700 rounded-md text-sm font-bold hover:bg-slate-300 transition";
+                label.innerText = "Pin cũ (E, r lớn)";
+                label.setAttribute('class', 'fill-amber-600 text-sm font-bold');
+            }
+            updateDisplay();
         }
 
         function toggleSwitch() {
@@ -261,14 +295,11 @@
         }
 
         function recordData() {
-            if (!isClosed) {
-                alert("Hãy đóng mạch để có dòng điện I!");
-                return;
-            }
+            if (!isClosed) return alert("Đóng mạch trước khi ghi số liệu!");
             const u = parseFloat(document.getElementById('voltmeter-val').innerText);
             const i = parseFloat(document.getElementById('ammeter-val').innerText);
             
-            measurements.push({ x: i, y: u });
+            measurements.push({ x: i, y: u, type: batteryType });
             updateTable();
             updateChart();
         }
@@ -276,68 +307,66 @@
         function updateTable() {
             const body = document.getElementById('data-table-body');
             if (measurements.length === 0) {
-                body.innerHTML = '<tr class="text-slate-400 italic"><td colspan="4" class="p-4">Chưa có số liệu...</td></tr>';
+                body.innerHTML = '<tr><td colspan="4" class="p-4 italic text-slate-400">Trống...</td></tr>';
                 return;
             }
             body.innerHTML = measurements.map((m, idx) => `
                 <tr class="hover:bg-slate-50 transition">
                     <td class="p-2 border-b font-bold">${idx + 1}</td>
-                    <td class="p-2 border-b font-mono text-red-600">${m.x.toFixed(3)}</td>
-                    <td class="p-2 border-b font-mono text-blue-700">${m.y.toFixed(2)}</td>
-                    <td class="p-2 border-b text-xs text-slate-400 italic">R = ${ (m.y/m.x - R0).toFixed(1) } Ω</td>
+                    <td class="p-2 border-b text-xs font-medium ${m.type === 'Pin mới' ? 'text-blue-600' : 'text-amber-600'}">${m.type}</td>
+                    <td class="p-2 border-b font-mono">${m.x.toFixed(3)}</td>
+                    <td class="p-2 border-b font-mono">${m.y.toFixed(2)}</td>
                 </tr>
             `).join('');
+            body.scrollTop = body.scrollHeight;
         }
 
         function updateChart() {
             chart.data.datasets[0].data = measurements;
-            if (measurements.length >= 2) {
-                const n = measurements.length;
+            
+            // Tính hồi quy cho các điểm cuối cùng có cùng loại pin
+            const currentTypePoints = measurements.filter(m => m.type === batteryType);
+            if (currentTypePoints.length >= 2) {
+                const n = currentTypePoints.length;
                 let sX = 0, sY = 0, sXY = 0, sX2 = 0;
-                measurements.forEach(m => {
+                currentTypePoints.forEach(m => {
                     sX += m.x; sY += m.y; sXY += m.x * m.y; sX2 += m.x * m.x;
                 });
                 const slope = (n * sXY - sX * sY) / (n * sX2 - sX * sX);
                 const intercept = (sY - slope * sX) / n;
 
-                chart.data.datasets[1].data = [{ x: 0, y: intercept }, { x: 0.2, y: intercept + slope * 0.2 }];
+                chart.data.datasets[1].data = [
+                    { x: 0, y: intercept }, 
+                    { x: 0.15, y: intercept + slope * 0.15 }
+                ];
+                chart.data.datasets[1].label = `Hồi quy (${batteryType})`;
 
                 document.getElementById('results-panel').classList.remove('hidden');
                 document.getElementById('calc-e').innerText = intercept.toFixed(3) + " V";
-                const r_inner = Math.abs(slope) - R0;
-                document.getElementById('calc-r').innerText = r_inner.toFixed(2) + " Ω";
+                document.getElementById('calc-r').innerText = (Math.abs(slope) - R0).toFixed(2) + " Ω";
             }
             chart.update();
         }
 
-        function exportToCSV() {
-            if (measurements.length === 0) {
-                alert("Bảng dữ liệu đang trống, không thể xuất file!");
-                return;
-            }
-            let csvContent = "data:text/csv;charset=utf-8,STT,I (A),U (V),R_total (Ohm)\n";
+        function exportCSV() {
+            if (measurements.length === 0) return alert("Không có dữ liệu!");
+            let csv = "STT,Loai Pin,I (A),U (V)\n";
             measurements.forEach((m, idx) => {
-                const rTotal = (m.y / m.x).toFixed(2);
-                csvContent += `${idx + 1},${m.x.toFixed(3)},${m.y.toFixed(2)},${rTotal}\n`;
+                csv += `${idx + 1},${m.type},${m.x},${m.y}\n`;
             });
-
-            const encodedUri = encodeURI(csvContent);
-            const link = document.createElement("a");
-            link.setAttribute("href", encodedUri);
-            link.setAttribute("download", "du_lieu_thi_nghiem_vat_ly.csv");
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.setAttribute('href', url);
+            a.setAttribute('download', 'thi_nghiem_pin_moi_cu.csv');
+            a.click();
         }
 
+        document.getElementById('btn-new-battery').addEventListener('click', () => setBattery("Pin mới"));
+        document.getElementById('btn-old-battery').addEventListener('click', () => setBattery("Pin cũ"));
         document.getElementById('toggle-switch').addEventListener('click', toggleSwitch);
-        document.getElementById('rheostat-slider').addEventListener('input', (e) => {
-            currentR = parseFloat(e.target.value);
-            document.getElementById('r-value-display').innerText = currentR.toFixed(1) + " Ω";
-            if (isClosed) updateDisplay();
-        });
         document.getElementById('record-data').addEventListener('click', recordData);
-        document.getElementById('export-excel').addEventListener('click', exportToCSV);
+        document.getElementById('export-excel').addEventListener('click', exportCSV);
         document.getElementById('reset-data').addEventListener('click', () => {
             measurements = [];
             updateTable();
@@ -346,11 +375,16 @@
             chart.update();
             document.getElementById('results-panel').classList.add('hidden');
         });
+        document.getElementById('rheostat-slider').addEventListener('input', (e) => {
+            currentR = parseFloat(e.target.value);
+            document.getElementById('r-value-display').innerText = currentR.toFixed(1) + " Ω";
+            if (isClosed) updateDisplay();
+        });
 
         window.onload = () => {
             initChart();
             updateDisplay();
-            setInterval(() => { if(isClosed) updateDisplay(); }, 1000);
+            setInterval(() => { if(isClosed) updateDisplay(); }, 800);
         };
     </script>
 </body>
