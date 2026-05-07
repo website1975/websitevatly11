@@ -134,10 +134,13 @@ const Forum: React.FC<ForumProps> = ({ nodeId, isAdmin, themeColor }) => {
   const uploadImage = async (file: File): Promise<string | null> => {
     const fileExt = file.name.split('.').pop();
     const fileName = `${Date.now()}.${fileExt}`;
-    // Check custom bucket
-    const { error } = await supabase.storage.from('forum_attachments').upload(`uploads/${fileName}`, file);
-    if (error) return null;
-    return supabase.storage.from('forum_attachments').getPublicUrl(`uploads/${fileName}`).data.publicUrl;
+    // Use 'resources' bucket instead of forum_attachments for simpler setup
+    const { error } = await supabase.storage.from('resources').upload(`forum/${fileName}`, file);
+    if (error) {
+      console.error("Upload error:", error);
+      return null;
+    }
+    return supabase.storage.from('resources').getPublicUrl(`forum/${fileName}`).data.publicUrl;
   };
 
   const handleSubmit = async (e?: React.FormEvent) => {
