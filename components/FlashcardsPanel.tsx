@@ -66,16 +66,36 @@ const FlashcardsPanel: React.FC<FlashcardsPanelProps> = ({ nodeId, isAdmin, them
   const fetchFlashcards = useCallback(async () => {
     setLoading(true);
     try {
-      // Tăng giới hạn lên 5000 để tránh bỏ sót khi số lượng câu hỏi lớn
+      // Try fetching all to handle potential nodeId vs node_id issues
       const { data, error } = await supabase
         .from('flashcards')
-        .select('*')
-        .eq('nodeId', nodeId)
-        .order('createdAt', { ascending: true })
-        .limit(5000);
+        .select('*');
       
-      if (error) throw error;
-      setFlashcards(data || []);
+      if (error) {
+         // Fallback to specific query
+         const { data: retryData, error: retryError } = await supabase.from('flashcards').select('*').eq('nodeId', nodeId);
+         if (retryError) {
+             const { data: snakeData } = await supabase.from('flashcards').select('*').eq('node_id', nodeId);
+             if (snakeData) setFlashcards(snakeData.map((f: any) => ({ ...f, nodeId: f.node_id, createdAt: f.created_at })));
+         } else if (retryData) {
+             setFlashcards(retryData);
+         }
+         return;
+      }
+
+      if (data) {
+        const filtered = data.filter((f: any) => (f.nodeId || f.node_id) === nodeId);
+        const mapped = filtered.map((f: any) => ({
+          id: f.id,
+          nodeId: f.nodeId || f.node_id,
+          front: f.front,
+          back: f.back,
+          createdAt: f.createdAt || f.created_at
+        })).sort((a, b) => new Date(a.createdAt || 0).getTime() - new Date(b.createdAt || 0).getTime());
+        
+        setFlashcards(mapped);
+      }
+      
       setCurrentIndex(0);
       setIsFlipped(false);
     } catch (err) {
@@ -101,10 +121,24 @@ const FlashcardsPanel: React.FC<FlashcardsPanelProps> = ({ nodeId, isAdmin, them
           .eq('id', editingId);
         if (error) throw error;
       } else {
+        const now = new Date().toISOString();
+        const payload = { 
+          nodeId, 
+          node_id: nodeId, 
+          front: formData.front, 
+          back: formData.back,
+          createdAt: now,
+          created_at: now
+        };
         const { error } = await supabase
           .from('flashcards')
-          .insert([{ node_id: nodeId, front: formData.front, back: formData.back }]);
-        if (error) throw error;
+          .insert([payload]);
+        
+        if (error) {
+           // Retry with minimal set
+           const { error: e2 } = await supabase.from('flashcards').insert([{ nodeId, front: formData.front, back: formData.back }]);
+           if (e2) await supabase.from('flashcards').insert([{ node_id: nodeId, front: formData.front, back: formData.back }]);
+        }
       }
       
       setFormData({ front: '', back: '' });
@@ -126,47 +160,44 @@ const FlashcardsPanel: React.FC<FlashcardsPanelProps> = ({ nodeId, isAdmin, them
       const text = event.target?.result as string;
       if (!text) return;
 
-      // Simple CSV parsing (handles comma and semicolon)
       const lines = text.split(/\r?\n/).filter(line => line.trim() !== '');
       if (lines.length < 2) {
         alert('File CSV không hợp lệ hoặc trống.');
         return;
       }
 
-      // Detect separator (comma or semicolon)
       const firstLine = lines[0];
       const separator = firstLine.includes(';') ? ';' : ',';
       
+      const now = new Date().toISOString();
       const newFlashcards = [];
       
-      // Helper to parse CSV line respecting quotes
       const parseCSVLine = (line: string, sep: string) => {
         const result = [];
         let current = '';
         let inQuotes = false;
         for (let i = 0; i < line.length; i++) {
           const char = line[i];
-          if (char === '"') {
-            inQuotes = !inQuotes;
-          } else if (char === sep && !inQuotes) {
+          if (char === '"') inQuotes = !inQuotes;
+          else if (char === sep && !inQuotes) {
             result.push(current.trim().replace(/^"|"$/g, '').replace(/""/g, '"'));
             current = '';
-          } else {
-            current += char;
-          }
+          } else current += char;
         }
         result.push(current.trim().replace(/^"|"$/g, '').replace(/""/g, '"'));
         return result;
       };
 
-      // Skip header
       for (let i = 1; i < lines.length; i++) {
         const parts = parseCSVLine(lines[i], separator);
         if (parts.length >= 2) {
           newFlashcards.push({
+            nodeId,
             node_id: nodeId,
             front: parts[0],
-            back: parts[1]
+            back: parts[1],
+            createdAt: now,
+            created_at: now
           });
         }
       }
@@ -181,7 +212,15 @@ const FlashcardsPanel: React.FC<FlashcardsPanelProps> = ({ nodeId, isAdmin, them
       setLoading(true);
       try {
         const { error } = await supabase.from('flashcards').insert(newFlashcards);
-        if (error) throw error;
+        if (error) {
+           // Retry with simplified payload if one set of columns fails
+           const simplified = newFlashcards.map(f => ({ nodeId: f.nodeId, front: f.front, back: f.back }));
+           const { error: e2 } = await supabase.from('flashcards').insert(simplified);
+           if (e2) {
+              const snakeSimplified = newFlashcards.map(f => ({ node_id: f.node_id, front: f.front, back: f.back }));
+              await supabase.from('flashcards').insert(snakeSimplified);
+           }
+        }
         alert(`Đã nhập thành công ${newFlashcards.length} thẻ.`);
         fetchFlashcards();
       } catch (err) {
@@ -192,7 +231,6 @@ const FlashcardsPanel: React.FC<FlashcardsPanelProps> = ({ nodeId, isAdmin, them
       }
     };
     reader.readAsText(file);
-    // Reset input
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
