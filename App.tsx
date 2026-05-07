@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from 'https://esm.sh/react@^19.2.3';
 import { Routes, Route, useNavigate, Navigate } from 'https://esm.sh/react-router-dom@^6.22.3';
-import { Book, Plus, Maximize2, Loader2, BrainCircuit, GraduationCap, ShieldCheck, Search, LogOut, Folder, Globe, Zap, Image as ImageIcon, Settings, ArrowLeft, Upload } from 'https://esm.sh/lucide-react@^0.562.0';
+import { Book, Plus, Maximize2, Loader2, BrainCircuit, GraduationCap, ShieldCheck, Search, LogOut, Folder, Globe, Zap, Image as ImageIcon, Settings, ArrowLeft, Upload, AlertCircle } from 'https://esm.sh/lucide-react@^0.562.0';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { AppData, ResourceLink, BookNode, NodeType } from './types';
 import { INITIAL_DATA } from './constants';
@@ -56,8 +56,8 @@ class ErrorBoundary extends React.Component<any, any> {
   }
 }
 
-const SUPABASE_URL = 'https://ktottoplusantmadclpg.supabase.co';
-const SUPABASE_ANON_KEY = 'sb_publishable_Fa4z8bEgByw3pGTJdvBqmQ_D_KeDGdl';
+const SUPABASE_URL = 'https://leyhdmhgbodjtnluwyao.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxleWhkbWhnYm9kanRubHV3eWFvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgwOTA5NDQsImV4cCI6MjA5MzY2Njk0NH0.fzF1AfdDcTye4MolmDkBlP-xeGF_9D3_tXD10iGf-RM';
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 const TEACHER_PWD = getSafeEnv('TEACHER_PASSWORD') || '1234';
 
@@ -69,6 +69,7 @@ const App: React.FC = () => {
   const [data, setData] = useState<AppData>(INITIAL_DATA);
   const [visitorCount, setVisitorCount] = useState<number>(0);
   const [isSyncing, setIsSyncing] = useState(false);
+  const [syncError, setSyncError] = useState<string | null>(null);
 
   const handleSelectGrade = (grade: number | null) => {
     setSelectedGrade(grade);
@@ -81,24 +82,29 @@ const App: React.FC = () => {
 
   const fetchCloudData = useCallback(async (gradeId: number) => {
     setIsSyncing(true);
+    setSyncError(null);
     try {
       const { data: cloud, error: cloudError } = await supabase.from('app_settings').select('data').eq('id', gradeId).single();
+      
       if (cloudError) {
         console.error("Cloud fetch error:", cloudError);
-        setData(INITIAL_DATA); // Fallback if no data for this grade yet
-      }
-      
-      if (cloud?.data && Array.isArray(cloud.data.nodes)) {
-        setData(cloud.data);
+        if (cloudError.code !== 'PGRST116') { // PGRST116 là lỗi không tìm thấy hàng, không phải lỗi kết nối
+           if (cloudError.message?.includes('FetchError') || cloudError.status === 503 || cloudError.status === 404) {
+             setSyncError("Không thể kết nối đến Supabase. Vui lòng kiểm tra dự án.");
+           }
+        }
+        setData(INITIAL_DATA); 
       } else if (cloud?.data) {
-        setData({ ...INITIAL_DATA, ...cloud.data, nodes: cloud.data.nodes || INITIAL_DATA.nodes });
+        setData(cloud.data);
       } else {
         setData(INITIAL_DATA);
       }
       
-      const { data: stats, error: statsError } = await supabase.from('app_settings').select('data').eq('id', 99).single();
-      if (!statsError && stats?.data && typeof stats.data.visitorCount === 'number') {
-        let currentCount = stats.data.visitorCount;
+      // Đồng bộ lượt truy cập (ID 99 trong app_settings)
+      try {
+        const { data: stats } = await supabase.from('app_settings').select('data').eq('id', 99).single();
+        let currentCount = (stats?.data as any)?.visitorCount || 0;
+        
         if (!sessionStorage.getItem('v_visited')) {
           const newCount = currentCount + 1;
           await supabase.from('app_settings').upsert({ id: 99, data: { visitorCount: newCount } });
@@ -107,9 +113,15 @@ const App: React.FC = () => {
         } else {
           setVisitorCount(currentCount);
         }
+      } catch (stErr) {
+        console.warn("Stats error (probably new project):", stErr);
       }
-    } catch (err) { console.error(err); }
-    finally { setIsSyncing(false); }
+    } catch (err: any) { 
+      console.error(err);
+      setSyncError("Lỗi kết nối CSDL: " + (err.message || "Không xác định"));
+    } finally {
+      setIsSyncing(false);
+    }
   }, []);
 
   useEffect(() => { 
@@ -130,8 +142,8 @@ const App: React.FC = () => {
     <ErrorBoundary>
       <Routes>
         <Route path="/" element={<LandingPage visitorCount={visitorCount} onSelectGrade={handleSelectGrade} selectedGrade={selectedGrade} />} />
-        <Route path="/teacher" element={<ProtectedRoute><MainView isAdmin={true} data={data} updateData={updateData} isSyncing={isSyncing} visitorCount={visitorCount} selectedGrade={selectedGrade}/></ProtectedRoute>} />
-        <Route path="/student" element={<MainView isAdmin={false} data={data} updateData={updateData} isSyncing={isSyncing} visitorCount={visitorCount} selectedGrade={selectedGrade}/>} />
+        <Route path="/teacher" element={<ProtectedRoute><MainView isAdmin={true} data={data} updateData={updateData} isSyncing={isSyncing} visitorCount={visitorCount} selectedGrade={selectedGrade} syncError={syncError} fetchCloudData={fetchCloudData}/></ProtectedRoute>} />
+        <Route path="/student" element={<MainView isAdmin={false} data={data} updateData={updateData} isSyncing={isSyncing} visitorCount={visitorCount} selectedGrade={selectedGrade} syncError={syncError} fetchCloudData={fetchCloudData}/>} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </ErrorBoundary>
@@ -225,7 +237,7 @@ const LandingPage: React.FC<{ visitorCount: number, onSelectGrade: (g: number) =
   );
 };
 
-const MainView: React.FC<{ isAdmin: boolean; data: AppData; updateData: (d: AppData) => void; isSyncing: boolean; visitorCount: number; selectedGrade: number | null }> = ({ isAdmin, data, updateData, isSyncing, visitorCount, selectedGrade }) => {
+const MainView: React.FC<{ isAdmin: boolean; data: AppData; updateData: (d: AppData) => void; isSyncing: boolean; visitorCount: number; selectedGrade: number | null; syncError: string | null; fetchCloudData: (g: number) => void }> = ({ isAdmin, data, updateData, isSyncing, visitorCount, selectedGrade, syncError, fetchCloudData }) => {
   const [selectedId, setSelectedId] = useState<string | null>(() => {
     return localStorage.getItem(`selected_id_${selectedGrade}`);
   });
@@ -312,6 +324,77 @@ const MainView: React.FC<{ isAdmin: boolean; data: AppData; updateData: (d: AppD
   const [showResModal, setShowResModal] = useState(false);
   const [resModalData, setResModalData] = useState<{id?: string, title: string, url: string, isGlobal: boolean}>({title: '', url: '', isGlobal: false});
   const [isUploading, setIsUploading] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
+  const [isImporting, setIsImporting] = useState(false);
+
+  const exportData = async () => {
+    setIsExporting(true);
+    try {
+      // Fetch all core tables
+      const { data: appSettings } = await supabase.from('app_settings').select('*');
+      const { data: quizData } = await supabase.from('quiz_data').select('*');
+      const { data: flashcards } = await supabase.from('flashcards').select('*');
+      const { data: forumComments } = await supabase.from('forum_comments').select('*');
+      
+      const backup = {
+        timestamp: new Date().toISOString(),
+        version: '1.2',
+        tables: {
+          app_settings: appSettings,
+          quiz_data: quizData,
+          flashcards: flashcards,
+          forum_comments: forumComments
+        }
+      };
+
+      const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `VatLy11_FullBackup_${new Date().toLocaleDateString()}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      alert("Lỗi khi xuất dữ liệu: " + (error instanceof Error ? error.message : String(error)));
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const importData = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!window.confirm("Cảnh báo: Việc khôi phục sẽ ghi đè dữ liệu hiện tại trong CSDL mới. Bạn có chắc chắn?")) return;
+
+    setIsImporting(true);
+    try {
+      const text = await file.text();
+      const backup = JSON.parse(text);
+
+      if (!backup.tables) throw new Error("File backup không đúng định dạng.");
+
+      // Restore flashcards
+      if (backup.tables.flashcards) {
+        for (const row of backup.tables.flashcards) {
+          await supabase.from('flashcards').upsert(row).select();
+        }
+      }
+
+      // Restore forum_comments
+      if (backup.tables.forum_comments) {
+        for (const row of backup.tables.forum_comments) {
+          await supabase.from('forum_comments').upsert(row).select();
+        }
+      }
+
+      alert("Khôi phục dữ liệu thành công! Hãy tải lại trang.");
+      window.location.reload();
+    } catch (error) {
+      alert("Lỗi khi khôi phục dữ liệu: " + (error instanceof Error ? error.message : String(error)));
+    } finally {
+      setIsImporting(false);
+    }
+  };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, target: 'node' | 'resource') => {
     const file = e.target.files?.[0];
@@ -541,6 +624,25 @@ const MainView: React.FC<{ isAdmin: boolean; data: AppData; updateData: (d: AppD
 
       {/* PANEL 2: MAIN CONTENT */}
       <main className="flex-1 flex flex-col overflow-hidden relative bg-white transition-all">
+        {syncError && (
+          <div className="bg-red-50 border-b border-red-100 px-6 py-3 flex items-center justify-between animate-in slide-in-from-top duration-500">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-red-100 text-red-600 rounded-xl">
+                <AlertCircle size={16} />
+              </div>
+              <div>
+                <p className="text-[10px] font-black text-red-800 uppercase tracking-widest">Lỗi kết nối bộ nhớ đám mây</p>
+                <p className="text-[11px] text-red-600 font-medium">{syncError}</p>
+              </div>
+            </div>
+            <button 
+              onClick={() => fetchCloudData(selectedGrade!)} 
+              className="px-4 py-2 bg-red-600 text-white text-[9px] font-black uppercase rounded-lg hover:bg-red-700 transition-all"
+            >
+              Thử lại
+            </button>
+          </div>
+        )}
         {selectedId ? (
           <>
             {selectedNode?.type === 'folder' ? (
@@ -627,19 +729,49 @@ const MainView: React.FC<{ isAdmin: boolean; data: AppData; updateData: (d: AppD
         onEdit={(r,isG)=> {setResModalData({...r, isGlobal: isG}); setShowResModal(true);}}
         onDelete={handleDeleteResource}/>
 
-      {/* MODAL CONFIG HOME URL */}
+      {/* MODAL SETTINGS & DATA */}
       {showHomeConfig && (
         <div className="fixed inset-0 z-[300] bg-slate-900/40 flex items-center justify-center p-4 backdrop-blur-md animate-in fade-in duration-300">
-          <div className="bg-white p-8 rounded-[32px] shadow-2xl w-full max-w-md space-y-4 border border-slate-100 animate-in zoom-in-95">
-            <h3 className="font-black text-center text-amber-600 uppercase text-[11px] tracking-widest mb-2">Cấu hình trang chủ</h3>
-            <div className="space-y-1">
-              <label className="text-[9px] font-bold text-slate-400 uppercase ml-1 tracking-widest">Link trang chủ (URL)</label>
-              <input value={tempHomeUrl} onChange={e=>setTempHomeUrl(e.target.value)} className="w-full px-4 py-3 text-sm font-medium outline-none bg-slate-50 border border-slate-100 rounded-xl focus:border-amber-400 transition-all" placeholder="https://..."/>
-              <p className="text-[8px] text-slate-400 p-1">Đây là trang hiện ra khi học sinh chưa chọn bài học nào.</p>
+          <div className="bg-white p-8 rounded-[32px] shadow-2xl w-full max-w-lg space-y-6 border border-slate-100 animate-in zoom-in-95">
+            <h3 className="font-black text-center text-amber-600 uppercase text-[11px] tracking-widest border-b pb-4">Cài đặt Admin & Dữ liệu</h3>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-4">
+                <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Trang chủ</h4>
+                <div className="space-y-1">
+                  <label className="text-[9px] font-bold text-slate-400 uppercase ml-1 tracking-widest">Link trang chủ (URL)</label>
+                  <input value={tempHomeUrl} onChange={e=>setTempHomeUrl(e.target.value)} className="w-full px-4 py-3 text-sm font-medium outline-none bg-slate-50 border border-slate-100 rounded-xl focus:border-amber-400 transition-all" placeholder="https://..."/>
+                  <p className="text-[8px] text-slate-400 p-1">Trang hiện ra khi chưa chọn bài học.</p>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Dữ liệu dự phòng</h4>
+                <div className="space-y-2">
+                  <button 
+                    onClick={exportData}
+                    disabled={isExporting}
+                    className="w-full flex items-center justify-between p-3 bg-indigo-50 text-indigo-700 rounded-xl hover:bg-indigo-100 transition-all text-[10px] font-black uppercase tracking-widest"
+                  >
+                    <span className="flex items-center gap-2"><Globe size={14}/> {isExporting ? 'Đang xuất...' : 'Tải Sao lưu (.json)'}</span>
+                    <Upload size={14} className="rotate-180" />
+                  </button>
+
+                  <label className="cursor-pointer block">
+                    <div className="w-full flex items-center justify-between p-3 bg-emerald-50 text-emerald-700 rounded-xl hover:bg-emerald-100 transition-all text-[10px] font-black uppercase tracking-widest">
+                      <span className="flex items-center gap-2"><Zap size={14}/> {isImporting ? 'Đang nạp...' : 'Khôi phục từ file'}</span>
+                      <Upload size={14} />
+                    </div>
+                    <input type="file" className="hidden" accept=".json" onChange={importData} disabled={isImporting} />
+                  </label>
+                  <p className="text-[8px] text-red-400 font-bold px-1 uppercase tracking-tight">* Khôi phục sẽ ghi đè dữ liệu dự án mới.</p>
+                </div>
+              </div>
             </div>
-            <div className="flex gap-4 pt-2">
-                <button type="button" onClick={()=>setShowHomeConfig(false)} className="flex-1 py-3 text-[10px] font-bold uppercase text-slate-300 tracking-widest">Hủy</button>
-                <button onClick={handleSaveHomeConfig} className="flex-1 py-3 bg-amber-500 text-white rounded-xl font-bold uppercase text-[10px] shadow-lg shadow-amber-200 tracking-widest">Lưu cấu hình</button>
+
+            <div className="flex gap-4 pt-2 border-t pt-4">
+                <button type="button" onClick={()=>setShowHomeConfig(false)} className="flex-1 py-3 text-[10px] font-bold uppercase text-slate-300 tracking-widest">Đóng</button>
+                <button onClick={handleSaveHomeConfig} className="flex-1 py-3 bg-amber-500 text-white rounded-xl font-bold uppercase text-[10px] shadow-lg shadow-amber-200 tracking-widest">Lưu trang chủ</button>
             </div>
           </div>
         </div>
