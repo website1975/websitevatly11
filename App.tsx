@@ -437,7 +437,7 @@ const MainView: React.FC<{ isAdmin: boolean; data: AppData; updateData: (d: AppD
     }
   };
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, target: 'node' | 'resource') => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, target: 'node' | 'resource' | 'node_image') => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -465,6 +465,8 @@ const MainView: React.FC<{ isAdmin: boolean; data: AppData; updateData: (d: AppD
 
       if (target === 'node') {
         setNodeModalData({ ...nodeModalData, url: publicUrl });
+      } else if (target === 'node_image') {
+        setNodeModalData({ ...nodeModalData, imageUrl: publicUrl });
       } else {
         setResModalData({ ...resModalData, url: publicUrl });
       }
@@ -849,7 +851,13 @@ const MainView: React.FC<{ isAdmin: boolean; data: AppData; updateData: (d: AppD
                   <input value={nodeModalData.url} onChange={e=>setNodeModalData({...nodeModalData, url:e.target.value})} className={`w-full px-4 py-3 text-[11px] outline-none bg-slate-50 border border-slate-100 rounded-xl focus:border-${themeColor}-400 transition-all`} placeholder="https://..."/>
                 </div>
                 <div className="space-y-1">
-                  <label className="text-[9px] font-bold text-slate-400 uppercase ml-1 tracking-widest flex items-center gap-1"><ImageIcon size={10}/> Link hình ảnh bài học</label>
+                  <label className="text-[9px] font-bold text-slate-400 uppercase ml-1 tracking-widest flex justify-between items-center">
+                    <span className="flex items-center gap-1"><ImageIcon size={10}/> Link hình ảnh bài học</span>
+                    <label className="cursor-pointer text-emerald-600 hover:text-emerald-800 flex items-center gap-1">
+                      <Upload size={10}/> {isUploading ? 'Đang tải...' : 'Tải ảnh lên'}
+                      <input type="file" className="hidden" onChange={(e) => handleFileUpload(e, 'node_image')} disabled={isUploading} accept="image/*"/>
+                    </label>
+                  </label>
                   <input value={nodeModalData.imageUrl || ''} onChange={e=>setNodeModalData({...nodeModalData, imageUrl:e.target.value})} className={`w-full px-4 py-3 text-[11px] outline-none bg-slate-50 border border-slate-100 rounded-xl focus:border-${themeColor}-400 transition-all`} placeholder="https://anh-minh-hoa.png"/>
                 </div>
               </>
