@@ -5,8 +5,8 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { ForumComment } from '../types';
 import { renderLatex } from '../utils';
 
-const SUPABASE_URL = 'https://ktottoplusantmadclpg.supabase.co';
-const SUPABASE_ANON_KEY = 'sb_publishable_Fa4z8bEgByw3pGTJdvBqmQ_D_KeDGdl';
+const SUPABASE_URL = 'https://leyhdmhgbodjtnluwyao.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxleWhkbWhnYm9kanRubHV3eWFvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgwOTA5NDQsImV4cCI6MjA5MzY2Njk0NH0.fzF1AfdDcTye4MolmDkBlP-xeGF_9D3_tXD10iGf-RM';
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 interface ForumProps {
@@ -128,7 +128,14 @@ const Forum: React.FC<ForumProps> = ({ nodeId, isAdmin, themeColor }) => {
       setUploading(false);
     }
 
-    const newComment = { nodeId, author: finalName, content, imageUrl, isAdmin, createdAt: new Date().toISOString() };
+    const newComment = { 
+      nodeId, 
+      author: finalName, 
+      content, 
+      imageUrl: imageUrl, 
+      isAdmin: isAdmin, 
+      createdAt: new Date().toISOString() 
+    };
     const { error } = await supabase.from('forum_comments').insert([newComment]);
     if (error) {
       alert("Không thể gửi bình luận.");
