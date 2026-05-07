@@ -5,8 +5,8 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { Flashcard } from '../types';
 import { renderLatex } from '../utils';
 
-const SUPABASE_URL = 'https://ktottoplusantmadclpg.supabase.co';
-const SUPABASE_ANON_KEY = 'sb_publishable_Fa4z8bEgByw3pGTJdvBqmQ_D_KeDGdl';
+const SUPABASE_URL = 'https://leyhdmhgbodjtnluwyao.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxleWhkbWhnYm9kanRubHV3eWFvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgwOTA5NDQsImV4cCI6MjA5MzY2Njk0NH0.fzF1AfdDcTye4MolmDkBlP-xeGF_9D3_tXD10iGf-RM';
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 interface FlashcardsPanelProps {
@@ -70,8 +70,8 @@ const FlashcardsPanel: React.FC<FlashcardsPanelProps> = ({ nodeId, isAdmin, them
       const { data, error } = await supabase
         .from('flashcards')
         .select('*')
-        .eq('node_id', nodeId)
-        .order('created_at', { ascending: true })
+        .eq('nodeId', nodeId)
+        .order('createdAt', { ascending: true })
         .limit(5000);
       
       if (error) throw error;
