@@ -7,8 +7,8 @@ import confetti from 'https://esm.sh/canvas-confetti';
 import { QuizQuestion } from '../types';
 import { renderLatex, getSafeEnv } from '../utils';
 
-const SUPABASE_URL = 'https://ktottoplusantmadclpg.supabase.co';
-const SUPABASE_ANON_KEY = 'sb_publishable_Fa4z8bEgByw3pGTJdvBqmQ_D_KeDGdl';
+const SUPABASE_URL = 'https://leyhdmhgbodjtnluwyao.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxleWhkbWhnYm9kanRubHV3eWFvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgwOTA5NDQsImV4cCI6MjA5MzY2Njk0NH0.fzF1AfdDcTye4MolmDkBlP-xeGF_9D3_tXD10iGf-RM';
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 interface QuizModalProps {
@@ -116,7 +116,7 @@ const QuizModal: React.FC<QuizModalProps> = ({ nodeId, lessonTitle, lessonUrl, i
         model: 'gemini-3-flash-preview',
         contents: prompt,
         tools: tools.length > 0 ? tools : undefined,
-        toolConfig: tools.length > 0 ? { includeServerSideTool_invocations: true } : undefined,
+        toolConfig: tools.length > 0 ? { includeServerSideToolInvocations: true } : undefined,
         config: {
           responseMimeType: "application/json",
           responseSchema: {
