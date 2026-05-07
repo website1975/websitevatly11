@@ -373,17 +373,58 @@ const MainView: React.FC<{ isAdmin: boolean; data: AppData; updateData: (d: AppD
 
       if (!backup.tables) throw new Error("File backup không đúng định dạng.");
 
+      // Restore app_settings
+      if (backup.tables.app_settings) {
+        for (const row of backup.tables.app_settings) {
+          // Map to handle potential id vs grade_id or data column differences
+          const cleanRow = { id: row.id, data: row.data };
+          await supabase.from('app_settings').upsert(cleanRow).select();
+        }
+      }
+
+      // Restore quiz_data
+      if (backup.tables.quiz_data) {
+        for (const row of backup.tables.quiz_data) {
+          const cleanRow = { id: row.id || row.quizId || row.node_id, data: row.data };
+          if (cleanRow.id) await supabase.from('quiz_data').upsert(cleanRow).select();
+        }
+      }
+
       // Restore flashcards
       if (backup.tables.flashcards) {
         for (const row of backup.tables.flashcards) {
-          await supabase.from('flashcards').upsert(row).select();
+          // Robust mapping for import
+          const cleanRow: any = {
+            front: row.front,
+            back: row.back,
+            nodeId: row.nodeId || row.node_id,
+            node_id: row.nodeId || row.node_id,
+            createdAt: row.createdAt || row.created_at || new Date().toISOString(),
+            created_at: row.createdAt || row.created_at || new Date().toISOString()
+          };
+          if (row.id) cleanRow.id = row.id;
+          await supabase.from('flashcards').upsert(cleanRow).select();
         }
       }
 
       // Restore forum_comments
       if (backup.tables.forum_comments) {
         for (const row of backup.tables.forum_comments) {
-          await supabase.from('forum_comments').upsert(row).select();
+          // Robust mapping for import
+          const cleanRow: any = {
+            author: row.author,
+            content: row.content,
+            nodeId: row.nodeId || row.node_id,
+            node_id: row.nodeId || row.node_id,
+            isAdmin: row.isAdmin !== undefined ? row.isAdmin : row.is_admin,
+            is_admin: row.isAdmin !== undefined ? row.isAdmin : row.is_admin,
+            imageUrl: row.imageUrl || row.image_url,
+            image_url: row.imageUrl || row.image_url,
+            createdAt: row.createdAt || row.created_at || new Date().toISOString(),
+            created_at: row.createdAt || row.created_at || new Date().toISOString()
+          };
+          if (row.id) cleanRow.id = row.id;
+          await supabase.from('forum_comments').upsert(cleanRow).select();
         }
       }
 
