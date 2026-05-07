@@ -55,12 +55,30 @@ const Forum: React.FC<ForumProps> = ({ nodeId, isAdmin, themeColor }) => {
 
   const fetchComments = async (silent = false) => {
     if (!silent) setIsRefreshing(true);
-    const { data, error } = await supabase.from('forum_comments').select('*').eq('nodeId', nodeId).order('createdAt', { ascending: true });
+    // Try to fetch everything and handle potential column name differences in mapping
+    const { data, error } = await supabase.from('forum_comments').select('*');
     if (data) {
-      setComments(data);
+      // Manual filtering and mapping to handle potential node_id vs nodeId naming issues
+      const filtered = data.filter((item: any) => (item.nodeId || item.node_id) === nodeId);
+      const mappedData = filtered.map((item: any) => ({
+        id: item.id,
+        nodeId: item.nodeId || item.node_id,
+        author: item.author,
+        content: item.content,
+        imageUrl: item.imageUrl || item.image_url,
+        createdAt: item.createdAt || item.created_at,
+        isAdmin: item.isAdmin !== undefined ? item.isAdmin : item.is_admin,
+      })).sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+      
+      setComments(mappedData);
       if (!silent) setTimeout(() => scrollToBottom('auto'), 50);
     }
-    if (error) console.error("Fetch error:", error);
+    if (error) {
+      console.error("Fetch error:", error);
+      // Fallback specific query if total fetch fails
+      const { data: retryData } = await supabase.from('forum_comments').select('*').eq('nodeId', nodeId);
+      if (retryData) setComments(retryData);
+    }
     setIsRefreshing(false);
   };
 
@@ -71,25 +89,34 @@ const Forum: React.FC<ForumProps> = ({ nodeId, isAdmin, themeColor }) => {
     try {
       const { error } = await supabase.from('forum_comments').delete().eq('id', id);
       if (error) throw error;
-      // Real-time sẽ lo việc cập nhật UI, nhưng ta lọc local luôn cho nhanh
       setComments(prev => prev.filter(c => c.id !== id));
     } catch (err) {
       alert("Lỗi khi xoá bình luận. Vui lòng thử lại.");
-      console.error(err);
     }
   };
 
   useEffect(() => {
     fetchComments();
-    const channel = supabase.channel(`public:forum_comments:${nodeId}`)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'forum_comments', filter: `nodeId=eq.${nodeId}` }, (payload) => {
+    const channel = supabase.channel(`public:forum_comments`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'forum_comments' }, (payload) => {
           if (payload.eventType === 'INSERT') {
-            const newC = payload.new as ForumComment;
-            setComments(prev => {
-              if (prev.some(c => c.id === newC.id)) return prev;
-              return [...prev, newC];
-            });
-            setTimeout(() => scrollToBottom('smooth'), 100);
+            const row = payload.new as any;
+            const newC: ForumComment = {
+              id: row.id,
+              nodeId: row.nodeId || row.node_id,
+              author: row.author,
+              content: row.content,
+              imageUrl: row.imageUrl || row.image_url,
+              createdAt: row.createdAt || row.created_at,
+              isAdmin: row.isAdmin !== undefined ? row.isAdmin : row.is_admin,
+            };
+            if (newC.nodeId === nodeId) {
+              setComments(prev => {
+                if (prev.some(c => c.id === newC.id)) return prev;
+                return [...prev, newC];
+              });
+              setTimeout(() => scrollToBottom('smooth'), 100);
+            }
           } else if (payload.eventType === 'DELETE') {
             setComments(prev => prev.filter(c => c.id !== payload.old.id));
           }
@@ -107,6 +134,7 @@ const Forum: React.FC<ForumProps> = ({ nodeId, isAdmin, themeColor }) => {
   const uploadImage = async (file: File): Promise<string | null> => {
     const fileExt = file.name.split('.').pop();
     const fileName = `${Date.now()}.${fileExt}`;
+    // Check custom bucket
     const { error } = await supabase.storage.from('forum_attachments').upload(`uploads/${fileName}`, file);
     if (error) return null;
     return supabase.storage.from('forum_attachments').getPublicUrl(`uploads/${fileName}`).data.publicUrl;
@@ -128,21 +156,36 @@ const Forum: React.FC<ForumProps> = ({ nodeId, isAdmin, themeColor }) => {
       setUploading(false);
     }
 
+    const createdAt = new Date().toISOString();
+    
+    // Try both camelCase and snake_case to ensure it lands somewhere or let Supabase handle it
     const newComment = { 
       nodeId, 
+      node_id: nodeId,
       author: finalName, 
       content, 
       imageUrl: imageUrl, 
+      image_url: imageUrl,
       isAdmin: isAdmin, 
-      createdAt: new Date().toISOString() 
+      is_admin: isAdmin,
+      createdAt,
+      created_at: createdAt
     };
+    
     const { error } = await supabase.from('forum_comments').insert([newComment]);
     if (error) {
-      alert("Không thể gửi bình luận.");
-      console.error(error);
-    } else {
-      setContent(''); setSelectedFile(null); setPreviewUrl(null); scrollToBottom('smooth');
+      console.error("Insert error, retrying without duplicates:", error);
+      // If error, try a simpler version in case some columns don't exist
+      const fallbackComment = { nodeId, author: finalName, content, imageUrl, isAdmin, createdAt };
+      const { error: error2 } = await supabase.from('forum_comments').insert([fallbackComment]);
+      if (error2) {
+         const snakeComment = { node_id: nodeId, author: finalName, content, image_url: imageUrl, is_admin: isAdmin, created_at: createdAt };
+         const { error: error3 } = await supabase.from('forum_comments').insert([snakeComment]);
+         if (error3) alert("Không thể gửi bình luận. Lỗi cấu trúc bảng.");
+      }
     }
+    
+    setContent(''); setSelectedFile(null); setPreviewUrl(null); scrollToBottom('smooth');
     setLoading(false);
   };
 
