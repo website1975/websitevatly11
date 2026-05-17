@@ -66,33 +66,40 @@ const FlashcardsPanel: React.FC<FlashcardsPanelProps> = ({ nodeId, isAdmin, them
   const fetchFlashcards = useCallback(async () => {
     setLoading(true);
     try {
-      // Try fetching all to handle potential nodeId vs node_id issues
+      // Helper to map record from any naming convention to standard Flashcard
+      const mapRecord = (f: any) => ({
+        id: f.id,
+        nodeId: f.nodeId || f.node_id,
+        front: f.front,
+        back: f.back,
+        createdAt: f.createdAt || f.created_at
+      });
+
+      // Try fetching all first (fallback for flexible environments)
       const { data, error } = await supabase
         .from('flashcards')
         .select('*');
       
-      if (error) {
-         // Fallback to specific query
-         const { data: retryData, error: retryError } = await supabase.from('flashcards').select('*').eq('nodeId', nodeId);
-         if (retryError) {
-             const { data: snakeData } = await supabase.from('flashcards').select('*').eq('node_id', nodeId);
-             if (snakeData) setFlashcards(snakeData.map((f: any) => ({ ...f, nodeId: f.node_id, createdAt: f.created_at })));
-         } else if (retryData) {
-             setFlashcards(retryData);
+      let rawData = data;
+
+      if (error || !data) {
+         console.warn('Fetch all failed, trying targeted queries:', error);
+         // Targeted retry for nodeId
+         const { data: d1 } = await supabase.from('flashcards').select('*').eq('nodeId', nodeId);
+         if (d1 && d1.length > 0) {
+           rawData = d1;
+         } else {
+           // Targeted retry for node_id
+           const { data: d2 } = await supabase.from('flashcards').select('*').eq('node_id', nodeId);
+           if (d2) rawData = d2;
          }
-         return;
       }
 
-      if (data) {
-        const filtered = data.filter((f: any) => (f.nodeId || f.node_id) === nodeId);
-        const mapped = filtered.map((f: any) => ({
-          id: f.id,
-          nodeId: f.nodeId || f.node_id,
-          front: f.front,
-          back: f.back,
-          createdAt: f.createdAt || f.created_at
-        })).sort((a, b) => new Date(a.createdAt || 0).getTime() - new Date(b.createdAt || 0).getTime());
-        
+      if (rawData) {
+        const filtered = rawData.filter((f: any) => (f.nodeId || f.node_id) === nodeId);
+        const mapped = filtered.map(mapRecord).sort((a, b) => 
+          new Date(a.createdAt || 0).getTime() - new Date(b.createdAt || 0).getTime()
+        );
         setFlashcards(mapped);
       }
       
@@ -122,22 +129,18 @@ const FlashcardsPanel: React.FC<FlashcardsPanelProps> = ({ nodeId, isAdmin, them
         if (error) throw error;
       } else {
         const now = new Date().toISOString();
-        const payload = { 
-          nodeId, 
-          node_id: nodeId, 
-          front: formData.front, 
-          back: formData.back,
-          createdAt: now,
-          created_at: now
-        };
+        // Try camelCase first
         const { error } = await supabase
           .from('flashcards')
-          .insert([payload]);
+          .insert([{ nodeId, front: formData.front, back: formData.back, createdAt: now }]);
         
         if (error) {
-           // Retry with minimal set
-           const { error: e2 } = await supabase.from('flashcards').insert([{ nodeId, front: formData.front, back: formData.back }]);
-           if (e2) await supabase.from('flashcards').insert([{ node_id: nodeId, front: formData.front, back: formData.back }]);
+           console.warn('First insert attempt failed, trying snake_case:', error);
+           // Try snake_case
+           const { error: e2 } = await supabase
+            .from('flashcards')
+            .insert([{ node_id: nodeId, front: formData.front, back: formData.back, created_at: now }]);
+           if (e2) throw e2;
         }
       }
       
@@ -145,9 +148,9 @@ const FlashcardsPanel: React.FC<FlashcardsPanelProps> = ({ nodeId, isAdmin, them
       setIsAdding(false);
       setEditingId(null);
       fetchFlashcards();
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error saving flashcard:', err);
-      alert('Có lỗi xảy ra khi lưu flashcard.');
+      alert('Lỗi: ' + (err.message || 'Không thể lưu flashcard.'));
     }
   };
 
@@ -162,15 +165,14 @@ const FlashcardsPanel: React.FC<FlashcardsPanelProps> = ({ nodeId, isAdmin, them
 
       const lines = text.split(/\r?\n/).filter(line => line.trim() !== '');
       if (lines.length < 2) {
-        alert('File CSV không hợp lệ hoặc trống.');
+        alert('File CSV không hợp lệ hoặc trống. Cần ít nhất 1 dòng tiêu đề và 1 dòng dữ liệu.');
         return;
       }
 
       const firstLine = lines[0];
       const separator = firstLine.includes(';') ? ';' : ',';
       
-      const now = new Date().toISOString();
-      const newFlashcards = [];
+      const parsedData: { front: string; back: string }[] = [];
       
       const parseCSVLine = (line: string, sep: string) => {
         const result = [];
@@ -190,42 +192,59 @@ const FlashcardsPanel: React.FC<FlashcardsPanelProps> = ({ nodeId, isAdmin, them
 
       for (let i = 1; i < lines.length; i++) {
         const parts = parseCSVLine(lines[i], separator);
-        if (parts.length >= 2) {
-          newFlashcards.push({
-            nodeId,
-            node_id: nodeId,
+        if (parts.length >= 2 && parts[0] && parts[1]) {
+          parsedData.push({
             front: parts[0],
-            back: parts[1],
-            createdAt: now,
-            created_at: now
+            back: parts[1]
           });
         }
       }
 
-      if (newFlashcards.length === 0) {
-        alert('Không tìm thấy dữ liệu hợp lệ trong file.');
+      if (parsedData.length === 0) {
+        alert('Không tìm thấy dữ liệu hợp lệ trong file (Yêu cầu ít nhất 2 cột: Câu hỏi và Trả lời).');
         return;
       }
 
-      if (!window.confirm(`Tìm thấy ${newFlashcards.length} thẻ. Bạn có muốn nhập vào không?`)) return;
+      if (!window.confirm(`Tìm thấy ${parsedData.length} thẻ. Bạn có muốn nhập vào không?`)) return;
 
       setLoading(true);
       try {
-        const { error } = await supabase.from('flashcards').insert(newFlashcards);
-        if (error) {
-           // Retry with simplified payload if one set of columns fails
-           const simplified = newFlashcards.map(f => ({ nodeId: f.nodeId, front: f.front, back: f.back }));
-           const { error: e2 } = await supabase.from('flashcards').insert(simplified);
-           if (e2) {
-              const snakeSimplified = newFlashcards.map(f => ({ node_id: f.node_id, front: f.front, back: f.back }));
-              await supabase.from('flashcards').insert(snakeSimplified);
-           }
+        const now = new Date().toISOString();
+        
+        // Attempt 1: camelCase
+        const camelPayload = parsedData.map(d => ({
+          nodeId,
+          front: d.front,
+          back: d.back,
+          createdAt: now
+        }));
+        
+        const { error: error1 } = await supabase.from('flashcards').insert(camelPayload);
+        
+        if (error1) {
+          console.warn('CSV camelCase insert failed, trying snake_case:', error1);
+          // Attempt 2: snake_case
+          const snakePayload = parsedData.map(d => ({
+            node_id: nodeId,
+            front: d.front,
+            back: d.back,
+            created_at: now
+          }));
+          const { error: error2 } = await supabase.from('flashcards').insert(snakePayload);
+          
+          if (error2) {
+             // Attempt 3: minimal set (node_id)
+             const minimal = parsedData.map(d => ({ node_id: nodeId, front: d.front, back: d.back }));
+             const { error: error3 } = await supabase.from('flashcards').insert(minimal);
+             if (error3) throw error3;
+          }
         }
-        alert(`Đã nhập thành công ${newFlashcards.length} thẻ.`);
+
+        alert(`Đã nhập thành công ${parsedData.length} thẻ.`);
         fetchFlashcards();
-      } catch (err) {
+      } catch (err: any) {
         console.error('Error importing CSV:', err);
-        alert('Lỗi khi nhập dữ liệu từ CSV.');
+        alert('Lỗi nhập CSV: ' + (err.message || 'Vui lòng kiểm tra lại cấu trúc bảng flashcards trên Supabase.'));
       } finally {
         setLoading(false);
       }
