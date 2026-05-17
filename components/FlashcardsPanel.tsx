@@ -65,8 +65,8 @@ const FlashcardsPanel: React.FC<FlashcardsPanelProps> = ({ nodeId, isAdmin, them
 
   const fetchFlashcards = useCallback(async () => {
     setLoading(true);
+    console.log(`Đang tải flashcards cho bài học: ${nodeId}`);
     try {
-      // Helper to map record from any naming convention to standard Flashcard
       const mapRecord = (f: any) => ({
         id: f.id,
         nodeId: f.nodeId || f.node_id,
@@ -75,38 +75,35 @@ const FlashcardsPanel: React.FC<FlashcardsPanelProps> = ({ nodeId, isAdmin, them
         createdAt: f.createdAt || f.created_at
       });
 
-      // Try fetching all first (fallback for flexible environments)
-      const { data, error } = await supabase
+      // Ưu tiên truy vấn trực tiếp bằng node_id (tên cột bạn đã xác nhận)
+      let { data, error } = await supabase
         .from('flashcards')
-        .select('*');
+        .select('*')
+        .eq('node_id', nodeId);
       
-      let rawData = data;
-
-      if (error || !data) {
-         console.warn('Fetch all failed, trying targeted queries:', error);
-         // Targeted retry for nodeId
-         const { data: d1 } = await supabase.from('flashcards').select('*').eq('nodeId', nodeId);
-         if (d1 && d1.length > 0) {
-           rawData = d1;
-         } else {
-           // Targeted retry for node_id
-           const { data: d2 } = await supabase.from('flashcards').select('*').eq('node_id', nodeId);
-           if (d2) rawData = d2;
-         }
+      // Nếu không có node_id (phòng trường hợp dự án cũ dùng nodeId)
+      if (error || !data || data.length === 0) {
+        const { data: camelData } = await supabase
+          .from('flashcards')
+          .select('*')
+          .eq('nodeId', nodeId);
+        if (camelData && camelData.length > 0) data = camelData;
       }
 
-      if (rawData) {
-        const filtered = rawData.filter((f: any) => (f.nodeId || f.node_id) === nodeId);
-        const mapped = filtered.map(mapRecord).sort((a, b) => 
+      if (data) {
+        const mapped = data.map(mapRecord).sort((a, b) => 
           new Date(a.createdAt || 0).getTime() - new Date(b.createdAt || 0).getTime()
         );
+        console.log(`Kết quả: Tìm thấy ${mapped.length} thẻ.`);
         setFlashcards(mapped);
+      } else {
+        setFlashcards([]);
       }
       
       setCurrentIndex(0);
       setIsFlipped(false);
     } catch (err) {
-      console.error('Error fetching flashcards:', err);
+      console.error('Lỗi khi tải flashcards:', err);
     } finally {
       setLoading(false);
     }
@@ -121,26 +118,36 @@ const FlashcardsPanel: React.FC<FlashcardsPanelProps> = ({ nodeId, isAdmin, them
     if (!formData.front || !formData.back) return;
 
     try {
+      const now = new Date().toISOString();
       if (editingId) {
         const { error } = await supabase
           .from('flashcards')
-          .update({ front: formData.front, back: formData.back })
+          .update({ front: formData.front, back: formData.back, createdAt: now, created_at: now })
           .eq('id', editingId);
-        if (error) throw error;
+        if (error) {
+           // Retry with minimal set
+           await supabase.from('flashcards').update({ front: formData.front, back: formData.back }).eq('id', editingId);
+        }
       } else {
-        const now = new Date().toISOString();
-        // Try camelCase first
-        const { error } = await supabase
-          .from('flashcards')
-          .insert([{ nodeId, front: formData.front, back: formData.back, createdAt: now }]);
+        // Try bulk-injecting both column names in case one is missing from schema
+        const payload = { 
+          nodeId, 
+          node_id: nodeId, 
+          front: formData.front, 
+          back: formData.back, 
+          createdAt: now, 
+          created_at: now 
+        };
+        const { error } = await supabase.from('flashcards').insert([payload]);
         
         if (error) {
-           console.warn('First insert attempt failed, trying snake_case:', error);
-           // Try snake_case
-           const { error: e2 } = await supabase
-            .from('flashcards')
-            .insert([{ node_id: nodeId, front: formData.front, back: formData.back, created_at: now }]);
-           if (e2) throw e2;
+           console.warn('First robust insert failed, trying camelCase:', error);
+           const { error: e2 } = await supabase.from('flashcards').insert([{ nodeId, front: formData.front, back: formData.back, createdAt: now }]);
+           if (e2) {
+             console.warn('camelCase insert failed, trying snake_case:', e2);
+             const { error: e3 } = await supabase.from('flashcards').insert([{ node_id: nodeId, front: formData.front, back: formData.back, created_at: now }]);
+             if (e3) throw e3;
+           }
         }
       }
       
@@ -211,37 +218,34 @@ const FlashcardsPanel: React.FC<FlashcardsPanelProps> = ({ nodeId, isAdmin, them
       try {
         const now = new Date().toISOString();
         
-        // Attempt 1: camelCase
-        const camelPayload = parsedData.map(d => ({
+        // Final check on columns mapping by trying to insert with both possible column names
+        const robustPayload = parsedData.map(d => ({
           nodeId,
+          node_id: nodeId,
           front: d.front,
           back: d.back,
-          createdAt: now
+          createdAt: now,
+          created_at: now
         }));
         
-        const { error: error1 } = await supabase.from('flashcards').insert(camelPayload);
+        const { error: error1 } = await supabase.from('flashcards').insert(robustPayload);
         
         if (error1) {
-          console.warn('CSV camelCase insert failed, trying snake_case:', error1);
-          // Attempt 2: snake_case
-          const snakePayload = parsedData.map(d => ({
-            node_id: nodeId,
-            front: d.front,
-            back: d.back,
-            created_at: now
-          }));
-          const { error: error2 } = await supabase.from('flashcards').insert(snakePayload);
+          console.warn('CSV robust insert failed, trying camelCase:', error1);
+          const camelPayload = parsedData.map(d => ({ nodeId, front: d.front, back: d.back, createdAt: now }));
+          const { error: error2 } = await supabase.from('flashcards').insert(camelPayload);
           
           if (error2) {
-             // Attempt 3: minimal set (node_id)
-             const minimal = parsedData.map(d => ({ node_id: nodeId, front: d.front, back: d.back }));
-             const { error: error3 } = await supabase.from('flashcards').insert(minimal);
+             console.warn('CSV camelCase insert failed, trying snake_case:', error2);
+             const snakePayload = parsedData.map(d => ({ node_id: nodeId, front: d.front, back: d.back, created_at: now }));
+             const { error: error3 } = await supabase.from('flashcards').insert(snakePayload);
              if (error3) throw error3;
           }
         }
 
         alert(`Đã nhập thành công ${parsedData.length} thẻ.`);
-        fetchFlashcards();
+        // Small delay to ensure DB sync before refresh
+        setTimeout(() => fetchFlashcards(), 500);
       } catch (err: any) {
         console.error('Error importing CSV:', err);
         alert('Lỗi nhập CSV: ' + (err.message || 'Vui lòng kiểm tra lại cấu trúc bảng flashcards trên Supabase.'));
