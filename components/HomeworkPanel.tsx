@@ -81,6 +81,7 @@ const HomeworkPanel: React.FC<HomeworkPanelProps> = ({ nodeId, student, isAdmin,
   const [showAnswersModal, setShowAnswersModal] = useState(false);
   const [selectedQuestionId, setSelectedQuestionId] = useState<string | null>(null);
   const [replyingToId, setReplyingToId] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
   
   const homeworkNodeId = `homework_${nodeId}`;
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -212,7 +213,7 @@ const HomeworkPanel: React.FC<HomeworkPanelProps> = ({ nodeId, student, isAdmin,
     const authorName = isAdmin ? "Giáo viên" : (student ? `[${student.name}] ${student.full_name || ''}` : "Học sinh");
     const targetNodeId = (isAdmin || !replyingToId) ? homeworkNodeId : `${homeworkNodeId}_ans_${replyingToId}`;
 
-    const newComment = { 
+    const commentData = { 
       nodeId: targetNodeId, 
       node_id: targetNodeId,
       author: authorName, 
@@ -226,23 +227,41 @@ const HomeworkPanel: React.FC<HomeworkPanelProps> = ({ nodeId, student, isAdmin,
     };
     
     try {
-      const { error } = await supabase.from('forum_comments').insert([newComment]);
-      if (error) {
-        console.error("Insert error, retrying with fallback:", error);
-        // Fallback: try mapping only existing columns
-        const fallback1 = { nodeId: targetNodeId, author: authorName, content, imageUrl, isAdmin, createdAt };
-        const { error: error1 } = await supabase.from('forum_comments').insert([fallback1]);
-        if (error1) {
-          const fallback2 = { node_id: targetNodeId, author: authorName, content, image_url: imageUrl, is_admin: isAdmin, created_at: createdAt };
-          const { error: error2 } = await supabase.from('forum_comments').insert([fallback2]);
-          if (error2) throw error2;
+      let result;
+      if (editingId) {
+        // UPDATE existing comment
+        result = await supabase
+          .from('forum_comments')
+          .update(commentData)
+          .eq('id', editingId);
+        
+        if (result.error) {
+          // Fallback update for schema variations
+          const fallbackData = { content, imageUrl, image_url: imageUrl };
+          result = await supabase.from('forum_comments').update(fallbackData).eq('id', editingId);
+        }
+      } else {
+        // INSERT new comment
+        result = await supabase.from('forum_comments').insert([commentData]);
+        
+        if (result.error) {
+          console.error("Insert error, retrying with fallback:", result.error);
+          const fallback1 = { nodeId: targetNodeId, author: authorName, content, imageUrl, isAdmin, createdAt };
+          result = await supabase.from('forum_comments').insert([fallback1]);
+          if (result.error) {
+            const fallback2 = { node_id: targetNodeId, author: authorName, content, image_url: imageUrl, is_admin: isAdmin, created_at: createdAt };
+            result = await supabase.from('forum_comments').insert([fallback2]);
+          }
         }
       }
+
+      if (result.error) throw result.error;
       
       setContent(''); 
       setSelectedFile(null); 
       setPreviewUrl(null);
       setReplyingToId(null);
+      setEditingId(null);
       // Immediately refresh list for better UX
       fetchComments(true);
     } catch (err: any) {
@@ -393,7 +412,7 @@ const HomeworkPanel: React.FC<HomeworkPanelProps> = ({ nodeId, student, isAdmin,
 
       <button onClick={() => handleSubmit()} disabled={loading || uploading} className={`px-10 py-4 ${isAdmin ? 'bg-amber-600 shadow-amber-200' : 'bg-indigo-600 shadow-indigo-200'} text-white rounded-2xl hover:scale-105 shadow-2xl disabled:opacity-50 transition-all flex items-center gap-3 group font-black uppercase text-xs tracking-widest`}>
         {loading ? <RefreshCw size={20} className="animate-spin" /> : <Send size={20} className="group-hover:translate-x-1 group-hover:-translate-y-1 transition-all" />}
-        {isAdmin ? 'Giao nhiệm vụ' : 'Gửi bài nộp'}
+        {isAdmin ? (editingId ? 'Cập nhật nhiệm vụ' : 'Giao nhiệm vụ') : (editingId ? 'Cập nhật bài nộp' : 'Gửi bài nộp')}
       </button>
     </div>
   );
@@ -527,7 +546,7 @@ const HomeworkPanel: React.FC<HomeworkPanelProps> = ({ nodeId, student, isAdmin,
                                       </div>
                                    )}
                                    <button 
-                                     onClick={() => { setReplyingToId(q.id); setContent(myAnswer.content); }}
+                                     onClick={() => { setReplyingToId(q.id); setContent(myAnswer.content); setEditingId(myAnswer.id); }}
                                      className="text-[9px] font-black text-slate-400 hover:text-indigo-600 uppercase tracking-widest transition-all"
                                    >
                                       Sửa lại câu trả lời
@@ -543,7 +562,7 @@ const HomeworkPanel: React.FC<HomeworkPanelProps> = ({ nodeId, student, isAdmin,
                                    <p className="text-[9px] font-black text-amber-600 uppercase tracking-widest flex items-center gap-2">
                                       <Edit2 size={12}/> Đang soạn thảo câu trả lời cho nhiệm vụ {idx + 1}
                                    </p>
-                                   <button onClick={() => setReplyingToId(null)} className="p-2 hover:bg-white rounded-lg text-amber-600 transition-all">
+                                   <button onClick={() => { setReplyingToId(null); setEditingId(null); setContent(''); }} className="p-2 hover:bg-white rounded-lg text-amber-600 transition-all">
                                       <X size={16} />
                                    </button>
                                 </div>
@@ -610,7 +629,7 @@ const HomeworkPanel: React.FC<HomeworkPanelProps> = ({ nodeId, student, isAdmin,
                          <button onClick={() => { setSelectedQuestionId(q.id); setShowAnswersModal(true); }} className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 text-emerald-600 rounded-lg text-[9px] font-black uppercase hover:bg-emerald-100 transition-all border border-emerald-100">
                             <Eye size={14} /> Xem bài nộp
                          </button>
-                         <button onClick={() => { setContent(q.content); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all" title="Sửa nội dung">
+                         <button onClick={() => { setContent(q.content); setEditingId(q.id); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all" title="Sửa nội dung">
                             <Edit2 size={16} />
                          </button>
                          <button onClick={() => handleDelete(q.id)} className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all" title="Xóa nhiệm vụ">
