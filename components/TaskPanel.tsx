@@ -68,11 +68,33 @@ const TaskPanel: React.FC<TaskPanelProps> = ({ nodeId, student, isAdmin, themeCo
     setLoading(true);
     try {
       // Fetch task for this node
-      const { data: taskData } = await supabase
+      let query = supabase
         .from('lesson_tasks')
         .select('*')
-        .eq('node_id', nodeId)
-        .maybeSingle();
+        .eq('node_id', nodeId);
+      
+      const { data: allTasks, error } = await query;
+      
+      if (error) throw error;
+
+      // Filter by grade_id and prefix logic to ensure isolation
+      const taskData = allTasks?.find((t: any) => {
+        const id = t.node_id || '';
+        const tGradeId = t.grade_id || t.gradeId;
+        
+        // 1. Khớp theo grade_id rõ ràng
+        if (gradeId && tGradeId) {
+          return tGradeId == gradeId;
+        }
+
+        // 2. Khớp theo tiền tố ID
+        if (id.startsWith('g10-')) return gradeId == 10;
+        if (id.startsWith('g11-')) return gradeId == 11;
+        if (id.startsWith('g12-')) return gradeId == 12;
+
+        // 3. Dự phòng cho dữ liệu cũ
+        return true;
+      });
       
       setTask(taskData ? {
         id: taskData.id,
@@ -117,6 +139,7 @@ const TaskPanel: React.FC<TaskPanelProps> = ({ nodeId, student, isAdmin, themeCo
     try {
       const payload = {
         node_id: nodeId,
+        grade_id: gradeId,
         description: formData.description,
         min_material_time: formData.minMaterialTime,
         min_flashcard_time: formData.minFlashcardTime,
@@ -124,17 +147,25 @@ const TaskPanel: React.FC<TaskPanelProps> = ({ nodeId, student, isAdmin, themeCo
       };
 
       if (task) {
-        const { error } = await supabase
+        let { error } = await supabase
           .from('lesson_tasks')
           .update(payload)
           .eq('id', task.id);
-        if (error) throw error;
+        if (error) {
+           console.warn("Update with grade_id failed, trying without:", error);
+           const { error: error2 } = await supabase.from('lesson_tasks').update({
+             description: formData.description,
+             min_material_time: formData.minMaterialTime,
+             min_flashcard_time: formData.minFlashcardTime
+           }).eq('id', task.id);
+           if (error2) throw error2;
+        }
       } else {
         const { error } = await supabase
           .from('lesson_tasks')
           .insert([payload]);
         if (error) {
-           console.error("Task insert error, retrying without created_at:", error);
+           console.error("Task insert error, retrying without grade_id:", error);
            const { error: error2 } = await supabase.from('lesson_tasks').insert([{
              node_id: payload.node_id,
              description: payload.description,
