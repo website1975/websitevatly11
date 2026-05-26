@@ -42,6 +42,33 @@ export interface Flashcard {
   createdAt?: string;
 }
 
+export interface Student {
+  id: string;
+  name: string;
+  full_name?: string;
+  password?: string;
+  grade_id: number;
+  is_guest?: boolean;
+}
+
+export interface StudyLog {
+  id: string;
+  student_id: string;
+  node_id: string;
+  type: 'material' | 'flashcard';
+  duration: number; // in seconds
+  created_at: string;
+}
+
+export interface LessonTask {
+  id: string;
+  nodeId: string;
+  description: string;
+  minMaterialTime: number; // minutes
+  minFlashcardTime: number; // minutes
+  createdAt: string;
+}
+
 export interface QuizQuestion {
   question: string;
   options: string[];
