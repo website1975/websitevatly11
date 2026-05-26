@@ -320,33 +320,38 @@ const FlashcardsPanel: React.FC<FlashcardsPanelProps> = ({ nodeId, isAdmin, them
     let successCount = 0;
     try {
       const stringGrade = String(gradeId);
+      let totalUpdated = 0;
+      let actualDbValue: string | null = null;
+      let usedColumn = "";
       
-      // Thử cập nhật từng cột một để tránh lỗi "cột không tồn tại" làm hỏng cả request
       const tryUpdate = async (colNode: string, colGrade: string) => {
-        const { data, error, count } = await supabase
+        const { data, error } = await supabase
           .from('flashcards')
           .update({ [colGrade]: stringGrade })
           .eq(colNode, nodeId)
-          .select('id'); // Trả về ID để đếm số bản ghi thực tế được sửa
+          .select('*'); // Lấy lại dữ liệu thực tế từ DB sau khi lưu
         
-        if (!error && data) {
-          successCount += data.length;
+        if (!error && data && data.length > 0) {
+          totalUpdated += data.length;
+          // Kiểm tra bản ghi đầu tiên xem cột đó có giá trị chưa
+          actualDbValue = data[0][colGrade];
+          usedColumn = colGrade;
           return true;
         }
         return false;
       };
 
-      // Thử mọi tổ hợp có thể (snake_case vs camelCase)
+      // Thử lần lượt các tổ hợp
       await tryUpdate('node_id', 'grade_id');
       await tryUpdate('node_id', 'gradeId');
       await tryUpdate('nodeId', 'grade_id');
       await tryUpdate('nodeId', 'gradeId');
 
-      if (successCount > 0) {
-        alert(`Thành công! Đã cập nhật nhãn Khối ${gradeId} cho ${successCount} thẻ.`);
+      if (totalUpdated > 0) {
+        alert(`KẾT QUẢ ĐỒNG BỘ:\n- Số thẻ đã xử lý: ${totalUpdated}\n- Cột đã nhận dữ liệu: ${usedColumn}\n- Giá trị thực tế trong CSDL: "${actualDbValue}"\n\n(Nếu giá trị là "null" hoặc trống, có thể cột này đang bị khóa bởi chính sách RLS trên Supabase)`);
         fetchFlashcards();
       } else {
-        alert("Không tìm thấy thẻ nào khớp với ID bài học này để cập nhật hoặc lỗi cấu trúc bảng.");
+        alert("KHÔNG THÀNH CÔNG:\nKhông tìm thấy thẻ nào khớp với bài học này để cập nhật hoặc cấu trúc bảng không khớp.");
       }
     } catch (err: any) {
       console.error("Batch update error:", err);
