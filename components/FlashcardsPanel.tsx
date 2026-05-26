@@ -1,13 +1,9 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'https://esm.sh/react@^19.2.3';
 import { Plus, Trash2, Edit2, ChevronLeft, ChevronRight, RotateCcw, Save, X, Loader2, FileUp } from 'https://esm.sh/lucide-react@^0.562.0';
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { supabase } from '../supabaseClient';
 import { Flashcard } from '../types';
 import { renderLatex } from '../utils';
-
-const SUPABASE_URL = 'https://leyhdmhgbodjtnluwyao.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxleWhkbWhnYm9kanRubHV3eWFvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgwOTA5NDQsImV4cCI6MjA5MzY2Njk0NH0.fzF1AfdDcTye4MolmDkBlP-xeGF_9D3_tXD10iGf-RM';
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 interface FlashcardsPanelProps {
   nodeId: string;
