@@ -1,13 +1,9 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'https://esm.sh/react@^19.2.3';
 import { Send, Trash2, Image as ImageIcon, Wifi, WifiOff, RefreshCw, ChevronDown, Eye, AlertCircle } from 'https://esm.sh/lucide-react@^0.562.0';
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { supabase } from '../supabaseClient';
 import { ForumComment } from '../types';
 import { renderLatex } from '../utils';
-
-const SUPABASE_URL = 'https://leyhdmhgbodjtnluwyao.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxleWhkbWhnYm9kanRubHV3eWFvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgwOTA5NDQsImV4cCI6MjA5MzY2Njk0NH0.fzF1AfdDcTye4MolmDkBlP-xeGF_9D3_tXD10iGf-RM';
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 interface ForumProps {
   nodeId: string;
@@ -137,7 +133,8 @@ const Forum: React.FC<ForumProps> = ({ nodeId, isAdmin, themeColor }) => {
     // Use 'resources' bucket instead of forum_attachments for simpler setup
     const { error } = await supabase.storage.from('resources').upload(`forum/${fileName}`, file);
     if (error) {
-      console.error("Upload error:", error);
+      console.error("Forum Upload error:", error);
+      alert(`Không thể tải ảnh thảo luận: ${error.message}\n\nBạn cần cấp quyền 'INSERT' cho bucket 'resources' trong phần Policies của Supabase.`);
       return null;
     }
     return supabase.storage.from('resources').getPublicUrl(`forum/${fileName}`).data.publicUrl;
@@ -270,7 +267,7 @@ const Forum: React.FC<ForumProps> = ({ nodeId, isAdmin, themeColor }) => {
         {showPreview && content.trim() && (
           <div className={`p-3 bg-${themeColor.split('-')[0]}-50/30 border border-${themeColor.split('-')[0]}-100 rounded-xl text-sm italic text-slate-500 animate-in fade-in zoom-in-95`}>
              <div className={`text-[9px] font-black ${currentThemeTextClass} opacity-70 uppercase tracking-widest mb-1 flex items-center gap-1`}><Eye size={10}/> Preview:</div>
-             <div className="not-italic">{renderLatex(content)}</div>
+             <div className="not-italic whitespace-pre-wrap">{renderLatex(content)}</div>
           </div>
         )}
 
