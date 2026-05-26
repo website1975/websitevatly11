@@ -2,14 +2,10 @@
 import React, { useState, useEffect, useCallback } from 'https://esm.sh/react@^19.2.3';
 import { X, BrainCircuit, Trophy, CheckCircle2, XCircle, AlertCircle, Send, Save, RefreshCw, Trash2, Shuffle, Pencil, PlusCircle, Eye } from 'https://esm.sh/lucide-react@^0.562.0';
 import { GoogleGenAI, Type } from "https://esm.sh/@google/genai";
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { supabase } from '../supabaseClient';
 import confetti from 'https://esm.sh/canvas-confetti';
 import { QuizQuestion } from '../types';
 import { renderLatex, getSafeEnv } from '../utils';
-
-const SUPABASE_URL = 'https://leyhdmhgbodjtnluwyao.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxleWhkbWhnYm9kanRubHV3eWFvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgwOTA5NDQsImV4cCI6MjA5MzY2Njk0NH0.fzF1AfdDcTye4MolmDkBlP-xeGF_9D3_tXD10iGf-RM';
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 interface QuizModalProps {
   nodeId: string;
@@ -38,8 +34,8 @@ const QuizModal: React.FC<QuizModalProps> = ({ nodeId, lessonTitle, lessonUrl, i
   const getDbId = () => {
     const numericPart = nodeId.replace(/\D/g, '');
     const baseId = parseInt(numericPart || "0");
-    // Nếu là Khối 11 (id: 1), giữ nguyên ID cũ để không mất dữ liệu
-    if (selectedGrade === 1 || !selectedGrade) return baseId;
+    // Nếu là Khối 11 (id: 11), giữ nguyên ID cũ để không mất dữ liệu
+    if (selectedGrade === 11 || selectedGrade === 1 || !selectedGrade) return baseId;
     // Với các khối khác, tạo ID duy nhất bằng cách thêm tiền tố grade
     // Ví dụ: Khối 10 -> 100000000000000 + timestamp
     return (selectedGrade * 100000000000000) + baseId;
