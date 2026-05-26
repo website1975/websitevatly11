@@ -878,7 +878,7 @@ const MainView: React.FC<{
                       {selectedNode?.url ? <iframe src={selectedNode.url} title={selectedNode.title} className={`w-full h-full border-none transition-opacity duration-500 ${iframeLoading ? 'opacity-0' : 'opacity-100'}`} onLoad={()=>setIframeLoading(false)}/> : <div className="h-full flex items-center justify-center italic text-slate-200 text-xl font-light tracking-widest">Nội dung chưa cập nhật...</div>}
                     </div>
                   ) : activeTab === 'flashcards' ? (
-                    <FlashcardsPanel nodeId={selectedId!} isAdmin={isAdmin} themeColor={themeColor} />
+                    <FlashcardsPanel nodeId={selectedId!} isAdmin={isAdmin} themeColor={themeColor} gradeId={selectedGrade} />
                   ) : activeTab === 'tasks' ? (
                     <TaskPanel 
                       nodeId={selectedId!} 
@@ -993,7 +993,20 @@ const MainView: React.FC<{
       )}
       {showNodeModal && (
         <div className="fixed inset-0 z-[300] bg-slate-900/40 flex items-center justify-center p-4 backdrop-blur-md animate-in fade-in duration-300">
-          <form onSubmit={(e)=>{e.preventDefault(); if(!nodeModalData.title)return; let nodes=[...data.nodes]; if(nodeModalData.id) nodes=nodes.map(n=>n.id===nodeModalData.id?{...n,title:nodeModalData.title,url:nodeModalData.url,type:nodeModalData.type,imageUrl:nodeModalData.imageUrl}:n); else nodes.push({id:`n-${Date.now()}`, ...nodeModalData, lessonResources:[]}); updateData({...data, nodes}); setShowNodeModal(false);}}
+          <form onSubmit={(e)=>{
+            e.preventDefault(); 
+            if(!nodeModalData.title) return; 
+            let nodes = [...data.nodes]; 
+            if(nodeModalData.id) {
+              nodes = nodes.map(n => n.id === nodeModalData.id ? {...n, title: nodeModalData.title, url: nodeModalData.url, type: nodeModalData.type, imageUrl: nodeModalData.imageUrl} : n);
+            } else {
+              // Gắn mã khối (selectedGrade) vào trước ID để đảm bảo tính duy nhất trên toàn hệ thống
+              const uniqueId = `g${selectedGrade || 0}-${Date.now()}`;
+              nodes.push({id: uniqueId, ...nodeModalData, lessonResources: []});
+            } 
+            updateData({...data, nodes}); 
+            setShowNodeModal(false);
+          }}
             className="bg-white p-8 rounded-[32px] shadow-2xl w-full max-w-md space-y-4 border border-slate-100 animate-in zoom-in-95">
             <h3 className={`font-black text-center text-${themeColor}-600 uppercase text-[11px] tracking-widest mb-2`}>Cấu trúc bài học</h3>
             <div className="flex gap-2 p-1 bg-slate-100 rounded-xl mb-4">
