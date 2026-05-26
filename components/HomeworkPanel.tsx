@@ -127,7 +127,7 @@ const HomeworkPanel: React.FC<HomeworkPanelProps> = ({ nodeId, student, isAdmin,
     if (!silent) setIsRefreshing(true);
     
     try {
-      // Use a broader query to avoid issues with missing columns in 'or' filters
+      // Lấy tất cả dữ liệu có node_id tương ứng
       const { data, error } = await supabase
         .from('forum_comments')
         .select('*');
@@ -141,8 +141,26 @@ const HomeworkPanel: React.FC<HomeworkPanelProps> = ({ nodeId, student, isAdmin,
         const mappedData = data
           .filter((item: any) => {
             const id = item.nodeId || item.node_id || '';
-            // Should match either the exact homework ID or its answers
-            return id === homeworkNodeId || id.startsWith(`${homeworkNodeId}_ans_`);
+            const itemGradeId = item.gradeId || item.grade_id;
+            
+            // So khớp node_id gốc hoặc câu trả lời
+            const isTargetNode = id === homeworkNodeId || id.startsWith(`${homeworkNodeId}_ans_`);
+            if (!isTargetNode) return false;
+
+            // KIỂM TRA KHỐI LỚP:
+            // 1. Nếu có grade_id rõ ràng, phải khớp
+            if (gradeId && itemGradeId) {
+              return itemGradeId == gradeId;
+            }
+
+            // 2. Nếu node_id bắt đầu bằng tiền tố khối (ví dụ: g10-...)
+            const cleanId = id.replace('homework_', '');
+            if (cleanId.startsWith('g10-')) return gradeId == 10;
+            if (cleanId.startsWith('g11-')) return gradeId == 11;
+            if (cleanId.startsWith('g12-')) return gradeId == 12;
+
+            // 3. Nếu là dữ liệu cũ chưa phân loại, cho hiện ở mọi khối để quản trị viên có thể thấy và lưu lại
+            return true;
           })
           .map((item: any) => ({
             id: item.id,
@@ -223,7 +241,9 @@ const HomeworkPanel: React.FC<HomeworkPanelProps> = ({ nodeId, student, isAdmin,
       isAdmin, 
       is_admin: isAdmin,
       createdAt,
-      created_at: createdAt
+      created_at: createdAt,
+      grade_id: gradeId,
+      gradeId: gradeId
     };
     
     try {
@@ -246,11 +266,15 @@ const HomeworkPanel: React.FC<HomeworkPanelProps> = ({ nodeId, student, isAdmin,
         
         if (result.error) {
           console.error("Insert error, retrying with fallback:", result.error);
-          const fallback1 = { nodeId: targetNodeId, author: authorName, content, imageUrl, isAdmin, createdAt };
+          const fallback1 = { nodeId: targetNodeId, author: authorName, content, imageUrl, isAdmin, createdAt, grade_id: gradeId };
           result = await supabase.from('forum_comments').insert([fallback1]);
           if (result.error) {
-            const fallback2 = { node_id: targetNodeId, author: authorName, content, image_url: imageUrl, is_admin: isAdmin, created_at: createdAt };
+            const fallback2 = { node_id: targetNodeId, author: authorName, content, image_url: imageUrl, is_admin: isAdmin, created_at: createdAt, grade_id: gradeId };
             result = await supabase.from('forum_comments').insert([fallback2]);
+            if (result.error) {
+              const fallback3 = { node_id: targetNodeId, author: authorName, content, image_url: imageUrl, is_admin: isAdmin };
+              result = await supabase.from('forum_comments').insert([fallback3]);
+            }
           }
         }
       }
