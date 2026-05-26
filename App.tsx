@@ -1,9 +1,9 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from 'https://esm.sh/react@^19.2.3';
 import { Routes, Route, useNavigate, Navigate } from 'https://esm.sh/react-router-dom@^6.22.3';
-import { Book, Plus, Maximize2, Loader2, BrainCircuit, GraduationCap, ShieldCheck, Search, LogOut, Folder, Globe, Zap, Image as ImageIcon, Settings, ArrowLeft, Upload, AlertCircle } from 'https://esm.sh/lucide-react@^0.562.0';
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { AppData, ResourceLink, BookNode, NodeType } from './types';
+import { Book, Plus, Maximize2, Loader2, BrainCircuit, GraduationCap, ShieldCheck, Search, LogOut, Folder, Globe, Zap, Image as ImageIcon, Settings, ArrowLeft, ArrowRight, Upload, AlertCircle, Users } from 'https://esm.sh/lucide-react@^0.562.0';
+import { supabase } from './supabaseClient';
+import { AppData, ResourceLink, BookNode, NodeType, Student } from './types';
 import { INITIAL_DATA } from './constants';
 import TreeItem from './components/TreeItem';
 import QuizModal from './components/QuizModal';
@@ -11,6 +11,10 @@ import ResourcesPanel from './components/ResourcesPanel';
 import FolderSummary from './components/FolderSummary';
 import Forum from './components/Forum';
 import FlashcardsPanel from './components/FlashcardsPanel';
+import TaskPanel from './components/TaskPanel';
+import StudentLogin from './components/StudentLogin';
+import StudentManager from './components/StudentManager';
+import HomeworkPanel from './components/HomeworkPanel';
 import { getSafeEnv, SLOGANS } from './utils';
 
 class ErrorBoundary extends React.Component<any, any> {
@@ -56,20 +60,30 @@ class ErrorBoundary extends React.Component<any, any> {
   }
 }
 
-const SUPABASE_URL = 'https://leyhdmhgbodjtnluwyao.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxleWhkbWhnYm9kanRubHV3eWFvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgwOTA5NDQsImV4cCI6MjA5MzY2Njk0NH0.fzF1AfdDcTye4MolmDkBlP-xeGF_9D3_tXD10iGf-RM';
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-const TEACHER_PWD = getSafeEnv('TEACHER_PASSWORD') || '1234';
+const TEACHER_PWD = getSafeEnv('TEACHER_PASSWORD') || '123';
 
 const App: React.FC = () => {
   const [selectedGrade, setSelectedGrade] = useState<number | null>(() => {
     const saved = localStorage.getItem('selected_grade');
+    if (saved === '1') return 11; // Migrate Khối 11 from ID 1 to ID 11
     return saved ? parseInt(saved) : null;
   });
   const [data, setData] = useState<AppData>(INITIAL_DATA);
   const [visitorCount, setVisitorCount] = useState<number>(0);
   const [isSyncing, setIsSyncing] = useState(false);
   const [syncError, setSyncError] = useState<string | null>(null);
+  const [student, setStudent] = useState<Student | null>(null);
+
+  useEffect(() => {
+    // Tự động đăng nhập student nếu đã có ID lưu trong máy
+    const savedId = localStorage.getItem('student_auth_id');
+    if (savedId && selectedGrade) {
+       supabase.from('students').select('*').eq('id', savedId).eq('grade_id', selectedGrade).maybeSingle()
+         .then(({ data: sData }) => {
+            if (sData) setStudent(sData);
+         });
+    }
+  }, [selectedGrade]);
 
   const handleSelectGrade = (grade: number | null) => {
     setSelectedGrade(grade);
@@ -80,27 +94,64 @@ const App: React.FC = () => {
     }
   };
 
-  const fetchCloudData = useCallback(async (gradeId: number) => {
-    setIsSyncing(true);
-    setSyncError(null);
+  const fetchCloudData = useCallback(async (gradeId: number, retryCount = 0) => {
+    if (retryCount === 0) {
+      setIsSyncing(true);
+      setSyncError(null);
+    }
+    
     try {
-      const { data: cloud, error: cloudError } = await supabase.from('app_settings').select('data').eq('id', gradeId).single();
+      const { data: cloud, error: cloudError } = await supabase
+        .from('app_settings')
+        .select('data')
+        .eq('id', gradeId)
+        .single();
       
       if (cloudError) {
-        console.error("Cloud fetch error:", cloudError);
-        if (cloudError.code !== 'PGRST116') { // PGRST116 là lỗi không tìm thấy hàng, không phải lỗi kết nối
-           if (cloudError.message?.includes('FetchError') || cloudError.status === 503 || cloudError.status === 404) {
-             setSyncError("Không thể kết nối đến Supabase. Vui lòng kiểm tra dự án.");
-           }
+        // Fallback for Grade 11 if no data is found at ID 11, try ID 1
+        if (gradeId === 11 && cloudError.code === 'PGRST116') {
+             const { data: fallback, error: fbError } = await supabase.from('app_settings').select('data').eq('id', 1).single();
+             if (!fbError && fallback?.data) {
+                setData(fallback.data);
+                setIsSyncing(false);
+                return;
+             }
         }
-        setData(INITIAL_DATA); 
+
+        console.error(`Cloud fetch error (Attempt ${retryCount + 1}):`, cloudError);
+        
+        // Nếu lỗi do mạng (FetchError) hoặc server tạm thời (5xx), thử lại tối đa 3 lần
+        const isNetworkError = cloudError.message?.includes('FetchError') || 
+                              cloudError.status === 503 || 
+                              cloudError.status === 502 ||
+                              cloudError.status === 504 ||
+                              cloudError.status === 404; // Đôi khi 404 là do đường truyền ngắt quãng
+
+        if (isNetworkError && retryCount < 2) {
+          console.log(`Đang thử lại lần ${retryCount + 1}...`);
+          setTimeout(() => fetchCloudData(gradeId, retryCount + 1), 2000);
+          return;
+        }
+
+        // Chỉ quay về INITIAL_DATA nếu chắc chắn là bản ghi không tồn tại (PGRST116)
+        if (cloudError.code === 'PGRST116') {
+          setData(INITIAL_DATA);
+          setIsSyncing(false);
+        } else {
+          // Lỗi thật sự (mạng, quyền truy cập...), không nên ghi đè INITIAL_DATA để tránh mất bài/chương
+          setSyncError(`Không thể tải dữ liệu: ${cloudError.message} (Mã: ${cloudError.code})`);
+          setIsSyncing(false);
+          // Giữ nguyên data hiện tại hoặc để trống thay vì nạp template làm người dùng hoang mang
+        }
       } else if (cloud?.data) {
         setData(cloud.data);
+        setIsSyncing(false); // Thành công, tắt loading
       } else {
         setData(INITIAL_DATA);
+        setIsSyncing(false);
       }
       
-      // Đồng bộ lượt truy cập (ID 99 trong app_settings)
+      // Đồng bộ lượt truy cập
       try {
         const { data: stats } = await supabase.from('app_settings').select('data').eq('id', 99).single();
         let currentCount = (stats?.data as any)?.visitorCount || 0;
@@ -114,15 +165,30 @@ const App: React.FC = () => {
           setVisitorCount(currentCount);
         }
       } catch (stErr) {
-        console.warn("Stats error (probably new project):", stErr);
+        console.warn("Stats sync skipped:", stErr);
       }
     } catch (err: any) { 
-      console.error(err);
-      setSyncError("Lỗi kết nối CSDL: " + (err.message || "Không xác định"));
+      console.error("Critical fetch error:", err);
+      if (retryCount < 2) {
+        setTimeout(() => fetchCloudData(gradeId, retryCount + 1), 2000);
+      } else {
+        setSyncError("Lỗi kết nối CSDL: " + (err.message || "Không xác định"));
+        setIsSyncing(false);
+      }
     } finally {
-      setIsSyncing(false);
+      // Chỉ tắt trạng thái loading nếu đây là lần thử cuối cùng hoặc đã thành công
+      // Trong trường hợp retry, setIsSyncing(false) sẽ được gọi ở lần gọi đệ quy cuối cùng
+      if (retryCount >= 2) {
+        setIsSyncing(false);
+      }
     }
   }, []);
+
+  // Hàm helper để kết thúc sync khi thành công (tránh gọi trong finally của các vòng lặp trung gian)
+  const finishSync = (success: boolean) => {
+    setIsSyncing(false);
+    if (success) setSyncError(null);
+  };
 
   useEffect(() => { 
     if (selectedGrade !== null) {
@@ -134,16 +200,26 @@ const App: React.FC = () => {
     if (selectedGrade === null) return;
     setData(newData);
     setIsSyncing(true);
-    try { await supabase.from('app_settings').upsert({ id: selectedGrade, data: newData }); }
-    finally { setIsSyncing(false); }
+    setSyncError(null);
+    try { 
+      const { error } = await supabase.from('app_settings').upsert({ id: selectedGrade, data: newData }); 
+      if (error) {
+        console.error("Update error:", error);
+        setSyncError("Lỗi khi lưu dữ liệu lên đám mây: " + error.message);
+      }
+    } catch (err: any) {
+      setSyncError("Lỗi hệ thống khi lưu: " + err.message);
+    } finally { 
+      setIsSyncing(false); 
+    }
   };
 
   return (
     <ErrorBoundary>
       <Routes>
         <Route path="/" element={<LandingPage visitorCount={visitorCount} onSelectGrade={handleSelectGrade} selectedGrade={selectedGrade} />} />
-        <Route path="/teacher" element={<ProtectedRoute><MainView isAdmin={true} data={data} updateData={updateData} isSyncing={isSyncing} visitorCount={visitorCount} selectedGrade={selectedGrade} syncError={syncError} fetchCloudData={fetchCloudData}/></ProtectedRoute>} />
-        <Route path="/student" element={<MainView isAdmin={false} data={data} updateData={updateData} isSyncing={isSyncing} visitorCount={visitorCount} selectedGrade={selectedGrade} syncError={syncError} fetchCloudData={fetchCloudData}/>} />
+        <Route path="/teacher" element={<ProtectedRoute><MainView isAdmin={true} data={data} updateData={updateData} isSyncing={isSyncing} visitorCount={visitorCount} selectedGrade={selectedGrade} syncError={syncError} fetchCloudData={fetchCloudData} student={null} /></ProtectedRoute>} />
+        <Route path="/student" element={student ? <MainView isAdmin={false} data={data} updateData={updateData} isSyncing={isSyncing} visitorCount={visitorCount} selectedGrade={selectedGrade} syncError={syncError} fetchCloudData={fetchCloudData} student={student} onLogout={() => { setStudent(null); localStorage.removeItem('student_auth_id'); }} /> : <StudentLogin onLogin={setStudent} gradeId={selectedGrade || 11} themeColor={selectedGrade === 10 ? 'emerald' : selectedGrade === 12 ? 'rose' : 'indigo'} />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </ErrorBoundary>
@@ -151,7 +227,7 @@ const App: React.FC = () => {
 };
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  if (sessionStorage.getItem('teacher_auth') !== 'true') return <Navigate to="/" replace />;
+  if (localStorage.getItem('teacher_auth') !== 'true') return <Navigate to="/" replace />;
   return <>{children}</>;
 };
 
@@ -163,7 +239,7 @@ const LandingPage: React.FC<{ visitorCount: number, onSelectGrade: (g: number) =
 
   const grades = [
     { id: 10, label: 'Khối 10', color: 'bg-emerald-600', shadow: 'shadow-emerald-100', theme: 'emerald' },
-    { id: 1, label: 'Khối 11', color: 'bg-indigo-600', shadow: 'shadow-indigo-100', theme: 'indigo' },
+    { id: 11, label: 'Khối 11', color: 'bg-indigo-600', shadow: 'shadow-indigo-100', theme: 'indigo' },
     { id: 12, label: 'Khối 12', color: 'bg-rose-600', shadow: 'shadow-rose-100', theme: 'rose' },
   ];
 
@@ -183,7 +259,7 @@ const LandingPage: React.FC<{ visitorCount: number, onSelectGrade: (g: number) =
             <Book size={48} className={selectedGrade ? (selectedGrade === 10 ? 'text-emerald-600' : selectedGrade === 12 ? 'text-rose-600' : 'text-indigo-600') : 'text-slate-400'}/>
         </div>
         <h1 className="text-4xl md:text-6xl font-black text-slate-900 uppercase mb-12 tracking-tighter">
-          {selectedGrade ? `VẬT LÝ ${selectedGrade === 1 ? '11' : selectedGrade}` : 'HỆ THỐNG HỌC TẬP'}
+          {selectedGrade ? `VẬT LÝ ${selectedGrade}` : 'HỆ THỐNG HỌC TẬP'}
         </h1>
         
         {!selectedGrade ? (
@@ -221,9 +297,9 @@ const LandingPage: React.FC<{ visitorCount: number, onSelectGrade: (g: number) =
                 <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Thiết lập học liệu & Quản lý</p>
               </button>
             ) : (
-              <form onSubmit={(e)=>{e.preventDefault(); if(pin===TEACHER_PWD) {sessionStorage.setItem('teacher_auth','true'); navigate('/teacher');} else setError(true);}} 
+              <form onSubmit={(e)=>{e.preventDefault(); if(pin===TEACHER_PWD) {localStorage.setItem('teacher_auth','true'); navigate('/teacher');} else setError(true);}} 
                 className="bg-white p-10 rounded-[40px] shadow-2xl border border-amber-100 flex flex-col items-center space-y-6 animate-in zoom-in-95">
-                <input type="password" autoFocus value={pin} onChange={(e)=>{setPin(e.target.value); setError(false);}} className={`w-full px-4 py-5 bg-slate-50 border-2 rounded-2xl text-center font-black text-3xl tracking-[0.5em] ${error?'border-red-400 animate-shake':'border-transparent focus:border-amber-400 outline-none'}`} placeholder="****" autoFill="off"/>
+                <input type="password" autoFocus value={pin} onChange={(e)=>{setPin(e.target.value); setError(false);}} className={`w-full px-4 py-5 bg-slate-50 border-2 rounded-2xl text-center font-black text-3xl tracking-[0.5em] ${error?'border-red-400 animate-shake':'border-transparent focus:border-amber-400 outline-none'}`} placeholder="****" autoComplete="current-password"/>
                 <div className="flex gap-4 w-full">
                   <button type="button" onClick={()=>setShowPass(false)} className="flex-1 font-bold text-slate-300 uppercase text-[10px] tracking-widest">Hủy bỏ</button>
                   <button type="submit" className="flex-1 px-4 py-4 bg-amber-500 text-white rounded-2xl font-bold uppercase text-[10px] shadow-lg shadow-amber-200 tracking-widest">Đăng nhập</button>
@@ -237,22 +313,63 @@ const LandingPage: React.FC<{ visitorCount: number, onSelectGrade: (g: number) =
   );
 };
 
-const MainView: React.FC<{ isAdmin: boolean; data: AppData; updateData: (d: AppData) => void; isSyncing: boolean; visitorCount: number; selectedGrade: number | null; syncError: string | null; fetchCloudData: (g: number) => void }> = ({ isAdmin, data, updateData, isSyncing, visitorCount, selectedGrade, syncError, fetchCloudData }) => {
+const MainView: React.FC<{ 
+  isAdmin: boolean; 
+  data: AppData; 
+  updateData: (d: AppData) => void; 
+  isSyncing: boolean; 
+  visitorCount: number; 
+  selectedGrade: number | null; 
+  syncError: string | null; 
+  fetchCloudData: (g: number) => void;
+  student: Student | null;
+  onLogout?: () => void;
+}> = ({ isAdmin, data, updateData, isSyncing, visitorCount, selectedGrade, syncError, fetchCloudData, student, onLogout }) => {
   const [selectedId, setSelectedId] = useState<string | null>(() => {
     return localStorage.getItem(`selected_id_${selectedGrade}`);
   });
   const [iframeLoading, setIframeLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState<'content' | 'forum' | 'flashcards'>('content');
+  const [activeTab, setActiveTab] = useState<'content' | 'tasks' | 'flashcards' | 'homework'>('content');
+  const [showStudentManager, setShowStudentManager] = useState(false);
   const [sloganIdx, setSloganIdx] = useState(0);
   const [searchTerm, setSearchTerm] = useState('');
   const [isQuizOpen, setIsQuizOpen] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
   const navigate = useNavigate();
 
+  const selectedNode = useMemo(() => data?.nodes?.find(n => n.id === selectedId), [data?.nodes, selectedId]);
+
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
+
+  // Study Tracking Logic
+  useEffect(() => {
+    if (!student || student.is_guest || !selectedId || !selectedNode || selectedNode.type !== 'lesson') return;
+    
+    // Only track if on content or flashcards tab
+    if (activeTab !== 'content' && activeTab !== 'flashcards') return;
+
+    const type = activeTab === 'content' ? 'material' : 'flashcard';
+    const startTime = Date.now();
+    
+    return () => {
+      const endTime = Date.now();
+      const durationSeconds = Math.round((endTime - startTime) / 1000);
+      if (durationSeconds > 5) { // Only log if more than 5 seconds
+        supabase.from('study_logs').insert([{
+          student_id: student.id,
+          node_id: selectedId,
+          type: type,
+          duration: durationSeconds,
+          created_at: new Date().toISOString()
+        }]).then(({ error }) => {
+           if (error) console.error("Log error:", error);
+        });
+      }
+    };
+  }, [student, selectedId, activeTab, selectedNode]);
 
   const formattedTime = useMemo(() => {
     return currentTime.toLocaleString('vi-VN', {
@@ -273,11 +390,10 @@ const MainView: React.FC<{ isAdmin: boolean; data: AppData; updateData: (d: AppD
 
   const gradeTitle = useMemo(() => {
     if (selectedGrade === 10) return 'VẬT LÝ 10';
+    if (selectedGrade === 11) return 'VẬT LÝ 11';
     if (selectedGrade === 12) return 'VẬT LÝ 12';
-    return 'VẬT LÝ 11';
+    return 'VẬT LÝ';
   }, [selectedGrade]);
-
-  const selectedNode = data?.nodes?.find(n => n.id === selectedId);
   const childNodes = useMemo(() => {
     if (!selectedId || selectedNode?.type !== 'folder' || !data?.nodes) return [];
     return data.nodes.filter(n => n.parentId === selectedId).sort((a,b) => (a.order ?? 0) - (b.order ?? 0));
@@ -308,7 +424,8 @@ const MainView: React.FC<{ isAdmin: boolean; data: AppData; updateData: (d: AppD
 
   const filteredRootNodes = useMemo(() => {
     if (!data?.nodes) return [];
-    const roots = data.nodes.filter(n => n.parentId === null).sort((a,b) => (a.order ?? 0) - (b.order ?? 0));
+    // Kiểm tra cả null và undefined để tránh mất chương do sai lệch kiểu dữ liệu
+    const roots = data.nodes.filter(n => n.parentId === null || n.parentId === undefined).sort((a,b) => (a.order ?? 0) - (b.order ?? 0));
     if (!visibleNodeIds) return roots;
     return roots.filter(n => visibleNodeIds.has(n.id));
   }, [data?.nodes, visibleNodeIds]);
@@ -457,7 +574,10 @@ const MainView: React.FC<{ isAdmin: boolean; data: AppData; updateData: (d: AppD
         .from('resources')
         .upload(filePath, file);
 
-      if (uploadError) throw uploadError;
+      if (uploadError) {
+        console.error("Supabase Upload Error:", uploadError);
+        throw new Error(uploadError.message || "Lỗi không xác định từ server.");
+      }
 
       const { data: { publicUrl } } = supabase.storage
         .from('resources')
@@ -472,9 +592,9 @@ const MainView: React.FC<{ isAdmin: boolean; data: AppData; updateData: (d: AppD
       }
       
       alert("Tải file lên thành công!");
-    } catch (error) {
-      console.error("Upload error:", error);
-      alert("Lỗi khi tải file lên. Hãy đảm bảo bạn đã tạo bucket 'resources' ở chế độ Public trên Supabase.");
+    } catch (error: any) {
+      console.error("Upload process error:", error);
+      alert(`Lỗi khi tải file: ${error.message || "Vui lòng kiểm tra lại kết nối."}\n\nLưu ý: Bạn cần vào Supabase -> Storage -> Policies và thêm chính sách (Policy) cho phép 'INSERT' cho bucket 'resources'.`);
     } finally {
       setIsUploading(false);
     }
@@ -657,11 +777,24 @@ const MainView: React.FC<{ isAdmin: boolean; data: AppData; updateData: (d: AppD
           ))}
         </div>
 
-        <footer className="p-3 border-t border-slate-100 bg-white shrink-0 flex items-center justify-between">
-             <span className="text-[8px] font-bold text-slate-300 uppercase tracking-widest">{visitorCount} View</span>
-             <button onClick={()=>{if(isAdmin)sessionStorage.removeItem('teacher_auth'); navigate('/');}} className="flex items-center gap-1 text-[8px] font-black text-red-400 uppercase tracking-widest hover:text-red-600 transition-colors">
-               <LogOut size={9}/> Thoát
-             </button>
+        <footer className="p-3 border-t border-slate-100 bg-white shrink-0">
+             <div className="flex items-center justify-between mb-2">
+                <span className="text-[8px] font-bold text-slate-300 uppercase tracking-widest">{visitorCount} View</span>
+                <button onClick={()=>{if(isAdmin)localStorage.removeItem('teacher_auth'); if(onLogout) onLogout(); navigate('/');}} className="flex items-center gap-1 text-[8px] font-black text-red-400 uppercase tracking-widest hover:text-red-600 transition-colors">
+                  <LogOut size={9}/> Thoát
+                </button>
+             </div>
+             {student && (
+               <div className="flex items-center gap-2 p-2 bg-slate-50 rounded-lg border border-slate-100">
+                  <div className="w-6 h-6 bg-indigo-600 rounded-full flex items-center justify-center text-white text-[8px] font-black">
+                    {student.name.charAt(0).toUpperCase()}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-[9px] font-black text-slate-700 truncate uppercase tracking-tighter">{student.full_name || student.name}</p>
+                    <p className="text-[7px] font-bold text-slate-400 uppercase tracking-widest">{student.is_guest ? 'Khách' : 'Học sinh'}</p>
+                  </div>
+               </div>
+             )}
         </footer>
       </aside>
 
@@ -725,7 +858,12 @@ const MainView: React.FC<{ isAdmin: boolean; data: AppData; updateData: (d: AppD
                     <div className="flex gap-6">
                       <button onClick={()=>setActiveTab('content')} className={`pb-2 text-[10px] font-bold uppercase tracking-widest border-b-2 transition-all ${activeTab==='content' ? `border-${themeColor}-600 text-${themeColor}-600` : 'border-transparent text-slate-300 hover:text-slate-500'}`}>Học liệu</button>
                       <button onClick={()=>setActiveTab('flashcards')} className={`pb-2 text-[10px] font-bold uppercase tracking-widest border-b-2 transition-all ${activeTab==='flashcards' ? `border-${themeColor}-600 text-${themeColor}-600` : 'border-transparent text-slate-300 hover:text-slate-500'}`}>Flashcards</button>
-                      <button onClick={()=>setActiveTab('forum')} className={`pb-2 text-[10px] font-bold uppercase tracking-widest border-b-2 transition-all ${activeTab==='forum' ? `border-${themeColor}-600 text-${themeColor}-600` : 'border-transparent text-slate-300 hover:text-slate-500'}`}>Thảo luận</button>
+                      {(isAdmin || !student?.is_guest) && (
+                        <button onClick={()=>setActiveTab('tasks')} className={`pb-2 text-[10px] font-bold uppercase tracking-widest border-b-2 transition-all ${activeTab==='tasks' ? `border-${themeColor}-600 text-${themeColor}-600` : 'border-transparent text-slate-300 hover:text-slate-500'}`}>Nhiệm vụ</button>
+                      )}
+                      {(isAdmin || !student?.is_guest) && (
+                        <button onClick={()=>setActiveTab('homework')} className={`pb-2 text-[10px] font-bold uppercase tracking-widest border-b-2 transition-all ${activeTab==='homework' ? `border-${themeColor}-600 text-${themeColor}-600` : 'border-transparent text-slate-300 hover:text-slate-500'}`}>Bài tập về nhà</button>
+                      )}
                     </div>
                     <div className="pb-2 text-[9px] font-bold text-slate-400 uppercase tracking-widest opacity-60">
                       {formattedTime}
@@ -741,8 +879,22 @@ const MainView: React.FC<{ isAdmin: boolean; data: AppData; updateData: (d: AppD
                     </div>
                   ) : activeTab === 'flashcards' ? (
                     <FlashcardsPanel nodeId={selectedId!} isAdmin={isAdmin} themeColor={themeColor} />
+                  ) : activeTab === 'tasks' ? (
+                    <TaskPanel 
+                      nodeId={selectedId!} 
+                      student={student} 
+                      isAdmin={isAdmin} 
+                      themeColor={themeColor} 
+                      gradeId={selectedGrade}
+                    />
                   ) : (
-                    <Forum nodeId={selectedId} isAdmin={isAdmin} themeColor={themeColor} />
+                    <HomeworkPanel 
+                      nodeId={selectedId!} 
+                      student={student} 
+                      isAdmin={isAdmin} 
+                      themeColor={themeColor} 
+                      gradeId={selectedGrade}
+                    />
                   )}
                 </div>
               </>
@@ -780,11 +932,22 @@ const MainView: React.FC<{ isAdmin: boolean; data: AppData; updateData: (d: AppD
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-4">
-                <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Trang chủ</h4>
+                <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Học sinh & Lớp học</h4>
+                <div className="space-y-2">
+                   <button 
+                     onClick={() => setShowStudentManager(true)}
+                     className={`w-full flex items-center justify-between p-4 bg-${themeColor}-50 text-${themeColor}-700 rounded-2xl hover:bg-${themeColor}-100 transition-all text-[11px] font-black uppercase tracking-widest border border-${themeColor}-100`}
+                   >
+                     <span className="flex items-center gap-3"><Users size={18}/> Quản lý Học sinh</span>
+                     <ArrowRight size={14} />
+                   </button>
+                   <p className="text-[8px] text-slate-400 px-1">Cấp tài khoản & Mật khẩu cho học sinh ở khối này.</p>
+                </div>
+                
+                <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest pt-2">Trang chủ</h4>
                 <div className="space-y-1">
                   <label className="text-[9px] font-bold text-slate-400 uppercase ml-1 tracking-widest">Link trang chủ (URL)</label>
                   <input value={tempHomeUrl} onChange={e=>setTempHomeUrl(e.target.value)} className="w-full px-4 py-3 text-sm font-medium outline-none bg-slate-50 border border-slate-100 rounded-xl focus:border-amber-400 transition-all" placeholder="https://..."/>
-                  <p className="text-[8px] text-slate-400 p-1">Trang hiện ra khi chưa chọn bài học.</p>
                 </div>
               </div>
 
@@ -821,6 +984,13 @@ const MainView: React.FC<{ isAdmin: boolean; data: AppData; updateData: (d: AppD
       )}
 
       {/* MODALS CẤU TRÚC BÀI HỌC */}
+      {showStudentManager && (
+         <StudentManager 
+           gradeId={selectedGrade || 1} 
+           themeColor={themeColor} 
+           onClose={() => setShowStudentManager(false)} 
+         />
+      )}
       {showNodeModal && (
         <div className="fixed inset-0 z-[300] bg-slate-900/40 flex items-center justify-center p-4 backdrop-blur-md animate-in fade-in duration-300">
           <form onSubmit={(e)=>{e.preventDefault(); if(!nodeModalData.title)return; let nodes=[...data.nodes]; if(nodeModalData.id) nodes=nodes.map(n=>n.id===nodeModalData.id?{...n,title:nodeModalData.title,url:nodeModalData.url,type:nodeModalData.type,imageUrl:nodeModalData.imageUrl}:n); else nodes.push({id:`n-${Date.now()}`, ...nodeModalData, lessonResources:[]}); updateData({...data, nodes}); setShowNodeModal(false);}}
