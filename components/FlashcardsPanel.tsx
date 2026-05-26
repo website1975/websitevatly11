@@ -317,23 +317,37 @@ const FlashcardsPanel: React.FC<FlashcardsPanelProps> = ({ nodeId, isAdmin, them
     if (!window.confirm(`Bạn có muốn cập nhật Khối ${gradeId} cho tất cả ${flashcards.length} thẻ trong bài này không?`)) return;
 
     setLoading(true);
+    let successCount = 0;
     try {
       const stringGrade = String(gradeId);
       
-      // Update both possible column names
-      const { error } = await supabase
-        .from('flashcards')
-        .update({ grade_id: stringGrade, gradeId: stringGrade })
-        .eq('node_id', nodeId);
+      // Thử cập nhật từng cột một để tránh lỗi "cột không tồn tại" làm hỏng cả request
+      const tryUpdate = async (colNode: string, colGrade: string) => {
+        const { data, error, count } = await supabase
+          .from('flashcards')
+          .update({ [colGrade]: stringGrade })
+          .eq(colNode, nodeId)
+          .select('id'); // Trả về ID để đếm số bản ghi thực tế được sửa
+        
+        if (!error && data) {
+          successCount += data.length;
+          return true;
+        }
+        return false;
+      };
 
-      // Also try camelCase nodeId just in case
-      await supabase
-        .from('flashcards')
-        .update({ grade_id: stringGrade, gradeId: stringGrade })
-        .eq('nodeId', nodeId);
+      // Thử mọi tổ hợp có thể (snake_case vs camelCase)
+      await tryUpdate('node_id', 'grade_id');
+      await tryUpdate('node_id', 'gradeId');
+      await tryUpdate('nodeId', 'grade_id');
+      await tryUpdate('nodeId', 'gradeId');
 
-      alert(`Đã gắn nhãn Khối ${gradeId} cho tất cả các thẻ của bài học này.`);
-      fetchFlashcards();
+      if (successCount > 0) {
+        alert(`Thành công! Đã cập nhật nhãn Khối ${gradeId} cho ${successCount} thẻ.`);
+        fetchFlashcards();
+      } else {
+        alert("Không tìm thấy thẻ nào khớp với ID bài học này để cập nhật hoặc lỗi cấu trúc bảng.");
+      }
     } catch (err: any) {
       console.error("Batch update error:", err);
       alert("Lỗi khi cập nhật: " + (err.message || "Không xác định"));
