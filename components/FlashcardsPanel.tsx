@@ -9,9 +9,10 @@ interface FlashcardsPanelProps {
   nodeId: string;
   isAdmin: boolean;
   themeColor: string;
+  gradeId?: number | null;
 }
 
-const FlashcardsPanel: React.FC<FlashcardsPanelProps> = ({ nodeId, isAdmin, themeColor }) => {
+const FlashcardsPanel: React.FC<FlashcardsPanelProps> = ({ nodeId, isAdmin, themeColor, gradeId }) => {
   const [flashcards, setFlashcards] = useState<Flashcard[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -71,23 +72,47 @@ const FlashcardsPanel: React.FC<FlashcardsPanelProps> = ({ nodeId, isAdmin, them
         createdAt: f.createdAt || f.created_at
       });
 
-      // Ưu tiên truy vấn trực tiếp bằng node_id (tên cột bạn đã xác nhận)
-      let { data, error } = await supabase
+      // Ưu tiên truy vấn trực tiếp bằng node_id
+      let query = supabase
         .from('flashcards')
         .select('*')
         .eq('node_id', nodeId);
       
+      let { data, error } = await query;
+      
       // Nếu không có node_id (phòng trường hợp dự án cũ dùng nodeId)
       if (error || !data || data.length === 0) {
-        const { data: camelData } = await supabase
+        let q2 = supabase
           .from('flashcards')
           .select('*')
           .eq('nodeId', nodeId);
+        const { data: camelData } = await q2;
         if (camelData && camelData.length > 0) data = camelData;
       }
 
       if (data) {
-        const mapped = data.map(mapRecord).sort((a, b) => 
+        // Lọc theo gradeId trong bộ nhớ nếu bản ghi có grade_id
+        // Điều này giúp tránh lỗi nếu cột grade_id chưa tồn tại trong Supabase
+        const filtered = data.filter((item: any) => {
+          const id = item.node_id || item.nodeId || '';
+          const itemGradeId = item.grade_id || item.gradeId;
+          
+          // 1. Nếu có grade_id rõ ràng, bắt buộc phải khớp
+          if (gradeId && itemGradeId) {
+            return itemGradeId == gradeId;
+          }
+          
+          // 2. Nếu ID có tiền tố khối (g10-, g11-, g12-), kiểm tra tiền tố
+          if (id.startsWith('g10-')) return gradeId == 10;
+          if (id.startsWith('g11-')) return gradeId == 11;
+          if (id.startsWith('g12-')) return gradeId == 12;
+
+          // 3. Với dữ liệu cũ (không grade_id, không tiền tố): 
+          // Hiển thị ở tất cả các khối để người dùng có thể thấy và cập nhật lại.
+          return !itemGradeId;
+        });
+
+        const mapped = filtered.map(mapRecord).sort((a, b) => 
           new Date(a.createdAt || 0).getTime() - new Date(b.createdAt || 0).getTime()
         );
         console.log(`Kết quả: Tìm thấy ${mapped.length} thẻ.`);
@@ -132,17 +157,22 @@ const FlashcardsPanel: React.FC<FlashcardsPanelProps> = ({ nodeId, isAdmin, them
           front: formData.front, 
           back: formData.back, 
           createdAt: now, 
-          created_at: now 
+          created_at: now,
+          grade_id: gradeId
         };
         const { error } = await supabase.from('flashcards').insert([payload]);
         
         if (error) {
            console.warn('First robust insert failed, trying camelCase:', error);
-           const { error: e2 } = await supabase.from('flashcards').insert([{ nodeId, front: formData.front, back: formData.back, createdAt: now }]);
+           const { error: e2 } = await supabase.from('flashcards').insert([{ nodeId, front: formData.front, back: formData.back, createdAt: now, grade_id: gradeId }]);
            if (e2) {
              console.warn('camelCase insert failed, trying snake_case:', e2);
-             const { error: e3 } = await supabase.from('flashcards').insert([{ node_id: nodeId, front: formData.front, back: formData.back, created_at: now }]);
-             if (e3) throw e3;
+             const { error: e3 } = await supabase.from('flashcards').insert([{ node_id: nodeId, front: formData.front, back: formData.back, created_at: now, grade_id: gradeId }]);
+             if (e3) {
+                console.warn('Snake_case with grade_id failed, trying absolute minimal:', e3);
+                const { error: e4 } = await supabase.from('flashcards').insert([{ node_id: nodeId, front: formData.front, back: formData.back }]);
+                if (e4) throw e4;
+             }
            }
         }
       }
@@ -221,21 +251,27 @@ const FlashcardsPanel: React.FC<FlashcardsPanelProps> = ({ nodeId, isAdmin, them
           front: d.front,
           back: d.back,
           createdAt: now,
-          created_at: now
+          created_at: now,
+          grade_id: gradeId
         }));
         
         const { error: error1 } = await supabase.from('flashcards').insert(robustPayload);
         
         if (error1) {
           console.warn('CSV robust insert failed, trying camelCase:', error1);
-          const camelPayload = parsedData.map(d => ({ nodeId, front: d.front, back: d.back, createdAt: now }));
+          const camelPayload = parsedData.map(d => ({ nodeId, front: d.front, back: d.back, createdAt: now, grade_id: gradeId }));
           const { error: error2 } = await supabase.from('flashcards').insert(camelPayload);
           
           if (error2) {
              console.warn('CSV camelCase insert failed, trying snake_case:', error2);
-             const snakePayload = parsedData.map(d => ({ node_id: nodeId, front: d.front, back: d.back, created_at: now }));
+             const snakePayload = parsedData.map(d => ({ node_id: nodeId, front: d.front, back: d.back, created_at: now, grade_id: gradeId }));
              const { error: error3 } = await supabase.from('flashcards').insert(snakePayload);
-             if (error3) throw error3;
+             if (error3) {
+                console.warn('CSV snake_case with grade_id failed, trying absolute minimal');
+                const minimalPayload = parsedData.map(d => ({ node_id: nodeId, front: d.front, back: d.back }));
+                const { error: error4 } = await supabase.from('flashcards').insert(minimalPayload);
+                if (error4) throw error4;
+             }
           }
         }
 
@@ -261,6 +297,33 @@ const FlashcardsPanel: React.FC<FlashcardsPanelProps> = ({ nodeId, isAdmin, them
       fetchFlashcards();
     } catch (err) {
       console.error('Error deleting flashcard:', err);
+    }
+  };
+
+  const handleBatchUpdateGrade = async () => {
+    if (!isAdmin || !gradeId || flashcards.length === 0) return;
+    if (!window.confirm(`Bạn có muốn cập nhật Khối ${gradeId} cho tất cả ${flashcards.length} thẻ trong bài này không?`)) return;
+
+    setLoading(true);
+    try {
+      // Cập nhật tất cả các thẻ có cùng node_id trong bài này
+      const { error } = await supabase
+        .from('flashcards')
+        .update({ grade_id: gradeId, gradeId: gradeId })
+        .eq('node_id', nodeId);
+
+      if (error) {
+        // Dự phòng nếu cột grade_id chưa tồn tại hoặc sai tên
+        await supabase.from('flashcards').update({ gradeId: gradeId }).eq('nodeId', nodeId);
+      }
+
+      alert("Hoàn tất! Các thẻ cũ đã được gắn nhãn Khối " + gradeId);
+      fetchFlashcards();
+    } catch (err: any) {
+      console.error("Batch update error:", err);
+      alert("Lỗi khi cập nhật: " + (err.message || "Không xác định"));
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -310,6 +373,13 @@ const FlashcardsPanel: React.FC<FlashcardsPanelProps> = ({ nodeId, isAdmin, them
               title="Nhập từ file CSV (Cột 1: Câu hỏi, Cột 2: Trả lời)"
             >
               <FileUp size={16} /> Nhập CSV
+            </button>
+            <button 
+              onClick={handleBatchUpdateGrade}
+              className={`flex items-center gap-2 px-4 py-2 bg-amber-50 text-amber-700 border border-amber-100 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-amber-100 transition-all ${flashcards.length === 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
+              title="Gắn nhãn khối hiện tại cho dữ liệu cũ (Sửa lỗi hiển thị)"
+            >
+              <Save size={16} /> Đồng bộ Khối
             </button>
             <button 
               onClick={() => { setIsAdding(true); setEditingId(null); setFormData({ front: '', back: '' }); }}
