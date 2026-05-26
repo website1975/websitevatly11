@@ -97,19 +97,19 @@ const FlashcardsPanel: React.FC<FlashcardsPanelProps> = ({ nodeId, isAdmin, them
           const id = item.node_id || item.nodeId || '';
           const itemGradeId = item.grade_id || item.gradeId;
           
-          // 1. Nếu có grade_id rõ ràng, bắt buộc phải khớp
+          // 1. So khớp nghiêm ngặt nếu bản ghi có grade_id
           if (gradeId && itemGradeId) {
-            return itemGradeId == gradeId;
+            return String(itemGradeId) === String(gradeId);
           }
           
-          // 2. Nếu ID có tiền tố khối (g10-, g11-, g12-), kiểm tra tiền tố
-          if (id.startsWith('g10-')) return gradeId == 10;
-          if (id.startsWith('g11-')) return gradeId == 11;
-          if (id.startsWith('g12-')) return gradeId == 12;
+          // 2. Kiểm tra tiền tố ID bài học (g10-, g11-, g12-)
+          if (id.startsWith('g10-')) return gradeId === 10;
+          if (id.startsWith('g11-')) return gradeId === 11;
+          if (id.startsWith('g12-')) return gradeId === 12;
 
-          // 3. Với dữ liệu cũ (không grade_id, không tiền tố): 
-          // Hiển thị ở tất cả các khối để người dùng có thể thấy và cập nhật lại.
-          return !itemGradeId;
+          // 3. Với dữ liệu cũ chưa có nhãn:
+          // Cho phép hiện để giáo viên có thể dùng nút ĐỒNG BỘ KHỐI
+          return true;
         });
 
         const mapped = filtered.map(mapRecord).sort((a, b) => 
@@ -164,10 +164,22 @@ const FlashcardsPanel: React.FC<FlashcardsPanelProps> = ({ nodeId, isAdmin, them
         
         if (error) {
            console.warn('First robust insert failed, trying camelCase:', error);
-           const { error: e2 } = await supabase.from('flashcards').insert([{ nodeId, front: formData.front, back: formData.back, createdAt: now, grade_id: gradeId }]);
+           const { error: e2 } = await supabase.from('flashcards').insert([{ 
+             nodeId, 
+             front: formData.front, 
+             back: formData.back, 
+             createdAt: now, 
+             grade_id: String(gradeId) 
+           }]);
            if (e2) {
              console.warn('camelCase insert failed, trying snake_case:', e2);
-             const { error: e3 } = await supabase.from('flashcards').insert([{ node_id: nodeId, front: formData.front, back: formData.back, created_at: now, grade_id: gradeId }]);
+             const { error: e3 } = await supabase.from('flashcards').insert([{ 
+               node_id: nodeId, 
+               front: formData.front, 
+               back: formData.back, 
+               created_at: now, 
+               grade_id: String(gradeId) 
+             }]);
              if (e3) {
                 console.warn('Snake_case with grade_id failed, trying absolute minimal:', e3);
                 const { error: e4 } = await supabase.from('flashcards').insert([{ node_id: nodeId, front: formData.front, back: formData.back }]);
@@ -306,18 +318,21 @@ const FlashcardsPanel: React.FC<FlashcardsPanelProps> = ({ nodeId, isAdmin, them
 
     setLoading(true);
     try {
-      // Cập nhật tất cả các thẻ có cùng node_id trong bài này
+      const stringGrade = String(gradeId);
+      
+      // Update both possible column names
       const { error } = await supabase
         .from('flashcards')
-        .update({ grade_id: gradeId, gradeId: gradeId })
+        .update({ grade_id: stringGrade, gradeId: stringGrade })
         .eq('node_id', nodeId);
 
-      if (error) {
-        // Dự phòng nếu cột grade_id chưa tồn tại hoặc sai tên
-        await supabase.from('flashcards').update({ gradeId: gradeId }).eq('nodeId', nodeId);
-      }
+      // Also try camelCase nodeId just in case
+      await supabase
+        .from('flashcards')
+        .update({ grade_id: stringGrade, gradeId: stringGrade })
+        .eq('nodeId', nodeId);
 
-      alert("Hoàn tất! Các thẻ cũ đã được gắn nhãn Khối " + gradeId);
+      alert(`Đã gắn nhãn Khối ${gradeId} cho tất cả các thẻ của bài học này.`);
       fetchFlashcards();
     } catch (err: any) {
       console.error("Batch update error:", err);
