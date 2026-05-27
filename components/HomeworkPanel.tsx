@@ -303,6 +303,47 @@ const HomeworkPanel: React.FC<HomeworkPanelProps> = ({ nodeId, student, isAdmin,
     setComments(prev => prev.filter(c => c.id !== id));
   };
 
+  const handleBatchUpdateGrade = async () => {
+    if (!isAdmin || !gradeId || comments.length === 0) return;
+    if (!window.confirm(`Gắn nhãn Khối ${gradeId} cho toàn bộ bài viết và câu trả lời trong bài học này?`)) return;
+
+    setLoading(true);
+    let successCount = 0;
+    try {
+      const gStr = String(gradeId);
+      
+      const tryUpdate = async (colNode: string, colGrade: string) => {
+        const { data, error } = await supabase
+          .from('forum_comments')
+          .update({ [colGrade]: gStr })
+          .or(`${colNode}.eq.${homeworkNodeId},${colNode}.ilike.${homeworkNodeId}_ans_%`)
+          .select('id');
+        
+        if (!error && data) {
+          successCount += data.length;
+          return true;
+        }
+        return false;
+      };
+
+      await tryUpdate('node_id', 'grade_id');
+      await tryUpdate('node_id', 'gradeId');
+      await tryUpdate('nodeId', 'grade_id');
+      await tryUpdate('nodeId', 'gradeId');
+
+      if (successCount > 0) {
+        alert(`Đã đồng bộ nhãn Khối ${gradeId} cho ${successCount} mục thảo luận.`);
+        fetchComments();
+      } else {
+        alert("Không tìm thấy dữ liệu cũ để đồng bộ hoặc bảng chưa có cột grade_id.");
+      }
+    } catch (err: any) {
+      alert("Lỗi: " + err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const renderToolbar = () => (
     <div className="flex flex-wrap gap-1 items-center px-2 py-2 bg-slate-50/50 rounded-2xl border border-slate-100">
       <div className="flex items-center gap-0.5 pr-2 mr-2 border-r border-slate-200">
@@ -371,6 +412,24 @@ const HomeworkPanel: React.FC<HomeworkPanelProps> = ({ nodeId, student, isAdmin,
             <div className="absolute top-full left-0 mt-2 w-48 bg-white border border-slate-100 rounded-2xl shadow-2xl z-50 py-2">
               {FONTS.map(f => (
                 <button key={f.label} onClick={() => applyStyle('font-family', f.value)} className="w-full px-4 py-2 text-left text-[10px] font-black text-slate-600 hover:bg-slate-50 transition-all uppercase">{f.label}</button>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="relative">
+          <button onClick={() => setActiveDropdown(activeDropdown === 'color' ? null : 'color')} className="flex items-center gap-2 px-3 py-1.5 hover:bg-white text-[10px] font-black text-slate-500 uppercase tracking-tight rounded-xl transition-all">
+             <Palette size={14}/> MÀU <ChevronDown size={12} />
+          </button>
+          {activeDropdown === 'color' && (
+            <div className="absolute top-full left-0 mt-2 w-48 bg-white border border-slate-100 rounded-2xl shadow-2xl z-50 p-3 grid grid-cols-3 gap-2">
+              {COLORS.map(c => (
+                <button 
+                  key={c.label} 
+                  onClick={() => applyStyle('color', c.value)} 
+                  className={`w-full aspect-square ${c.bg} rounded-lg border border-slate-200 hover:scale-110 transition-transform`}
+                  title={c.label}
+                />
               ))}
             </div>
           )}
@@ -480,6 +539,15 @@ const HomeworkPanel: React.FC<HomeworkPanelProps> = ({ nodeId, student, isAdmin,
           </p>
         </div>
         <div className="flex items-center gap-2">
+            {isAdmin && comments.length > 0 && (
+              <button 
+                onClick={handleBatchUpdateGrade}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 text-amber-700 border border-amber-100 rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-amber-100 transition-all"
+                title="Đồng bộ khối cho dữ liệu cũ"
+              >
+                <RefreshCw size={12} /> Đồng bộ Khối
+              </button>
+            )}
             {isConnected ? <span className="text-[8px] font-black text-green-500 uppercase tracking-widest flex items-center gap-1"><Wifi size={10}/> Trực tiếp</span> : <span className="text-[8px] font-black text-amber-500 flex items-center gap-1"><WifiOff size={10}/> Kết nối...</span>}
             <button onClick={() => fetchComments()} className="p-2 text-slate-300 hover:text-indigo-600 transition-all"><RefreshCw size={14} className={isRefreshing ? 'animate-spin' : ''}/></button>
         </div>
