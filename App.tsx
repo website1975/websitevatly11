@@ -346,7 +346,7 @@ const MainView: React.FC<{
 
   // Study Tracking Logic
   useEffect(() => {
-    if (!student || student.is_guest || !selectedId || !selectedNode || selectedNode.type !== 'lesson') return;
+    if (!student || !selectedId || !selectedNode || selectedNode.type !== 'lesson') return;
     
     // Only track if on content or flashcards tab
     if (activeTab !== 'content' && activeTab !== 'flashcards') return;
@@ -358,36 +358,31 @@ const MainView: React.FC<{
       const endTime = Date.now();
       const durationSeconds = Math.round((endTime - startTime) / 1000);
       if (durationSeconds > 5) { // Only log if more than 5 seconds
-        // Tối ưu hóa: Cộng dồn thời gian thay vì tạo dòng mới để tránh phình to data
         supabase.from('study_logs')
           .select('*')
           .eq('student_id', student.id)
           .eq('node_id', selectedId)
           .eq('type', type)
-          .maybeSingle()
-          .then(({ data: existingLog }) => {
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .then(({ data }) => {
+            const existingLog = data?.[0];
             if (existingLog) {
-              // Cập nhật cộng dồn
               supabase.from('study_logs')
                 .update({ 
                   duration: existingLog.duration + durationSeconds,
                   created_at: new Date().toISOString() 
                 })
                 .eq('id', existingLog.id)
-                .then(({ error }) => {
-                  if (error) console.error("Log update error:", error);
-                });
+                .then(); // Trigger execution
             } else {
-              // Tạo mới nếu chưa có
               supabase.from('study_logs').insert([{
                 student_id: student.id,
                 node_id: selectedId,
                 type: type,
                 duration: durationSeconds,
                 created_at: new Date().toISOString()
-              }]).then(({ error }) => {
-                if (error) console.error("Log insert error:", error);
-              });
+              }]).then(); // Trigger execution
             }
           });
       }
@@ -865,11 +860,17 @@ const MainView: React.FC<{
                     <div className="flex items-center gap-2">
                       <div className="flex gap-2">
                         {isAdmin ? (
-                          <button onClick={()=>setIsQuizOpen(true)} className="group flex items-center gap-2 px-5 py-2 bg-indigo-600 text-white font-bold text-[10px] uppercase shadow-lg shadow-indigo-100 rounded-full hover:bg-indigo-700 hover:scale-105 transition-all">
+                            <button 
+                              onClick={()=>setIsQuizOpen(true)} 
+                              className="group flex items-center gap-2 px-5 py-2 bg-indigo-600 text-white font-bold text-[10px] uppercase shadow-lg shadow-indigo-100 rounded-full hover:bg-indigo-700 hover:scale-105 transition-all"
+                            >
                             <Zap size={14} className="fill-current text-amber-300"/> Soạn Quiz AI
                           </button>
                         ) : (
-                          <button onClick={()=>setIsQuizOpen(true)} className={`group flex items-center gap-2 px-5 py-2 bg-${themeColor}-600 text-white font-bold text-[10px] uppercase shadow-lg shadow-${themeColor}-100 rounded-full hover:bg-${themeColor}-700 hover:scale-105 transition-all`}>
+                            <button 
+                              onClick={()=>setIsQuizOpen(true)} 
+                              className={`group flex items-center gap-2 px-5 py-2 bg-${themeColor}-600 text-white font-bold text-[10px] uppercase shadow-lg shadow-${themeColor}-100 rounded-full hover:bg-${themeColor}-700 hover:scale-105 transition-all`}
+                            >
                             <BrainCircuit size={14}/> Rèn luyện
                           </button>
                         )}
@@ -882,10 +883,10 @@ const MainView: React.FC<{
                     <div className="flex gap-6">
                       <button onClick={()=>setActiveTab('content')} className={`pb-2 text-[10px] font-bold uppercase tracking-widest border-b-2 transition-all ${activeTab==='content' ? `border-${themeColor}-600 text-${themeColor}-600` : 'border-transparent text-slate-300 hover:text-slate-500'}`}>Học liệu</button>
                       <button onClick={()=>setActiveTab('flashcards')} className={`pb-2 text-[10px] font-bold uppercase tracking-widest border-b-2 transition-all ${activeTab==='flashcards' ? `border-${themeColor}-600 text-${themeColor}-600` : 'border-transparent text-slate-300 hover:text-slate-500'}`}>Flashcards</button>
-                      {(isAdmin || !student?.is_guest) && (
+                      {(isAdmin || student) && (
                         <button onClick={()=>setActiveTab('tasks')} className={`pb-2 text-[10px] font-bold uppercase tracking-widest border-b-2 transition-all ${activeTab==='tasks' ? `border-${themeColor}-600 text-${themeColor}-600` : 'border-transparent text-slate-300 hover:text-slate-500'}`}>Nhiệm vụ</button>
                       )}
-                      {(isAdmin || !student?.is_guest) && (
+                      {(isAdmin || student) && (
                         <button onClick={()=>setActiveTab('homework')} className={`pb-2 text-[10px] font-bold uppercase tracking-widest border-b-2 transition-all ${activeTab==='homework' ? `border-${themeColor}-600 text-${themeColor}-600` : 'border-transparent text-slate-300 hover:text-slate-500'}`}>Bài tập về nhà</button>
                       )}
                     </div>
