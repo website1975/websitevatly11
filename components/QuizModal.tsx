@@ -72,51 +72,7 @@ const QuizModal: React.FC<QuizModalProps> = ({ nodeId, lessonTitle, lessonUrl, i
   };
 
   useEffect(() => { fetchFromDB(); }, [nodeId]);
-
-  // Quiz Tracking Logic
-  useEffect(() => {
-    if (!student || student.is_guest || isAdmin) return;
-    
-    const startTime = Date.now();
-    
-    return () => {
-      const endTime = Date.now();
-      const durationSeconds = Math.round((endTime - startTime) / 1000);
-      if (durationSeconds > 5) { // Only log if more than 5 seconds
-        // Tối ưu hóa: Cộng dồn thời gian thay vì tạo dòng mới
-        supabase.from('study_logs')
-          .select('*')
-          .eq('student_id', student.id)
-          .eq('node_id', nodeId)
-          .eq('type', 'quiz')
-          .maybeSingle()
-          .then(({ data: existingLog }) => {
-            if (existingLog) {
-              supabase.from('study_logs')
-                .update({ 
-                  duration: existingLog.duration + durationSeconds,
-                  created_at: new Date().toISOString() 
-                })
-                .eq('id', existingLog.id)
-                .then(({ error }) => {
-                  if (error) console.error("Quiz Log update error:", error);
-                });
-            } else {
-              supabase.from('study_logs').insert([{
-                student_id: student.id,
-                node_id: nodeId,
-                type: 'quiz',
-                duration: durationSeconds,
-                created_at: new Date().toISOString()
-              }]).then(({ error }) => {
-                if (error) console.error("Quiz Log insert error:", error);
-              });
-            }
-          });
-      }
-    };
-  }, [student, nodeId, isAdmin]);
-
+  
   const handleShuffleNewSet = () => {
     if (fullBank.length === 0) return;
     const newSet = pickRandomQuestions(fullBank, 5);
@@ -326,9 +282,17 @@ const QuizModal: React.FC<QuizModalProps> = ({ nodeId, lessonTitle, lessonUrl, i
   const currentThemeLightBorderClass = themeLightBorderClasses[themeColor as keyof typeof themeLightBorderClasses] || themeLightBorderClasses['indigo-600'];
 
   const handleSubmit = () => {
-    if (userAnswers.some(a => a === null)) { alert("Hãy hoàn thành tất cả câu hỏi!"); return; }
+    if (userAnswers.some(a => a === null)) { 
+      alert("⚠️ Hãy hoàn thành tất cả câu hỏi trước khi nộp!"); 
+      return; 
+    }
+    
+    // saveCurrentDuration(); // Gỡ bỏ theo yêu cầu
+    
     const score = calculateScore();
-    if (score >= (questions.length * 0.8)) { confetti({ particleCount: 150, spread: 70, origin: { y: 0.7 } }); }
+    if (score >= (questions.length * 0.8)) { 
+      confetti({ particleCount: 150, spread: 70, origin: { y: 0.7 } }); 
+    }
     setShowResults(true);
   };
 
@@ -412,6 +376,19 @@ const QuizModal: React.FC<QuizModalProps> = ({ nodeId, lessonTitle, lessonUrl, i
             <button onClick={onClose} className="p-2 text-slate-300 hover:text-red-500 transition-colors"><X size={20}/></button>
           </div>
         </header>
+
+        {!student && !isAdmin && questions.length > 0 && (
+           <div className="px-8 py-2 bg-amber-50 text-amber-600 text-[10px] font-black uppercase tracking-widest text-center border-b border-amber-100 animate-pulse">
+             ⚠️ Bạn chưa đăng nhập. Thời gian luyện tập sẽ không được ghi nhận.
+             <button onClick={() => window.location.href = '/student'} className="ml-2 underline text-amber-700">Đăng nhập ngay</button>
+           </div>
+        )}
+        {student?.is_guest && !isAdmin && questions.length > 0 && (
+           <div className="px-8 py-2 bg-sky-50 text-sky-600 text-[10px] font-black uppercase tracking-widest text-center border-b border-sky-100">
+             ℹ️ Đang ở chế độ Khách. Kết quả sẽ không được lưu vào danh sách lớp.
+             <button onClick={() => window.location.href = '/student'} className="ml-2 underline text-sky-700 font-black">ĐĂNG NHẬP CHÍNH THỨC</button>
+           </div>
+        )}
 
         <div className="flex-1 overflow-y-auto p-8 custom-scrollbar space-y-12 bg-slate-50/30">
           {loading ? (
