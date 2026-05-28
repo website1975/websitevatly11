@@ -55,7 +55,7 @@ export interface StudyLog {
   id: string;
   student_id: string;
   node_id: string;
-  type: 'material' | 'flashcard';
+  type: 'material' | 'flashcard' | 'quiz';
   duration: number; // in seconds
   created_at: string;
 }
@@ -66,6 +66,7 @@ export interface LessonTask {
   description: string;
   minMaterialTime: number; // minutes
   minFlashcardTime: number; // minutes
+  minQuizTime: number; // minutes
   createdAt: string;
 }
 
