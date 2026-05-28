@@ -358,15 +358,38 @@ const MainView: React.FC<{
       const endTime = Date.now();
       const durationSeconds = Math.round((endTime - startTime) / 1000);
       if (durationSeconds > 5) { // Only log if more than 5 seconds
-        supabase.from('study_logs').insert([{
-          student_id: student.id,
-          node_id: selectedId,
-          type: type,
-          duration: durationSeconds,
-          created_at: new Date().toISOString()
-        }]).then(({ error }) => {
-           if (error) console.error("Log error:", error);
-        });
+        // Tối ưu hóa: Cộng dồn thời gian thay vì tạo dòng mới để tránh phình to data
+        supabase.from('study_logs')
+          .select('*')
+          .eq('student_id', student.id)
+          .eq('node_id', selectedId)
+          .eq('type', type)
+          .maybeSingle()
+          .then(({ data: existingLog }) => {
+            if (existingLog) {
+              // Cập nhật cộng dồn
+              supabase.from('study_logs')
+                .update({ 
+                  duration: existingLog.duration + durationSeconds,
+                  created_at: new Date().toISOString() 
+                })
+                .eq('id', existingLog.id)
+                .then(({ error }) => {
+                  if (error) console.error("Log update error:", error);
+                });
+            } else {
+              // Tạo mới nếu chưa có
+              supabase.from('study_logs').insert([{
+                student_id: student.id,
+                node_id: selectedId,
+                type: type,
+                duration: durationSeconds,
+                created_at: new Date().toISOString()
+              }]).then(({ error }) => {
+                if (error) console.error("Log insert error:", error);
+              });
+            }
+          });
       }
     };
   }, [student, selectedId, activeTab, selectedNode]);
@@ -728,6 +751,7 @@ const MainView: React.FC<{
           isAdmin={isAdmin}
           selectedGrade={selectedGrade}
           themeColor={themeColor}
+          student={student}
           onClose={() => setIsQuizOpen(false)} 
         />
       )}
