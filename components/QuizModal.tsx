@@ -4,7 +4,7 @@ import { X, BrainCircuit, Trophy, CheckCircle2, XCircle, AlertCircle, Send, Save
 import { GoogleGenAI, Type } from "https://esm.sh/@google/genai";
 import { supabase } from '../supabaseClient';
 import confetti from 'https://esm.sh/canvas-confetti';
-import { QuizQuestion } from '../types';
+import { QuizQuestion, Student } from '../types';
 import { renderLatex, getSafeEnv } from '../utils';
 
 interface QuizModalProps {
@@ -14,10 +14,11 @@ interface QuizModalProps {
   isAdmin: boolean;
   selectedGrade: number | null;
   themeColor: string;
+  student: Student | null;
   onClose: () => void;
 }
 
-const QuizModal: React.FC<QuizModalProps> = ({ nodeId, lessonTitle, lessonUrl, isAdmin, selectedGrade, themeColor, onClose }) => {
+const QuizModal: React.FC<QuizModalProps> = ({ nodeId, lessonTitle, lessonUrl, isAdmin, selectedGrade, themeColor, student, onClose }) => {
   const [questions, setQuestions] = useState<QuizQuestion[]>([]);
   const [fullBank, setFullBank] = useState<QuizQuestion[]>([]);
   const [loading, setLoading] = useState(false);
@@ -71,6 +72,50 @@ const QuizModal: React.FC<QuizModalProps> = ({ nodeId, lessonTitle, lessonUrl, i
   };
 
   useEffect(() => { fetchFromDB(); }, [nodeId]);
+
+  // Quiz Tracking Logic
+  useEffect(() => {
+    if (!student || student.is_guest || isAdmin) return;
+    
+    const startTime = Date.now();
+    
+    return () => {
+      const endTime = Date.now();
+      const durationSeconds = Math.round((endTime - startTime) / 1000);
+      if (durationSeconds > 5) { // Only log if more than 5 seconds
+        // Tối ưu hóa: Cộng dồn thời gian thay vì tạo dòng mới
+        supabase.from('study_logs')
+          .select('*')
+          .eq('student_id', student.id)
+          .eq('node_id', nodeId)
+          .eq('type', 'quiz')
+          .maybeSingle()
+          .then(({ data: existingLog }) => {
+            if (existingLog) {
+              supabase.from('study_logs')
+                .update({ 
+                  duration: existingLog.duration + durationSeconds,
+                  created_at: new Date().toISOString() 
+                })
+                .eq('id', existingLog.id)
+                .then(({ error }) => {
+                  if (error) console.error("Quiz Log update error:", error);
+                });
+            } else {
+              supabase.from('study_logs').insert([{
+                student_id: student.id,
+                node_id: nodeId,
+                type: 'quiz',
+                duration: durationSeconds,
+                created_at: new Date().toISOString()
+              }]).then(({ error }) => {
+                if (error) console.error("Quiz Log insert error:", error);
+              });
+            }
+          });
+      }
+    };
+  }, [student, nodeId, isAdmin]);
 
   const handleShuffleNewSet = () => {
     if (fullBank.length === 0) return;
