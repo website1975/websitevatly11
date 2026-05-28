@@ -17,7 +17,7 @@ const TaskPanel: React.FC<TaskPanelProps> = ({ nodeId, student, isAdmin, themeCo
   const [logs, setLogs] = useState<StudyLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
-  const [formData, setFormData] = useState({ description: '', minMaterialTime: 10, minFlashcardTime: 5, minQuizTime: 5 });
+  const [formData, setFormData] = useState({ description: '', minMaterialTime: 10, minFlashcardTime: 5 });
   const [showIncompleteModal, setShowIncompleteModal] = useState(false);
   const [loadingIncomplete, setLoadingIncomplete] = useState(false);
   const [incompleteStudentsData, setIncompleteStudentsData] = useState<any[]>([]);
@@ -29,7 +29,6 @@ const TaskPanel: React.FC<TaskPanelProps> = ({ nodeId, student, isAdmin, themeCo
     try {
       const minMat = task?.minMaterialTime || 0;
       const minFlash = task?.minFlashcardTime || 0;
-      const minQuiz = task?.minQuizTime || 0;
 
       const { data: students } = await supabase.from('students').select('*').eq('grade_id', gradeId);
       if (!students) return;
@@ -40,12 +39,10 @@ const TaskPanel: React.FC<TaskPanelProps> = ({ nodeId, student, isAdmin, themeCo
         const studentLogs = allLogs?.filter(l => l.student_id === s.id) || [];
         const matSec = studentLogs.filter(l => l.type === 'material').reduce((acc, curr) => acc + curr.duration, 0);
         const flashSec = studentLogs.filter(l => l.type === 'flashcard').reduce((acc, curr) => acc + curr.duration, 0);
-        const quizSec = studentLogs.filter(l => l.type === 'quiz').reduce((acc, curr) => acc + curr.duration, 0);
         
         const matCompleted = (matSec / 60) >= minMat;
         const flashCompleted = (flashSec / 60) >= minFlash;
-        const quizCompleted = (quizSec / 60) >= minQuiz;
-        const fullyCompleted = matCompleted && flashCompleted && quizCompleted;
+        const fullyCompleted = matCompleted && flashCompleted;
 
         return {
           id: s.id,
@@ -53,10 +50,8 @@ const TaskPanel: React.FC<TaskPanelProps> = ({ nodeId, student, isAdmin, themeCo
           fullName: s.full_name,
           matTime: matSec,
           flashTime: flashSec,
-          quizTime: quizSec,
           matCompleted,
           flashCompleted,
-          quizCompleted,
           fullyCompleted
         };
       });
@@ -150,7 +145,6 @@ const TaskPanel: React.FC<TaskPanelProps> = ({ nodeId, student, isAdmin, themeCo
         description: formData.description,
         min_material_time: formData.minMaterialTime,
         min_flashcard_time: formData.minFlashcardTime,
-        min_quiz_time: formData.minQuizTime,
         created_at: new Date().toISOString()
       };
 
@@ -164,8 +158,7 @@ const TaskPanel: React.FC<TaskPanelProps> = ({ nodeId, student, isAdmin, themeCo
            const { error: error2 } = await supabase.from('lesson_tasks').update({
              description: formData.description,
              min_material_time: formData.minMaterialTime,
-             min_flashcard_time: formData.minFlashcardTime,
-             min_quiz_time: formData.minQuizTime
+             min_flashcard_time: formData.minFlashcardTime
            }).eq('id', task.id);
            if (error2) throw error2;
         }
@@ -179,8 +172,7 @@ const TaskPanel: React.FC<TaskPanelProps> = ({ nodeId, student, isAdmin, themeCo
              node_id: payload.node_id,
              description: payload.description,
              min_material_time: payload.min_material_time,
-             min_flashcard_time: payload.min_flashcard_time,
-             min_quiz_time: payload.min_quiz_time
+             min_flashcard_time: payload.min_flashcard_time
            }]);
            if (error2) throw error2;
         }
@@ -250,19 +242,33 @@ const TaskPanel: React.FC<TaskPanelProps> = ({ nodeId, student, isAdmin, themeCo
 
   const matTime = calculateTotalTime('material');
   const flashTime = calculateTotalTime('flashcard');
-  const quizTime = calculateTotalTime('quiz');
   const matMinSec = (task?.minMaterialTime || 0) * 60;
   const flashMinSec = (task?.minFlashcardTime || 0) * 60;
-  const quizMinSec = (task?.minQuizTime || 0) * 60;
 
   const matPercent = Math.min(100, matMinSec > 0 ? (matTime / matMinSec) * 100 : 100);
   const flashPercent = Math.min(100, flashMinSec > 0 ? (flashTime / flashMinSec) * 100 : 100);
-  const quizPercent = Math.min(100, quizMinSec > 0 ? (quizTime / quizMinSec) * 100 : 100);
 
-  const isCompleted = matTime >= matMinSec && flashTime >= flashMinSec && quizTime >= quizMinSec;
+  const isCompleted = matTime >= matMinSec && flashTime >= flashMinSec;
 
   return (
     <div className="space-y-6">
+      {student?.is_guest && (
+         <div className="bg-amber-50 border border-amber-100 p-4 rounded-2xl flex items-center justify-between animate-in slide-in-from-top-4">
+            <div className="flex items-center gap-3">
+               <AlertCircle className="text-amber-500" size={20} />
+               <p className="text-[10px] font-black text-amber-700 uppercase tracking-widest leading-tight">
+                  Bạn đang dùng tài khoản khách. <br/>
+                  Kết quả sẽ KHÔNG được lưu vào danh sách quản lý của giáo viên.
+               </p>
+            </div>
+            <button 
+              onClick={() => window.location.href = '/student'}
+              className="px-4 py-2 bg-amber-500 text-white text-[9px] font-black uppercase rounded-xl shadow-lg shadow-amber-100"
+            >
+              Đăng nhập ngay
+            </button>
+         </div>
+      )}
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-xl font-black text-slate-800 tracking-tight flex items-center gap-2 uppercase">
@@ -314,7 +320,7 @@ const TaskPanel: React.FC<TaskPanelProps> = ({ nodeId, student, isAdmin, themeCo
               required
             />
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-slate-500 font-medium">
             <div className="space-y-2">
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Thời gian học liệu (Phút)</label>
               <input 
@@ -330,15 +336,6 @@ const TaskPanel: React.FC<TaskPanelProps> = ({ nodeId, student, isAdmin, themeCo
                 type="number"
                 value={formData.minFlashcardTime}
                 onChange={e => setFormData({ ...formData, minFlashcardTime: parseInt(e.target.value) })}
-                className="w-full p-4 bg-slate-50 border-2 border-transparent focus:border-indigo-400 rounded-2xl outline-none"
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Rèn luyện trắc nghiệm (Phút)</label>
-              <input 
-                type="number"
-                value={formData.minQuizTime}
-                onChange={e => setFormData({ ...formData, minQuizTime: parseInt(e.target.value) })}
                 className="w-full p-4 bg-slate-50 border-2 border-transparent focus:border-indigo-400 rounded-2xl outline-none"
               />
             </div>
@@ -393,21 +390,6 @@ const TaskPanel: React.FC<TaskPanelProps> = ({ nodeId, student, isAdmin, themeCo
                       ></div>
                     </div>
                   </div>
-
-                  <div className="space-y-2">
-                    <div className="flex justify-between items-end">
-                      <span className="text-xs font-bold text-slate-600 uppercase tracking-wide">Rèn luyện trắc nghiệm</span>
-                      <span className="text-[10px] font-black text-slate-400 tracking-tighter">
-                        {Math.floor(quizTime / 60)}p {quizTime % 60}s <span className="text-slate-200">/</span> {task.minQuizTime}p
-                      </span>
-                    </div>
-                    <div className="h-3 bg-slate-50 rounded-full overflow-hidden border border-slate-100">
-                      <div 
-                        className={`h-full bg-${themeColor}-600 transition-all duration-1000 shadow-sm`} 
-                        style={{ width: `${quizPercent}%` }}
-                      ></div>
-                    </div>
-                  </div>
                 </div>
               </div>
             )}
@@ -442,8 +424,8 @@ const TaskPanel: React.FC<TaskPanelProps> = ({ nodeId, student, isAdmin, themeCo
                       <p className="text-xl font-black text-white">{task.minMaterialTime}p</p>
                    </div>
                    <div className="p-4 bg-white/5 rounded-2xl border border-white/5">
-                      <p className="text-[8px] font-bold text-white/30 uppercase tracking-widest">Rèn luyện</p>
-                      <p className="text-xl font-black text-white">{task.minQuizTime}p</p>
+                      <p className="text-[8px] font-bold text-white/30 uppercase tracking-widest">Flashcard</p>
+                      <p className="text-xl font-black text-white">{task.minFlashcardTime}p</p>
                    </div>
                 </div>
              </div>
@@ -531,7 +513,7 @@ const TaskPanel: React.FC<TaskPanelProps> = ({ nodeId, student, isAdmin, themeCo
                               </div>
                            </div>
 
-                           <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
+                           <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
                               <div className={`p-3 rounded-2xl border ${s.matCompleted ? 'bg-emerald-50 border-emerald-100' : 'bg-slate-50 border-slate-100'}`}>
                                  <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Học liệu</p>
                                  <p className={`text-[10px] font-black ${s.matCompleted ? 'text-emerald-600' : 'text-slate-400'}`}>
@@ -542,12 +524,6 @@ const TaskPanel: React.FC<TaskPanelProps> = ({ nodeId, student, isAdmin, themeCo
                                  <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Flashcard</p>
                                  <p className={`text-[10px] font-black ${s.flashCompleted ? 'text-emerald-600' : 'text-slate-400'}`}>
                                     {Math.floor(s.flashTime / 60)}p {s.flashTime % 60}s
-                                 </p>
-                              </div>
-                              <div className={`p-3 rounded-2xl border ${s.quizCompleted ? 'bg-emerald-50 border-emerald-100' : 'bg-slate-50 border-slate-100'}`}>
-                                 <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Trắc nghiệm</p>
-                                 <p className={`text-[10px] font-black ${s.quizCompleted ? 'text-emerald-600' : 'text-slate-400'}`}>
-                                    {Math.floor(s.quizTime / 60)}p {s.quizTime % 60}s
                                  </p>
                               </div>
                            </div>
@@ -562,12 +538,6 @@ const TaskPanel: React.FC<TaskPanelProps> = ({ nodeId, student, isAdmin, themeCo
                               {s.flashCompleted ? <CheckCircle2 size={12} className="text-emerald-500"/> : <AlertCircle size={12} className="text-amber-500"/>}
                               <p className="text-[9px] font-bold text-slate-400 uppercase tracking-tight">
                                  {s.flashCompleted ? 'Đã luyện Flashcard' : 'Flashcard chưa đạt'}
-                              </p>
-                           </div>
-                           <div className="flex items-center gap-2 mt-1">
-                              {s.quizCompleted ? <CheckCircle2 size={12} className="text-emerald-500"/> : <AlertCircle size={12} className="text-amber-500"/>}
-                              <p className="text-[9px] font-bold text-slate-400 uppercase tracking-tight">
-                                 {s.quizCompleted ? 'Đã rèn trắc nghiệm' : 'Trắc nghiệm chưa đạt'}
                               </p>
                            </div>
                         </div>
