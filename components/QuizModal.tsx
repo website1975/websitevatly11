@@ -95,17 +95,17 @@ const QuizModal: React.FC<QuizModalProps> = ({ nodeId, lessonTitle, lessonUrl, i
       const ai = new GoogleGenAI({ apiKey });
       const gradeLabel = selectedGrade === 1 ? '11' : (selectedGrade || '11');
       
-      let prompt = `Tạo 5 câu trắc nghiệm Vật lý ${gradeLabel} bài: "${lessonTitle}". 
-      2 Biết/Hiểu, 2 Vận dụng, 1 Vận dụng cao. 
+      let prompt = `Tạo 10 câu trắc nghiệm Vật lý ${gradeLabel} bài: "${lessonTitle}". 
+      Phân bổ mức độ: 4 câu Nhận biết (Biết), 3 câu Thông hiểu (Hiểu), 3 câu Vận dụng. 
       Sử dụng $...$ cho công thức. Xuất JSON array.`;
 
       const tools: any[] = [];
       if (lessonUrl) {
         tools.push({ googleSearch: {} });
         prompt = `Hãy truy cập và đọc nội dung từ đường link bài học sau đây: ${lessonUrl}. 
-        Dựa trên nội dung bài học đó, hãy soạn 5 câu trắc nghiệm Vật lý ${gradeLabel}. 
+        Dựa trên nội dung bài học đó, hãy soạn 10 câu trắc nghiệm Vật lý ${gradeLabel}. 
         Nếu không truy cập được link hoặc nội dung không phù hợp, hãy soạn dựa trên tên bài: "${lessonTitle}".
-        Phân bổ: 2 Biết/Hiểu, 2 Vận dụng, 1 Vận dụng cao. 
+        Phân bổ mức độ: 4 câu Nhận biết (Biết), 3 câu Thông hiểu (Hiểu), 3 câu Vận dụng (40% - 30% - 30%). 
         Sử dụng $...$ cho công thức LaTeX. Xuất kết quả dưới dạng JSON array.`;
       }
 
@@ -144,7 +144,7 @@ const QuizModal: React.FC<QuizModalProps> = ({ nodeId, lessonTitle, lessonUrl, i
           const ai = new GoogleGenAI({ apiKey });
           const response = await ai.models.generateContent({
             model: 'gemini-3-flash-preview',
-            contents: `Tạo 5 câu trắc nghiệm Vật lý bài: "${lessonTitle}". Xuất JSON array.`,
+            contents: `Tạo 10 câu trắc nghiệm Vật lý bài: "${lessonTitle}". Phân bổ 4 Biết, 3 Hiểu, 3 Vận dụng. Xuất JSON array.`,
             config: { responseMimeType: "application/json" }
           });
           const qData = JSON.parse(response.text || "[]");
@@ -353,7 +353,7 @@ const QuizModal: React.FC<QuizModalProps> = ({ nodeId, lessonTitle, lessonUrl, i
             </div>
             <div className="min-w-0">
               <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-800 leading-none mb-1">
-                {isAdmin ? (isAiMode ? 'BẢN NHÁP AI (5 CÂU)' : `NGÂN HÀNG (${fullBank.length} CÂU)`) : `LUYỆN TẬP (5/${fullBank.length} CÂU)`}
+                {isAdmin ? (isAiMode ? 'BẢN NHÁP AI (10 CÂU)' : `NGÂN HÀNG (${fullBank.length} CÂU)`) : `LUYỆN TẬP (5/${fullBank.length} CÂU)`}
               </h3>
               <p className="text-[9px] text-slate-400 font-bold uppercase truncate max-w-[200px] leading-none">{lessonTitle}</p>
             </div>
@@ -411,7 +411,7 @@ const QuizModal: React.FC<QuizModalProps> = ({ nodeId, lessonTitle, lessonUrl, i
                 </div>
                 {isAdmin && (
                   <div className="flex flex-col gap-3 items-center">
-                    <button onClick={generateQuiz} className={`px-10 py-4 ${currentThemeBgClass} text-white text-[11px] font-black uppercase rounded-2xl shadow-xl ${currentThemeShadowClass} ${currentThemeHoverBgClass} transition-all`}>Tạo 5 câu với AI</button>
+                    <button onClick={generateQuiz} className={`px-10 py-4 ${currentThemeBgClass} text-white text-[11px] font-black uppercase rounded-2xl shadow-xl ${currentThemeShadowClass} ${currentThemeHoverBgClass} transition-all`}>Tạo 10 câu với AI</button>
                     <button onClick={() => openEditForm(-1)} className={`text-[10px] font-black uppercase text-slate-400 hover:${currentThemeTextClass} tracking-widest`}>Hoặc soạn thủ công</button>
                   </div>
                 )}
@@ -492,7 +492,7 @@ const QuizModal: React.FC<QuizModalProps> = ({ nodeId, lessonTitle, lessonUrl, i
                              <PlusCircle size={14}/> Thủ công
                            </button>
                            <button onClick={generateQuiz} className="px-6 py-3 bg-slate-100 text-slate-600 text-[10px] font-black uppercase rounded-2xl hover:bg-slate-200 flex items-center gap-2">
-                             <RefreshCw size={14}/> {isAiMode ? "Đổi bộ AI" : "Thêm 5 câu (AI)"}
+                             <RefreshCw size={14}/> {isAiMode ? "Đổi bộ AI" : "Thêm 10 câu (AI)"}
                            </button>
                         </div>
                     ) : (
