@@ -1,6 +1,6 @@
 
-import katex from 'https://esm.sh/katex@0.16.11';
-import React from 'https://esm.sh/react@^19.2.3';
+import katex from 'katex';
+import React from 'react';
 
 export const getSafeEnv = (key: string): string | undefined => {
   try {
