@@ -1,9 +1,9 @@
 
-import React, { useState, useEffect, useCallback } from 'https://esm.sh/react@^19.2.3';
-import { X, BrainCircuit, Trophy, CheckCircle2, XCircle, AlertCircle, Send, Save, RefreshCw, Trash2, Shuffle, Pencil, PlusCircle, Eye } from 'https://esm.sh/lucide-react@^0.562.0';
-import { GoogleGenAI, Type } from "https://esm.sh/@google/genai";
+import React, { useState, useEffect, useCallback } from 'react';
+import { X, BrainCircuit, Trophy, CheckCircle2, XCircle, AlertCircle, Send, Save, RefreshCw, Trash2, Shuffle, Pencil, PlusCircle, Eye } from 'lucide-react';
+import { GoogleGenAI, Type } from "@google/genai";
 import { supabase } from '../supabaseClient';
-import confetti from 'https://esm.sh/canvas-confetti';
+import confetti from 'canvas-confetti';
 import { QuizQuestion, Student } from '../types';
 import { renderLatex, getSafeEnv } from '../utils';
 

@@ -1,6 +1,6 @@
 
-import React, { useState, useMemo } from 'https://esm.sh/react@^19.2.3';
-import { ChevronRight, ChevronDown, Folder, Globe, Plus, Pencil, Trash2, ArrowUp, ArrowDown, ArrowLeft, ArrowRight } from 'https://esm.sh/lucide-react@^0.562.0';
+import React, { useState, useMemo } from 'react';
+import { ChevronRight, ChevronDown, Folder, Globe, Plus, Pencil, Trash2, ArrowUp, ArrowDown, ArrowLeft, ArrowRight } from 'lucide-react';
 import { BookNode, NodeType } from '../types';
 
 interface TreeItemProps {

@@ -1,6 +1,6 @@
 
-import React, { useState } from 'https://esm.sh/react@^19.2.3';
-import { User, Lock, Loader2, ArrowRight, GraduationCap, UserCheck } from 'https://esm.sh/lucide-react@^0.562.0';
+import React, { useState } from 'react';
+import { User, Lock, Loader2, ArrowRight, GraduationCap, UserCheck } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 import { Student } from '../types';
 
@@ -17,8 +17,11 @@ const StudentLogin: React.FC<StudentLoginProps> = ({ onLogin, gradeId, themeColo
   const [error, setError] = useState<string | null>(null);
 
   const handleGuestLogin = () => {
+    // Tạo ID giả dạng UUID để tránh lỗi nếu cột student_id trong study_logs là kiểu UUID
+    const timestamp = Date.now().toString();
+    const guestId = `00000000-0000-4000-a000-${timestamp.slice(-12).padStart(12, '0')}`;
     const guestStudent: Student = {
-      id: 'guest_' + Date.now(),
+      id: guestId,
       name: 'Khách',
       full_name: 'Khách vãng lai',
       grade_id: gradeId,

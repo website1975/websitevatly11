@@ -1,6 +1,6 @@
 
-import React, { useState, useEffect, useCallback, useRef } from 'https://esm.sh/react@^19.2.3';
-import { Plus, Trash2, Edit2, ChevronLeft, ChevronRight, RotateCcw, Save, X, Loader2, FileUp } from 'https://esm.sh/lucide-react@^0.562.0';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { Plus, Trash2, Edit2, ChevronLeft, ChevronRight, RotateCcw, Save, X, Loader2, FileUp } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 import { Flashcard } from '../types';
 import { renderLatex } from '../utils';

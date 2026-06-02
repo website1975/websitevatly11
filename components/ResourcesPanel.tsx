@@ -1,6 +1,6 @@
 
-import React from 'https://esm.sh/react@^19.2.3';
-import { Plus, Pencil, Trash2, FileText, Cloud, Globe } from 'https://esm.sh/lucide-react@^0.562.0';
+import React from 'react';
+import { Plus, Pencil, Trash2, FileText, Cloud, Globe } from 'lucide-react';
 import { ResourceLink } from '../types';
 
 interface ResourcesPanelProps {

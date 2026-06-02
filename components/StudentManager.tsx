@@ -1,6 +1,6 @@
 
-import React, { useState, useEffect } from 'https://esm.sh/react@^19.2.3';
-import { Users, Loader2, Search, UserPlus, Trash2, Key, FileUp, Edit2, X, Download } from 'https://esm.sh/lucide-react@^0.562.0';
+import React, { useState, useEffect } from 'react';
+import { Users, Loader2, Search, UserPlus, Trash2, Key, FileUp, Edit2, X, Download } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 import { Student } from '../types';
 
@@ -106,11 +106,12 @@ const StudentManager: React.FC<StudentManagerProps> = ({ gradeId, themeColor, on
         // Support both comma and semicolon
         const parts = line.includes(';') ? line.split(';') : line.split(',');
         if (parts.length >= 2) {
+          const csvGrade = parts[3] ? parseInt(parts[3].trim()) : null;
           studentsToInsert.push({
             name: parts[0].trim(), // Mã SV
             full_name: parts[1].trim(), // Họ tên
             password: (parts[2] || '123456').trim(), // Mật khẩu (mặc định 123456)
-            grade_id: gradeId
+            grade_id: !isNaN(Number(csvGrade)) && csvGrade !== null ? csvGrade : gradeId
           });
         }
       }
@@ -172,7 +173,7 @@ const StudentManager: React.FC<StudentManagerProps> = ({ gradeId, themeColor, on
                  </div>
                  <div>
                     <h3 className="text-xl font-black uppercase tracking-tight">Quản lý lớp học</h3>
-                    <p className="text-[10px] font-bold opacity-60 uppercase tracking-widest">Khối {gradeId === 1 ? '11' : gradeId} • {students.length} Thành viên</p>
+                    <p className="text-[10px] font-bold opacity-60 uppercase tracking-widest">Khối {gradeId} • {students.length} Thành viên</p>
                  </div>
               </div>
               <div className="flex gap-2">
@@ -180,6 +181,7 @@ const StudentManager: React.FC<StudentManagerProps> = ({ gradeId, themeColor, on
                 <button 
                   onClick={() => fileInputRef.current?.click()}
                   className="flex items-center gap-2 px-4 py-2.5 bg-white/10 hover:bg-white/20 text-white text-[10px] font-black uppercase rounded-xl transition-all border border-white/20"
+                  title="Cột CSV: 1. Mã HS, 2. Họ tên, 3. Mật khẩu (tùy chọn), 4. Khối (tùy chọn)"
                 >
                   <FileUp size={14} /> Nhập CSV
                 </button>

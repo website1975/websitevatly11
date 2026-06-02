@@ -1,12 +1,12 @@
 
-import React, { useState, useEffect, useRef, useCallback } from 'https://esm.sh/react@^19.2.3';
-import { Send, Trash2, Image as ImageIcon, Wifi, WifiOff, RefreshCw, ChevronDown, Eye, AlertCircle, Home, BookOpen, Clock, CheckCircle2, Bold, Italic, List, Table as TableIcon, Link, Type, Palette, AlignLeft, AlignCenter, AlignRight, AlignJustify, Heading3, Calculator, X, Search, Edit2, Users } from 'https://esm.sh/lucide-react@^0.562.0';
-import ReactMarkdown from 'https://esm.sh/react-markdown@^9.0.0';
-import remarkGfm from 'https://esm.sh/remark-gfm@^4.0.0';
-import remarkMath from 'https://esm.sh/remark-math@^6.0.0';
-import remarkBreaks from 'https://esm.sh/remark-breaks@^4.0.0';
-import rehypeKatex from 'https://esm.sh/rehype-katex@^7.0.0';
-import rehypeRaw from 'https://esm.sh/rehype-raw@^7.0.0';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { Send, Trash2, Image as ImageIcon, Wifi, WifiOff, RefreshCw, ChevronDown, Eye, AlertCircle, Home, BookOpen, Clock, CheckCircle2, Bold, Italic, List, Table as TableIcon, Link, Type, Palette, AlignLeft, AlignCenter, AlignRight, AlignJustify, Heading3, Calculator, X, Search, Edit2, Users } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import remarkMath from 'remark-math';
+import remarkBreaks from 'remark-breaks';
+import rehypeKatex from 'rehype-katex';
+import rehypeRaw from 'rehype-raw';
 import { supabase } from '../supabaseClient';
 import { ForumComment, Student } from '../types';
 

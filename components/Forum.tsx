@@ -1,6 +1,6 @@
 
-import React, { useState, useEffect, useRef, useCallback } from 'https://esm.sh/react@^19.2.3';
-import { Send, Trash2, Image as ImageIcon, Wifi, WifiOff, RefreshCw, ChevronDown, Eye, AlertCircle } from 'https://esm.sh/lucide-react@^0.562.0';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { Send, Trash2, Image as ImageIcon, Wifi, WifiOff, RefreshCw, ChevronDown, Eye, AlertCircle } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 import { ForumComment } from '../types';
 import { renderLatex } from '../utils';

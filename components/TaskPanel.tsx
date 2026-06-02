@@ -1,6 +1,6 @@
 
-import React, { useState, useEffect, useCallback } from 'https://esm.sh/react@^19.2.3';
-import { ClipboardCheck, Clock, CheckCircle2, AlertCircle, Loader2, Search, X, Users, RefreshCw } from 'https://esm.sh/lucide-react@^0.562.0';
+import React, { useState, useEffect, useCallback } from 'react';
+import { ClipboardCheck, Clock, CheckCircle2, AlertCircle, Loader2, Search, X, Users, RefreshCw } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 import { LessonTask, StudyLog, Student } from '../types';
 

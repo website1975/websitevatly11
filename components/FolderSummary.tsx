@@ -1,6 +1,6 @@
 
-import React, { useState, useEffect } from 'https://esm.sh/react@^19.2.3';
-import { ChevronLeft, ChevronRight, Play, BookOpen } from 'https://esm.sh/lucide-react@^0.562.0';
+import React, { useState, useEffect } from 'react';
+import { ChevronLeft, ChevronRight, Play, BookOpen } from 'lucide-react';
 import { BookNode } from '../types';
 
 interface FolderSummaryProps {
