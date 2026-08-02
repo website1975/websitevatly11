@@ -487,10 +487,14 @@ const HomeworkPanel: React.FC<HomeworkPanelProps> = ({ nodeId, student, isAdmin,
   const renderActionBar = () => (
     <div className="bg-slate-50/80 p-6 flex items-center justify-between border-t border-slate-100">
       <div className="flex items-center gap-4">
-         <button type="button" onClick={() => fileInputRef.current?.click()} className="flex items-center gap-2 px-6 py-3 bg-white text-slate-500 rounded-2xl hover:bg-indigo-50 hover:text-indigo-600 border border-slate-200 transition-all font-black uppercase text-[10px] tracking-widest shadow-sm">
-            <ImageIcon size={18} /> Đính kèm ảnh
-         </button>
-         <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept="image/*" />
+         {isAdmin && (
+           <>
+             <button type="button" onClick={() => fileInputRef.current?.click()} className="flex items-center gap-2 px-6 py-3 bg-white text-slate-500 rounded-2xl hover:bg-indigo-50 hover:text-indigo-600 border border-slate-200 transition-all font-black uppercase text-[10px] tracking-widest shadow-sm">
+                <ImageIcon size={18} /> Đính kèm ảnh
+             </button>
+             <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept="image/*" />
+           </>
+         )}
       </div>
 
       <button onClick={() => handleSubmit()} disabled={loading || uploading} className={`px-10 py-4 ${isAdmin ? 'bg-amber-600 shadow-amber-200' : 'bg-indigo-600 shadow-indigo-200'} text-white rounded-2xl hover:scale-105 shadow-2xl disabled:opacity-50 transition-all flex items-center gap-3 group font-black uppercase text-xs tracking-widest`}>
