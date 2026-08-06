@@ -3,6 +3,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { ClipboardCheck, Clock, CheckCircle2, AlertCircle, Loader2, Search, X, Users, RefreshCw } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 import { LessonTask, StudyLog, Student } from '../types';
+import { ConfirmModal, ToastNotification, ConfirmState, ToastState } from './CustomDialog';
 
 interface TaskPanelProps {
   nodeId: string;
@@ -17,11 +18,21 @@ const TaskPanel: React.FC<TaskPanelProps> = ({ nodeId, student, isAdmin, themeCo
   const [logs, setLogs] = useState<StudyLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
-  const [formData, setFormData] = useState({ description: '', minMaterialTime: 10, minFlashcardTime: 5 });
+  const [formData, setFormData] = useState({ description: '', minMaterialTime: 10, minFlashcardTime: 5, minQuizTime: 0 });
   const [showIncompleteModal, setShowIncompleteModal] = useState(false);
   const [loadingIncomplete, setLoadingIncomplete] = useState(false);
   const [incompleteStudentsData, setIncompleteStudentsData] = useState<any[]>([]);
   const [incompleteSearch, setIncompleteSearch] = useState('');
+
+  const [confirmState, setConfirmState] = useState<ConfirmState>({ isOpen: false, title: '', message: '', onConfirm: () => {} });
+  const [toastState, setToastState] = useState<ToastState>({ isOpen: false, message: '' });
+
+  const showToast = (message: string, type: 'success' | 'error' | 'warning' | 'info' = 'info', title?: string) => {
+    setToastState({ isOpen: true, message, type, title });
+    setTimeout(() => {
+      setToastState(prev => ({ ...prev, isOpen: false }));
+    }, 5000);
+  };
 
   const fetchIncompleteStudents = async () => {
     if (!gradeId) return;
@@ -180,9 +191,10 @@ const TaskPanel: React.FC<TaskPanelProps> = ({ nodeId, student, isAdmin, themeCo
 
       setIsEditing(false);
       fetchTaskData();
+      showToast("Đã lưu yêu cầu nhiệm vụ thành công", "success");
     } catch (err: any) {
       console.error('Error saving task:', err);
-      alert('Lỗi lưu nhiệm vụ: ' + (err.message || "Kiểm tra quyền truy cập CSDL (Table lesson_tasks?)"));
+      showToast('Lỗi lưu nhiệm vụ: ' + (err.message || "Kiểm tra quyền CSDL"), "error");
     }
   };
 
@@ -213,13 +225,13 @@ const TaskPanel: React.FC<TaskPanelProps> = ({ nodeId, student, isAdmin, themeCo
       await tryUpdate('nodeId', 'gradeId');
 
       if (successCount > 0) {
-        alert(`Đã đồng bộ Khối ${gradeId} cho nhiệm vụ.`);
+        showToast(`Đã đồng bộ Khối ${gradeId} cho nhiệm vụ.`, "success");
         fetchTaskData();
       } else {
-        alert("Nhiệm vụ này đã có nhãn chính xác hoặc lỗi cấu trúc bảng.");
+        showToast("Nhiệm vụ này đã có nhãn chính xác hoặc lỗi cấu trúc bảng.", "warning");
       }
     } catch (err: any) {
-      alert("Lỗi: " + err.message);
+      showToast("Lỗi: " + err.message, "error");
     } finally {
       setLoading(false);
     }
@@ -556,6 +568,9 @@ const TaskPanel: React.FC<TaskPanelProps> = ({ nodeId, student, isAdmin, themeCo
           </div>
         </div>
       )}
+       {/* MODALS CỦA NHIỆM VỤ */}
+       <ConfirmModal state={confirmState} onClose={() => setConfirmState(prev => ({ ...prev, isOpen: false }))} />
+       <ToastNotification state={toastState} onClose={() => setToastState(prev => ({ ...prev, isOpen: false }))} />
     </div>
   );
 };
