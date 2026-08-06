@@ -4,6 +4,7 @@ import { Plus, Trash2, Edit2, ChevronLeft, ChevronRight, RotateCcw, Save, X, Loa
 import { supabase } from '../supabaseClient';
 import { Flashcard } from '../types';
 import { renderLatex } from '../utils';
+import { ConfirmModal, ToastNotification, ConfirmState, ToastState } from './CustomDialog';
 
 interface FlashcardsPanelProps {
   nodeId: string;
@@ -59,6 +60,16 @@ const FlashcardsPanel: React.FC<FlashcardsPanelProps> = ({ nodeId, isAdmin, them
   const [isAdding, setIsAdding] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState({ front: '', back: '' });
+
+  const [confirmState, setConfirmState] = useState<ConfirmState>({ isOpen: false, title: '', message: '', onConfirm: () => {} });
+  const [toastState, setToastState] = useState<ToastState>({ isOpen: false, message: '' });
+
+  const showToast = (message: string, type: 'success' | 'error' | 'warning' | 'info' = 'info', title?: string) => {
+    setToastState({ isOpen: true, message, type, title });
+    setTimeout(() => {
+      setToastState(prev => ({ ...prev, isOpen: false }));
+    }, 5000);
+  };
 
   const fetchFlashcards = useCallback(async () => {
     setLoading(true);
@@ -193,9 +204,10 @@ const FlashcardsPanel: React.FC<FlashcardsPanelProps> = ({ nodeId, isAdmin, them
       setIsAdding(false);
       setEditingId(null);
       fetchFlashcards();
+      showToast("Đã lưu thẻ flashcard thành công", "success");
     } catch (err: any) {
       console.error('Error saving flashcard:', err);
-      alert('Lỗi: ' + (err.message || 'Không thể lưu flashcard.'));
+      showToast('Lỗi: ' + (err.message || 'Không thể lưu flashcard.'), "error");
     }
   };
 
@@ -210,7 +222,7 @@ const FlashcardsPanel: React.FC<FlashcardsPanelProps> = ({ nodeId, isAdmin, them
 
       const lines = text.split(/\r?\n/).filter(line => line.trim() !== '');
       if (lines.length < 2) {
-        alert('File CSV không hợp lệ hoặc trống. Cần ít nhất 1 dòng tiêu đề và 1 dòng dữ liệu.');
+        showToast('File CSV không hợp lệ hoặc trống. Cần ít nhất 1 dòng tiêu đề và 1 dòng dữ liệu.', "error");
         return;
       }
 
@@ -246,119 +258,138 @@ const FlashcardsPanel: React.FC<FlashcardsPanelProps> = ({ nodeId, isAdmin, them
       }
 
       if (parsedData.length === 0) {
-        alert('Không tìm thấy dữ liệu hợp lệ trong file (Yêu cầu ít nhất 2 cột: Câu hỏi và Trả lời).');
+        showToast('Không tìm thấy dữ liệu hợp lệ trong file (Yêu cầu ít nhất 2 cột: Câu hỏi và Trả lời).', "error");
         return;
       }
 
-      if (!window.confirm(`Tìm thấy ${parsedData.length} thẻ. Bạn có muốn nhập vào không?`)) return;
+      setConfirmState({
+        isOpen: true,
+        title: 'Nhập Flashcard từ CSV',
+        message: `Tìm thấy ${parsedData.length} thẻ. Bạn có muốn nhập vào bài học này không?`,
+        type: 'info',
+        confirmText: 'Nhập ngay',
+        onConfirm: async () => {
+          setLoading(true);
+          try {
+            const now = new Date().toISOString();
+            
+            const robustPayload = parsedData.map(d => ({
+              nodeId,
+              node_id: nodeId,
+              front: d.front,
+              back: d.back,
+              createdAt: now,
+              created_at: now,
+              grade_id: gradeId
+            }));
+            
+            const { error: error1 } = await supabase.from('flashcards').insert(robustPayload);
+            
+            if (error1) {
+              console.warn('CSV robust insert failed, trying camelCase:', error1);
+              const camelPayload = parsedData.map(d => ({ nodeId, front: d.front, back: d.back, createdAt: now, grade_id: gradeId }));
+              const { error: error2 } = await supabase.from('flashcards').insert(camelPayload);
+              
+              if (error2) {
+                 console.warn('CSV camelCase insert failed, trying snake_case:', error2);
+                 const snakePayload = parsedData.map(d => ({ node_id: nodeId, front: d.front, back: d.back, created_at: now, grade_id: gradeId }));
+                 const { error: error3 } = await supabase.from('flashcards').insert(snakePayload);
+                 if (error3) {
+                    console.warn('CSV snake_case with grade_id failed, trying absolute minimal');
+                    const minimalPayload = parsedData.map(d => ({ node_id: nodeId, front: d.front, back: d.back }));
+                    const { error: error4 } = await supabase.from('flashcards').insert(minimalPayload);
+                    if (error4) throw error4;
+                 }
+              }
+            }
 
-      setLoading(true);
-      try {
-        const now = new Date().toISOString();
-        
-        // Final check on columns mapping by trying to insert with both possible column names
-        const robustPayload = parsedData.map(d => ({
-          nodeId,
-          node_id: nodeId,
-          front: d.front,
-          back: d.back,
-          createdAt: now,
-          created_at: now,
-          grade_id: gradeId
-        }));
-        
-        const { error: error1 } = await supabase.from('flashcards').insert(robustPayload);
-        
-        if (error1) {
-          console.warn('CSV robust insert failed, trying camelCase:', error1);
-          const camelPayload = parsedData.map(d => ({ nodeId, front: d.front, back: d.back, createdAt: now, grade_id: gradeId }));
-          const { error: error2 } = await supabase.from('flashcards').insert(camelPayload);
-          
-          if (error2) {
-             console.warn('CSV camelCase insert failed, trying snake_case:', error2);
-             const snakePayload = parsedData.map(d => ({ node_id: nodeId, front: d.front, back: d.back, created_at: now, grade_id: gradeId }));
-             const { error: error3 } = await supabase.from('flashcards').insert(snakePayload);
-             if (error3) {
-                console.warn('CSV snake_case with grade_id failed, trying absolute minimal');
-                const minimalPayload = parsedData.map(d => ({ node_id: nodeId, front: d.front, back: d.back }));
-                const { error: error4 } = await supabase.from('flashcards').insert(minimalPayload);
-                if (error4) throw error4;
-             }
+            showToast(`Đã nhập thành công ${parsedData.length} thẻ.`, "success");
+            setTimeout(() => fetchFlashcards(), 500);
+          } catch (err: any) {
+            console.error('Error importing CSV:', err);
+            showToast('Lỗi nhập CSV: ' + (err.message || 'Vui lòng kiểm tra lại CSDL.'), "error");
+          } finally {
+            setLoading(false);
           }
         }
-
-        alert(`Đã nhập thành công ${parsedData.length} thẻ.`);
-        // Small delay to ensure DB sync before refresh
-        setTimeout(() => fetchFlashcards(), 500);
-      } catch (err: any) {
-        console.error('Error importing CSV:', err);
-        alert('Lỗi nhập CSV: ' + (err.message || 'Vui lòng kiểm tra lại cấu trúc bảng flashcards trên Supabase.'));
-      } finally {
-        setLoading(false);
-      }
+      });
     };
     reader.readAsText(file);
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
-  const handleDelete = async (id: string) => {
-    if (!window.confirm('Bạn có chắc chắn muốn xóa flashcard này?')) return;
-    try {
-      const { error } = await supabase.from('flashcards').delete().eq('id', id);
-      if (error) throw error;
-      fetchFlashcards();
-    } catch (err) {
-      console.error('Error deleting flashcard:', err);
-    }
+  const handleDelete = (id: string) => {
+    setConfirmState({
+      isOpen: true,
+      title: 'Xóa Flashcard',
+      message: 'Bạn có chắc chắn muốn xóa thẻ flashcard này?',
+      type: 'danger',
+      confirmText: 'Xóa thẻ',
+      onConfirm: async () => {
+        try {
+          const { error } = await supabase.from('flashcards').delete().eq('id', id);
+          if (error) throw error;
+          fetchFlashcards();
+          showToast('Đã xóa thẻ thành công', 'success');
+        } catch (err) {
+          console.error('Error deleting flashcard:', err);
+          showToast('Không thể xóa thẻ', 'error');
+        }
+      }
+    });
   };
 
-  const handleBatchUpdateGrade = async () => {
+  const handleBatchUpdateGrade = () => {
     if (!isAdmin || !gradeId || flashcards.length === 0) return;
-    if (!window.confirm(`Bạn có muốn cập nhật Khối ${gradeId} cho tất cả ${flashcards.length} thẻ trong bài này không?`)) return;
+    setConfirmState({
+      isOpen: true,
+      title: 'Đồng bộ Khối Lớp',
+      message: `Bạn có muốn cập nhật Khối ${gradeId} cho tất cả ${flashcards.length} thẻ trong bài này không?`,
+      type: 'info',
+      confirmText: 'Cập nhật Khối',
+      onConfirm: async () => {
+        setLoading(true);
+        try {
+          const stringGrade = String(gradeId);
+          let totalUpdated = 0;
+          let actualDbValue: string | null = null;
+          let usedColumn = "";
+          
+          const tryUpdate = async (colNode: string, colGrade: string) => {
+            const { data, error } = await supabase
+              .from('flashcards')
+              .update({ [colGrade]: stringGrade })
+              .eq(colNode, nodeId)
+              .select('*');
+            
+            if (!error && data && data.length > 0) {
+              totalUpdated += data.length;
+              actualDbValue = data[0][colGrade];
+              usedColumn = colGrade;
+              return true;
+            }
+            return false;
+          };
 
-    setLoading(true);
-    let successCount = 0;
-    try {
-      const stringGrade = String(gradeId);
-      let totalUpdated = 0;
-      let actualDbValue: string | null = null;
-      let usedColumn = "";
-      
-      const tryUpdate = async (colNode: string, colGrade: string) => {
-        const { data, error } = await supabase
-          .from('flashcards')
-          .update({ [colGrade]: stringGrade })
-          .eq(colNode, nodeId)
-          .select('*'); // Lấy lại dữ liệu thực tế từ DB sau khi lưu
-        
-        if (!error && data && data.length > 0) {
-          totalUpdated += data.length;
-          // Kiểm tra bản ghi đầu tiên xem cột đó có giá trị chưa
-          actualDbValue = data[0][colGrade];
-          usedColumn = colGrade;
-          return true;
+          await tryUpdate('node_id', 'grade_id');
+          await tryUpdate('node_id', 'gradeId');
+          await tryUpdate('nodeId', 'grade_id');
+          await tryUpdate('nodeId', 'gradeId');
+
+          if (totalUpdated > 0) {
+            showToast(`Đã cập nhật Khối ${gradeId} cho ${totalUpdated} thẻ.`, "success");
+            fetchFlashcards();
+          } else {
+            showToast("Không tìm thấy thẻ nào khớp với bài học để cập nhật.", "warning");
+          }
+        } catch (err: any) {
+          console.error("Batch update error:", err);
+          showToast("Lỗi khi cập nhật: " + (err.message || "Không xác định"), "error");
+        } finally {
+          setLoading(false);
         }
-        return false;
-      };
-
-      // Thử lần lượt các tổ hợp
-      await tryUpdate('node_id', 'grade_id');
-      await tryUpdate('node_id', 'gradeId');
-      await tryUpdate('nodeId', 'grade_id');
-      await tryUpdate('nodeId', 'gradeId');
-
-      if (totalUpdated > 0) {
-        alert(`KẾT QUẢ ĐỒNG BỘ:\n- Số thẻ đã xử lý: ${totalUpdated}\n- Cột đã nhận dữ liệu: ${usedColumn}\n- Giá trị thực tế trong CSDL: "${actualDbValue}"\n\n(Nếu giá trị là "null" hoặc trống, có thể cột này đang bị khóa bởi chính sách RLS trên Supabase)`);
-        fetchFlashcards();
-      } else {
-        alert("KHÔNG THÀNH CÔNG:\nKhông tìm thấy thẻ nào khớp với bài học này để cập nhật hoặc cấu trúc bảng không khớp.");
       }
-    } catch (err: any) {
-      console.error("Batch update error:", err);
-      alert("Lỗi khi cập nhật: " + (err.message || "Không xác định"));
-    } finally {
-      setLoading(false);
-    }
+    });
   };
 
   const nextCard = () => {
@@ -578,6 +609,9 @@ const FlashcardsPanel: React.FC<FlashcardsPanelProps> = ({ nodeId, isAdmin, them
           </div>
         )
       )}
+
+      <ConfirmModal state={confirmState} onClose={() => setConfirmState(prev => ({ ...prev, isOpen: false }))} />
+      <ToastNotification state={toastState} onClose={() => setToastState(prev => ({ ...prev, isOpen: false }))} />
 
       <style>{`
         .perspective-1000 { 
