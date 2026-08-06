@@ -6,6 +6,7 @@ import { supabase } from '../supabaseClient';
 import confetti from 'canvas-confetti';
 import { QuizQuestion, Student } from '../types';
 import { renderLatex, getSafeEnv } from '../utils';
+import { ConfirmModal, ToastNotification, ConfirmState, ToastState } from './CustomDialog';
 
 interface QuizModalProps {
   nodeId: string;
@@ -27,6 +28,16 @@ const QuizModal: React.FC<QuizModalProps> = ({ nodeId, lessonTitle, lessonUrl, i
   const [userAnswers, setUserAnswers] = useState<(number | null)[]>([]);
   const [showResults, setShowResults] = useState(false);
   const [isAiMode, setIsAiMode] = useState(false);
+  
+  const [confirmState, setConfirmState] = useState<ConfirmState>({ isOpen: false, title: '', message: '', onConfirm: () => {} });
+  const [toastState, setToastState] = useState<ToastState>({ isOpen: false, message: '' });
+
+  const showToast = (message: string, type: 'success' | 'error' | 'warning' | 'info' = 'info', title?: string) => {
+    setToastState({ isOpen: true, message, type, title });
+    setTimeout(() => {
+      setToastState(prev => ({ ...prev, isOpen: false }));
+    }, 5000);
+  };
   
   // State cho việc sửa/thêm thủ công
   const [editingIndex, setEditingIndex] = useState<number | null>(null); // -1 là thêm mới
@@ -110,11 +121,10 @@ const QuizModal: React.FC<QuizModalProps> = ({ nodeId, lessonTitle, lessonUrl, i
       }
 
       const response = await ai.models.generateContent({
-        model: 'gemini-3-flash-preview',
+        model: 'gemini-2.5-flash',
         contents: prompt,
-        tools: tools.length > 0 ? tools : undefined,
-        toolConfig: tools.length > 0 ? { includeServerSideToolInvocations: true } : undefined,
         config: {
+          tools: tools.length > 0 ? tools as any : undefined,
           responseMimeType: "application/json",
           responseSchema: {
             type: Type.ARRAY,
@@ -184,16 +194,25 @@ const QuizModal: React.FC<QuizModalProps> = ({ nodeId, lessonTitle, lessonUrl, i
       setQuestions(updatedBank);
       setUserAnswers(new Array(updatedBank.length).fill(null));
       setIsAiMode(false);
-      if (!customData) alert("Đã lưu kho câu hỏi thành công!");
-    } catch (e) { alert("Lỗi khi lưu CSDL."); }
+      if (!customData) showToast("Đã lưu kho câu hỏi thành công!", "success");
+    } catch (e) { showToast("Lỗi khi lưu CSDL.", "error"); }
     finally { setSaving(false); }
   };
 
   // Logic Sửa / Xóa từng câu
   const deleteQuestion = (index: number) => {
-    if (!window.confirm("Bạn muốn xóa câu hỏi này khỏi ngân hàng?")) return;
-    const newBank = fullBank.filter((_, i) => i !== index);
-    saveToDB(newBank);
+    setConfirmState({
+      isOpen: true,
+      title: 'Xóa câu hỏi',
+      message: 'Bạn có chắc chắn muốn xóa câu hỏi này khỏi ngân hàng câu hỏi?',
+      type: 'danger',
+      confirmText: 'Xóa câu hỏi',
+      onConfirm: () => {
+        const newBank = fullBank.filter((_, i) => i !== index);
+        saveToDB(newBank);
+        showToast("Đã xóa câu hỏi", "success");
+      }
+    });
   };
 
   const openEditForm = (index: number) => {
@@ -219,14 +238,23 @@ const QuizModal: React.FC<QuizModalProps> = ({ nodeId, lessonTitle, lessonUrl, i
     setEditForm(null);
   };
 
-  const clearBank = async () => {
-    if (!window.confirm("Xóa sạch ngân hàng câu hỏi?")) return;
-    setSaving(true);
-    try {
-      await supabase.from('quiz_data').delete().eq('id', getDbId());
-      setQuestions([]); setFullBank([]); setIsAiMode(false);
-    } catch (e) { alert("Lỗi xóa."); }
-    finally { setSaving(false); }
+  const clearBank = () => {
+    setConfirmState({
+      isOpen: true,
+      title: 'Xóa ngân hàng câu hỏi',
+      message: 'Bạn có chắc chắn muốn xóa toàn bộ ngân hàng câu hỏi của bài học này?',
+      type: 'danger',
+      confirmText: 'Xóa sạch',
+      onConfirm: async () => {
+        setSaving(true);
+        try {
+          await supabase.from('quiz_data').delete().eq('id', getDbId());
+          setQuestions([]); setFullBank([]); setIsAiMode(false);
+          showToast("Đã xóa sạch ngân hàng câu hỏi", "success");
+        } catch (e) { showToast("Lỗi khi xóa CSDL.", "error"); }
+        finally { setSaving(false); }
+      }
+    });
   };
 
   const calculateScore = () => questions.filter((q, i) => userAnswers[i] === q.correctIndex).length;
@@ -283,7 +311,7 @@ const QuizModal: React.FC<QuizModalProps> = ({ nodeId, lessonTitle, lessonUrl, i
 
   const handleSubmit = () => {
     if (userAnswers.some(a => a === null)) { 
-      alert("⚠️ Hãy hoàn thành tất cả câu hỏi trước khi nộp!"); 
+      showToast("Hãy hoàn thành tất cả câu hỏi trước khi nộp bài!", "warning", "Chưa hoàn thành"); 
       return; 
     }
     
@@ -509,6 +537,9 @@ const QuizModal: React.FC<QuizModalProps> = ({ nodeId, lessonTitle, lessonUrl, i
           </footer>
         )}
       </div>
+
+      <ConfirmModal state={confirmState} onClose={() => setConfirmState(prev => ({ ...prev, isOpen: false }))} />
+      <ToastNotification state={toastState} onClose={() => setToastState(prev => ({ ...prev, isOpen: false }))} />
 
       <style>{`
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
