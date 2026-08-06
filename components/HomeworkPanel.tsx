@@ -8,7 +8,7 @@ import remarkBreaks from 'remark-breaks';
 import rehypeKatex from 'rehype-katex';
 import rehypeRaw from 'rehype-raw';
 import { supabase } from '../supabaseClient';
-import { uploadFileToGoogleDrive } from '../googleDrive';
+import { uploadFileToGoogleDrive, signInWithGoogleForDrive, getDriveAccessToken } from '../googleDrive';
 import { ForumComment, Student } from '../types';
 import { ConfirmModal, ToastNotification, ConfirmState, ToastState } from './CustomDialog';
 
@@ -99,6 +99,20 @@ const HomeworkPanel: React.FC<HomeworkPanelProps> = ({ nodeId, student, isAdmin,
   const fileInputRef = useRef<HTMLInputElement>(null);
   const driveFileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  const triggerGoogleDriveUpload = async () => {
+    try {
+      if (!getDriveAccessToken()) {
+        setIsUploadingDrive(true);
+        await signInWithGoogleForDrive();
+        setIsUploadingDrive(false);
+      }
+      driveFileInputRef.current?.click();
+    } catch (err: any) {
+      setIsUploadingDrive(false);
+      showToast(err.message || 'Lỗi khi đăng nhập Google Drive.', 'error', 'Đăng nhập Google thất bại');
+    }
+  };
 
   const handleDriveFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -549,7 +563,7 @@ const HomeworkPanel: React.FC<HomeworkPanelProps> = ({ nodeId, student, isAdmin,
       <div className="flex items-center gap-3 flex-wrap">
          <button 
            type="button" 
-           onClick={() => driveFileInputRef.current?.click()} 
+           onClick={triggerGoogleDriveUpload} 
            disabled={isUploadingDrive}
            className="flex items-center gap-2 px-5 py-3 bg-emerald-50 text-emerald-700 rounded-2xl hover:bg-emerald-100 border border-emerald-200 transition-all font-black uppercase text-[10px] tracking-widest shadow-sm"
          >
