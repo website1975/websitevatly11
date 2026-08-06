@@ -1,6 +1,16 @@
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, User } from 'firebase/auth';
-import firebaseConfig from './firebase-applet-config.json';
+const env = (import.meta as any).env || {};
+const firebaseConfig = {
+  projectId: env.VITE_FIREBASE_PROJECT_ID || "zinc-lotus-0bndl",
+  appId: env.VITE_FIREBASE_APP_ID || "1:565062106080:web:921a31222f9ed356c08985",
+  apiKey: env.VITE_FIREBASE_API_KEY || "AIzaSyBcHdqfomUk8aVxZtJt_ikAzoXxsBeGiWI",
+  authDomain: env.VITE_FIREBASE_AUTH_DOMAIN || "zinc-lotus-0bndl.firebaseapp.com",
+  storageBucket: env.VITE_FIREBASE_STORAGE_BUCKET || "zinc-lotus-0bndl.firebasestorage.app",
+  messagingSenderId: env.VITE_FIREBASE_MESSAGING_SENDER_ID || "565062106080",
+  measurementId: env.VITE_FIREBASE_MEASUREMENT_ID || "",
+  oAuthClientId: env.VITE_FIREBASE_OAUTH_CLIENT_ID || "565062106080-5rhr93hbu09crtbq29f13h3m0b5eits4.apps.googleusercontent.com",
+};
 
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
 export const auth = getAuth(app);
