@@ -1,7 +1,8 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Routes, Route, useNavigate, Navigate } from 'react-router-dom';
-import { Book, Plus, Maximize2, Loader2, BrainCircuit, GraduationCap, ShieldCheck, Search, LogOut, Folder, Globe, Zap, Image as ImageIcon, Settings, ArrowLeft, ArrowRight, Upload, AlertCircle, Users } from 'lucide-react';
+import { Book, Plus, Maximize2, Loader2, BrainCircuit, GraduationCap, ShieldCheck, Search, LogOut, Folder, Globe, Zap, Image as ImageIcon, Settings, ArrowLeft, ArrowRight, Upload, AlertCircle, Users, Cloud, ExternalLink, BookOpen } from 'lucide-react';
+import { uploadFileToGoogleDrive } from './googleDrive';
 import { supabase } from './supabaseClient';
 import { AppData, ResourceLink, BookNode, NodeType, Student } from './types';
 import { INITIAL_DATA } from './constants';
@@ -15,6 +16,7 @@ import TaskPanel from './components/TaskPanel';
 import StudentLogin from './components/StudentLogin';
 import StudentManager from './components/StudentManager';
 import HomeworkPanel from './components/HomeworkPanel';
+import { ConfirmModal, ToastNotification, ConfirmState, ToastState } from './components/CustomDialog';
 import { getSafeEnv, SLOGANS } from './utils';
 
 class ErrorBoundary extends React.Component<any, any> {
@@ -122,10 +124,10 @@ const App: React.FC = () => {
         
         // Nếu lỗi do mạng (FetchError) hoặc server tạm thời (5xx), thử lại tối đa 3 lần
         const isNetworkError = cloudError.message?.includes('FetchError') || 
-                              cloudError.status === 503 || 
-                              cloudError.status === 502 ||
-                              cloudError.status === 504 ||
-                              cloudError.status === 404; // Đôi khi 404 là do đường truyền ngắt quãng
+                              (cloudError as any).status === 503 || 
+                              (cloudError as any).status === 502 ||
+                              (cloudError as any).status === 504 ||
+                              (cloudError as any).status === 404; // Đôi khi 404 là do đường truyền ngắt quãng
 
         if (isNetworkError && retryCount < 2) {
           console.log(`Đang thử lại lần ${retryCount + 1}...`);
@@ -448,6 +450,38 @@ const MainView: React.FC<{
     return roots.filter(n => visibleNodeIds.has(n.id));
   }, [data?.nodes, visibleNodeIds]);
 
+  const isNotebookLMUrl = (url: string) => {
+    if (!url) return false;
+    const l = url.toLowerCase();
+    return l.includes('notebook.google.com') || l.includes('notebooklm.google.com') || l.includes('notebooklm');
+  };
+
+  const formatUrlForIframe = (url: string) => {
+    if (!url) return '';
+    let cleanUrl = url.trim();
+
+    if (cleanUrl.includes('drive.google.com')) {
+      if (cleanUrl.includes('/view') || cleanUrl.includes('/edit')) {
+        cleanUrl = cleanUrl.replace(/\/view.*$/, '/preview').replace(/\/edit.*$/, '/preview');
+      } else if (!cleanUrl.includes('/preview') && cleanUrl.includes('/file/d/')) {
+        cleanUrl = cleanUrl.replace(/(\/file\/d\/[^\/]+).*/, '$1/preview');
+      } else if (cleanUrl.includes('open?id=')) {
+        const fileId = cleanUrl.split('id=')[1]?.split('&')[0];
+        if (fileId) cleanUrl = `https://drive.google.com/file/d/${fileId}/preview`;
+      }
+    }
+
+    if (cleanUrl.includes('youtube.com/watch?v=')) {
+      const videoId = cleanUrl.split('v=')[1]?.split('&')[0];
+      if (videoId) cleanUrl = `https://www.youtube.com/embed/${videoId}`;
+    } else if (cleanUrl.includes('youtu.be/')) {
+      const videoId = cleanUrl.split('youtu.be/')[1]?.split('?')[0];
+      if (videoId) cleanUrl = `https://www.youtube.com/embed/${videoId}`;
+    }
+
+    return cleanUrl;
+  };
+
   useEffect(() => {
     const timer = setInterval(() => setSloganIdx(prev => (prev + 1) % SLOGANS.length), 30000);
     return () => clearInterval(timer);
@@ -459,8 +493,56 @@ const MainView: React.FC<{
   const [showResModal, setShowResModal] = useState(false);
   const [resModalData, setResModalData] = useState<{id?: string, title: string, url: string, isGlobal: boolean}>({title: '', url: '', isGlobal: false});
   const [isUploading, setIsUploading] = useState(false);
+  const [isUploadingDrive, setIsUploadingDrive] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
+
+  const [confirmState, setConfirmState] = useState<ConfirmState>({ isOpen: false, title: '', message: '', onConfirm: () => {} });
+  const [toastState, setToastState] = useState<ToastState>({ isOpen: false, message: '' });
+
+  const showToast = (message: string, type: 'success' | 'error' | 'info' = 'info', title?: string) => {
+    setToastState({ isOpen: true, message, type, title });
+    setTimeout(() => {
+      setToastState(prev => ({ ...prev, isOpen: false }));
+    }, 5000);
+  };
+
+  const showConfirm = (title: string, message: string, onConfirm: () => void, type: 'danger' | 'warning' | 'info' = 'danger', confirmText?: string) => {
+    setConfirmState({
+      isOpen: true,
+      title,
+      message,
+      type,
+      confirmText,
+      onConfirm,
+    });
+  };
+
+  const handleGoogleDriveUpload = async (e: React.ChangeEvent<HTMLInputElement>, target: 'node' | 'resource' | 'node_image') => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploadingDrive(true);
+    try {
+      const result = await uploadFileToGoogleDrive(file);
+      const driveUrl = result.previewUrl; // https://drive.google.com/file/d/FILE_ID/preview
+
+      if (target === 'node') {
+        setNodeModalData((prev: any) => ({ ...prev, url: driveUrl, title: prev.title || file.name.replace(/\.[^/.]+$/, '') }));
+      } else if (target === 'node_image') {
+        setNodeModalData((prev: any) => ({ ...prev, imageUrl: driveUrl }));
+      } else {
+        setResModalData((prev: any) => ({ ...prev, url: driveUrl, title: prev.title || file.name.replace(/\.[^/.]+$/, '') }));
+      }
+      showToast(`Đã tải file "${file.name}" lên Google Drive thành công!`, 'success', 'Tải lên Google Drive');
+    } catch (err: any) {
+      console.error("Google Drive Upload error:", err);
+      showToast(err.message || 'Lỗi khi tải lên Google Drive.', 'error', 'Tải lên thất bại');
+    } finally {
+      setIsUploadingDrive(false);
+      e.target.value = '';
+    }
+  };
 
   const exportData = async () => {
     setIsExporting(true);
@@ -489,8 +571,9 @@ const MainView: React.FC<{
       a.download = `VatLy11_FullBackup_${new Date().toLocaleDateString()}.json`;
       a.click();
       URL.revokeObjectURL(url);
+      showToast("Đã xuất file dữ liệu thành công!", "success");
     } catch (error) {
-      alert("Lỗi khi xuất dữ liệu: " + (error instanceof Error ? error.message : String(error)));
+      showToast("Lỗi khi xuất dữ liệu: " + (error instanceof Error ? error.message : String(error)), "error");
     } finally {
       setIsExporting(false);
     }
@@ -499,77 +582,81 @@ const MainView: React.FC<{
   const importData = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (!window.confirm("Cảnh báo: Việc khôi phục sẽ ghi đè dữ liệu hiện tại trong CSDL mới. Bạn có chắc chắn?")) return;
 
-    setIsImporting(true);
-    try {
-      const text = await file.text();
-      const backup = JSON.parse(text);
+    showConfirm(
+      "Xác nhận Khôi phục Dữ liệu",
+      "Cảnh báo: Việc khôi phục sẽ ghi đè toàn bộ dữ liệu hiện tại trong CSDL. Bạn có chắc chắn muốn tiếp tục?",
+      async () => {
+        setIsImporting(true);
+        try {
+          const text = await file.text();
+          const backup = JSON.parse(text);
 
-      if (!backup.tables) throw new Error("File backup không đúng định dạng.");
+          if (!backup.tables) throw new Error("File backup không đúng định dạng.");
 
-      // Restore app_settings
-      if (backup.tables.app_settings) {
-        for (const row of backup.tables.app_settings) {
-          // Map to handle potential id vs grade_id or data column differences
-          const cleanRow = { id: row.id, data: row.data };
-          await supabase.from('app_settings').upsert(cleanRow).select();
+          // Restore app_settings
+          if (backup.tables.app_settings) {
+            for (const row of backup.tables.app_settings) {
+              const cleanRow = { id: row.id, data: row.data };
+              await supabase.from('app_settings').upsert(cleanRow).select();
+            }
+          }
+
+          // Restore quiz_data
+          if (backup.tables.quiz_data) {
+            for (const row of backup.tables.quiz_data) {
+              const cleanRow = { id: row.id || row.quizId || row.node_id, data: row.data };
+              if (cleanRow.id) await supabase.from('quiz_data').upsert(cleanRow).select();
+            }
+          }
+
+          // Restore flashcards
+          if (backup.tables.flashcards) {
+            for (const row of backup.tables.flashcards) {
+              const cleanRow: any = {
+                front: row.front,
+                back: row.back,
+                nodeId: row.nodeId || row.node_id,
+                node_id: row.nodeId || row.node_id,
+                createdAt: row.createdAt || row.created_at || new Date().toISOString(),
+                created_at: row.createdAt || row.created_at || new Date().toISOString()
+              };
+              if (row.id) cleanRow.id = row.id;
+              await supabase.from('flashcards').upsert(cleanRow).select();
+            }
+          }
+
+          // Restore forum_comments
+          if (backup.tables.forum_comments) {
+            for (const row of backup.tables.forum_comments) {
+              const cleanRow: any = {
+                author: row.author,
+                content: row.content,
+                nodeId: row.nodeId || row.node_id,
+                node_id: row.nodeId || row.node_id,
+                isAdmin: row.isAdmin !== undefined ? row.isAdmin : row.is_admin,
+                is_admin: row.isAdmin !== undefined ? row.isAdmin : row.is_admin,
+                imageUrl: row.imageUrl || row.image_url,
+                image_url: row.imageUrl || row.image_url,
+                createdAt: row.createdAt || row.created_at || new Date().toISOString(),
+                created_at: row.createdAt || row.created_at || new Date().toISOString()
+              };
+              if (row.id) cleanRow.id = row.id;
+              await supabase.from('forum_comments').upsert(cleanRow).select();
+            }
+          }
+
+          showToast("Khôi phục dữ liệu thành công! Hãy tải lại trang.", "success");
+          setTimeout(() => window.location.reload(), 1500);
+        } catch (error) {
+          showToast("Lỗi khi khôi phục dữ liệu: " + (error instanceof Error ? error.message : String(error)), "error");
+        } finally {
+          setIsImporting(false);
         }
-      }
-
-      // Restore quiz_data
-      if (backup.tables.quiz_data) {
-        for (const row of backup.tables.quiz_data) {
-          const cleanRow = { id: row.id || row.quizId || row.node_id, data: row.data };
-          if (cleanRow.id) await supabase.from('quiz_data').upsert(cleanRow).select();
-        }
-      }
-
-      // Restore flashcards
-      if (backup.tables.flashcards) {
-        for (const row of backup.tables.flashcards) {
-          // Robust mapping for import
-          const cleanRow: any = {
-            front: row.front,
-            back: row.back,
-            nodeId: row.nodeId || row.node_id,
-            node_id: row.nodeId || row.node_id,
-            createdAt: row.createdAt || row.created_at || new Date().toISOString(),
-            created_at: row.createdAt || row.created_at || new Date().toISOString()
-          };
-          if (row.id) cleanRow.id = row.id;
-          await supabase.from('flashcards').upsert(cleanRow).select();
-        }
-      }
-
-      // Restore forum_comments
-      if (backup.tables.forum_comments) {
-        for (const row of backup.tables.forum_comments) {
-          // Robust mapping for import
-          const cleanRow: any = {
-            author: row.author,
-            content: row.content,
-            nodeId: row.nodeId || row.node_id,
-            node_id: row.nodeId || row.node_id,
-            isAdmin: row.isAdmin !== undefined ? row.isAdmin : row.is_admin,
-            is_admin: row.isAdmin !== undefined ? row.isAdmin : row.is_admin,
-            imageUrl: row.imageUrl || row.image_url,
-            image_url: row.imageUrl || row.image_url,
-            createdAt: row.createdAt || row.created_at || new Date().toISOString(),
-            created_at: row.createdAt || row.created_at || new Date().toISOString()
-          };
-          if (row.id) cleanRow.id = row.id;
-          await supabase.from('forum_comments').upsert(cleanRow).select();
-        }
-      }
-
-      alert("Khôi phục dữ liệu thành công! Hãy tải lại trang.");
-      window.location.reload();
-    } catch (error) {
-      alert("Lỗi khi khôi phục dữ liệu: " + (error instanceof Error ? error.message : String(error)));
-    } finally {
-      setIsImporting(false);
-    }
+      },
+      "warning",
+      "Khôi phục ngay"
+    );
   };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, target: 'node' | 'resource' | 'node_image') => {
@@ -578,7 +665,7 @@ const MainView: React.FC<{
 
     // Limit 50MB
     if (file.size > 50 * 1024 * 1024) {
-      alert("File quá lớn! Giới hạn 50MB.");
+      showToast("File quá lớn! Giới hạn 50MB.", "error");
       return;
     }
 
@@ -609,10 +696,10 @@ const MainView: React.FC<{
         setResModalData({ ...resModalData, url: publicUrl });
       }
       
-      alert("Tải file lên thành công!");
+      showToast("Tải file lên thành công!", "success");
     } catch (error: any) {
       console.error("Upload process error:", error);
-      alert(`Lỗi khi tải file: ${error.message || "Vui lòng kiểm tra lại kết nối."}\n\nLưu ý: Bạn cần vào Supabase -> Storage -> Policies và thêm chính sách (Policy) cho phép 'INSERT' cho bucket 'resources'.`);
+      showToast(`Lỗi khi tải file: ${error.message || "Kiểm tra kết nối."}`, "error");
     } finally {
       setIsUploading(false);
     }
@@ -624,15 +711,23 @@ const MainView: React.FC<{
   useEffect(() => { setActiveTab('content'); }, [selectedId]);
 
   const handleDeleteNode = (id: string) => {
-    if(!window.confirm("Xóa thư mục/bài học này? Hệ thống sẽ xóa cả các mục con bên trong.")) return;
-    const getChildIds = (parentId: string): string[] => {
-      const children = (data?.nodes || []).filter(n => n.parentId === parentId);
-      return [parentId, ...children.flatMap(c => getChildIds(c.id))];
-    };
-    const idsToDelete = getChildIds(id);
-    const newData = {...data, nodes: (data?.nodes || []).filter(n => !idsToDelete.includes(n.id))};
-    updateData(newData);
-    if(selectedId && idsToDelete.includes(selectedId)) setSelectedId(null);
+    showConfirm(
+      "Xác nhận xóa thư mục / bài học",
+      "Xóa thư mục/bài học này? Hệ thống sẽ xóa cả các mục con bên trong.",
+      () => {
+        const getChildIds = (parentId: string): string[] => {
+          const children = (data?.nodes || []).filter(n => n.parentId === parentId);
+          return [parentId, ...children.flatMap(c => getChildIds(c.id))];
+        };
+        const idsToDelete = getChildIds(id);
+        const newData = {...data, nodes: (data?.nodes || []).filter(n => !idsToDelete.includes(n.id))};
+        updateData(newData);
+        if(selectedId && idsToDelete.includes(selectedId)) setSelectedId(null);
+        showToast("Đã xóa mục bài học thành công", "success");
+      },
+      "danger",
+      "Xóa vĩnh viễn"
+    );
   };
 
   const handleReorderNode = (id: string, direction: 'up' | 'down') => {
@@ -714,11 +809,19 @@ const MainView: React.FC<{
   };
 
   const handleDeleteResource = (id: string, title: string, isGlobal: boolean) => {
-    if(!window.confirm(`Xóa học liệu: ${title}?`)) return;
-    const newData = {...data};
-    if(isGlobal) newData.globalResources = (data?.globalResources || []).filter(r => r.id !== id);
-    else newData.nodes = (data?.nodes || []).map(n => n.id === selectedId ? {...n, lessonResources: (n.lessonResources || []).filter(r => r.id !== id)} : n);
-    updateData(newData);
+    showConfirm(
+      "Xác nhận xóa học liệu",
+      `Bạn có chắc chắn muốn xóa học liệu: "${title}"?`,
+      () => {
+        const newData = {...data};
+        if(isGlobal) newData.globalResources = (data?.globalResources || []).filter(r => r.id !== id);
+        else newData.nodes = (data?.nodes || []).map(n => n.id === selectedId ? {...n, lessonResources: (n.lessonResources || []).filter(r => r.id !== id)} : n);
+        updateData(newData);
+        showToast("Đã xóa học liệu thành công", "success");
+      },
+      "danger",
+      "Xóa học liệu"
+    );
   };
 
   const handleSaveHomeConfig = () => {
@@ -899,8 +1002,35 @@ const MainView: React.FC<{
                 <div className={`flex-1 relative overflow-y-auto custom-scrollbar bg-[#fcfdfe] ${activeTab === 'content' ? 'p-0' : 'p-6'}`}>
                   {activeTab === 'content' ? (
                     <div className="h-full relative">
-                      {iframeLoading && <div className="absolute inset-0 flex flex-col items-center justify-center z-10 bg-white/90 backdrop-blur-sm"><Loader2 className={`animate-spin text-${themeColor}-500 mb-2`} size={32}/><p className="text-[10px] uppercase font-bold text-slate-300 tracking-widest">Đang tải...</p></div>}
-                      {selectedNode?.url ? <iframe src={selectedNode.url} title={selectedNode.title} className={`w-full h-full border-none transition-opacity duration-500 ${iframeLoading ? 'opacity-0' : 'opacity-100'}`} onLoad={()=>setIframeLoading(false)}/> : <div className="h-full flex items-center justify-center italic text-slate-200 text-xl font-light tracking-widest">Nội dung chưa cập nhật...</div>}
+                      {selectedNode?.url ? (
+                        isNotebookLMUrl(selectedNode.url) ? (
+                          <div className="h-full flex flex-col items-center justify-center p-8 text-center bg-slate-50/50 rounded-2xl border border-slate-100/80 m-4">
+                            <div className="w-16 h-16 bg-purple-100 text-purple-600 rounded-3xl flex items-center justify-center mb-4 shadow-sm">
+                              <BookOpen size={28} />
+                            </div>
+                            <h3 className="text-lg font-black text-slate-800 mb-2">Sổ tay Google NotebookLM</h3>
+                            <p className="text-xs text-slate-500 max-w-md mb-6 leading-relaxed">
+                              Liên kết này tới tài liệu sổ tay thông minh Google NotebookLM. Vì lý do bảo mật và phân quyền tài khoản Google, trang này cần mở trực tiếp trong thẻ mới để tương tác đầy đủ.
+                            </p>
+                            <a
+                              href={selectedNode.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="px-6 py-3.5 bg-purple-600 text-white rounded-2xl font-bold text-xs shadow-lg shadow-purple-200 hover:bg-purple-700 hover:shadow-xl transition-all flex items-center gap-2"
+                            >
+                              <ExternalLink size={16} />
+                              Mở Google NotebookLM trong tab mới
+                            </a>
+                          </div>
+                        ) : (
+                          <>
+                            {iframeLoading && <div className="absolute inset-0 flex flex-col items-center justify-center z-10 bg-white/90 backdrop-blur-sm"><Loader2 className={`animate-spin text-${themeColor}-500 mb-2`} size={32}/><p className="text-[10px] uppercase font-bold text-slate-300 tracking-widest">Đang tải...</p></div>}
+                            <iframe src={formatUrlForIframe(selectedNode.url)} title={selectedNode.title} className={`w-full h-full border-none transition-opacity duration-500 ${iframeLoading ? 'opacity-0' : 'opacity-100'}`} onLoad={()=>setIframeLoading(false)}/>
+                          </>
+                        )
+                      ) : (
+                        <div className="h-full flex items-center justify-center italic text-slate-200 text-xl font-light tracking-widest">Nội dung chưa cập nhật...</div>
+                      )}
                     </div>
                   ) : activeTab === 'flashcards' ? (
                     <FlashcardsPanel nodeId={selectedId!} isAdmin={isAdmin} themeColor={themeColor} gradeId={selectedGrade} />
@@ -1049,22 +1179,34 @@ const MainView: React.FC<{
             {nodeModalData.type === 'lesson' && (
               <>
                 <div className="space-y-1">
-                  <label className="text-[9px] font-bold text-slate-400 uppercase ml-1 tracking-widest flex justify-between items-center">
+                  <label className="text-[9px] font-bold text-slate-400 uppercase ml-1 tracking-widest flex justify-between items-center flex-wrap gap-2">
                     <span>Link tài liệu (Iframe)</span>
-                    <label className="cursor-pointer text-indigo-600 hover:text-indigo-800 flex items-center gap-1">
-                      <Upload size={10}/> {isUploading ? 'Đang tải...' : 'Tải file lên'}
-                      <input type="file" className="hidden" onChange={(e) => handleFileUpload(e, 'node')} disabled={isUploading}/>
-                    </label>
+                    <div className="flex items-center gap-2">
+                      <label className="cursor-pointer text-emerald-600 hover:text-emerald-800 flex items-center gap-1 font-black bg-emerald-50 px-2 py-1 rounded-lg border border-emerald-100 transition-all">
+                        <Cloud size={11}/> {isUploadingDrive ? 'Đang lên Drive...' : 'Tải lên Google Drive'}
+                        <input type="file" className="hidden" onChange={(e) => handleGoogleDriveUpload(e, 'node')} disabled={isUploadingDrive}/>
+                      </label>
+                      <label className="cursor-pointer text-indigo-600 hover:text-indigo-800 flex items-center gap-1 bg-indigo-50 px-2 py-1 rounded-lg border border-indigo-100 transition-all">
+                        <Upload size={11}/> {isUploading ? 'Đang tải...' : 'File máy'}
+                        <input type="file" className="hidden" onChange={(e) => handleFileUpload(e, 'node')} disabled={isUploading}/>
+                      </label>
+                    </div>
                   </label>
-                  <input value={nodeModalData.url} onChange={e=>setNodeModalData({...nodeModalData, url:e.target.value})} className={`w-full px-4 py-3 text-[11px] outline-none bg-slate-50 border border-slate-100 rounded-xl focus:border-${themeColor}-400 transition-all`} placeholder="https://..."/>
+                  <input value={nodeModalData.url} onChange={e=>setNodeModalData({...nodeModalData, url:e.target.value})} className={`w-full px-4 py-3 text-[11px] outline-none bg-slate-50 border border-slate-100 rounded-xl focus:border-${themeColor}-400 transition-all`} placeholder="https://drive.google.com/file/d/.../preview hoặc link tài liệu..."/>
                 </div>
                 <div className="space-y-1">
-                  <label className="text-[9px] font-bold text-slate-400 uppercase ml-1 tracking-widest flex justify-between items-center">
+                  <label className="text-[9px] font-bold text-slate-400 uppercase ml-1 tracking-widest flex justify-between items-center flex-wrap gap-2">
                     <span className="flex items-center gap-1"><ImageIcon size={10}/> Link hình ảnh bài học</span>
-                    <label className="cursor-pointer text-emerald-600 hover:text-emerald-800 flex items-center gap-1">
-                      <Upload size={10}/> {isUploading ? 'Đang tải...' : 'Tải ảnh lên'}
-                      <input type="file" className="hidden" onChange={(e) => handleFileUpload(e, 'node_image')} disabled={isUploading} accept="image/*"/>
-                    </label>
+                    <div className="flex items-center gap-2">
+                      <label className="cursor-pointer text-emerald-600 hover:text-emerald-800 flex items-center gap-1 font-black bg-emerald-50 px-2 py-1 rounded-lg border border-emerald-100 transition-all">
+                        <Cloud size={11}/> {isUploadingDrive ? 'Đang lên Drive...' : 'Up Google Drive'}
+                        <input type="file" className="hidden" onChange={(e) => handleGoogleDriveUpload(e, 'node_image')} disabled={isUploadingDrive} accept="image/*"/>
+                      </label>
+                      <label className="cursor-pointer text-indigo-600 hover:text-indigo-800 flex items-center gap-1 bg-indigo-50 px-2 py-1 rounded-lg border border-indigo-100 transition-all">
+                        <Upload size={11}/> {isUploading ? 'Đang tải...' : 'File máy'}
+                        <input type="file" className="hidden" onChange={(e) => handleFileUpload(e, 'node_image')} disabled={isUploading} accept="image/*"/>
+                      </label>
+                    </div>
                   </label>
                   <input value={nodeModalData.imageUrl || ''} onChange={e=>setNodeModalData({...nodeModalData, imageUrl:e.target.value})} className={`w-full px-4 py-3 text-[11px] outline-none bg-slate-50 border border-slate-100 rounded-xl focus:border-${themeColor}-400 transition-all`} placeholder="https://anh-minh-hoa.png"/>
                 </div>
@@ -1088,14 +1230,20 @@ const MainView: React.FC<{
               <input autoFocus value={resModalData.title} onChange={e=>setResModalData({...resModalData, title:e.target.value})} className={`w-full px-4 py-3 text-sm font-medium outline-none bg-slate-50 border border-slate-100 rounded-xl focus:border-${themeColor}-400 transition-all`} placeholder="Ví dụ: Video thí nghiệm..."/>
             </div>
             <div className="space-y-1">
-              <label className="text-[9px] font-bold text-slate-400 uppercase ml-1 tracking-widest flex justify-between items-center">
+              <label className="text-[9px] font-bold text-slate-400 uppercase ml-1 tracking-widest flex justify-between items-center flex-wrap gap-2">
                 <span>Đường dẫn (URL)</span>
-                <label className="cursor-pointer text-indigo-600 hover:text-indigo-800 flex items-center gap-1">
-                  <Upload size={10}/> {isUploading ? 'Đang tải...' : 'Tải file lên'}
-                  <input type="file" className="hidden" onChange={(e) => handleFileUpload(e, 'resource')} disabled={isUploading}/>
-                </label>
+                <div className="flex items-center gap-2">
+                  <label className="cursor-pointer text-emerald-600 hover:text-emerald-800 flex items-center gap-1 font-black bg-emerald-50 px-2 py-1 rounded-lg border border-emerald-100 transition-all">
+                    <Cloud size={11}/> {isUploadingDrive ? 'Đang lên Drive...' : 'Tải lên Google Drive'}
+                    <input type="file" className="hidden" onChange={(e) => handleGoogleDriveUpload(e, 'resource')} disabled={isUploadingDrive}/>
+                  </label>
+                  <label className="cursor-pointer text-indigo-600 hover:text-indigo-800 flex items-center gap-1 bg-indigo-50 px-2 py-1 rounded-lg border border-indigo-100 transition-all">
+                    <Upload size={11}/> {isUploading ? 'Đang tải...' : 'File máy'}
+                    <input type="file" className="hidden" onChange={(e) => handleFileUpload(e, 'resource')} disabled={isUploading}/>
+                  </label>
+                </div>
               </label>
-              <input value={resModalData.url} onChange={e=>setResModalData({...resModalData, url:e.target.value})} className={`w-full px-4 py-3 text-[11px] outline-none bg-slate-50 border border-slate-100 rounded-xl focus:border-${themeColor}-400 transition-all`} placeholder="https://drive.google.com/..."/>
+              <input value={resModalData.url} onChange={e=>setResModalData({...resModalData, url:e.target.value})} className={`w-full px-4 py-3 text-[11px] outline-none bg-slate-50 border border-slate-100 rounded-xl focus:border-${themeColor}-400 transition-all`} placeholder="https://drive.google.com/file/d/.../preview"/>
             </div>
             <div className="flex gap-4 pt-2">
                 <button type="button" onClick={()=>setShowResModal(false)} className="flex-1 py-3 text-[10px] font-bold uppercase text-slate-300 tracking-widest">Hủy</button>
@@ -1104,6 +1252,9 @@ const MainView: React.FC<{
           </form>
         </div>
       )}
+
+      <ConfirmModal state={confirmState} onClose={() => setConfirmState(prev => ({ ...prev, isOpen: false }))} />
+      <ToastNotification state={toastState} onClose={() => setToastState(prev => ({ ...prev, isOpen: false }))} />
 
       <style>{`
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
