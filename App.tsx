@@ -1,8 +1,8 @@
 
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Routes, Route, useNavigate, Navigate } from 'react-router-dom';
 import { Book, Plus, Maximize2, Loader2, BrainCircuit, GraduationCap, ShieldCheck, Search, LogOut, Folder, Globe, Zap, Image as ImageIcon, Settings, ArrowLeft, ArrowRight, Upload, AlertCircle, Users, Cloud, ExternalLink, BookOpen } from 'lucide-react';
-import { uploadFileToGoogleDrive } from './googleDrive';
+import { uploadFileToGoogleDrive, signInWithGoogleForDrive, getDriveAccessToken } from './googleDrive';
 import { supabase } from './supabaseClient';
 import { AppData, ResourceLink, BookNode, NodeType, Student } from './types';
 import { INITIAL_DATA } from './constants';
@@ -496,6 +496,24 @@ const MainView: React.FC<{
   const [isUploadingDrive, setIsUploadingDrive] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
+
+  const nodeDriveInputRef = useRef<HTMLInputElement>(null);
+  const nodeImageDriveInputRef = useRef<HTMLInputElement>(null);
+  const resourceDriveInputRef = useRef<HTMLInputElement>(null);
+
+  const triggerGoogleDriveUpload = async (inputRef: React.RefObject<HTMLInputElement>) => {
+    try {
+      if (!getDriveAccessToken()) {
+        setIsUploadingDrive(true);
+        await signInWithGoogleForDrive();
+        setIsUploadingDrive(false);
+      }
+      inputRef.current?.click();
+    } catch (err: any) {
+      setIsUploadingDrive(false);
+      showToast(err.message || 'Lỗi khi đăng nhập Google Drive.', 'error', 'Đăng nhập Google thất bại');
+    }
+  };
 
   const [confirmState, setConfirmState] = useState<ConfirmState>({ isOpen: false, title: '', message: '', onConfirm: () => {} });
   const [toastState, setToastState] = useState<ToastState>({ isOpen: false, message: '' });
@@ -1182,10 +1200,15 @@ const MainView: React.FC<{
                   <label className="text-[9px] font-bold text-slate-400 uppercase ml-1 tracking-widest flex justify-between items-center flex-wrap gap-2">
                     <span>Link tài liệu (Iframe)</span>
                     <div className="flex items-center gap-2">
-                      <label className="cursor-pointer text-emerald-600 hover:text-emerald-800 flex items-center gap-1 font-black bg-emerald-50 px-2 py-1 rounded-lg border border-emerald-100 transition-all">
+                      <button
+                        type="button"
+                        onClick={() => triggerGoogleDriveUpload(nodeDriveInputRef)}
+                        disabled={isUploadingDrive}
+                        className="cursor-pointer text-emerald-600 hover:text-emerald-800 flex items-center gap-1 font-black bg-emerald-50 px-2 py-1 rounded-lg border border-emerald-100 transition-all"
+                      >
                         <Cloud size={11}/> {isUploadingDrive ? 'Đang lên Drive...' : 'Tải lên Google Drive'}
-                        <input type="file" className="hidden" onChange={(e) => handleGoogleDriveUpload(e, 'node')} disabled={isUploadingDrive}/>
-                      </label>
+                      </button>
+                      <input ref={nodeDriveInputRef} type="file" className="hidden" onChange={(e) => handleGoogleDriveUpload(e, 'node')} disabled={isUploadingDrive}/>
                       <label className="cursor-pointer text-indigo-600 hover:text-indigo-800 flex items-center gap-1 bg-indigo-50 px-2 py-1 rounded-lg border border-indigo-100 transition-all">
                         <Upload size={11}/> {isUploading ? 'Đang tải...' : 'File máy'}
                         <input type="file" className="hidden" onChange={(e) => handleFileUpload(e, 'node')} disabled={isUploading}/>
@@ -1198,10 +1221,15 @@ const MainView: React.FC<{
                   <label className="text-[9px] font-bold text-slate-400 uppercase ml-1 tracking-widest flex justify-between items-center flex-wrap gap-2">
                     <span className="flex items-center gap-1"><ImageIcon size={10}/> Link hình ảnh bài học</span>
                     <div className="flex items-center gap-2">
-                      <label className="cursor-pointer text-emerald-600 hover:text-emerald-800 flex items-center gap-1 font-black bg-emerald-50 px-2 py-1 rounded-lg border border-emerald-100 transition-all">
+                      <button
+                        type="button"
+                        onClick={() => triggerGoogleDriveUpload(nodeImageDriveInputRef)}
+                        disabled={isUploadingDrive}
+                        className="cursor-pointer text-emerald-600 hover:text-emerald-800 flex items-center gap-1 font-black bg-emerald-50 px-2 py-1 rounded-lg border border-emerald-100 transition-all"
+                      >
                         <Cloud size={11}/> {isUploadingDrive ? 'Đang lên Drive...' : 'Up Google Drive'}
-                        <input type="file" className="hidden" onChange={(e) => handleGoogleDriveUpload(e, 'node_image')} disabled={isUploadingDrive} accept="image/*"/>
-                      </label>
+                      </button>
+                      <input ref={nodeImageDriveInputRef} type="file" className="hidden" onChange={(e) => handleGoogleDriveUpload(e, 'node_image')} disabled={isUploadingDrive} accept="image/*"/>
                       <label className="cursor-pointer text-indigo-600 hover:text-indigo-800 flex items-center gap-1 bg-indigo-50 px-2 py-1 rounded-lg border border-indigo-100 transition-all">
                         <Upload size={11}/> {isUploading ? 'Đang tải...' : 'File máy'}
                         <input type="file" className="hidden" onChange={(e) => handleFileUpload(e, 'node_image')} disabled={isUploading} accept="image/*"/>
@@ -1233,10 +1261,15 @@ const MainView: React.FC<{
               <label className="text-[9px] font-bold text-slate-400 uppercase ml-1 tracking-widest flex justify-between items-center flex-wrap gap-2">
                 <span>Đường dẫn (URL)</span>
                 <div className="flex items-center gap-2">
-                  <label className="cursor-pointer text-emerald-600 hover:text-emerald-800 flex items-center gap-1 font-black bg-emerald-50 px-2 py-1 rounded-lg border border-emerald-100 transition-all">
+                  <button
+                    type="button"
+                    onClick={() => triggerGoogleDriveUpload(resourceDriveInputRef)}
+                    disabled={isUploadingDrive}
+                    className="cursor-pointer text-emerald-600 hover:text-emerald-800 flex items-center gap-1 font-black bg-emerald-50 px-2 py-1 rounded-lg border border-emerald-100 transition-all"
+                  >
                     <Cloud size={11}/> {isUploadingDrive ? 'Đang lên Drive...' : 'Tải lên Google Drive'}
-                    <input type="file" className="hidden" onChange={(e) => handleGoogleDriveUpload(e, 'resource')} disabled={isUploadingDrive}/>
-                  </label>
+                  </button>
+                  <input ref={resourceDriveInputRef} type="file" className="hidden" onChange={(e) => handleGoogleDriveUpload(e, 'resource')} disabled={isUploadingDrive}/>
                   <label className="cursor-pointer text-indigo-600 hover:text-indigo-800 flex items-center gap-1 bg-indigo-50 px-2 py-1 rounded-lg border border-indigo-100 transition-all">
                     <Upload size={11}/> {isUploading ? 'Đang tải...' : 'File máy'}
                     <input type="file" className="hidden" onChange={(e) => handleFileUpload(e, 'resource')} disabled={isUploading}/>
