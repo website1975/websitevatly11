@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Send, Trash2, Image as ImageIcon, Wifi, WifiOff, RefreshCw, ChevronDown, Eye, AlertCircle, Home, BookOpen, Clock, CheckCircle2, Bold, Italic, List, Table as TableIcon, Link, Type, Palette, AlignLeft, AlignCenter, AlignRight, AlignJustify, Heading3, Calculator, X, Search, Edit2, Users } from 'lucide-react';
+import { Send, Trash2, Image as ImageIcon, Wifi, WifiOff, RefreshCw, ChevronDown, Eye, AlertCircle, Home, BookOpen, Clock, CheckCircle2, Bold, Italic, List, Table as TableIcon, Link, Type, Palette, AlignLeft, AlignCenter, AlignRight, AlignJustify, Heading3, Calculator, X, Search, Edit2, Users, Cloud } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import remarkMath from 'remark-math';
@@ -8,7 +8,9 @@ import remarkBreaks from 'remark-breaks';
 import rehypeKatex from 'rehype-katex';
 import rehypeRaw from 'rehype-raw';
 import { supabase } from '../supabaseClient';
+import { uploadFileToGoogleDrive } from '../googleDrive';
 import { ForumComment, Student } from '../types';
+import { ConfirmModal, ToastNotification, ConfirmState, ToastState } from './CustomDialog';
 
 // Import Katex CSS
 const KATEX_CSS = "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css";
@@ -70,6 +72,7 @@ const HomeworkPanel: React.FC<HomeworkPanelProps> = ({ nodeId, student, isAdmin,
   const [content, setContent] = useState('');
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [isUploadingDrive, setIsUploadingDrive] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [isConnected, setIsConnected] = useState(false);
@@ -82,10 +85,50 @@ const HomeworkPanel: React.FC<HomeworkPanelProps> = ({ nodeId, student, isAdmin,
   const [selectedQuestionId, setSelectedQuestionId] = useState<string | null>(null);
   const [replyingToId, setReplyingToId] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [confirmState, setConfirmState] = useState<ConfirmState>({ isOpen: false, title: '', message: '', onConfirm: () => {} });
+  const [toastState, setToastState] = useState<ToastState>({ isOpen: false, message: '' });
+
+  const showToast = (message: string, type: 'success' | 'error' | 'info' = 'info', title?: string) => {
+    setToastState({ isOpen: true, message, type, title });
+    setTimeout(() => {
+      setToastState(prev => ({ ...prev, isOpen: false }));
+    }, 5000);
+  };
   
   const homeworkNodeId = `homework_${nodeId}`;
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const driveFileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  const handleDriveFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploadingDrive(true);
+    try {
+      const result = await uploadFileToGoogleDrive(file);
+      const fileName = result.name || file.name;
+      const isPdf = file.type === 'application/pdf' || fileName.toLowerCase().endsWith('.pdf');
+
+      let snippet = '';
+      if (isPdf) {
+        snippet = `\n\n<iframe src="${result.previewUrl}" width="100%" height="500px" style="border:none; border-radius:12px;"></iframe>\n\n[📄 Xem/Tải tài liệu PDF: ${fileName}](${result.previewUrl})\n\n`;
+      } else if (file.type.startsWith('image/')) {
+        snippet = `\n\n![${fileName}](${result.previewUrl})\n\n`;
+      } else {
+        snippet = `\n\n[📎 Tài liệu đính kèm Google Drive: ${fileName}](${result.previewUrl})\n\n`;
+      }
+
+      setContent(prev => prev + snippet);
+      showToast(`Đã tải file "${fileName}" lên Google Drive và chèn xem trực tiếp thành công!`, 'success', 'Thành công');
+    } catch (err: any) {
+      console.error("Google Drive upload error in HomeworkPanel:", err);
+      showToast(err.message || 'Lỗi khi tải file lên Google Drive.', 'error', 'Tải tệp thất bại');
+    } finally {
+      setIsUploadingDrive(false);
+      e.target.value = '';
+    }
+  };
 
   useEffect(() => {
     // Inject Katex CSS
@@ -290,58 +333,75 @@ const HomeworkPanel: React.FC<HomeworkPanelProps> = ({ nodeId, student, isAdmin,
       fetchComments(true);
     } catch (err: any) {
       console.error("Submission error:", err);
-      alert("Lỗi khi gửi nội dung: " + (err.message || "Kiểm tra kết nối"));
+      showToast("Lỗi khi gửi nội dung: " + (err.message || "Kiểm tra kết nối"), 'error', 'Thất bại');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = (id: string) => {
     if (!isAdmin) return;
-    if (!window.confirm("Xoá bài này?")) return;
-    await supabase.from('forum_comments').delete().eq('id', id);
-    setComments(prev => prev.filter(c => c.id !== id));
+    setConfirmState({
+      isOpen: true,
+      title: 'Xác nhận xoá bài đăng',
+      message: 'Bạn có chắc chắn muốn xoá bài viết / câu trả lời này không?',
+      type: 'danger',
+      confirmText: 'Xóa bài',
+      onConfirm: async () => {
+        await supabase.from('forum_comments').delete().eq('id', id);
+        setComments(prev => prev.filter(c => c.id !== id));
+        showToast('Đã xóa bài viết thành công', 'success');
+      },
+    });
   };
 
   const handleBatchUpdateGrade = async () => {
     if (!isAdmin || !gradeId || comments.length === 0) return;
-    if (!window.confirm(`Gắn nhãn Khối ${gradeId} cho toàn bộ bài viết và câu trả lời trong bài học này?`)) return;
+    
+    setConfirmState({
+      isOpen: true,
+      title: `Gắn nhãn Khối ${gradeId}`,
+      message: `Bạn có chắc chắn muốn gắn nhãn Khối ${gradeId} cho toàn bộ bài viết và câu trả lời trong bài học này?`,
+      type: 'info',
+      confirmText: 'Gắn nhãn',
+      onConfirm: async () => {
+        setLoading(true);
+        let successCount = 0;
+        try {
+          const gStr = String(gradeId);
+          
+          const tryUpdate = async (colNode: string, colGrade: string) => {
+            const { data, error } = await supabase
+              .from('forum_comments')
+              .update({ [colGrade]: gStr })
+              .or(`${colNode}.eq.${homeworkNodeId},${colNode}.ilike.${homeworkNodeId}_ans_%`)
+              .select('id');
+            
+            if (!error && data) {
+              successCount += data.length;
+              return true;
+            }
+            return false;
+          };
 
-    setLoading(true);
-    let successCount = 0;
-    try {
-      const gStr = String(gradeId);
-      
-      const tryUpdate = async (colNode: string, colGrade: string) => {
-        const { data, error } = await supabase
-          .from('forum_comments')
-          .update({ [colGrade]: gStr })
-          .or(`${colNode}.eq.${homeworkNodeId},${colNode}.ilike.${homeworkNodeId}_ans_%`)
-          .select('id');
-        
-        if (!error && data) {
-          successCount += data.length;
-          return true;
+          await tryUpdate('node_id', 'grade_id');
+          await tryUpdate('node_id', 'gradeId');
+          await tryUpdate('nodeId', 'grade_id');
+          await tryUpdate('nodeId', 'gradeId');
+
+          if (successCount > 0) {
+            showToast(`Đã đồng bộ nhãn Khối ${gradeId} cho ${successCount} mục thảo luận.`, 'success');
+            fetchComments();
+          } else {
+            showToast("Không tìm thấy dữ liệu cũ để đồng bộ hoặc bảng chưa có cột grade_id.", 'info');
+          }
+        } catch (err: any) {
+          showToast("Lỗi: " + err.message, 'error');
+        } finally {
+          setLoading(false);
         }
-        return false;
-      };
-
-      await tryUpdate('node_id', 'grade_id');
-      await tryUpdate('node_id', 'gradeId');
-      await tryUpdate('nodeId', 'grade_id');
-      await tryUpdate('nodeId', 'gradeId');
-
-      if (successCount > 0) {
-        alert(`Đã đồng bộ nhãn Khối ${gradeId} cho ${successCount} mục thảo luận.`);
-        fetchComments();
-      } else {
-        alert("Không tìm thấy dữ liệu cũ để đồng bộ hoặc bảng chưa có cột grade_id.");
       }
-    } catch (err: any) {
-      alert("Lỗi: " + err.message);
-    } finally {
-      setLoading(false);
-    }
+    });
   };
 
   const renderToolbar = () => (
@@ -485,8 +545,18 @@ const HomeworkPanel: React.FC<HomeworkPanelProps> = ({ nodeId, student, isAdmin,
   );
 
   const renderActionBar = () => (
-    <div className="bg-slate-50/80 p-6 flex items-center justify-between border-t border-slate-100">
-      <div className="flex items-center gap-4">
+    <div className="bg-slate-50/80 p-6 flex items-center justify-between border-t border-slate-100 flex-wrap gap-4">
+      <div className="flex items-center gap-3 flex-wrap">
+         <button 
+           type="button" 
+           onClick={() => driveFileInputRef.current?.click()} 
+           disabled={isUploadingDrive}
+           className="flex items-center gap-2 px-5 py-3 bg-emerald-50 text-emerald-700 rounded-2xl hover:bg-emerald-100 border border-emerald-200 transition-all font-black uppercase text-[10px] tracking-widest shadow-sm"
+         >
+            <Cloud size={18} /> {isUploadingDrive ? 'Đang lên Drive...' : 'Tải file lên Google Drive'}
+         </button>
+         <input type="file" ref={driveFileInputRef} onChange={handleDriveFileUpload} className="hidden" />
+
          {isAdmin && (
            <>
              <button type="button" onClick={() => fileInputRef.current?.click()} className="flex items-center gap-2 px-6 py-3 bg-white text-slate-500 rounded-2xl hover:bg-indigo-50 hover:text-indigo-600 border border-slate-200 transition-all font-black uppercase text-[10px] tracking-widest shadow-sm">
@@ -497,7 +567,7 @@ const HomeworkPanel: React.FC<HomeworkPanelProps> = ({ nodeId, student, isAdmin,
          )}
       </div>
 
-      <button onClick={() => handleSubmit()} disabled={loading || uploading} className={`px-10 py-4 ${isAdmin ? 'bg-amber-600 shadow-amber-200' : 'bg-indigo-600 shadow-indigo-200'} text-white rounded-2xl hover:scale-105 shadow-2xl disabled:opacity-50 transition-all flex items-center gap-3 group font-black uppercase text-xs tracking-widest`}>
+      <button onClick={() => handleSubmit()} disabled={loading || uploading || isUploadingDrive} className={`px-10 py-4 ${isAdmin ? 'bg-amber-600 shadow-amber-200' : 'bg-indigo-600 shadow-indigo-200'} text-white rounded-2xl hover:scale-105 shadow-2xl disabled:opacity-50 transition-all flex items-center gap-3 group font-black uppercase text-xs tracking-widest`}>
         {loading ? <RefreshCw size={20} className="animate-spin" /> : <Send size={20} className="group-hover:translate-x-1 group-hover:-translate-y-1 transition-all" />}
         {isAdmin ? (editingId ? 'Cập nhật nhiệm vụ' : 'Giao nhiệm vụ') : (editingId ? 'Cập nhật bài nộp' : 'Gửi bài nộp')}
       </button>
@@ -850,6 +920,9 @@ const HomeworkPanel: React.FC<HomeworkPanelProps> = ({ nodeId, student, isAdmin,
         </div>
       )}
 
+      {/* MODAL & TOAST CHO HOÀN CẢNH IFRAME / MOBILE */}
+      <ConfirmModal state={confirmState} onClose={() => setConfirmState(prev => ({ ...prev, isOpen: false }))} />
+      <ToastNotification state={toastState} onClose={() => setToastState(prev => ({ ...prev, isOpen: false }))} />
     </div>
   );
 };
