@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Users, Loader2, Search, UserPlus, Trash2, Key, FileUp, Edit2, X, Download } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 import { Student } from '../types';
+import { ConfirmModal, ToastNotification, ConfirmState, ToastState } from './CustomDialog';
 
 interface StudentManagerProps {
   gradeId: number;
@@ -17,6 +18,16 @@ const StudentManager: React.FC<StudentManagerProps> = ({ gradeId, themeColor, on
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingStudent, setEditingStudent] = useState<Student | null>(null);
   const [newStudent, setNewStudent] = useState({ name: '', full_name: '', password: '' });
+  const [confirmState, setConfirmState] = useState<ConfirmState>({ isOpen: false, title: '', message: '', onConfirm: () => {} });
+  const [toastState, setToastState] = useState<ToastState>({ isOpen: false, message: '' });
+
+  const showToast = (message: string, type: 'success' | 'error' | 'warning' | 'info' = 'info', title?: string) => {
+    setToastState({ isOpen: true, message, type, title });
+    setTimeout(() => {
+      setToastState(prev => ({ ...prev, isOpen: false }));
+    }, 5000);
+  };
+
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   const fetchStudents = async () => {
@@ -58,8 +69,9 @@ const StudentManager: React.FC<StudentManagerProps> = ({ gradeId, themeColor, on
       setNewStudent({ name: '', full_name: '', password: '' });
       setShowAddForm(false);
       fetchStudents();
+      showToast("Đã thêm học sinh thành công", "success");
     } catch (err: any) {
-      alert('Lỗi khi thêm học sinh: ' + err.message);
+      showToast('Lỗi khi thêm học sinh: ' + err.message, "error");
     }
   };
 
@@ -81,8 +93,9 @@ const StudentManager: React.FC<StudentManagerProps> = ({ gradeId, themeColor, on
       
       setEditingStudent(null);
       fetchStudents();
+      showToast("Cập nhật thông tin học sinh thành công", "success");
     } catch (err: any) {
-      alert('Lỗi khi cập nhật: ' + err.message);
+      showToast('Lỗi khi cập nhật: ' + err.message, "error");
     }
   };
 
@@ -117,40 +130,56 @@ const StudentManager: React.FC<StudentManagerProps> = ({ gradeId, themeColor, on
       }
 
       if (studentsToInsert.length === 0) {
-        alert("Không tìm thấy dữ liệu hợp lệ trong file CSV.");
+        showToast("Không tìm thấy dữ liệu hợp lệ trong file CSV.", "error");
         return;
       }
 
-      if (window.confirm(`Thêm ${studentsToInsert.length} học sinh từ file?`)) {
-        setLoading(true);
-        try {
-          const { error } = await supabase.from('students').insert(studentsToInsert);
-          if (error) throw error;
-          alert(`Đã thêm thành công ${studentsToInsert.length} học sinh.`);
-          fetchStudents();
-        } catch (err: any) {
-          alert("Lỗi khi nhập CSV: " + err.message);
-        } finally {
-          setLoading(false);
+      setConfirmState({
+        isOpen: true,
+        title: 'Nhập danh sách học sinh',
+        message: `Thêm ${studentsToInsert.length} học sinh từ file CSV vào danh sách lớp?`,
+        type: 'info',
+        confirmText: 'Nhập ngay',
+        onConfirm: async () => {
+          setLoading(true);
+          try {
+            const { error } = await supabase.from('students').insert(studentsToInsert);
+            if (error) throw error;
+            showToast(`Đã thêm thành công ${studentsToInsert.length} học sinh.`, "success");
+            fetchStudents();
+          } catch (err: any) {
+            showToast("Lỗi khi nhập CSV: " + err.message, "error");
+          } finally {
+            setLoading(false);
+          }
         }
-      }
+      });
     };
     reader.readAsText(file);
     e.target.value = ''; // Reset input
   };
 
-  const handleDeleteStudent = async (id: string, name: string) => {
-    if (!window.confirm(`Xóa học sinh ${name}? Mọi dữ liệu học tập của em sẽ bị mất.`)) return;
-    try {
-      const { error } = await supabase
-        .from('students')
-        .delete()
-        .eq('id', id);
-      if (error) throw error;
-      fetchStudents();
-    } catch (err: any) {
-      alert('Lỗi khi xóa: ' + err.message);
-    }
+  const handleDeleteStudent = (id: string, name: string) => {
+    setConfirmState({
+      isOpen: true,
+      title: 'Xóa học sinh',
+      message: `Bạn có chắc chắn muốn xóa học sinh "${name}"? Mọi dữ liệu học tập của em sẽ bị mất.`,
+      type: 'danger',
+      confirmText: 'Xóa học sinh',
+      onConfirm: async () => {
+        try {
+          const { error } = await supabase
+            .from('students')
+            .delete()
+            .eq('id', id);
+          if (error) throw error;
+          fetchStudents();
+          showToast(`Đã xóa học sinh ${name}`, "success");
+        } catch (err: any) {
+          showToast('Lỗi khi xóa: ' + err.message, "error");
+        }
+      }
+    });
   };
 
   const filteredStudents = students.filter(s => 
@@ -323,6 +352,9 @@ const StudentManager: React.FC<StudentManagerProps> = ({ gradeId, themeColor, on
            </form>
         </div>
       )}
+       {/* MODALS CỦA TRÌNH QUẢN LÝ HỌC SINH */}
+       <ConfirmModal state={confirmState} onClose={() => setConfirmState(prev => ({ ...prev, isOpen: false }))} />
+       <ToastNotification state={toastState} onClose={() => setToastState(prev => ({ ...prev, isOpen: false }))} />
     </div>
   );
 };
