@@ -4,6 +4,7 @@ import { Send, Trash2, Image as ImageIcon, Wifi, WifiOff, RefreshCw, ChevronDown
 import { supabase } from '../supabaseClient';
 import { ForumComment } from '../types';
 import { renderLatex } from '../utils';
+import { ConfirmModal, ToastNotification, ConfirmState, ToastState } from './CustomDialog';
 
 interface ForumProps {
   nodeId: string;
@@ -32,6 +33,16 @@ const Forum: React.FC<ForumProps> = ({ nodeId, isAdmin, themeColor }) => {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [showScrollBtn, setShowScrollBtn] = useState(false);
   const [showPreview, setShowPreview] = useState(true);
+  
+  const [confirmState, setConfirmState] = useState<ConfirmState>({ isOpen: false, title: '', message: '', onConfirm: () => {} });
+  const [toastState, setToastState] = useState<ToastState>({ isOpen: false, message: '' });
+
+  const showToast = (message: string, type: 'success' | 'error' | 'warning' | 'info' = 'info', title?: string) => {
+    setToastState({ isOpen: true, message, type, title });
+    setTimeout(() => {
+      setToastState(prev => ({ ...prev, isOpen: false }));
+    }, 5000);
+  };
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -78,17 +89,25 @@ const Forum: React.FC<ForumProps> = ({ nodeId, isAdmin, themeColor }) => {
     setIsRefreshing(false);
   };
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = (id: string) => {
     if (!isAdmin) return;
-    if (!window.confirm("Bạn có chắc chắn muốn xoá bình luận này?")) return;
-    
-    try {
-      const { error } = await supabase.from('forum_comments').delete().eq('id', id);
-      if (error) throw error;
-      setComments(prev => prev.filter(c => c.id !== id));
-    } catch (err) {
-      alert("Lỗi khi xoá bình luận. Vui lòng thử lại.");
-    }
+    setConfirmState({
+      isOpen: true,
+      title: 'Xóa bình luận',
+      message: 'Bạn có chắc chắn muốn xoá bình luận này?',
+      type: 'danger',
+      confirmText: 'Xóa',
+      onConfirm: async () => {
+        try {
+          const { error } = await supabase.from('forum_comments').delete().eq('id', id);
+          if (error) throw error;
+          setComments(prev => prev.filter(c => c.id !== id));
+          showToast('Đã xóa bình luận thành công', 'success');
+        } catch (err) {
+          showToast("Lỗi khi xoá bình luận. Vui lòng thử lại.", 'error');
+        }
+      }
+    });
   };
 
   useEffect(() => {
@@ -299,6 +318,9 @@ const Forum: React.FC<ForumProps> = ({ nodeId, isAdmin, themeColor }) => {
             <button onClick={() => { setSelectedFile(null); setPreviewUrl(null); }} className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 shadow-lg"><Trash2 size={10} /></button>
           </div>
         )}
+
+        <ConfirmModal state={confirmState} onClose={() => setConfirmState(prev => ({ ...prev, isOpen: false }))} />
+        <ToastNotification state={toastState} onClose={() => setToastState(prev => ({ ...prev, isOpen: false }))} />
       </div>
     </div>
   );
