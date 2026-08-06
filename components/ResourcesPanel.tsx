@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Plus, Pencil, Trash2, FileText, Cloud, Globe } from 'lucide-react';
+import { Plus, Pencil, Trash2, FileText, Cloud, Globe, BookOpen } from 'lucide-react';
 import { ResourceLink } from '../types';
 
 interface ResourcesPanelProps {
@@ -22,6 +22,8 @@ const ResourceItem: React.FC<{
   onEdit: (res: ResourceLink, isGlobal: boolean) => void;
   onDelete: (id: string, title: string, isGlobal: boolean) => void;
 }> = ({ r, isGlobal, isAdmin, themeColor, onEdit, onDelete }) => {
+  const urlLower = r.url.toLowerCase();
+  const isNotebook = urlLower.includes('notebook.google.com') || urlLower.includes('notebooklm');
   const isDocument = (url: string) => url.toLowerCase().endsWith('.pdf') || url.toLowerCase().includes('drive.google.com');
   
   const themeBorderClasses = {
@@ -34,8 +36,8 @@ const ResourceItem: React.FC<{
 
   return (
     <div className="group relative">
-      <a href={r.url} target="_blank" className={`flex items-center gap-2 p-2 bg-white border border-slate-100 rounded-xl font-bold text-[9px] text-slate-500 uppercase tracking-tighter shadow-sm hover:shadow-md transition-all ${currentThemeBorderClass}`}>
-        {r.url.toLowerCase().includes('drive.google.com') ? <Cloud size={12} className="text-blue-500 shrink-0"/> : isDocument(r.url) ? <FileText size={12} className="text-red-500 shrink-0"/> : <Globe size={12} className="text-sky-500 shrink-0"/>}
+      <a href={r.url} target="_blank" rel="noopener noreferrer" className={`flex items-center gap-2 p-2 bg-white border border-slate-100 rounded-xl font-bold text-[9px] text-slate-500 uppercase tracking-tighter shadow-sm hover:shadow-md transition-all ${currentThemeBorderClass}`}>
+        {isNotebook ? <BookOpen size={12} className="text-purple-600 shrink-0"/> : urlLower.includes('drive.google.com') ? <Cloud size={12} className="text-blue-500 shrink-0"/> : isDocument(r.url) ? <FileText size={12} className="text-red-500 shrink-0"/> : <Globe size={12} className="text-sky-500 shrink-0"/>}
         <span className="truncate">{r.title}</span>
       </a>
       {isAdmin && (
