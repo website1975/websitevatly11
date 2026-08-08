@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Routes, Route, useNavigate, Navigate } from 'react-router-dom';
 import { Book, Plus, Maximize2, Loader2, BrainCircuit, GraduationCap, ShieldCheck, Search, LogOut, Folder, Globe, Zap, Image as ImageIcon, Settings, ArrowLeft, ArrowRight, Upload, AlertCircle, Users, Cloud, ExternalLink, BookOpen } from 'lucide-react';
-import { uploadFileToGoogleDrive, signInWithGoogleForDrive, getDriveAccessToken } from './googleDrive';
+import { uploadFileToGoogleDrive, signInWithGoogleForDrive, getDriveAccessToken, isGoogleDriveUrl, extractDriveFileId } from './googleDrive';
 import { supabase } from './supabaseClient';
 import { AppData, ResourceLink, BookNode, NodeType, Student } from './types';
 import { INITIAL_DATA } from './constants';
@@ -333,6 +333,7 @@ const MainView: React.FC<{
   const [iframeLoading, setIframeLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<'content' | 'tasks' | 'flashcards' | 'homework'>('content');
   const [showStudentManager, setShowStudentManager] = useState(false);
+  const [resourceModal, setResourceModal] = useState<ResourceLink | null>(null);
   const [sloganIdx, setSloganIdx] = useState(0);
   const [searchTerm, setSearchTerm] = useState('');
   const [isQuizOpen, setIsQuizOpen] = useState(false);
@@ -460,7 +461,21 @@ const MainView: React.FC<{
     if (!url) return '';
     let cleanUrl = url.trim();
 
-    if (cleanUrl.includes('drive.google.com')) {
+    // Direct Google Apps Script URL support
+    if (cleanUrl.includes('script.google.com')) {
+      return cleanUrl.replace(/\?\s*id\s*=\s*/g, '?id=').replace(/&\s*id\s*=\s*/g, '&id=').trim();
+    }
+
+    // Apps Script Proxy auto-routing for Google Drive URLs if gasProxyUrl is set
+    if (data?.gasProxyUrl && (cleanUrl.includes('drive.google.com') || cleanUrl.includes('docs.google.com'))) {
+      const fileId = extractDriveFileId(cleanUrl);
+      if (fileId) {
+        const baseUrl = data.gasProxyUrl.trim();
+        return `${baseUrl}${baseUrl.includes('?') ? '&' : '?'}id=${fileId}`;
+      }
+    }
+
+    if (cleanUrl.includes('drive.google.com') || cleanUrl.includes('docs.google.com')) {
       if (cleanUrl.includes('/view') || cleanUrl.includes('/edit')) {
         cleanUrl = cleanUrl.replace(/\/view.*$/, '/preview').replace(/\/edit.*$/, '/preview');
       } else if (!cleanUrl.includes('/preview') && cleanUrl.includes('/file/d/')) {
@@ -725,6 +740,14 @@ const MainView: React.FC<{
   
   const [showHomeConfig, setShowHomeConfig] = useState(false);
   const [tempHomeUrl, setTempHomeUrl] = useState(data.homeUrl || '');
+  const [tempGasProxyUrl, setTempGasProxyUrl] = useState(data.gasProxyUrl || '');
+
+  useEffect(() => {
+    if (showHomeConfig) {
+      setTempHomeUrl(data.homeUrl || '');
+      setTempGasProxyUrl(data.gasProxyUrl || '');
+    }
+  }, [showHomeConfig, data.homeUrl, data.gasProxyUrl]);
 
   useEffect(() => { setActiveTab('content'); }, [selectedId]);
 
@@ -843,8 +866,9 @@ const MainView: React.FC<{
   };
 
   const handleSaveHomeConfig = () => {
-    updateData({...data, homeUrl: tempHomeUrl});
+    updateData({...data, homeUrl: tempHomeUrl, gasProxyUrl: tempGasProxyUrl});
     setShowHomeConfig(false);
+    showToast("Đã lưu cấu hình cài đặt thành công!", "success");
   };
 
   const handleSelectNode = (id: string | null) => {
@@ -1041,10 +1065,31 @@ const MainView: React.FC<{
                             </a>
                           </div>
                         ) : (
-                          <>
-                            {iframeLoading && <div className="absolute inset-0 flex flex-col items-center justify-center z-10 bg-white/90 backdrop-blur-sm"><Loader2 className={`animate-spin text-${themeColor}-500 mb-2`} size={32}/><p className="text-[10px] uppercase font-bold text-slate-300 tracking-widest">Đang tải...</p></div>}
-                            <iframe src={formatUrlForIframe(selectedNode.url)} title={selectedNode.title} className={`w-full h-full border-none transition-opacity duration-500 ${iframeLoading ? 'opacity-0' : 'opacity-100'}`} onLoad={()=>setIframeLoading(false)}/>
-                          </>
+                          <div className="h-full flex flex-col relative">
+                            {isGoogleDriveUrl(selectedNode.url) && (
+                              <div className="bg-amber-50/90 border-b border-amber-200/60 px-4 py-2 flex items-center justify-between text-xs text-amber-900 shrink-0 z-10 backdrop-blur-sm">
+                                <div className="flex items-center gap-2 overflow-hidden mr-2">
+                                  <AlertCircle size={15} className="text-amber-600 shrink-0" />
+                                  <span className="truncate text-[11px] font-medium">
+                                    Nếu thấy báo lỗi từ Google Drive: Hãy đảm bảo file đã bật chia sẻ <b>"Bất kỳ ai có liên kết"</b> (hoặc dùng Google Apps Script Web App đã chọn <i>"Who has access: Anyone"</i>).
+                                  </span>
+                                </div>
+                                <a
+                                  href={selectedNode.url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="px-3 py-1 bg-amber-600 hover:bg-amber-700 text-white font-bold text-[10px] rounded-lg shrink-0 flex items-center gap-1 shadow-sm transition-all"
+                                >
+                                  <ExternalLink size={12} />
+                                  Mở tab mới
+                                </a>
+                              </div>
+                            )}
+                            <div className="flex-1 relative overflow-hidden">
+                              {iframeLoading && <div className="absolute inset-0 flex flex-col items-center justify-center z-10 bg-white/90 backdrop-blur-sm"><Loader2 className={`animate-spin text-${themeColor}-500 mb-2`} size={32}/><p className="text-[10px] uppercase font-bold text-slate-300 tracking-widest">Đang tải...</p></div>}
+                              <iframe src={formatUrlForIframe(selectedNode.url)} title={selectedNode.title} className={`w-full h-full border-none transition-opacity duration-500 ${iframeLoading ? 'opacity-0' : 'opacity-100'}`} onLoad={()=>setIframeLoading(false)}/>
+                            </div>
+                          </div>
                         )
                       ) : (
                         <div className="h-full flex items-center justify-center italic text-slate-200 text-xl font-light tracking-widest">Nội dung chưa cập nhật...</div>
@@ -1095,7 +1140,40 @@ const MainView: React.FC<{
         themeColor={themeColor}
         onAdd={(isG)=> {setResModalData({title:'', url:'', isGlobal: isG}); setShowResModal(true);}}
         onEdit={(r,isG)=> {setResModalData({...r, isGlobal: isG}); setShowResModal(true);}}
-        onDelete={handleDeleteResource}/>
+        onDelete={handleDeleteResource}
+        onViewResource={(r)=> setResourceModal(r)}/>
+
+      {/* MODAL VIEW RESOURCE */}
+      {resourceModal && (
+        <div className="fixed inset-0 z-[400] bg-slate-950/80 backdrop-blur-md flex flex-col animate-in fade-in duration-300">
+          <div className="p-3 bg-slate-900 border-b border-slate-800 flex justify-between items-center text-white shrink-0">
+            <h3 className="font-bold text-xs tracking-wide uppercase text-indigo-400 truncate max-w-md">
+              Học liệu: {resourceModal.title}
+            </h3>
+            <div className="flex items-center gap-2">
+              <a
+                href={resourceModal.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-3 py-1 bg-indigo-600 hover:bg-indigo-500 rounded-lg text-xs font-bold text-white transition-colors flex items-center gap-1"
+              >
+                <ExternalLink size={12} /> Mở tab mới
+              </a>
+              <button onClick={() => setResourceModal(null)} className="px-3 py-1 bg-slate-800 hover:bg-slate-700 rounded-lg text-xs font-bold text-slate-300 transition-colors">
+                Đóng
+              </button>
+            </div>
+          </div>
+          <div className="flex-1 w-full h-full overflow-hidden bg-white">
+            <iframe
+              src={formatUrlForIframe(resourceModal.url)}
+              title={resourceModal.title}
+              className="w-full h-full border-none"
+            />
+          </div>
+        </div>
+      )}
+
 
       {/* MODAL SETTINGS & DATA */}
       {showHomeConfig && (
@@ -1117,10 +1195,18 @@ const MainView: React.FC<{
                    <p className="text-[8px] text-slate-400 px-1">Cấp tài khoản & Mật khẩu cho học sinh ở khối này.</p>
                 </div>
                 
-                <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest pt-2">Trang chủ</h4>
+                <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest pt-2">Trang chủ & Proxy</h4>
                 <div className="space-y-1">
                   <label className="text-[9px] font-bold text-slate-400 uppercase ml-1 tracking-widest">Link trang chủ (URL)</label>
                   <input value={tempHomeUrl} onChange={e=>setTempHomeUrl(e.target.value)} className="w-full px-4 py-3 text-sm font-medium outline-none bg-slate-50 border border-slate-100 rounded-xl focus:border-amber-400 transition-all" placeholder="https://..."/>
+                </div>
+
+                <div className="space-y-1 pt-1">
+                  <label className="text-[9px] font-bold text-indigo-500 uppercase ml-1 tracking-widest flex items-center gap-1">
+                    <Globe size={11} /> Google Apps Script Web App URL (Tùy chọn)
+                  </label>
+                  <input value={tempGasProxyUrl} onChange={e=>setTempGasProxyUrl(e.target.value)} className="w-full px-4 py-2.5 text-xs font-medium outline-none bg-slate-50 border border-slate-100 rounded-xl focus:border-indigo-400 transition-all" placeholder="https://script.google.com/macros/s/.../exec"/>
+                  <p className="text-[8px] text-slate-400 leading-tight px-1">Nhập Web App URL từ Apps Script để tự động chuyển link Google Drive HTML thành trang chạy HTML trong iframe.</p>
                 </div>
               </div>
 
