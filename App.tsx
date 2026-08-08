@@ -461,20 +461,6 @@ const MainView: React.FC<{
     if (!url) return '';
     let cleanUrl = url.trim();
 
-    // Direct Google Apps Script URL support
-    if (cleanUrl.includes('script.google.com')) {
-      return cleanUrl.replace(/\?\s*id\s*=\s*/g, '?id=').replace(/&\s*id\s*=\s*/g, '&id=').trim();
-    }
-
-    // Apps Script Proxy auto-routing for Google Drive URLs if gasProxyUrl is set
-    if (data?.gasProxyUrl && (cleanUrl.includes('drive.google.com') || cleanUrl.includes('docs.google.com'))) {
-      const fileId = extractDriveFileId(cleanUrl);
-      if (fileId) {
-        const baseUrl = data.gasProxyUrl.trim();
-        return `${baseUrl}${baseUrl.includes('?') ? '&' : '?'}id=${fileId}`;
-      }
-    }
-
     if (cleanUrl.includes('drive.google.com') || cleanUrl.includes('docs.google.com')) {
       if (cleanUrl.includes('/view') || cleanUrl.includes('/edit')) {
         cleanUrl = cleanUrl.replace(/\/view.*$/, '/preview').replace(/\/edit.*$/, '/preview');
@@ -740,14 +726,12 @@ const MainView: React.FC<{
   
   const [showHomeConfig, setShowHomeConfig] = useState(false);
   const [tempHomeUrl, setTempHomeUrl] = useState(data.homeUrl || '');
-  const [tempGasProxyUrl, setTempGasProxyUrl] = useState(data.gasProxyUrl || '');
 
   useEffect(() => {
     if (showHomeConfig) {
       setTempHomeUrl(data.homeUrl || '');
-      setTempGasProxyUrl(data.gasProxyUrl || '');
     }
-  }, [showHomeConfig, data.homeUrl, data.gasProxyUrl]);
+  }, [showHomeConfig, data.homeUrl]);
 
   useEffect(() => { setActiveTab('content'); }, [selectedId]);
 
@@ -866,7 +850,7 @@ const MainView: React.FC<{
   };
 
   const handleSaveHomeConfig = () => {
-    updateData({...data, homeUrl: tempHomeUrl, gasProxyUrl: tempGasProxyUrl});
+    updateData({...data, homeUrl: tempHomeUrl});
     setShowHomeConfig(false);
     showToast("Đã lưu cấu hình cài đặt thành công!", "success");
   };
@@ -1195,18 +1179,10 @@ const MainView: React.FC<{
                    <p className="text-[8px] text-slate-400 px-1">Cấp tài khoản & Mật khẩu cho học sinh ở khối này.</p>
                 </div>
                 
-                <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest pt-2">Trang chủ & Proxy</h4>
+                <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest pt-2">Trang chủ</h4>
                 <div className="space-y-1">
                   <label className="text-[9px] font-bold text-slate-400 uppercase ml-1 tracking-widest">Link trang chủ (URL)</label>
                   <input value={tempHomeUrl} onChange={e=>setTempHomeUrl(e.target.value)} className="w-full px-4 py-3 text-sm font-medium outline-none bg-slate-50 border border-slate-100 rounded-xl focus:border-amber-400 transition-all" placeholder="https://..."/>
-                </div>
-
-                <div className="space-y-1 pt-1">
-                  <label className="text-[9px] font-bold text-indigo-500 uppercase ml-1 tracking-widest flex items-center gap-1">
-                    <Globe size={11} /> Google Apps Script Web App URL (Tùy chọn)
-                  </label>
-                  <input value={tempGasProxyUrl} onChange={e=>setTempGasProxyUrl(e.target.value)} className="w-full px-4 py-2.5 text-xs font-medium outline-none bg-slate-50 border border-slate-100 rounded-xl focus:border-indigo-400 transition-all" placeholder="https://script.google.com/macros/s/.../exec"/>
-                  <p className="text-[8px] text-slate-400 leading-tight px-1">Nhập Web App URL từ Apps Script để tự động chuyển link Google Drive HTML thành trang chạy HTML trong iframe.</p>
                 </div>
               </div>
 
