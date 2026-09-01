@@ -15,6 +15,7 @@ export interface ForumComment {
   imageUrl?: string;
   createdAt: string;
   isAdmin: boolean;
+  isApproved?: boolean;
 }
 
 export interface BookNode {
