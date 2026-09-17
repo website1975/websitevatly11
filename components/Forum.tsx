@@ -177,30 +177,35 @@ const Forum: React.FC<ForumProps> = ({ nodeId, isAdmin, themeColor }) => {
 
     const createdAt = new Date().toISOString();
     
-    // Try both camelCase and snake_case to ensure it lands somewhere or let Supabase handle it
-    const newComment = { 
+    // 1. Try standard camelCase schema (nodeId, author, content, isAdmin, createdAt)
+    const camelComment: Record<string, any> = { 
       nodeId, 
-      node_id: nodeId,
       author: finalName, 
       content, 
-      imageUrl: imageUrl, 
-      image_url: imageUrl,
       isAdmin: isAdmin, 
-      is_admin: isAdmin,
-      createdAt,
-      created_at: createdAt
+      createdAt
     };
+    if (imageUrl) camelComment.imageUrl = imageUrl;
     
-    const { error } = await supabase.from('forum_comments').insert([newComment]);
+    let { error } = await supabase.from('forum_comments').insert([camelComment]);
     if (error) {
-      console.error("Insert error, retrying without duplicates:", error);
-      // If error, try a simpler version in case some columns don't exist
-      const fallbackComment = { nodeId, author: finalName, content, imageUrl, isAdmin, createdAt };
-      const { error: error2 } = await supabase.from('forum_comments').insert([fallbackComment]);
+      console.warn("Primary camelCase insert failed, trying snake_case schema:", error);
+      // 2. Try snake_case schema (node_id, author, content, is_admin, created_at)
+      const snakeComment: Record<string, any> = { 
+        node_id: nodeId, 
+        author: finalName, 
+        content, 
+        is_admin: isAdmin, 
+        created_at: createdAt 
+      };
+      if (imageUrl) snakeComment.image_url = imageUrl;
+      const { error: error2 } = await supabase.from('forum_comments').insert([snakeComment]);
       if (error2) {
-         const snakeComment = { node_id: nodeId, author: finalName, content, image_url: imageUrl, is_admin: isAdmin, created_at: createdAt };
-         const { error: error3 } = await supabase.from('forum_comments').insert([snakeComment]);
-         if (error3) alert("Không thể gửi bình luận. Lỗi cấu trúc bảng.");
+         // 3. Minimal fallback (nodeId, author, content)
+         const minimalComment: Record<string, any> = { nodeId, author: finalName, content };
+         if (imageUrl) minimalComment.imageUrl = imageUrl;
+         const { error: error3 } = await supabase.from('forum_comments').insert([minimalComment]);
+         if (error3) alert("Không thể gửi bình luận. Vui lòng kiểm tra kết nối mạng.");
       }
     }
     
