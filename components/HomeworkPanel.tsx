@@ -320,54 +320,88 @@ const HomeworkPanel: React.FC<HomeworkPanelProps> = ({ nodeId, student, isAdmin,
     const cleanUserContent = content.replace(/<!--status:(approved|pending)-->/g, '').trim();
     // Default: admin post is auto-approved, student answer starts with pending status
     const finalContent = isAdmin ? cleanUserContent : `${cleanUserContent}\n\n<!--status:pending-->`;
-    const isInitialApproved = isAdmin ? true : false;
 
-    const commentData = { 
-      nodeId: targetNodeId, 
-      node_id: targetNodeId,
-      author: authorName, 
-      content: finalContent, 
-      imageUrl, 
-      image_url: imageUrl,
-      isAdmin, 
-      is_admin: isAdmin,
-      isApproved: isInitialApproved,
-      is_approved: isInitialApproved,
-      approved: isInitialApproved,
-      createdAt,
-      created_at: createdAt,
-      grade_id: gradeId,
-      gradeId: gradeId
-    };
-    
     try {
-      let result;
+      let result: any = { error: null };
+
       if (editingId) {
-        // UPDATE existing comment
+        // UPDATE existing comment/answer
+        // Only update content (and imageUrl if provided) to avoid non-existent column schema cache errors
+        const updatePayload: Record<string, any> = { content: finalContent };
+        if (imageUrl) {
+          updatePayload.imageUrl = imageUrl;
+        }
+
         result = await supabase
           .from('forum_comments')
-          .update(commentData)
+          .update(updatePayload)
           .eq('id', editingId);
         
-        if (result.error) {
-          // Fallback update for schema variations
-          const fallbackData = { content: finalContent, imageUrl, image_url: imageUrl, is_approved: isInitialApproved };
-          result = await supabase.from('forum_comments').update(fallbackData).eq('id', editingId);
+        if (result.error && imageUrl) {
+          // Fallback update if imageUrl column is snake_case
+          result = await supabase
+            .from('forum_comments')
+            .update({ content: finalContent, image_url: imageUrl })
+            .eq('id', editingId);
+          
+          if (result.error) {
+            // Final fallback: update content only
+            result = await supabase
+              .from('forum_comments')
+              .update({ content: finalContent })
+              .eq('id', editingId);
+          }
         }
       } else {
-        // INSERT new comment
-        result = await supabase.from('forum_comments').insert([commentData]);
-        
+        // INSERT new comment/answer
+        // Try 1: Standard camelCase schema matching SQL table definition (nodeId, author, content, isAdmin, createdAt)
+        const camelPayload: Record<string, any> = {
+          nodeId: targetNodeId,
+          author: authorName,
+          content: finalContent,
+          isAdmin: isAdmin,
+          createdAt: createdAt
+        };
+        if (imageUrl) camelPayload.imageUrl = imageUrl;
+
+        result = await supabase.from('forum_comments').insert([camelPayload]);
+
         if (result.error) {
-          console.error("Insert error, retrying with fallback:", result.error);
-          const fallback1 = { nodeId: targetNodeId, author: authorName, content: finalContent, imageUrl, isAdmin, is_approved: isInitialApproved, createdAt, grade_id: gradeId };
-          result = await supabase.from('forum_comments').insert([fallback1]);
+          console.warn("Primary camelCase insert failed, trying snake_case schema:", result.error);
+          // Try 2: snake_case schema (node_id, author, content, is_admin, created_at)
+          const snakePayload: Record<string, any> = {
+            node_id: targetNodeId,
+            author: authorName,
+            content: finalContent,
+            is_admin: isAdmin,
+            created_at: createdAt
+          };
+          if (imageUrl) snakePayload.image_url = imageUrl;
+
+          result = await supabase.from('forum_comments').insert([snakePayload]);
+
           if (result.error) {
-            const fallback2 = { node_id: targetNodeId, author: authorName, content: finalContent, image_url: imageUrl, is_admin: isAdmin, created_at: createdAt, grade_id: gradeId };
-            result = await supabase.from('forum_comments').insert([fallback2]);
+            console.warn("Snake_case insert failed, trying minimal camelCase:", result.error);
+            // Try 3: Minimal camelCase (nodeId, author, content)
+            const minimalCamel: Record<string, any> = {
+              nodeId: targetNodeId,
+              author: authorName,
+              content: finalContent
+            };
+            if (imageUrl) minimalCamel.imageUrl = imageUrl;
+
+            result = await supabase.from('forum_comments').insert([minimalCamel]);
+
             if (result.error) {
-              const fallback3 = { node_id: targetNodeId, author: authorName, content: finalContent, image_url: imageUrl, is_admin: isAdmin };
-              result = await supabase.from('forum_comments').insert([fallback3]);
+              // Try 4: Minimal snake_case (node_id, author, content)
+              const minimalSnake: Record<string, any> = {
+                node_id: targetNodeId,
+                author: authorName,
+                content: finalContent
+              };
+              if (imageUrl) minimalSnake.image_url = imageUrl;
+
+              result = await supabase.from('forum_comments').insert([minimalSnake]);
             }
           }
         }
@@ -410,25 +444,19 @@ const HomeworkPanel: React.FC<HomeworkPanelProps> = ({ nodeId, student, isAdmin,
     setComments(prev => prev.map(c => c.id === answer.id ? { ...c, isApproved: newStatus, content: updatedContent } : c));
 
     try {
-      let { error } = await supabase
+      const { error } = await supabase
         .from('forum_comments')
-        .update({
-          is_approved: newStatus,
-          isApproved: newStatus,
-          approved: newStatus,
-          content: updatedContent
-        })
+        .update({ content: updatedContent })
         .eq('id', answer.id);
 
-      if (error) {
-        // Fallback update content only if column is not supported in schema
-        const { error: fallbackError } = await supabase
-          .from('forum_comments')
-          .update({ content: updatedContent })
-          .eq('id', answer.id);
-        
-        if (fallbackError) throw fallbackError;
-      }
+      if (error) throw error;
+
+      // Silently sync is_approved if column exists in user's schema (without throwing if not)
+      supabase
+        .from('forum_comments')
+        .update({ is_approved: newStatus })
+        .eq('id', answer.id)
+        .then(() => {}, () => {});
 
       const studentDisplayName = answer.author.split(']').pop()?.trim() || answer.author;
       showToast(
@@ -466,12 +494,7 @@ const HomeworkPanel: React.FC<HomeworkPanelProps> = ({ nodeId, student, isAdmin,
             
             await supabase
               .from('forum_comments')
-              .update({
-                is_approved: true,
-                isApproved: true,
-                approved: true,
-                content: updatedContent
-              })
+              .update({ content: updatedContent })
               .eq('id', ans.id);
           }
           showToast(`Đã duyệt thành công ${targetAnswers.length} bài nộp!`, 'success');
