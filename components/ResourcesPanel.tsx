@@ -12,6 +12,7 @@ interface ResourcesPanelProps {
   onAdd: (isGlobal: boolean) => void;
   onEdit: (res: ResourceLink, isGlobal: boolean) => void;
   onDelete: (id: string, title: string, isGlobal: boolean) => void;
+  onViewResource?: (res: ResourceLink) => void;
 }
 
 const ResourceItem: React.FC<{ 
@@ -21,7 +22,8 @@ const ResourceItem: React.FC<{
   themeColor: string;
   onEdit: (res: ResourceLink, isGlobal: boolean) => void;
   onDelete: (id: string, title: string, isGlobal: boolean) => void;
-}> = ({ r, isGlobal, isAdmin, themeColor, onEdit, onDelete }) => {
+  onViewResource?: (res: ResourceLink) => void;
+}> = ({ r, isGlobal, isAdmin, themeColor, onEdit, onDelete, onViewResource }) => {
   const urlLower = r.url.toLowerCase();
   const isNotebook = urlLower.includes('notebook.google.com') || urlLower.includes('notebooklm');
   const isDocument = (url: string) => url.toLowerCase().endsWith('.pdf') || url.toLowerCase().includes('drive.google.com');
@@ -34,23 +36,30 @@ const ResourceItem: React.FC<{
 
   const currentThemeBorderClass = themeBorderClasses[themeColor as keyof typeof themeBorderClasses] || themeBorderClasses['indigo-600'];
 
+  const handleClick = (e: React.MouseEvent) => {
+    if (onViewResource) {
+      e.preventDefault();
+      onViewResource(r);
+    }
+  };
+
   return (
     <div className="group relative">
-      <a href={r.url} target="_blank" rel="noopener noreferrer" className={`flex items-center gap-2 p-2 bg-white border border-slate-100 rounded-xl font-bold text-[9px] text-slate-500 uppercase tracking-tighter shadow-sm hover:shadow-md transition-all ${currentThemeBorderClass}`}>
+      <a href={r.url} onClick={handleClick} target="_blank" rel="noopener noreferrer" className={`flex items-center gap-2 p-2 bg-white border border-slate-100 rounded-xl font-bold text-[9px] text-slate-500 uppercase tracking-tighter shadow-sm hover:shadow-md transition-all ${currentThemeBorderClass}`}>
         {isNotebook ? <BookOpen size={12} className="text-purple-600 shrink-0"/> : urlLower.includes('drive.google.com') ? <Cloud size={12} className="text-blue-500 shrink-0"/> : isDocument(r.url) ? <FileText size={12} className="text-red-500 shrink-0"/> : <Globe size={12} className="text-sky-500 shrink-0"/>}
         <span className="truncate">{r.title}</span>
       </a>
       {isAdmin && (
         <div className="absolute top-1.5 right-1.5 hidden group-hover:flex items-center gap-1 scale-90">
-          <button onClick={()=>onEdit(r, isGlobal)} className="p-1 bg-amber-50 text-amber-600 rounded-lg border border-amber-100"><Pencil size={8}/></button>
-          <button onClick={()=>onDelete(r.id, r.title, isGlobal)} className="p-1 bg-red-50 text-red-500 rounded-lg border border-red-100"><Trash2 size={8}/></button>
+          <button onClick={(e)=>{e.stopPropagation(); onEdit(r, isGlobal);}} className="p-1 bg-amber-50 text-amber-600 rounded-lg border border-amber-100"><Pencil size={8}/></button>
+          <button onClick={(e)=>{e.stopPropagation(); onDelete(r.id, r.title, isGlobal);}} className="p-1 bg-red-50 text-red-500 rounded-lg border border-red-100"><Trash2 size={8}/></button>
         </div>
       )}
     </div>
   );
 };
 
-const ResourcesPanel: React.FC<ResourcesPanelProps> = ({ isAdmin, selectedId, lessonResources, globalResources, themeColor, onAdd, onEdit, onDelete }) => {
+const ResourcesPanel: React.FC<ResourcesPanelProps> = ({ isAdmin, selectedId, lessonResources, globalResources, themeColor, onAdd, onEdit, onDelete, onViewResource }) => {
   const isDocument = (url: string) => url.toLowerCase().endsWith('.pdf') || url.toLowerCase().includes('drive.google.com');
   const docResources = lessonResources.filter(r => isDocument(r.url));
   const htmlResources = lessonResources.filter(r => !isDocument(r.url));
@@ -81,7 +90,7 @@ const ResourcesPanel: React.FC<ResourcesPanelProps> = ({ isAdmin, selectedId, le
           <div className="space-y-1.5">
             <h4 className="px-2 py-1 text-[8px] font-black text-red-400 uppercase tracking-widest bg-red-50/50 rounded-lg inline-block">Hệ thống File</h4>
             {docResources.map(r => (
-              <ResourceItem key={r.id} r={r} isGlobal={false} isAdmin={isAdmin} themeColor={themeColor} onEdit={onEdit} onDelete={onDelete} />
+              <ResourceItem key={r.id} r={r} isGlobal={false} isAdmin={isAdmin} themeColor={themeColor} onEdit={onEdit} onDelete={onDelete} onViewResource={onViewResource} />
             ))}
           </div>
         )}
@@ -89,7 +98,7 @@ const ResourcesPanel: React.FC<ResourcesPanelProps> = ({ isAdmin, selectedId, le
           <div className="space-y-1.5">
             <h4 className="px-2 py-1 text-[8px] font-black text-sky-400 uppercase tracking-widest bg-sky-50/50 rounded-lg inline-block">Liên kết ngoài</h4>
             {htmlResources.map(r => (
-              <ResourceItem key={r.id} r={r} isGlobal={false} isAdmin={isAdmin} themeColor={themeColor} onEdit={onEdit} onDelete={onDelete} />
+              <ResourceItem key={r.id} r={r} isGlobal={false} isAdmin={isAdmin} themeColor={themeColor} onEdit={onEdit} onDelete={onDelete} onViewResource={onViewResource} />
             ))}
           </div>
         )}
@@ -102,12 +111,13 @@ const ResourcesPanel: React.FC<ResourcesPanelProps> = ({ isAdmin, selectedId, le
       </div>
       <div className="p-3 space-y-2 bg-white/30">
         {globalResources.map(r => (
-          <ResourceItem key={r.id} r={r} isGlobal={true} isAdmin={isAdmin} themeColor={themeColor} onEdit={onEdit} onDelete={onDelete} />
+          <ResourceItem key={r.id} r={r} isGlobal={true} isAdmin={isAdmin} themeColor={themeColor} onEdit={onEdit} onDelete={onDelete} onViewResource={onViewResource} />
         ))}
         {globalResources.length === 0 && <p className="text-center text-[9px] text-slate-200 font-bold uppercase pt-4 pb-4 tracking-widest">Trống</p>}
       </div>
     </aside>
   );
 };
+
 
 export default ResourcesPanel;

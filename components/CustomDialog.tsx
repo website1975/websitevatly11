@@ -28,8 +28,11 @@ export const ConfirmModal: React.FC<{
   const isDanger = state.type === 'danger' || !state.type;
 
   return (
-    <div className="fixed inset-0 z-[999] bg-slate-900/60 flex items-center justify-center p-4 backdrop-blur-md animate-in fade-in duration-200">
-      <div className="bg-white p-6 sm:p-8 rounded-[32px] shadow-2xl w-full max-w-md space-y-5 border border-slate-100 animate-in zoom-in-95">
+    <div className="fixed inset-0 z-[999999] bg-slate-900/70 flex items-center justify-center p-4 backdrop-blur-md animate-in fade-in duration-200">
+      <div 
+        className="bg-white p-6 sm:p-8 rounded-[32px] shadow-2xl w-full max-w-md space-y-5 border border-slate-100 animate-in zoom-in-95"
+        onClick={e => e.stopPropagation()}
+      >
         <div className="flex items-center gap-3">
           <div className={`p-3 rounded-2xl ${isDanger ? 'bg-rose-50 text-rose-600' : 'bg-amber-50 text-amber-600'}`}>
             <AlertTriangle size={24} />
@@ -53,7 +56,7 @@ export const ConfirmModal: React.FC<{
             }}
             className="flex-1 py-3 text-[11px] font-bold uppercase text-slate-500 bg-slate-100 hover:bg-slate-200 rounded-2xl tracking-widest transition-all"
           >
-            {state.cancelText || 'Hủy'}
+            {state.cancelText || 'Hủy bỏ'}
           </button>
           <button
             type="button"
@@ -67,7 +70,7 @@ export const ConfirmModal: React.FC<{
                 : 'bg-indigo-600 hover:bg-indigo-700 shadow-indigo-200'
             }`}
           >
-            {state.confirmText || 'Đồng ý / Xóa'}
+            {state.confirmText || 'Xác nhận'}
           </button>
         </div>
       </div>
@@ -86,7 +89,7 @@ export const ToastNotification: React.FC<{
   const isWarning = state.type === 'warning';
 
   return (
-    <div className="fixed top-5 right-5 z-[1000] max-w-md w-full animate-in slide-in-from-top-5 duration-300 p-2">
+    <div className="fixed top-5 right-5 z-[1000000] max-w-md w-full animate-in slide-in-from-top-5 duration-300 p-2 pointer-events-auto">
       <div
         className={`p-5 rounded-3xl shadow-2xl border flex items-start gap-4 ${
           isSuccess

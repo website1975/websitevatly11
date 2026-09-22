@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Routes, Route, useNavigate, Navigate } from 'react-router-dom';
-import { Book, Plus, Maximize2, Loader2, BrainCircuit, GraduationCap, ShieldCheck, Search, LogOut, Folder, Globe, Zap, Image as ImageIcon, Settings, ArrowLeft, ArrowRight, Upload, AlertCircle, Users, Cloud, ExternalLink, BookOpen } from 'lucide-react';
+import { Book, Plus, Maximize2, Loader2, BrainCircuit, GraduationCap, ShieldCheck, Search, LogOut, Folder, Globe, Zap, Image as ImageIcon, Settings, ArrowLeft, ArrowRight, Upload, AlertCircle, Users, Cloud, ExternalLink, BookOpen, Sparkles, ChevronRight, Key } from 'lucide-react';
 import { uploadFileToGoogleDrive, signInWithGoogleForDrive, getDriveAccessToken, isGoogleDriveUrl, extractDriveFileId } from './googleDrive';
 import { supabase } from './supabaseClient';
 import { AppData, ResourceLink, BookNode, NodeType, Student } from './types';
@@ -16,6 +16,7 @@ import TaskPanel from './components/TaskPanel';
 import StudentLogin from './components/StudentLogin';
 import StudentManager from './components/StudentManager';
 import HomeworkPanel from './components/HomeworkPanel';
+import { StudentSpaceModal } from './components/StudentSpaceModal';
 import { ConfirmModal, ToastNotification, ConfirmState, ToastState } from './components/CustomDialog';
 import { getSafeEnv, SLOGANS } from './utils';
 
@@ -333,6 +334,13 @@ const MainView: React.FC<{
   const [iframeLoading, setIframeLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<'content' | 'tasks' | 'flashcards' | 'homework'>('content');
   const [showStudentManager, setShowStudentManager] = useState(false);
+  const [isStudentSpaceOpen, setIsStudentSpaceOpen] = useState(false);
+  const [currentStudent, setCurrentStudent] = useState<Student | null>(student);
+
+  useEffect(() => {
+    setCurrentStudent(student);
+  }, [student]);
+
   const [resourceModal, setResourceModal] = useState<ResourceLink | null>(null);
   const [sloganIdx, setSloganIdx] = useState(0);
   const [searchTerm, setSearchTerm] = useState('');
@@ -899,10 +907,22 @@ const MainView: React.FC<{
           </div>
         </header>
 
-        <div className="p-3 shrink-0 bg-[#fbfcfd]">
+        <div className="p-3 shrink-0 bg-[#fbfcfd] space-y-2">
+          {currentStudent && (
+            <button
+              onClick={() => setIsStudentSpaceOpen(true)}
+              className="w-full flex items-center justify-between px-3 py-2 bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white rounded-xl shadow-md shadow-indigo-100 transition-all text-left group"
+            >
+              <span className="flex items-center gap-2 text-[10px] font-black uppercase tracking-wider">
+                <GraduationCap size={14} className="text-amber-300" /> Góc học tập của em
+              </span>
+              <Sparkles size={12} className="text-amber-300 opacity-80 group-hover:scale-110 transition-transform" />
+            </button>
+          )}
+
           <div className={`flex items-center bg-white border border-slate-200 rounded-xl px-3 py-1.5 shadow-sm focus-within:border-${themeColor}-400 transition-all`}>
             <Search size={12} className="text-slate-400"/>
-            <input value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} placeholder="Tìm kiếm..." className="bg-transparent border-none outline-none text-[10px] font-medium w-full ml-2"/>
+            <input value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} placeholder="Tìm kiếm bài..." className="bg-transparent border-none outline-none text-[10px] font-medium w-full ml-2"/>
           </div>
         </div>
 
@@ -932,16 +952,23 @@ const MainView: React.FC<{
                   <LogOut size={9}/> Thoát
                 </button>
              </div>
-             {student && (
-               <div className="flex items-center gap-2 p-2 bg-slate-50 rounded-lg border border-slate-100">
-                  <div className="w-6 h-6 bg-indigo-600 rounded-full flex items-center justify-center text-white text-[8px] font-black">
-                    {student.name.charAt(0).toUpperCase()}
+             {currentStudent && (
+               <button 
+                 onClick={() => setIsStudentSpaceOpen(true)}
+                 className="w-full flex items-center gap-2 p-2 bg-indigo-50/70 hover:bg-indigo-100/90 rounded-xl border border-indigo-100 transition-all text-left group"
+                 title="Nhấn để mở Góc học tập cá nhân & Đổi mật khẩu"
+               >
+                  <div className="w-6 h-6 bg-indigo-600 group-hover:bg-indigo-700 rounded-full flex items-center justify-center text-white text-[8px] font-black shadow-sm shrink-0 transition-colors">
+                    {currentStudent.name.charAt(0).toUpperCase()}
                   </div>
-                  <div className="min-w-0">
-                    <p className="text-[9px] font-black text-slate-700 truncate uppercase tracking-tighter">{student.full_name || student.name}</p>
-                    <p className="text-[7px] font-bold text-slate-400 uppercase tracking-widest">{student.is_guest ? 'Khách' : 'Học sinh'}</p>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[9px] font-black text-slate-800 truncate uppercase tracking-tight group-hover:text-indigo-700">{currentStudent.full_name || currentStudent.name}</p>
+                    <p className="text-[7px] font-bold text-indigo-500 uppercase tracking-widest flex items-center gap-1">
+                      {currentStudent.is_guest ? 'Khách' : 'Góc học tập cá nhân'}
+                    </p>
                   </div>
-               </div>
+                  <ChevronRight size={12} className="text-indigo-400 group-hover:translate-x-0.5 transition-transform shrink-0" />
+               </button>
              )}
         </footer>
       </aside>
@@ -996,12 +1023,22 @@ const MainView: React.FC<{
                             <Zap size={14} className="fill-current text-amber-300"/> Soạn Quiz AI
                           </button>
                         ) : (
+                          <>
+                            {currentStudent && (
+                              <button 
+                                onClick={()=>setIsStudentSpaceOpen(true)} 
+                                className="group flex items-center gap-1.5 px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold text-[10px] uppercase shadow-lg shadow-indigo-100 rounded-full hover:scale-105 transition-all"
+                              >
+                                <GraduationCap size={14} className="text-amber-300"/> Góc học tập
+                              </button>
+                            )}
                             <button 
                               onClick={()=>setIsQuizOpen(true)} 
                               className={`group flex items-center gap-2 px-5 py-2 bg-${themeColor}-600 text-white font-bold text-[10px] uppercase shadow-lg shadow-${themeColor}-100 rounded-full hover:bg-${themeColor}-700 hover:scale-105 transition-all`}
                             >
-                            <BrainCircuit size={14}/> Rèn luyện
-                          </button>
+                              <BrainCircuit size={14}/> Rèn luyện
+                            </button>
+                          </>
                         )}
                       </div>
                       {selectedNode?.url && <button onClick={()=>window.open(selectedNode.url, '_blank')} className={`p-2 bg-slate-50 text-slate-400 hover:text-${themeColor}-600 rounded-full hover:bg-${themeColor}-50 transition-colors`}><Maximize2 size={16}/></button>}
@@ -1346,6 +1383,24 @@ const MainView: React.FC<{
             </div>
           </form>
         </div>
+      )}
+
+      {currentStudent && (
+        <StudentSpaceModal
+          isOpen={isStudentSpaceOpen}
+          onClose={() => setIsStudentSpaceOpen(false)}
+          student={currentStudent}
+          data={data}
+          themeColor={themeColor}
+          selectedGrade={selectedGrade}
+          onSelectLessonAndTab={(lessonId, tab) => {
+            setSelectedId(lessonId);
+            setActiveTab(tab);
+          }}
+          onStudentUpdated={(updated) => {
+            setCurrentStudent(updated);
+          }}
+        />
       )}
 
       <ConfirmModal state={confirmState} onClose={() => setConfirmState(prev => ({ ...prev, isOpen: false }))} />

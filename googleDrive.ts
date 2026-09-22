@@ -84,7 +84,12 @@ export interface DriveUploadResult {
   name: string;
   previewUrl: string;
   viewUrl: string;
+  directImageUrl: string;
 }
+
+export const getDriveDirectImageUrl = (fileId: string): string => {
+  return `https://lh3.googleusercontent.com/d/${fileId}`;
+};
 
 export const uploadFileToGoogleDrive = async (file: File): Promise<DriveUploadResult> => {
   let token = cachedAccessToken;
@@ -165,6 +170,7 @@ export const uploadFileToGoogleDrive = async (file: File): Promise<DriveUploadRe
     name: data.name || file.name,
     previewUrl,
     viewUrl,
+    directImageUrl: `https://lh3.googleusercontent.com/d/${fileId}`,
   };
 };
 

@@ -9,6 +9,8 @@ import rehypeKatex from 'rehype-katex';
 import rehypeRaw from 'rehype-raw';
 import { supabase } from '../supabaseClient';
 import { uploadFileToGoogleDrive, signInWithGoogleForDrive, getDriveAccessToken } from '../googleDrive';
+import { uploadToImgBB } from '../imgbb';
+import { ImageUploadModal } from './ImageUploadModal';
 import { ForumComment, Student } from '../types';
 import { ConfirmModal, ToastNotification, ConfirmState, ToastState } from './CustomDialog';
 
@@ -87,14 +89,45 @@ const HomeworkPanel: React.FC<HomeworkPanelProps> = ({ nodeId, student, isAdmin,
   const [selectedQuestionId, setSelectedQuestionId] = useState<string | null>(null);
   const [replyingToId, setReplyingToId] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [isImageModalOpen, setIsImageModalOpen] = useState(false);
   const [confirmState, setConfirmState] = useState<ConfirmState>({ isOpen: false, title: '', message: '', onConfirm: () => {} });
   const [toastState, setToastState] = useState<ToastState>({ isOpen: false, message: '' });
 
   const isGuest = !isAdmin && (!student || student.is_guest === true || student.name === 'Khách' || student.name === 'Khách vãng lai' || student.full_name === 'Khách vãng lai' || (student.id ? student.id.startsWith('00000000-0000-4000-a000-') : false));
 
+  const handleStartEditQuestion = (q: ForumComment) => {
+    setEditingId(q.id);
+    setContent(displayMarkdown(q.content));
+    if (q.imageUrl) {
+      setPreviewUrl(q.imageUrl);
+    } else {
+      setPreviewUrl(null);
+    }
+    // Smooth scroll to the inline card so it stays comfortably in view without jumping to top
+    setTimeout(() => {
+      const el = document.getElementById(`homework-item-${q.id}`);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }, 50);
+  };
+
+  const handleCancelEdit = () => {
+    setEditingId(null);
+    setContent('');
+    setSelectedFile(null);
+    setPreviewUrl(null);
+    setReplyingToId(null);
+  };
+
   const displayMarkdown = (rawText: string) => {
     if (!rawText) return '';
-    return rawText.replace(/<!--status:(approved|pending)-->/g, '').trim();
+    let text = rawText.replace(/<!--status:(approved|pending)-->/g, '').trim();
+    // Auto-convert any Google Drive image URLs in markdown ![alt](drive_url) to direct image view URLs
+    text = text.replace(/!\[([^\]]*)\]\((https:\/\/(?:drive|docs)\.google\.com\/(?:file\/d\/|open\?id=|uc\?[^)]*id=)([a-zA-Z0-9_-]+)[^)]*)\)/g, (_match, alt, _fullUrl, fileId) => {
+      return `![${alt}](https://lh3.googleusercontent.com/d/${fileId})`;
+    });
+    return text;
   };
 
   const showToast = (message: string, type: 'success' | 'error' | 'info' = 'info', title?: string) => {
@@ -102,6 +135,47 @@ const HomeworkPanel: React.FC<HomeworkPanelProps> = ({ nodeId, student, isAdmin,
     setTimeout(() => {
       setToastState(prev => ({ ...prev, isOpen: false }));
     }, 5000);
+  };
+
+  const handleInsertImageSnippet = (snippet: string) => {
+    if (!textareaRef.current) {
+      setContent(prev => prev + snippet);
+      return;
+    }
+    const textarea = textareaRef.current;
+    const start = textarea.selectionStart ?? content.length;
+    const end = textarea.selectionEnd ?? content.length;
+    const newContent = content.substring(0, start) + snippet + content.substring(end);
+    setContent(newContent);
+    setTimeout(() => {
+      textarea.focus();
+      const newCursor = start + snippet.length;
+      textarea.setSelectionRange(newCursor, newCursor);
+    }, 50);
+  };
+
+  const handleTextareaPaste = async (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
+    const items = e.clipboardData?.items;
+    if (!items) return;
+
+    for (let i = 0; i < items.length; i++) {
+      if (items[i].type.indexOf('image') !== -1) {
+        const blob = items[i].getAsFile();
+        if (blob) {
+          e.preventDefault();
+          showToast('Đang tự động tải ảnh dán từ clipboard lên ImgBB...', 'info', 'Đang xử lý ảnh');
+          try {
+            const result = await uploadToImgBB(blob);
+            const snippet = `\n\n![Ảnh dán](${result.url})\n\n`;
+            handleInsertImageSnippet(snippet);
+            showToast('Đã tải ảnh lên ImgBB và chèn vào bài thành công!', 'success');
+          } catch (err: any) {
+            showToast(err.message || 'Không thể tải ảnh dán lên ImgBB.', 'error');
+          }
+          break;
+        }
+      }
+    }
   };
   
   const homeworkNodeId = `homework_${nodeId}`;
@@ -137,7 +211,8 @@ const HomeworkPanel: React.FC<HomeworkPanelProps> = ({ nodeId, student, isAdmin,
       if (isPdf) {
         snippet = `\n\n<iframe src="${result.previewUrl}" width="100%" height="500px" style="border:none; border-radius:12px;"></iframe>\n\n[📄 Xem/Tải tài liệu PDF: ${fileName}](${result.previewUrl})\n\n`;
       } else if (file.type.startsWith('image/')) {
-        snippet = `\n\n![${fileName}](${result.previewUrl})\n\n`;
+        const directUrl = result.directImageUrl || `https://lh3.googleusercontent.com/d/${result.fileId}`;
+        snippet = `\n\n![${fileName}](${directUrl})\n\n`;
       } else {
         snippet = `\n\n[📎 Tài liệu đính kèm Google Drive: ${fileName}](${result.previewUrl})\n\n`;
       }
@@ -485,6 +560,7 @@ const HomeworkPanel: React.FC<HomeworkPanelProps> = ({ nodeId, student, isAdmin,
       message: `Bạn có chắc chắn muốn duyệt và công khai toàn bộ ${targetAnswers.length} bài nộp đang chờ duyệt?`,
       type: 'info',
       confirmText: 'Duyệt tất cả',
+      cancelText: 'Hủy bỏ',
       onConfirm: async () => {
         setLoading(true);
         try {
@@ -515,7 +591,8 @@ const HomeworkPanel: React.FC<HomeworkPanelProps> = ({ nodeId, student, isAdmin,
       title: 'Xác nhận xoá bài đăng',
       message: 'Bạn có chắc chắn muốn xoá bài viết / câu trả lời này không?',
       type: 'danger',
-      confirmText: 'Xóa bài',
+      confirmText: 'Xác nhận xóa',
+      cancelText: 'Hủy bỏ',
       onConfirm: async () => {
         await supabase.from('forum_comments').delete().eq('id', id);
         setComments(prev => prev.filter(c => c.id !== id));
@@ -664,7 +741,14 @@ const HomeworkPanel: React.FC<HomeworkPanelProps> = ({ nodeId, student, isAdmin,
           )}
         </div>
 
-        <button onClick={() => wrapText("![Alt text](", ")")} className="p-2 text-slate-500 hover:text-indigo-600 hover:bg-white rounded-lg transition-all" title="Insert Image Link"><ImageIcon size={18}/></button>
+        <button 
+          type="button" 
+          onClick={() => setIsImageModalOpen(true)} 
+          className="p-2 text-slate-500 hover:text-indigo-600 hover:bg-white rounded-lg transition-all flex items-center gap-1 group/btn" 
+          title="Tải ảnh lên ImgBB / Dán ảnh (Ctrl + V)"
+        >
+          <ImageIcon size={18} className="group-hover/btn:scale-110 transition-transform"/>
+        </button>
       </div>
     </div>
   );
@@ -675,7 +759,8 @@ const HomeworkPanel: React.FC<HomeworkPanelProps> = ({ nodeId, student, isAdmin,
         ref={textareaRef}
         value={content} 
         onChange={e => setContent(e.target.value)} 
-        placeholder={isAdmin ? "Nhập nội dung bài viết tin tức tại đây (sử dụng Markdown)..." : "Em viết bài trả lời tại đây (sử dụng Markdown)..."} 
+        onPaste={handleTextareaPaste}
+        placeholder={isAdmin ? "Nhập nội dung bài viết tin tức tại đây (sử dụng Markdown, hỗ trợ dán ảnh trực tiếp Ctrl+V)..." : "Em viết bài trả lời tại đây (sử dụng Markdown, hỗ trợ dán ảnh trực tiếp Ctrl+V)..."} 
         className="w-full flex-1 p-8 text-slate-600 text-lg font-medium outline-none transition-all resize-none selection:bg-indigo-100 leading-relaxed placeholder:text-slate-300 min-h-[300px]" 
       />
       
@@ -701,7 +786,7 @@ const HomeworkPanel: React.FC<HomeworkPanelProps> = ({ nodeId, student, isAdmin,
                 remarkPlugins={[remarkGfm, remarkMath, remarkBreaks]} 
                 rehypePlugins={[rehypeRaw, rehypeKatex]}
               >
-                {content}
+                {displayMarkdown(content)}
               </ReactMarkdown>
             </div>
           ) : (
@@ -736,14 +821,25 @@ const HomeworkPanel: React.FC<HomeworkPanelProps> = ({ nodeId, student, isAdmin,
          )}
       </div>
 
-      <button 
-        onClick={() => handleSubmit()} 
-        disabled={loading || uploading || isUploadingDrive || isGuest} 
-        className={`px-10 py-4 ${isAdmin ? 'bg-amber-600 shadow-amber-200' : isGuest ? 'bg-slate-200 text-slate-400 cursor-not-allowed shadow-none' : 'bg-indigo-600 shadow-indigo-200 text-white hover:scale-105 shadow-2xl'} rounded-2xl disabled:opacity-50 transition-all flex items-center gap-3 group font-black uppercase text-xs tracking-widest`}
-      >
-        {loading ? <RefreshCw size={20} className="animate-spin" /> : isGuest ? <Lock size={18} /> : <Send size={20} className="group-hover:translate-x-1 group-hover:-translate-y-1 transition-all" />}
-        {isAdmin ? (editingId ? 'Cập nhật nhiệm vụ' : 'Giao nhiệm vụ') : isGuest ? 'Khóa nộp bài (Khách)' : (editingId ? 'Cập nhật bài nộp' : 'Gửi bài nộp')}
-      </button>
+      <div className="flex items-center gap-3">
+        {editingId && (
+          <button 
+            type="button" 
+            onClick={handleCancelEdit} 
+            className="px-6 py-4 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-2xl font-black uppercase text-xs tracking-wider transition-all"
+          >
+            Hủy bỏ
+          </button>
+        )}
+        <button 
+          onClick={() => handleSubmit()} 
+          disabled={loading || uploading || isUploadingDrive || isGuest} 
+          className={`px-10 py-4 ${isAdmin ? 'bg-amber-600 shadow-amber-200 hover:bg-amber-700' : isGuest ? 'bg-slate-200 text-slate-400 cursor-not-allowed shadow-none' : 'bg-indigo-600 shadow-indigo-200 text-white hover:scale-105 shadow-2xl'} rounded-2xl disabled:opacity-50 transition-all flex items-center gap-3 group font-black uppercase text-xs tracking-widest text-white`}
+        >
+          {loading ? <RefreshCw size={20} className="animate-spin" /> : isGuest ? <Lock size={18} /> : <Send size={20} className="group-hover:translate-x-1 group-hover:-translate-y-1 transition-all" />}
+          {isAdmin ? (editingId ? 'Cập nhật nhiệm vụ' : 'Giao nhiệm vụ') : isGuest ? 'Khóa nộp bài (Khách)' : (editingId ? 'Cập nhật bài nộp' : 'Gửi bài nộp')}
+        </button>
+      </div>
     </div>
   );
 
@@ -1028,27 +1124,64 @@ const HomeworkPanel: React.FC<HomeworkPanelProps> = ({ nodeId, student, isAdmin,
 
       {/* ADMIN EDITOR SECTION */}
       {isAdmin && (
-        <div className="bg-white rounded-[40px] border border-slate-100 shadow-2xl overflow-hidden animate-in zoom-in-95 duration-500 border-t-8 border-t-indigo-50">
-          <div className="bg-white p-4 border-b border-slate-100">
-             <div className="flex items-center justify-between mb-2">
-                <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">
-                   CỬA SỔ SOẠN THẢO NHIỆM VỤ
-                </h4>
-                <div className="flex items-center gap-4">
-                   <button onClick={() => setShowPreview(!showPreview)} className={`text-[10px] font-black uppercase tracking-widest flex items-center gap-2 transition-all ${showPreview ? 'text-indigo-600' : 'text-slate-400'}`}>
-                      <Eye size={14}/> {showPreview ? 'Bản xem trước (ON)' : 'Bản xem trước (OFF)'}
-                   </button>
-                </div>
-             </div>
-             {renderToolbar()}
+        editingId ? (
+          <div className="bg-amber-50/80 border border-amber-200 rounded-3xl p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-amber-900 shadow-sm animate-in fade-in">
+            <div className="flex items-center gap-3.5">
+              <div className="w-10 h-10 rounded-2xl bg-amber-100 text-amber-700 flex items-center justify-center shrink-0 shadow-sm">
+                <Edit2 size={18} />
+              </div>
+              <div>
+                <p className="text-xs font-black uppercase tracking-wider text-amber-900">
+                  Đang chỉnh sửa trực tiếp nội dung nhiệm vụ ở bên dưới
+                </p>
+                <p className="text-[11px] text-amber-700 font-medium">
+                  Khung soạn thảo đã thay thế trực tiếp vào vị trí bài viết bạn chọn. Hãy chỉnh sửa và nhấn Lưu.
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              <button
+                type="button"
+                onClick={() => {
+                  const el = document.getElementById(`homework-item-${editingId}`);
+                  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }}
+                className="px-3.5 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all shadow-sm"
+              >
+                Cuộn tới bài đang sửa
+              </button>
+              <button
+                type="button"
+                onClick={handleCancelEdit}
+                className="px-3.5 py-2 bg-white hover:bg-amber-100 text-amber-800 border border-amber-300 rounded-xl text-xs font-black uppercase tracking-wider transition-all shadow-sm"
+              >
+                Hủy sửa
+              </button>
+            </div>
           </div>
+        ) : (
+          <div className="bg-white rounded-[40px] border border-slate-100 shadow-2xl overflow-hidden animate-in zoom-in-95 duration-500 border-t-8 border-t-indigo-50">
+            <div className="bg-white p-4 border-b border-slate-100">
+               <div className="flex items-center justify-between mb-2">
+                  <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">
+                     CỬA SỔ SOẠN THẢO NHIỆM VỤ MỚI
+                  </h4>
+                  <div className="flex items-center gap-4">
+                     <button onClick={() => setShowPreview(!showPreview)} className={`text-[10px] font-black uppercase tracking-widest flex items-center gap-2 transition-all ${showPreview ? 'text-indigo-600' : 'text-slate-400'}`}>
+                        <Eye size={14}/> {showPreview ? 'Bản xem trước (ON)' : 'Bản xem trước (OFF)'}
+                     </button>
+                  </div>
+               </div>
+               {renderToolbar()}
+            </div>
 
-          <div className={`grid ${showPreview ? 'grid-cols-1 lg:grid-cols-2' : 'grid-cols-1'} divide-x divide-slate-100`}>
-             {renderInputArea()}
-             {showPreview && renderPreviewArea()}
+            <div className={`grid ${showPreview ? 'grid-cols-1 lg:grid-cols-2' : 'grid-cols-1'} divide-x divide-slate-100`}>
+               {renderInputArea()}
+               {showPreview && renderPreviewArea()}
+            </div>
+            {renderActionBar()}
           </div>
-          {renderActionBar()}
-        </div>
+        )
       )}
 
       {/* ADMIN MANAGEMENT SECTION: MISSION LIST */}
@@ -1060,13 +1193,56 @@ const HomeworkPanel: React.FC<HomeworkPanelProps> = ({ nodeId, student, isAdmin,
               </h4>
            </div>
            
-           <div className="grid grid-cols-1 gap-4">
+           <div className="grid grid-cols-1 gap-6">
               {questions.map((q, idx) => {
                 const qAnswers = getAnswersForQuestion(q.id);
                 const pendingCount = qAnswers.filter(a => !a.isApproved).length;
+                const isEditingThis = editingId === q.id;
+
+                if (isEditingThis) {
+                  return (
+                    <div 
+                      key={q.id} 
+                      id={`homework-item-${q.id}`} 
+                      className="bg-white rounded-[40px] border-2 border-amber-400 shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300"
+                    >
+                      <div className="bg-amber-500/10 px-6 py-4 border-b border-amber-200 flex items-center justify-between flex-wrap gap-3">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-2xl bg-amber-600 text-white flex items-center justify-center text-xs font-black shadow-md shadow-amber-200">
+                            {idx + 1}
+                          </div>
+                          <div>
+                            <h4 className="text-xs font-black text-amber-900 uppercase tracking-wider flex items-center gap-2">
+                              <span>Chỉnh sửa trực tiếp: Nhiệm vụ {idx + 1}</span>
+                              <span className="text-[9px] bg-amber-200 text-amber-900 px-2 py-0.5 rounded-md font-bold">Đang sửa tại bài viết</span>
+                            </h4>
+                            <p className="text-[10px] text-amber-700 font-medium">Thay đổi nội dung và nhấn Cập nhật để lưu trực tiếp</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <button 
+                            type="button" 
+                            onClick={() => setShowPreview(!showPreview)} 
+                            className={`text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5 transition-all ${showPreview ? 'text-indigo-600' : 'text-slate-400'}`}
+                          >
+                            <Eye size={14}/> {showPreview ? 'Bản xem trước (ON)' : 'Bản xem trước (OFF)'}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={handleCancelEdit}
+                            className="px-3 py-1.5 bg-white hover:bg-slate-50 text-slate-700 rounded-xl text-xs font-black uppercase tracking-wider border border-slate-200 shadow-sm transition-all flex items-center gap-1"
+                          >
+                            <X size={14} /> Hủy sửa
+                          </button>
+                        </div>
+                      </div>
+                      {renderEditor()}
+                    </div>
+                  );
+                }
 
                 return (
-                  <div key={q.id} className="bg-white p-6 rounded-[32px] border border-slate-100 shadow-sm relative group hover:border-amber-200 transition-all">
+                  <div key={q.id} id={`homework-item-${q.id}`} className="bg-white p-6 rounded-[32px] border border-slate-100 shadow-sm relative group hover:border-amber-200 transition-all">
                      <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center gap-3">
                            <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-[10px] font-black border border-amber-100 uppercase tracking-widest">
@@ -1089,7 +1265,7 @@ const HomeworkPanel: React.FC<HomeworkPanelProps> = ({ nodeId, student, isAdmin,
                                 </span>
                               )}
                            </button>
-                           <button onClick={() => { setContent(displayMarkdown(q.content)); setEditingId(q.id); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all" title="Sửa nội dung">
+                           <button onClick={() => handleStartEditQuestion(q)} className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all" title="Sửa nội dung">
                               <Edit2 size={16} />
                            </button>
                            <button onClick={() => handleDelete(q.id)} className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all" title="Xóa nhiệm vụ">
@@ -1299,6 +1475,12 @@ const HomeworkPanel: React.FC<HomeworkPanelProps> = ({ nodeId, student, isAdmin,
       )}
 
       {/* MODAL & TOAST CHO HOÀN CẢNH IFRAME / MOBILE */}
+      <ImageUploadModal 
+        isOpen={isImageModalOpen} 
+        onClose={() => setIsImageModalOpen(false)} 
+        onInsert={handleInsertImageSnippet}
+        isAdmin={isAdmin}
+      />
       <ConfirmModal state={confirmState} onClose={() => setConfirmState(prev => ({ ...prev, isOpen: false }))} />
       <ToastNotification state={toastState} onClose={() => setToastState(prev => ({ ...prev, isOpen: false }))} />
     </div>
