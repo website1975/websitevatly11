@@ -16,6 +16,7 @@ export interface ForumComment {
   createdAt: string;
   isAdmin: boolean;
   isApproved?: boolean;
+  isPublic?: boolean;
 }
 
 export interface BookNode {

@@ -22,7 +22,8 @@ import {
   Layers,
   ChevronRight,
   ShieldCheck,
-  RefreshCw
+  RefreshCw,
+  Star
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -56,6 +57,7 @@ interface AssignmentItem {
     content: string;
     createdAt: string;
     isApproved: boolean;
+    isPublic?: boolean;
   } | null;
   status: 'completed_approved' | 'completed_pending' | 'not_submitted';
 }
@@ -95,10 +97,10 @@ export const StudentSpaceModal: React.FC<StudentSpaceModalProps> = ({
     if (!student || student.is_guest) return;
     setLoading(true);
     try {
-      // 1. Fetch comments with grade_id
+      // 1. Fetch comments with grade_id or unassigned (null)
       let query = supabase.from('forum_comments').select('*');
       if (selectedGrade) {
-        query = query.eq('grade_id', selectedGrade);
+        query = query.or(`grade_id.eq.${selectedGrade},grade_id.is.null`);
       }
       const { data: commentsData, error: commentsError } = await query;
       if (commentsError) throw commentsError;
@@ -146,7 +148,10 @@ export const StudentSpaceModal: React.FC<StudentSpaceModalProps> = ({
   // Clean and parse markdown helper
   const cleanMarkdown = (rawText: string) => {
     if (!rawText) return '';
-    let text = String(rawText).replace(/<!--status:(approved|pending)-->/g, '').trim();
+    let text = String(rawText)
+      .replace(/<!--status:(approved|pending)-->/g, '')
+      .replace(/<!--public:(true|false)-->/g, '')
+      .trim();
     text = text.replace(/!\[([^\]]*)\]\((https:\/\/(?:drive|docs)\.google\.com\/(?:file\/d\/|open\?id=|uc\?[^)]*id=)([a-zA-Z0-9_-]+)[^)]*)\)/g, (_m, alt, _u, id) => {
       return `![${alt}](https://lh3.googleusercontent.com/d/${id})`;
     });
@@ -161,7 +166,28 @@ export const StudentSpaceModal: React.FC<StudentSpaceModalProps> = ({
     const teacherQuestions = rawComments.filter(c => {
       const nodeId = c.node_id || c.nodeId;
       const isAdmin = c.is_admin || c.isAdmin;
-      return nodeId && nodeId.startsWith('homework_') && !nodeId.includes('_ans_') && (isAdmin === true || !(c.author || '').includes('['));
+      const isTeacherQuestion = nodeId && nodeId.startsWith('homework_') && !nodeId.includes('_ans_') && (isAdmin === true || !(c.author || '').includes('['));
+      if (!isTeacherQuestion) return false;
+
+      const itemGrade = c.grade_id || c.gradeId;
+      const lessonId = nodeId.replace('homework_', '');
+
+      // 1. Nếu có grade_id rõ ràng:
+      if (selectedGrade && itemGrade) {
+        return String(itemGrade) === String(selectedGrade);
+      }
+
+      // 2. Nếu chưa có grade_id nhưng bài học nằm trong cây bài học của khối hiện tại:
+      if (nodeMap.has(lessonId)) {
+        return true;
+      }
+
+      // 3. Khớp theo tiền tố khối trong ID bài học
+      if (selectedGrade && (lessonId.startsWith(`g${selectedGrade}-`) || lessonId.startsWith(`${selectedGrade}-`))) {
+        return true;
+      }
+
+      return !selectedGrade;
     });
 
     // Student answers for this specific student
@@ -187,11 +213,13 @@ export const StudentSpaceModal: React.FC<StudentSpaceModalProps> = ({
       if (myAns) {
         const rawContent = myAns.content || '';
         const isApproved = myAns.is_approved === true || myAns.isApproved === true || rawContent.includes('<!--status:approved-->');
+        const isPublic = (myAns.is_public === true || myAns.isPublic === true || rawContent.includes('<!--public:true-->')) && !rawContent.includes('<!--public:false-->');
         myAnswerObj = {
           id: myAns.id,
           content: cleanMarkdown(rawContent),
           createdAt: myAns.created_at || myAns.createdAt,
           isApproved: isApproved,
+          isPublic: isPublic,
         };
         status = isApproved ? 'completed_approved' : 'completed_pending';
       }
@@ -207,7 +235,7 @@ export const StudentSpaceModal: React.FC<StudentSpaceModalProps> = ({
         status: status,
       };
     });
-  }, [rawComments, nodeMap, student?.name]);
+  }, [rawComments, nodeMap, student?.name, selectedGrade]);
 
   // Filtered assignments
   const filteredAssignments = useMemo(() => {
@@ -295,9 +323,17 @@ export const StudentSpaceModal: React.FC<StudentSpaceModalProps> = ({
     }
   };
 
-  const handleGoToLesson = (lessonId: string) => {
+  const handleGoToLesson = (lessonId: string, questionId?: string) => {
     onSelectLessonAndTab(lessonId, 'homework');
     onClose();
+    if (questionId) {
+      setTimeout(() => {
+        const el = document.getElementById(`homework-item-${questionId}`);
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 400);
+    }
   };
 
   if (!isOpen) return null;
@@ -569,7 +605,7 @@ export const StudentSpaceModal: React.FC<StudentSpaceModalProps> = ({
                           <div className="flex items-center gap-2 self-end sm:self-center shrink-0">
                             {item.status === 'not_submitted' ? (
                               <button
-                                onClick={() => handleGoToLesson(item.lessonId)}
+                                onClick={() => handleGoToLesson(item.lessonId, item.id)}
                                 className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all shadow-md shadow-indigo-100 flex items-center gap-1.5"
                               >
                                 Làm bài ngay <ArrowRight size={13} />
@@ -583,7 +619,7 @@ export const StudentSpaceModal: React.FC<StudentSpaceModalProps> = ({
                                   <Eye size={13} /> {isExpanded ? 'Thu gọn' : 'Xem bài nộp'}
                                 </button>
                                 <button
-                                  onClick={() => handleGoToLesson(item.lessonId)}
+                                  onClick={() => handleGoToLesson(item.lessonId, item.id)}
                                   className="px-3.5 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-xl text-xs font-black uppercase tracking-wider transition-all border border-indigo-200 flex items-center gap-1.5"
                                   title="Đến trang bài học để sửa bài"
                                 >
@@ -601,13 +637,24 @@ export const StudentSpaceModal: React.FC<StudentSpaceModalProps> = ({
                               <span className="text-[10px] font-black uppercase text-indigo-600 tracking-widest flex items-center gap-1">
                                 <Send size={12} /> Bài trả lời của em:
                               </span>
-                              <span className={`px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wider ${
-                                item.myAnswer.isApproved 
-                                  ? 'bg-emerald-100 text-emerald-700' 
-                                  : 'bg-amber-100 text-amber-700'
-                              }`}>
-                                {item.myAnswer.isApproved ? 'Đã được giáo viên duyệt & cộng điểm' : 'Đang chờ giáo viên kiểm tra & duyệt'}
-                              </span>
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                <span className={`px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wider ${
+                                  item.myAnswer.isApproved 
+                                    ? 'bg-emerald-100 text-emerald-700' 
+                                    : 'bg-amber-100 text-amber-700'
+                                }`}>
+                                  {item.myAnswer.isApproved ? 'Đã được giáo viên duyệt' : 'Đang chờ duyệt'}
+                                </span>
+                                {item.myAnswer.isPublic ? (
+                                  <span className="px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wider bg-purple-100 text-purple-700 flex items-center gap-1">
+                                    <Star size={10} className="fill-purple-600" /> Bài mẫu cả lớp
+                                  </span>
+                                ) : (
+                                  <span className="px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wider bg-slate-200/80 text-slate-600 flex items-center gap-1">
+                                    <Lock size={9} /> Riêng tư (GV & Em)
+                                  </span>
+                                )}
+                              </div>
                             </div>
 
                             <div className="p-4 bg-white rounded-xl border border-slate-200 prose prose-slate max-w-none text-xs leading-relaxed">
@@ -619,7 +666,7 @@ export const StudentSpaceModal: React.FC<StudentSpaceModalProps> = ({
                             <div className="flex justify-between items-center text-[10px] text-slate-400 font-semibold">
                               <span>Nộp lúc: {item.myAnswer.createdAt ? new Date(item.myAnswer.createdAt).toLocaleString('vi-VN') : 'Không rõ'}</span>
                               <button
-                                onClick={() => handleGoToLesson(item.lessonId)}
+                                onClick={() => handleGoToLesson(item.lessonId, item.id)}
                                 className="text-indigo-600 font-bold hover:underline"
                               >
                                 Đến phòng thảo luận bài học →

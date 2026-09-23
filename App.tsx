@@ -741,8 +741,6 @@ const MainView: React.FC<{
     }
   }, [showHomeConfig, data.homeUrl]);
 
-  useEffect(() => { setActiveTab('content'); }, [selectedId]);
-
   const handleDeleteNode = (id: string) => {
     showConfirm(
       "Xác nhận xóa thư mục / bài học",
@@ -863,8 +861,9 @@ const MainView: React.FC<{
     showToast("Đã lưu cấu hình cài đặt thành công!", "success");
   };
 
-  const handleSelectNode = (id: string | null) => {
+  const handleSelectNode = (id: string | null, tab: 'content' | 'flashcards' | 'tasks' | 'homework' = 'content') => {
     setSelectedId(id);
+    setActiveTab(tab);
     if (id) {
       localStorage.setItem(`selected_id_${selectedGrade}`, id);
       if (data.nodes.find(n => n.id === id)?.url) setIframeLoading(true);

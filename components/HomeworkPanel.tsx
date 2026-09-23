@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Send, Trash2, Image as ImageIcon, Wifi, WifiOff, RefreshCw, ChevronDown, ChevronUp, Eye, EyeOff, AlertCircle, Home, BookOpen, Clock, CheckCircle2, Bold, Italic, List, Table as TableIcon, Link, Type, Palette, AlignLeft, AlignCenter, AlignRight, AlignJustify, Heading3, Calculator, X, Search, Edit2, Users, Cloud, Lock, Check, Filter, ShieldCheck } from 'lucide-react';
+import { Send, Trash2, Image as ImageIcon, Wifi, WifiOff, RefreshCw, ChevronDown, ChevronUp, Eye, EyeOff, AlertCircle, Home, BookOpen, Clock, CheckCircle2, Bold, Italic, List, Table as TableIcon, Link, Type, Palette, AlignLeft, AlignCenter, AlignRight, AlignJustify, Heading3, Calculator, X, Search, Edit2, Users, Cloud, Lock, Check, Filter, ShieldCheck, MessageSquare, Star, Sparkles } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import remarkMath from 'remark-math';
@@ -84,11 +84,13 @@ const HomeworkPanel: React.FC<HomeworkPanelProps> = ({ nodeId, student, isAdmin,
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [showAnswersModal, setShowAnswersModal] = useState(false);
-  const [filterApprovalTab, setFilterApprovalTab] = useState<'all' | 'pending' | 'approved'>('all');
+  const [filterApprovalTab, setFilterApprovalTab] = useState<'all' | 'pending' | 'approved' | 'public'>('all');
   const [expandedAnswersQId, setExpandedAnswersQId] = useState<string | null>(null);
   const [selectedQuestionId, setSelectedQuestionId] = useState<string | null>(null);
   const [replyingToId, setReplyingToId] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [feedbackInputs, setFeedbackInputs] = useState<Record<string, string>>({});
+  const [sendingFeedbackId, setSendingFeedbackId] = useState<string | null>(null);
   const [isImageModalOpen, setIsImageModalOpen] = useState(false);
   const [confirmState, setConfirmState] = useState<ConfirmState>({ isOpen: false, title: '', message: '', onConfirm: () => {} });
   const [toastState, setToastState] = useState<ToastState>({ isOpen: false, message: '' });
@@ -122,7 +124,10 @@ const HomeworkPanel: React.FC<HomeworkPanelProps> = ({ nodeId, student, isAdmin,
 
   const displayMarkdown = (rawText: string) => {
     if (!rawText) return '';
-    let text = rawText.replace(/<!--status:(approved|pending)-->/g, '').trim();
+    let text = rawText
+      .replace(/<!--status:(approved|pending)-->/g, '')
+      .replace(/<!--public:(true|false)-->/g, '')
+      .trim();
     // Auto-convert any Google Drive image URLs in markdown ![alt](drive_url) to direct image view URLs
     text = text.replace(/!\[([^\]]*)\]\((https:\/\/(?:drive|docs)\.google\.com\/(?:file\/d\/|open\?id=|uc\?[^)]*id=)([a-zA-Z0-9_-]+)[^)]*)\)/g, (_match, alt, _fullUrl, fileId) => {
       return `![${alt}](https://lh3.googleusercontent.com/d/${fileId})`;
@@ -284,8 +289,8 @@ const HomeworkPanel: React.FC<HomeworkPanelProps> = ({ nodeId, student, isAdmin,
             const id = item.nodeId || item.node_id || '';
             const itemGradeId = item.gradeId || item.grade_id;
             
-            // So khớp node_id gốc hoặc câu trả lời
-            const isTargetNode = id === homeworkNodeId || id.startsWith(`${homeworkNodeId}_ans_`);
+            // So khớp node_id gốc, câu trả lời, hoặc luồng trao đổi phản hồi
+            const isTargetNode = id === homeworkNodeId || id.startsWith(`${homeworkNodeId}_ans_`) || id.startsWith(`${homeworkNodeId}_feedback_`);
             if (!isTargetNode) return false;
 
             // KIỂM TRA KHỐI LỚP:
@@ -317,9 +322,17 @@ const HomeworkPanel: React.FC<HomeworkPanelProps> = ({ nodeId, student, isAdmin,
               item.is_approved === true || 
               item.is_approved === 'true' || 
               item.approved === true || 
-              item.approved === 'true' ||
+              item.approved === 'true' || 
               rawContent.includes('<!--status:approved-->')
             );
+
+            const isPublic = (
+              item.isPublic === true ||
+              item.isPublic === 'true' ||
+              item.is_public === true ||
+              item.is_public === 'true' ||
+              rawContent.includes('<!--public:true-->')
+            ) && !rawContent.includes('<!--public:false-->');
 
             return {
               id: item.id,
@@ -330,6 +343,7 @@ const HomeworkPanel: React.FC<HomeworkPanelProps> = ({ nodeId, student, isAdmin,
               createdAt: item.createdAt || item.created_at,
               isAdmin: isTeacher,
               isApproved: isApproved,
+              isPublic: isPublic,
             };
           })
           .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
@@ -372,6 +386,67 @@ const HomeworkPanel: React.FC<HomeworkPanelProps> = ({ nodeId, student, isAdmin,
     return supabase.storage.from('resources').getPublicUrl(`homework/${fileName}`).data.publicUrl;
   };
 
+  const insertRecordToSupabase = async (payload: {
+    targetNodeId: string;
+    authorName: string;
+    content: string;
+    isAdmin: boolean;
+    createdAt: string;
+    gradeId?: string | null;
+    imageUrl?: string;
+  }) => {
+    const { targetNodeId, authorName, content, isAdmin, createdAt, gradeId, imageUrl } = payload;
+    
+    // Try 1: Standard camelCase schema matching SQL table definition
+    const camelPayload: Record<string, any> = {
+      nodeId: targetNodeId,
+      author: authorName,
+      content: content,
+      isAdmin: isAdmin,
+      createdAt: createdAt,
+      grade_id: gradeId || null
+    };
+    if (imageUrl) camelPayload.imageUrl = imageUrl;
+
+    let result = await supabase.from('forum_comments').insert([camelPayload]);
+    if (!result.error) return result;
+
+    // Try 2: snake_case schema
+    const snakePayload: Record<string, any> = {
+      node_id: targetNodeId,
+      author: authorName,
+      content: content,
+      is_admin: isAdmin,
+      created_at: createdAt,
+      grade_id: gradeId || null
+    };
+    if (imageUrl) snakePayload.image_url = imageUrl;
+
+    result = await supabase.from('forum_comments').insert([snakePayload]);
+    if (!result.error) return result;
+
+    // Try 3: Minimal camelCase
+    const minimalCamel: Record<string, any> = {
+      nodeId: targetNodeId,
+      author: authorName,
+      content: content,
+      grade_id: gradeId || null
+    };
+    if (imageUrl) minimalCamel.imageUrl = imageUrl;
+    result = await supabase.from('forum_comments').insert([minimalCamel]);
+    if (!result.error) return result;
+
+    // Try 4: Minimal snake_case
+    const minimalSnake: Record<string, any> = {
+      node_id: targetNodeId,
+      author: authorName,
+      content: content,
+      grade_id: gradeId || null
+    };
+    if (imageUrl) minimalSnake.image_url = imageUrl;
+    return await supabase.from('forum_comments').insert([minimalSnake]);
+  };
+
   const handleSubmit = async () => {
     if (isGuest) {
       showToast("Tính năng nộp bài chỉ dành cho học sinh có tài khoản được cấp.", "error", "Không được phép");
@@ -391,17 +466,19 @@ const HomeworkPanel: React.FC<HomeworkPanelProps> = ({ nodeId, student, isAdmin,
     const authorName = isAdmin ? "Giáo viên" : (student ? `[${student.name}] ${student.full_name || ''}` : "Học sinh");
     const targetNodeId = (isAdmin || !replyingToId) ? homeworkNodeId : `${homeworkNodeId}_ans_${replyingToId}`;
 
-    // Clean any prior status tags
-    const cleanUserContent = content.replace(/<!--status:(approved|pending)-->/g, '').trim();
-    // Default: admin post is auto-approved, student answer starts with pending status
-    const finalContent = isAdmin ? cleanUserContent : `${cleanUserContent}\n\n<!--status:pending-->`;
+    // Clean any prior status & public tags
+    const cleanUserContent = content
+      .replace(/<!--status:(approved|pending)-->/g, '')
+      .replace(/<!--public:(true|false)-->/g, '')
+      .trim();
+    // Default: admin post is auto-approved, student answer starts with pending status & private
+    const finalContent = isAdmin ? cleanUserContent : `${cleanUserContent}\n\n<!--status:pending-->\n<!--public:false-->`;
 
     try {
       let result: any = { error: null };
 
       if (editingId) {
         // UPDATE existing comment/answer
-        // Only update content (and imageUrl if provided) to avoid non-existent column schema cache errors
         const updatePayload: Record<string, any> = { content: finalContent };
         if (imageUrl) {
           updatePayload.imageUrl = imageUrl;
@@ -420,7 +497,6 @@ const HomeworkPanel: React.FC<HomeworkPanelProps> = ({ nodeId, student, isAdmin,
             .eq('id', editingId);
           
           if (result.error) {
-            // Final fallback: update content only
             result = await supabase
               .from('forum_comments')
               .update({ content: finalContent })
@@ -428,58 +504,17 @@ const HomeworkPanel: React.FC<HomeworkPanelProps> = ({ nodeId, student, isAdmin,
           }
         }
       } else {
-        // INSERT new comment/answer
-        // Try 1: Standard camelCase schema matching SQL table definition (nodeId, author, content, isAdmin, createdAt)
-        const camelPayload: Record<string, any> = {
-          nodeId: targetNodeId,
-          author: authorName,
+        // INSERT new comment/answer using robust fallback helper
+        const effectiveGradeId = gradeId ? String(gradeId) : null;
+        result = await insertRecordToSupabase({
+          targetNodeId,
+          authorName,
           content: finalContent,
-          isAdmin: isAdmin,
-          createdAt: createdAt
-        };
-        if (imageUrl) camelPayload.imageUrl = imageUrl;
-
-        result = await supabase.from('forum_comments').insert([camelPayload]);
-
-        if (result.error) {
-          console.warn("Primary camelCase insert failed, trying snake_case schema:", result.error);
-          // Try 2: snake_case schema (node_id, author, content, is_admin, created_at)
-          const snakePayload: Record<string, any> = {
-            node_id: targetNodeId,
-            author: authorName,
-            content: finalContent,
-            is_admin: isAdmin,
-            created_at: createdAt
-          };
-          if (imageUrl) snakePayload.image_url = imageUrl;
-
-          result = await supabase.from('forum_comments').insert([snakePayload]);
-
-          if (result.error) {
-            console.warn("Snake_case insert failed, trying minimal camelCase:", result.error);
-            // Try 3: Minimal camelCase (nodeId, author, content)
-            const minimalCamel: Record<string, any> = {
-              nodeId: targetNodeId,
-              author: authorName,
-              content: finalContent
-            };
-            if (imageUrl) minimalCamel.imageUrl = imageUrl;
-
-            result = await supabase.from('forum_comments').insert([minimalCamel]);
-
-            if (result.error) {
-              // Try 4: Minimal snake_case (node_id, author, content)
-              const minimalSnake: Record<string, any> = {
-                node_id: targetNodeId,
-                author: authorName,
-                content: finalContent
-              };
-              if (imageUrl) minimalSnake.image_url = imageUrl;
-
-              result = await supabase.from('forum_comments').insert([minimalSnake]);
-            }
-          }
-        }
+          isAdmin,
+          createdAt,
+          gradeId: effectiveGradeId,
+          imageUrl
+        });
       }
 
       if (result.error) throw result.error;
@@ -493,7 +528,7 @@ const HomeworkPanel: React.FC<HomeworkPanelProps> = ({ nodeId, student, isAdmin,
       fetchComments(true);
 
       if (!isAdmin) {
-        showToast("Đã nộp bài thành công! Bài làm của em đang chờ giáo viên duyệt trước khi hiển thị công khai.", "success", "Nộp bài thành công");
+        showToast("Đã nộp bài thành công! Bài làm của em đang chờ giáo viên chấm và nhận xét.", "success", "Nộp bài thành công");
       } else {
         showToast(editingId ? "Đã cập nhật nhiệm vụ thành công!" : "Đã giao nhiệm vụ thành công!", "success");
       }
@@ -535,14 +570,101 @@ const HomeworkPanel: React.FC<HomeworkPanelProps> = ({ nodeId, student, isAdmin,
 
       const studentDisplayName = answer.author.split(']').pop()?.trim() || answer.author;
       showToast(
-        newStatus ? `Đã duyệt & công khai bài nộp của ${studentDisplayName}` : `Đã chuyển bài nộp về trạng thái Chờ duyệt`,
+        newStatus ? `Đã duyệt bài nộp của ${studentDisplayName}` : `Đã chuyển bài nộp về trạng thái Chờ duyệt`,
         'success',
-        newStatus ? 'Đã duyệt công khai' : 'Đã hủy duyệt'
+        newStatus ? 'Đã duyệt đạt' : 'Đã hủy duyệt'
       );
     } catch (err: any) {
       console.error("Approve error:", err);
       showToast("Lỗi khi cập nhật trạng thái duyệt: " + err.message, 'error');
       fetchComments(true);
+    }
+  };
+
+  const handleTogglePublic = async (answer: ForumComment) => {
+    if (!isAdmin) return;
+    const newPublicStatus = !answer.isPublic;
+    
+    // Clean and tag content
+    const cleanContent = answer.content.replace(/<!--public:(true|false)-->/g, '').trim();
+    const updatedContent = newPublicStatus 
+      ? `${cleanContent}\n\n<!--public:true-->`
+      : `${cleanContent}\n\n<!--public:false-->`;
+
+    // Optimistic UI update
+    setComments(prev => prev.map(c => c.id === answer.id ? { ...c, isPublic: newPublicStatus, content: updatedContent } : c));
+
+    try {
+      const { error } = await supabase
+        .from('forum_comments')
+        .update({ content: updatedContent })
+        .eq('id', answer.id);
+
+      if (error) throw error;
+
+      supabase
+        .from('forum_comments')
+        .update({ is_public: newPublicStatus })
+        .eq('id', answer.id)
+        .then(() => {}, () => {});
+
+      const studentDisplayName = answer.author.split(']').pop()?.trim() || answer.author;
+      showToast(
+        newPublicStatus 
+          ? `Đã chọn bài của ${studentDisplayName} làm bài mẫu công khai cho cả lớp!` 
+          : `Đã đưa bài của ${studentDisplayName} về chế độ riêng tư (Chỉ GV và học sinh).`,
+        'success',
+        newPublicStatus ? 'Công khai bài mẫu' : 'Đã ẩn công khai'
+      );
+    } catch (err: any) {
+      console.error("Toggle public error:", err);
+      showToast("Lỗi cập nhật chế độ công khai: " + err.message, 'error');
+      fetchComments(true);
+    }
+  };
+
+  const handleSendFeedback = async (answerId: string) => {
+    const text = (feedbackInputs[answerId] || '').trim();
+    if (!text) return;
+
+    setSendingFeedbackId(answerId);
+    const feedbackNodeId = `${homeworkNodeId}_feedback_${answerId}`;
+    const authorName = isAdmin ? "Giáo viên" : (student ? `[${student.name}] ${student.full_name || student.name}` : "Học sinh");
+    const createdAt = new Date().toISOString();
+    const effectiveGradeId = gradeId ? String(gradeId) : null;
+
+    try {
+      const res = await insertRecordToSupabase({
+        targetNodeId: feedbackNodeId,
+        authorName: authorName,
+        content: text,
+        isAdmin: isAdmin,
+        createdAt: createdAt,
+        gradeId: effectiveGradeId
+      });
+
+      if (res.error) throw res.error;
+
+      // Clear input
+      setFeedbackInputs(prev => ({ ...prev, [answerId]: '' }));
+      showToast("Đã gửi phản hồi thành công!", "success");
+      fetchComments(true);
+    } catch (err: any) {
+      console.error("Feedback error:", err);
+      showToast("Lỗi khi gửi phản hồi: " + err.message, "error");
+    } finally {
+      setSendingFeedbackId(null);
+    }
+  };
+
+  const handleDeleteFeedback = async (feedbackId: string) => {
+    if (!isAdmin) return;
+    try {
+      await supabase.from('forum_comments').delete().eq('id', feedbackId);
+      showToast("Đã xóa nhận xét", "info");
+      fetchComments(true);
+    } catch (err: any) {
+      showToast("Lỗi xóa nhận xét: " + err.message, "error");
     }
   };
 
@@ -856,17 +978,137 @@ const HomeworkPanel: React.FC<HomeworkPanelProps> = ({ nodeId, student, isAdmin,
     </div>
   );
 
-  const questions = comments.filter(c => c.isAdmin);
-  const answers = comments.filter(c => !c.isAdmin);
+  const questions = comments.filter(c => c.nodeId === homeworkNodeId && c.isAdmin);
+  const answers = comments.filter(c => c.nodeId.startsWith(`${homeworkNodeId}_ans_`));
+  const feedbacks = comments.filter(c => c.nodeId.startsWith(`${homeworkNodeId}_feedback_`));
   
   const getAnswersForQuestion = (qId: string) => {
     return answers.filter(a => a.nodeId === `${homeworkNodeId}_ans_${qId}`);
+  };
+
+  const getFeedbacksForAnswer = (answerId: string) => {
+    return feedbacks.filter(f => f.nodeId === `${homeworkNodeId}_feedback_${answerId}`);
   };
 
   const getMyAnswerForQuestion = (qId: string) => {
     if (!student) return null;
     const qAnswers = getAnswersForQuestion(qId);
     return qAnswers.find(a => a.author.includes(`[${student.name}]`));
+  };
+
+  const renderFeedbackThread = (answer: ForumComment) => {
+    const threadFeedbacks = getFeedbacksForAnswer(answer.id);
+    const inputText = feedbackInputs[answer.id] || '';
+    const isSending = sendingFeedbackId === answer.id;
+    const isOwner = student && answer.author.includes(`[${student.name}]`);
+
+    // Chỉ GV và chính học sinh này mới xem & gửi phản hồi trong luồng này
+    if (!isAdmin && !isOwner) return null;
+
+    return (
+      <div className="mt-4 pt-4 border-t border-slate-200/80 space-y-3">
+        <div className="flex items-center justify-between">
+          <span className="text-[10px] font-black uppercase text-indigo-700 tracking-wider flex items-center gap-1.5">
+            <MessageSquare size={13} className="text-indigo-600" />
+            Nhận xét & Trao đổi riêng ({threadFeedbacks.length})
+          </span>
+          <span className="text-[9px] font-semibold text-slate-400">
+            {isAdmin ? '🔒 Kênh riêng giữa GV và học sinh này' : '🔒 Trao đổi trực tiếp với Giáo viên'}
+          </span>
+        </div>
+
+        {/* FEEDBACK LIST */}
+        {threadFeedbacks.length > 0 ? (
+          <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
+            {threadFeedbacks.map(f => {
+              const isTeacherMsg = f.isAdmin;
+              return (
+                <div 
+                  key={f.id} 
+                  className={`p-3 rounded-2xl border text-xs leading-relaxed transition-all ${
+                    isTeacherMsg 
+                      ? 'bg-indigo-50/80 border-indigo-200/80 text-indigo-950 ml-0 mr-3 shadow-xs' 
+                      : 'bg-emerald-50/70 border-emerald-200/70 text-emerald-950 ml-3 mr-0 shadow-xs'
+                  }`}
+                >
+                  <div className="flex items-center justify-between mb-1 gap-2">
+                    <span className={`text-[9px] font-black uppercase tracking-wider flex items-center gap-1 ${isTeacherMsg ? 'text-indigo-700' : 'text-emerald-700'}`}>
+                      {isTeacherMsg ? (
+                        <>
+                          <ShieldCheck size={11} className="text-indigo-600" /> Giáo viên
+                        </>
+                      ) : (
+                        <>
+                          <Users size={11} className="text-emerald-600" /> {f.author.split(']').pop()?.trim() || f.author}
+                        </>
+                      )}
+                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[8px] text-slate-400 font-semibold">
+                        {new Date(f.createdAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })} - {new Date(f.createdAt).toLocaleDateString('vi-VN')}
+                      </span>
+                      {isAdmin && (
+                        <button 
+                          onClick={() => handleDeleteFeedback(f.id)} 
+                          className="text-slate-300 hover:text-red-500 transition-colors p-0.5" 
+                          title="Xóa tin nhắn này"
+                        >
+                          <Trash2 size={11} />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                  <div className="prose prose-sm max-w-none text-slate-700 whitespace-pre-wrap font-medium">
+                    {displayMarkdown(f.content)}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <p className="text-[10px] text-slate-400 italic py-0.5">
+            {isAdmin 
+              ? 'Chưa có nhận xét nào. Thầy/Cô có thể nhắc nhở học sinh ở khung bên dưới (VD: nhắc làm cẩn thận ở mục x, câu y...).' 
+              : 'Chưa có nhận xét nào từ Giáo viên.'}
+          </p>
+        )}
+
+        {/* INPUT BOX */}
+        <div className="flex items-center gap-2 pt-1">
+          <input
+            type="text"
+            value={inputText}
+            onChange={(e) => setFeedbackInputs(prev => ({ ...prev, [answer.id]: e.target.value }))}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                handleSendFeedback(answer.id);
+              }
+            }}
+            placeholder={
+              isAdmin 
+                ? 'Nhắc nhở học sinh (VD: Chú ý cẩn thận ở mục số x bài số y, trình bày lại...)...' 
+                : 'Nhập câu hỏi hoặc phản hồi gửi đến Giáo viên...'
+            }
+            className="flex-1 px-3.5 py-2 bg-white rounded-xl border border-slate-200 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent placeholder:text-slate-400"
+          />
+          <button
+            onClick={() => handleSendFeedback(answer.id)}
+            disabled={!inputText.trim() || isSending}
+            className="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40 text-white rounded-xl text-xs font-bold transition-all shadow-sm flex items-center gap-1.5 shrink-0"
+          >
+            {isSending ? (
+              <RefreshCw size={13} className="animate-spin" />
+            ) : (
+              <>
+                <Send size={13} />
+                <span className="hidden sm:inline">{isAdmin ? 'Gửi nhắc nhở' : 'Gửi phản hồi'}</span>
+              </>
+            )}
+          </button>
+        </div>
+      </div>
+    );
   };
 
   return (
@@ -1007,21 +1249,38 @@ const HomeworkPanel: React.FC<HomeworkPanelProps> = ({ nodeId, student, isAdmin,
                                          </div>
                                       </div>
 
-                                      {myAnswer.isApproved ? (
-                                         <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-xl text-[9px] font-black uppercase tracking-wider shadow-sm">
-                                            <CheckCircle2 size={13} className="text-emerald-600" /> Đã được giáo viên duyệt & công nhận
-                                         </span>
-                                      ) : (
-                                         <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-50 border border-amber-200 text-amber-800 rounded-xl text-[9px] font-black uppercase tracking-wider shadow-sm">
-                                            <Clock size={13} className="text-amber-600" /> Đang chờ giáo viên duyệt
-                                         </span>
-                                      )}
+                                      <div className="flex items-center gap-2">
+                                         {myAnswer.isApproved ? (
+                                            <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-xl text-[9px] font-black uppercase tracking-wider shadow-sm">
+                                               <CheckCircle2 size={13} className="text-emerald-600" /> Đã được giáo viên duyệt
+                                            </span>
+                                         ) : (
+                                            <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-50 border border-amber-200 text-amber-800 rounded-xl text-[9px] font-black uppercase tracking-wider shadow-sm">
+                                               <Clock size={13} className="text-amber-600" /> Đang chờ giáo viên duyệt
+                                            </span>
+                                         )}
+
+                                         {myAnswer.isPublic ? (
+                                            <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-purple-50 border border-purple-200 text-purple-700 rounded-xl text-[9px] font-black uppercase tracking-wider shadow-sm">
+                                               <Star size={13} className="text-purple-600 fill-purple-600" /> Bài mẫu cả lớp
+                                            </span>
+                                         ) : (
+                                            <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-slate-100 border border-slate-200 text-slate-600 rounded-xl text-[9px] font-black uppercase tracking-wider">
+                                               <Lock size={12} className="text-slate-400" /> Riêng tư (GV & Em)
+                                            </span>
+                                         )}
+                                      </div>
                                    </div>
 
-                                   {!myAnswer.isApproved && (
-                                      <div className="p-3.5 bg-amber-50/80 border border-amber-200/70 rounded-2xl text-[11px] text-amber-900 font-medium flex items-center gap-2.5">
-                                         <ShieldCheck size={16} className="text-amber-600 shrink-0" />
-                                         <span>Bài làm của em đã gửi thành công và đang chờ giáo viên kiểm duyệt để bảo đảm chất lượng nội dung trước khi xuất hiện trên màn hình chung.</span>
+                                   {myAnswer.isPublic ? (
+                                      <div className="p-3.5 bg-gradient-to-r from-amber-50 via-purple-50 to-indigo-50 border border-amber-200/80 rounded-2xl text-[11px] text-amber-950 font-bold flex items-center gap-2.5 shadow-xs">
+                                         <Star size={18} className="text-amber-500 fill-amber-500 shrink-0" />
+                                         <span>🌟 <b>Chúc mừng em!</b> Bài làm này đạt chất lượng tốt và đã được Giáo viên chọn làm <b>Bài mẫu tham khảo</b> cho cả lớp học tập!</span>
+                                      </div>
+                                   ) : (
+                                      <div className="p-3 bg-slate-50 border border-slate-200/70 rounded-2xl text-[11px] text-slate-600 font-medium flex items-center gap-2.5">
+                                         <Lock size={14} className="text-slate-400 shrink-0" />
+                                         <span>Bài làm đang ở chế độ <b>Riêng tư</b> (Chỉ có em và Giáo viên xem được). Khi bài làm đạt chất lượng cao, Giáo viên có thể duyệt cho xuất hiện làm bài mẫu chung.</span>
                                       </div>
                                    )}
 
@@ -1035,58 +1294,68 @@ const HomeworkPanel: React.FC<HomeworkPanelProps> = ({ nodeId, student, isAdmin,
                                          <img src={myAnswer.imageUrl} className="w-full h-auto opacity-90" />
                                       </div>
                                    )}
-                                   <button 
-                                     onClick={() => { setReplyingToId(q.id); setContent(displayMarkdown(myAnswer.content)); setEditingId(myAnswer.id); }}
-                                     className="text-[9px] font-black text-slate-400 hover:text-indigo-600 uppercase tracking-widest transition-all flex items-center gap-1.5 pt-1"
-                                   >
-                                      <Edit2 size={12} /> Sửa lại câu trả lời
-                                   </button>
+                                   <div className="flex items-center justify-between pt-1">
+                                      <button 
+                                        onClick={() => { setReplyingToId(q.id); setContent(displayMarkdown(myAnswer.content)); setEditingId(myAnswer.id); }}
+                                        className="text-[9px] font-black text-slate-400 hover:text-indigo-600 uppercase tracking-widest transition-all flex items-center gap-1.5"
+                                      >
+                                         <Edit2 size={12} /> Sửa lại câu trả lời
+                                      </button>
+                                   </div>
+
+                                   {/* MỤC TRAO ĐỔI & NHẬN XÉT VỚI GIÁO VIÊN */}
+                                   {renderFeedbackThread(myAnswer)}
                                 </div>
                              )}
 
-                             {/* APPROVED CLASSMATE ANSWERS (CLEAN & COLLAPSIBLE) */}
+                             {/* APPROVED & PUBLIC CLASSMATE ANSWERS (CLEAN & COLLAPSIBLE) */}
                              {(() => {
-                                const otherApprovedAnswers = getAnswersForQuestion(q.id).filter(a => a.isApproved && (!student || !a.author.includes(`[${student.name}]`)));
-                                if (otherApprovedAnswers.length === 0) return null;
+                                const otherPublicAnswers = getAnswersForQuestion(q.id).filter(a => a.isApproved && a.isPublic && (!student || !a.author.includes(`[${student.name}]`)));
+                                if (otherPublicAnswers.length === 0) return null;
                                 const isExpanded = expandedAnswersQId === q.id;
 
                                 return (
                                    <div className="mt-6 pt-6 border-t border-slate-100 space-y-4">
                                       <button 
                                         onClick={() => setExpandedAnswersQId(isExpanded ? null : q.id)}
-                                        className="flex items-center justify-between w-full p-4 bg-slate-50 hover:bg-slate-100/80 rounded-2xl border border-slate-200/80 text-left transition-all group"
+                                        className="flex items-center justify-between w-full p-4 bg-purple-50/50 hover:bg-purple-100/60 rounded-2xl border border-purple-200/70 text-left transition-all group"
                                       >
                                          <div className="flex items-center gap-3">
-                                            <div className="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center text-xs font-black">
-                                               <ShieldCheck size={16} />
+                                            <div className="w-8 h-8 rounded-xl bg-purple-600 text-white flex items-center justify-center text-xs font-black shadow-sm">
+                                               <Star size={16} className="fill-white" />
                                             </div>
                                             <div>
-                                               <p className="text-[11px] font-black text-slate-700 uppercase tracking-wider group-hover:text-emerald-700 transition-colors">
-                                                  Bài làm tham khảo từ các bạn ({otherApprovedAnswers.length} bài đã duyệt)
+                                               <p className="text-[11px] font-black text-purple-950 uppercase tracking-wider group-hover:text-purple-700 transition-colors">
+                                                  Bài làm mẫu tham khảo từ các bạn ({otherPublicAnswers.length} bài mẫu xuất sắc)
                                                </p>
-                                               <p className="text-[9px] text-slate-400 font-medium">Chỉ hiển thị các câu trả lời chất lượng đã qua kiểm duyệt</p>
+                                               <p className="text-[9px] text-purple-700/80 font-medium">Chỉ hiển thị các bài làm chất lượng cao được Giáo viên chọn công khai làm mẫu</p>
                                             </div>
                                          </div>
-                                         <div className="text-slate-400 group-hover:text-slate-600 transition-transform">
+                                         <div className="text-purple-500 group-hover:text-purple-700 transition-transform">
                                             {isExpanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
                                          </div>
                                       </button>
 
                                       {isExpanded && (
                                          <div className="space-y-4 pl-2 pt-2 animate-in fade-in slide-in-from-top-2 duration-300">
-                                            {otherApprovedAnswers.map(ans => (
-                                               <div key={ans.id} className="bg-emerald-50/30 p-5 rounded-2xl border border-emerald-100/70 space-y-3">
+                                            {otherPublicAnswers.map(ans => (
+                                               <div key={ans.id} className="bg-purple-50/20 p-5 rounded-2xl border border-purple-200/60 space-y-3">
                                                   <div className="flex items-center justify-between text-[10px]">
-                                                     <span className="font-black text-emerald-800 uppercase tracking-tight">{ans.author}</span>
+                                                     <div className="flex items-center gap-2">
+                                                        <span className="font-black text-purple-900 uppercase tracking-tight">{ans.author}</span>
+                                                        <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-purple-100 text-purple-800 rounded-md text-[8px] font-bold">
+                                                           <Star size={9} className="fill-purple-600 text-purple-600" /> Bài mẫu
+                                                        </span>
+                                                     </div>
                                                      <span className="text-slate-400 font-medium">{new Date(ans.createdAt).toLocaleDateString('vi-VN')}</span>
                                                   </div>
-                                                  <div className="prose prose-emerald max-w-none prose-sm text-slate-700 leading-relaxed font-medium">
+                                                  <div className="prose prose-purple max-w-none prose-sm text-slate-700 leading-relaxed font-medium">
                                                      <ReactMarkdown remarkPlugins={[remarkGfm, remarkMath, remarkBreaks]} rehypePlugins={[rehypeRaw, rehypeKatex]}>
                                                         {displayMarkdown(ans.content)}
                                                      </ReactMarkdown>
                                                   </div>
                                                   {ans.imageUrl && (
-                                                     <div className="rounded-xl overflow-hidden border border-emerald-100 max-w-sm">
+                                                     <div className="rounded-xl overflow-hidden border border-purple-100 max-w-sm">
                                                         <img src={ans.imageUrl} className="w-full h-auto" />
                                                      </div>
                                                   )}
@@ -1341,10 +1610,11 @@ const HomeworkPanel: React.FC<HomeworkPanelProps> = ({ nodeId, student, isAdmin,
                   const totalCount = scopeAnswers.length;
                   const pendingCount = scopeAnswers.filter(a => !a.isApproved).length;
                   const approvedCount = scopeAnswers.filter(a => a.isApproved).length;
+                  const publicCount = scopeAnswers.filter(a => a.isPublic).length;
 
                   return (
                      <div className="flex items-center justify-between flex-wrap gap-3 pt-2 border-t border-slate-200/60">
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 flex-wrap">
                            <button 
                              onClick={() => setFilterApprovalTab('all')}
                              className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all ${filterApprovalTab === 'all' ? 'bg-slate-800 text-white shadow-md' : 'bg-white text-slate-500 border border-slate-200 hover:bg-slate-50'}`}
@@ -1362,6 +1632,12 @@ const HomeworkPanel: React.FC<HomeworkPanelProps> = ({ nodeId, student, isAdmin,
                              className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all flex items-center gap-1.5 ${filterApprovalTab === 'approved' ? 'bg-emerald-600 text-white shadow-md' : 'bg-white text-emerald-700 border border-emerald-200 hover:bg-emerald-50'}`}
                            >
                               <CheckCircle2 size={12} /> Đã duyệt ({approvedCount})
+                           </button>
+                           <button 
+                             onClick={() => setFilterApprovalTab('public')}
+                             className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all flex items-center gap-1.5 ${filterApprovalTab === 'public' ? 'bg-purple-600 text-white shadow-md' : 'bg-white text-purple-700 border border-purple-200 hover:bg-purple-50'}`}
+                           >
+                              <Star size={12} className="fill-current" /> Bài mẫu công khai (${publicCount})
                            </button>
                         </div>
 
@@ -1384,6 +1660,7 @@ const HomeworkPanel: React.FC<HomeworkPanelProps> = ({ nodeId, student, isAdmin,
                      .filter(a => {
                         if (filterApprovalTab === 'pending') return !a.isApproved;
                         if (filterApprovalTab === 'approved') return a.isApproved;
+                        if (filterApprovalTab === 'public') return a.isPublic;
                         return true;
                      })
                      .filter(a => a.author.toLowerCase().includes(searchTerm.toLowerCase()));
@@ -1406,15 +1683,25 @@ const HomeworkPanel: React.FC<HomeworkPanelProps> = ({ nodeId, student, isAdmin,
                            </div>
                            <h5 className="text-[11px] font-black text-slate-800 uppercase tracking-tight leading-tight mb-1">{a.author}</h5>
                            
-                           {/* STATUS PILL */}
-                           <div className="my-2">
+                           {/* STATUS PILLS */}
+                           <div className="my-2 space-y-1 w-full">
                               {a.isApproved ? (
-                                 <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-emerald-100 text-emerald-800 rounded-full text-[8px] font-black uppercase tracking-wider">
-                                    <CheckCircle2 size={10} /> Đã công khai
+                                 <span className="inline-flex items-center justify-center gap-1 w-full px-2.5 py-1 bg-emerald-100 text-emerald-800 rounded-full text-[8px] font-black uppercase tracking-wider">
+                                    <CheckCircle2 size={10} /> Đã duyệt đạt
                                  </span>
                               ) : (
-                                 <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-amber-100 text-amber-900 rounded-full text-[8px] font-black uppercase tracking-wider animate-pulse">
+                                 <span className="inline-flex items-center justify-center gap-1 w-full px-2.5 py-1 bg-amber-100 text-amber-900 rounded-full text-[8px] font-black uppercase tracking-wider animate-pulse">
                                     <Clock size={10} /> Chờ duyệt
+                                 </span>
+                              )}
+
+                              {a.isPublic ? (
+                                 <span className="inline-flex items-center justify-center gap-1 w-full px-2.5 py-1 bg-purple-100 text-purple-800 rounded-full text-[8px] font-black uppercase tracking-wider shadow-xs">
+                                    <Star size={10} className="fill-purple-600 text-purple-600" /> Bài mẫu công khai
+                                 </span>
+                              ) : (
+                                 <span className="inline-flex items-center justify-center gap-1 w-full px-2.5 py-1 bg-slate-200/80 text-slate-600 rounded-full text-[8px] font-black uppercase tracking-wider">
+                                    <Lock size={10} /> Riêng tư (GV & HS)
                                  </span>
                               )}
                            </div>
@@ -1426,7 +1713,7 @@ const HomeworkPanel: React.FC<HomeworkPanelProps> = ({ nodeId, student, isAdmin,
                               </div>
                            </div>
 
-                           {/* TEACHER APPROVAL & DELETE ACTIONS */}
+                           {/* TEACHER APPROVAL, PUBLIC TOGGLE & DELETE ACTIONS */}
                            {isAdmin && (
                              <div className="mt-4 pt-3 border-t border-slate-200/70 w-full space-y-2">
                                 <button 
@@ -1439,14 +1726,35 @@ const HomeworkPanel: React.FC<HomeworkPanelProps> = ({ nodeId, student, isAdmin,
                                 >
                                    {a.isApproved ? (
                                      <>
-                                        <X size={12} /> Hủy duyệt (Ẩn)
+                                        <X size={12} /> Hủy duyệt (Chờ duyệt)
                                      </>
                                    ) : (
                                      <>
-                                        <CheckCircle2 size={12} /> Duyệt & Công khai
+                                        <CheckCircle2 size={12} /> Duyệt bài làm
                                      </>
                                    )}
                                 </button>
+
+                                <button 
+                                  onClick={() => handleTogglePublic(a)}
+                                  className={`w-full py-2 px-3 rounded-xl text-[9px] font-black uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 shadow-sm ${
+                                    a.isPublic 
+                                      ? 'bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200' 
+                                      : 'bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200'
+                                  }`}
+                                  title={a.isPublic ? "Ẩn khỏi danh sách bài mẫu chung" : "Cho phép cả lớp xem bài làm này như bài mẫu tham khảo"}
+                                >
+                                   {a.isPublic ? (
+                                     <>
+                                        <EyeOff size={12} /> Đổi sang Riêng tư
+                                     </>
+                                   ) : (
+                                     <>
+                                        <Star size={12} className="text-amber-600" /> Công khai làm Bài mẫu
+                                     </>
+                                   )}
+                                </button>
+
                                 <button onClick={() => handleDelete(a.id)} className="w-full py-1.5 px-3 bg-red-50 text-red-500 hover:bg-red-100 rounded-xl text-[9px] font-bold uppercase transition-all flex items-center justify-center gap-1" title="Xóa bài nộp">
                                    <Trash2 size={12} /> Xóa bài
                                 </button>
@@ -1465,6 +1773,9 @@ const HomeworkPanel: React.FC<HomeworkPanelProps> = ({ nodeId, student, isAdmin,
                                 <img src={a.imageUrl} className="w-full h-auto" />
                              </div>
                            )}
+
+                           {/* MỤC TRAO ĐỔI & NHẬN XÉT DẶN DÒ CỦA GIÁO VIÊN */}
+                           {renderFeedbackThread(a)}
                         </div>
                      </div>
                   ));
