@@ -17,6 +17,8 @@ import StudentLogin from './components/StudentLogin';
 import StudentManager from './components/StudentManager';
 import HomeworkPanel from './components/HomeworkPanel';
 import { StudentSpaceModal } from './components/StudentSpaceModal';
+import VdcQuestionsPanel from './components/VdcQuestionsPanel';
+import { uploadToImgBB } from './imgbb';
 import { ConfirmModal, ToastNotification, ConfirmState, ToastState } from './components/CustomDialog';
 import { getSafeEnv, SLOGANS } from './utils';
 
@@ -331,6 +333,7 @@ const MainView: React.FC<{
   const [selectedId, setSelectedId] = useState<string | null>(() => {
     return localStorage.getItem(`selected_id_${selectedGrade}`);
   });
+  const [isVdcMode, setIsVdcMode] = useState<boolean>(false);
   const [iframeLoading, setIframeLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<'content' | 'tasks' | 'flashcards' | 'homework'>('content');
   const [showStudentManager, setShowStudentManager] = useState(false);
@@ -579,15 +582,21 @@ const MainView: React.FC<{
       const { data: quizData } = await supabase.from('quiz_data').select('*');
       const { data: flashcards } = await supabase.from('flashcards').select('*');
       const { data: forumComments } = await supabase.from('forum_comments').select('*');
+      let vdcQuestions: any[] = [];
+      try {
+        const { data: vdc } = await supabase.from('vdc_questions').select('*');
+        if (vdc) vdcQuestions = vdc;
+      } catch (e) {}
       
       const backup = {
         timestamp: new Date().toISOString(),
-        version: '1.2',
+        version: '1.3',
         tables: {
           app_settings: appSettings,
           quiz_data: quizData,
           flashcards: flashcards,
-          forum_comments: forumComments
+          forum_comments: forumComments,
+          vdc_questions: vdcQuestions
         }
       };
 
@@ -673,6 +682,15 @@ const MainView: React.FC<{
             }
           }
 
+          // Restore vdc_questions
+          if (backup.tables.vdc_questions && Array.isArray(backup.tables.vdc_questions)) {
+            for (const row of backup.tables.vdc_questions) {
+              try {
+                await supabase.from('vdc_questions').upsert(row).select();
+              } catch (vdcErr) {}
+            }
+          }
+
           showToast("Khôi phục dữ liệu thành công! Hãy tải lại trang.", "success");
           setTimeout(() => window.location.reload(), 1500);
         } catch (error) {
@@ -698,6 +716,21 @@ const MainView: React.FC<{
 
     setIsUploading(true);
     try {
+      // Nếu là tải ảnh bài học, ưu tiên tải lên ImgBB trước
+      if (target === 'node_image') {
+        try {
+          const imgbb = await uploadToImgBB(file);
+          if (imgbb && imgbb.url) {
+            setNodeModalData({ ...nodeModalData, imageUrl: imgbb.url });
+            showToast("Đã tải ảnh lên ImgBB thành công!", "success");
+            setIsUploading(false);
+            return;
+          }
+        } catch (imgbbErr) {
+          console.warn("ImgBB upload failed, falling back to Supabase:", imgbbErr);
+        }
+      }
+
       const fileExt = file.name.split('.').pop();
       const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
       const filePath = `uploads/${fileName}`;
@@ -862,6 +895,7 @@ const MainView: React.FC<{
   };
 
   const handleSelectNode = (id: string | null, tab: 'content' | 'flashcards' | 'tasks' | 'homework' = 'content') => {
+    setIsVdcMode(false);
     setSelectedId(id);
     setActiveTab(tab);
     if (id) {
@@ -907,17 +941,28 @@ const MainView: React.FC<{
         </header>
 
         <div className="p-3 shrink-0 bg-[#fbfcfd] space-y-2">
-          {currentStudent && (
-            <button
-              onClick={() => setIsStudentSpaceOpen(true)}
-              className="w-full flex items-center justify-between px-3 py-2 bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white rounded-xl shadow-md shadow-indigo-100 transition-all text-left group"
-            >
-              <span className="flex items-center gap-2 text-[10px] font-black uppercase tracking-wider">
-                <GraduationCap size={14} className="text-amber-300" /> Góc học tập của em
-              </span>
-              <Sparkles size={12} className="text-amber-300 opacity-80 group-hover:scale-110 transition-transform" />
-            </button>
-          )}
+          {/* NÚT KHO VDC & CÂU HỎI HAY */}
+          <button
+            onClick={() => {
+              setIsVdcMode(true);
+              setSelectedId(null);
+            }}
+            className={`w-full flex items-center justify-between px-3 py-2 rounded-xl transition-all text-left group shadow-xs ${
+              isVdcMode
+                ? 'bg-gradient-to-r from-rose-600 via-amber-600 to-indigo-600 text-white shadow-md shadow-rose-200 ring-2 ring-rose-400'
+                : 'bg-gradient-to-r from-amber-50 to-rose-50/80 hover:from-amber-100 hover:to-rose-100 text-slate-800 border border-amber-200/80'
+            }`}
+          >
+            <span className="flex items-center gap-2 text-[10px] font-black uppercase tracking-wider">
+              <Sparkles size={13} className={isVdcMode ? "text-amber-300 fill-amber-300 animate-pulse" : "text-rose-500 fill-rose-500"} />
+              <span>Kho VDC & Sưu tầm</span>
+            </span>
+            <span className={`text-[8px] font-black px-1.5 py-0.5 rounded-md uppercase tracking-tight ${
+              isVdcMode ? 'bg-white/20 text-white' : 'bg-rose-500 text-white'
+            }`}>
+              9+
+            </span>
+          </button>
 
           <div className={`flex items-center bg-white border border-slate-200 rounded-xl px-3 py-1.5 shadow-sm focus-within:border-${themeColor}-400 transition-all`}>
             <Search size={12} className="text-slate-400"/>
@@ -993,7 +1038,17 @@ const MainView: React.FC<{
             </button>
           </div>
         )}
-        {selectedId ? (
+        {isVdcMode ? (
+          <VdcQuestionsPanel
+            isAdmin={isAdmin}
+            selectedGrade={selectedGrade}
+            nodes={data?.nodes || []}
+            themeColor={themeColor}
+            onBackToLessons={() => setIsVdcMode(false)}
+            showToast={showToast}
+            showConfirm={showConfirm}
+          />
+        ) : selectedId ? (
           <>
             {selectedNode?.type === 'folder' ? (
               <FolderSummary 
@@ -1156,12 +1211,14 @@ const MainView: React.FC<{
       </main>
 
       {/* PANEL 3: RESOURCES */}
-      <ResourcesPanel isAdmin={isAdmin} selectedId={selectedId} lessonResources={selectedNode?.lessonResources||[]} globalResources={data.globalResources}
-        themeColor={themeColor}
-        onAdd={(isG)=> {setResModalData({title:'', url:'', isGlobal: isG}); setShowResModal(true);}}
-        onEdit={(r,isG)=> {setResModalData({...r, isGlobal: isG}); setShowResModal(true);}}
-        onDelete={handleDeleteResource}
-        onViewResource={(r)=> setResourceModal(r)}/>
+      {!isVdcMode && (
+        <ResourcesPanel isAdmin={isAdmin} selectedId={selectedId} lessonResources={selectedNode?.lessonResources||[]} globalResources={data.globalResources}
+          themeColor={themeColor}
+          onAdd={(isG)=> {setResModalData({title:'', url:'', isGlobal: isG}); setShowResModal(true);}}
+          onEdit={(r,isG)=> {setResModalData({...r, isGlobal: isG}); setShowResModal(true);}}
+          onDelete={handleDeleteResource}
+          onViewResource={(r)=> setResourceModal(r)}/>
+      )}
 
       {/* MODAL VIEW RESOURCE */}
       {resourceModal && (
