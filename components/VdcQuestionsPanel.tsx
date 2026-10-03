@@ -28,7 +28,9 @@ import {
   RefreshCw,
   FileText,
   ArrowUp,
-  ArrowDown
+  ArrowDown,
+  RotateCcw,
+  Menu
 } from 'lucide-react';
 import { VdcQuestion, BookNode } from '../types';
 import { SAMPLE_VDC_QUESTIONS } from '../sampleVdcData';
@@ -45,7 +47,6 @@ interface VdcQuestionsPanelProps {
   onBackToLessons?: () => void;
   showToast: (message: string, type?: 'success' | 'error' | 'warning' | 'info', title?: string) => void;
   showConfirm: (title: string, message: string, onConfirm: () => void, type?: 'danger' | 'warning' | 'info', confirmText?: string) => void;
-  onUpdateNodes?: (newNodes: BookNode[]) => void;
 }
 
 export const VdcQuestionsPanel: React.FC<VdcQuestionsPanelProps> = ({
@@ -55,8 +56,7 @@ export const VdcQuestionsPanel: React.FC<VdcQuestionsPanelProps> = ({
   themeColor,
   onBackToLessons,
   showToast,
-  showConfirm,
-  onUpdateNodes
+  showConfirm
 }) => {
   const [questions, setQuestions] = useState<VdcQuestion[]>([]);
   const [loading, setLoading] = useState(true);
@@ -124,6 +124,9 @@ export const VdcQuestionsPanel: React.FC<VdcQuestionsPanelProps> = ({
     }
   });
 
+  // State mở menu các chương trên thiết bị di động (iPhone / Tablet)
+  const [isMobileChapterMenuOpen, setIsMobileChapterMenuOpen] = useState(false);
+
   // Cập nhật chapterOrder và deletedChapters khi gradeId thay đổi
   useEffect(() => {
     try {
@@ -136,6 +139,26 @@ export const VdcQuestionsPanel: React.FC<VdcQuestionsPanelProps> = ({
       setDeletedChapters([]);
     }
   }, [gradeId]);
+
+  // Khôi phục các chương đã ẩn khỏi VDC (lấy lại từ cấu trúc sách)
+  const handleRestoreDeletedChapters = async () => {
+    setDeletedChapters([]);
+    try {
+      localStorage.removeItem(`vdc_deleted_chapters_g${gradeId}`);
+      await supabase.from('app_settings').upsert({
+        id: 8000 + gradeId,
+        data: {
+          questions,
+          chapter_order: chapterOrder,
+          deleted_chapters: [],
+          updated_at: new Date().toISOString()
+        }
+      });
+      showToast('Đã khôi phục các chương từ sách vào menu VDC thành công!', 'success');
+    } catch (e) {
+      console.warn("Lỗi khi khôi phục chương:", e);
+    }
+  };
 
   // Lấy danh sách các chương (Folders) từ cấu trúc sách hiện tại
   const chaptersList = useMemo(() => {
@@ -211,48 +234,39 @@ export const VdcQuestionsPanel: React.FC<VdcQuestionsPanelProps> = ({
     }
   };
 
-  // Xóa chương khỏi menu và hệ thống
+  // Xóa chương khỏi menu VDC
   const handleDeleteChapter = (ch: { id: string; title: string; fromNode?: boolean }, count: number) => {
     showConfirm(
-      "Xác nhận xóa chương",
+      "Xác nhận xóa chương khỏi kho VDC",
       count > 0 
-        ? `Chương "${ch.title}" đang có ${count} câu hỏi. Thầy/cô có chắc chắn muốn xóa chương này và toàn bộ ${count} câu hỏi bên trong không?`
-        : `Thầy/cô có chắc chắn muốn xóa chương "${ch.title}" khỏi menu không?`,
+        ? `Chương "${ch.title}" đang có ${count} câu hỏi VDC. Thầy/cô có chắc chắn muốn xóa chương này khỏi kho VDC và toàn bộ ${count} câu hỏi bên trong không? (Lưu ý: Không ảnh hưởng đến bài học ở màn hình chính)`
+        : `Thầy/cô có chắc chắn muốn xóa chương "${ch.title}" khỏi menu kho VDC không?`,
       async () => {
         try {
           const lowerTitle = ch.title.trim().toLowerCase();
 
-          // 1. Nếu chương này là 1 node trong cấu trúc sách (App.tsx), xóa node đó
-          if (onUpdateNodes) {
-            const matchNode = (nodes || []).find(n => n.id === ch.id || n.title.trim().toLowerCase() === lowerTitle);
-            if (matchNode) {
-              const remainingNodes = (nodes || []).filter(n => n.id !== matchNode.id && n.parentId !== matchNode.id);
-              onUpdateNodes(remainingNodes);
-            }
-          }
-
-          // 2. Xóa các câu hỏi thuộc chương này
+          // 1. Xóa các câu hỏi VDC thuộc chương này
           const remainingQuestions = questions.filter(
             q => q.chapter_title?.trim().toLowerCase() !== lowerTitle && q.chapter_id !== ch.id
           );
           setQuestions(remainingQuestions);
 
-          // 3. Xóa câu hỏi trên Supabase
+          // 2. Xóa câu hỏi trên Supabase
           if (dbStatus === 'connected') {
             await supabase.from('vdc_questions').delete().eq('grade_id', gradeId).ilike('chapter_title', ch.title.trim());
           }
 
-          // 4. Cập nhật danh sách deletedChapters để không bao giờ bị nạp lại
+          // 3. Cập nhật danh sách deletedChapters để loại bỏ khỏi menu VDC vĩnh viễn
           const updatedDeleted = Array.from(new Set([...deletedChapters, ch.title.trim()]));
           setDeletedChapters(updatedDeleted);
           localStorage.setItem(`vdc_deleted_chapters_g${gradeId}`, JSON.stringify(updatedDeleted));
 
-          // 5. Cập nhật chapterOrder
+          // 4. Cập nhật chapterOrder
           const updatedOrder = chapterOrder.filter(t => t.trim().toLowerCase() !== lowerTitle);
           setChapterOrder(updatedOrder);
           localStorage.setItem(`vdc_chapter_order_g${gradeId}`, JSON.stringify(updatedOrder));
 
-          // 6. Cập nhật backup vào app_settings
+          // 5. Cập nhật backup vào app_settings VDC (ID 8000 + gradeId)
           await supabase.from('app_settings').upsert({
             id: 8000 + gradeId,
             data: {
@@ -263,24 +277,24 @@ export const VdcQuestionsPanel: React.FC<VdcQuestionsPanelProps> = ({
             }
           });
 
-          // 7. Nếu đang chọn chương này thì chuyển về 'all'
+          // 6. Nếu đang chọn chương này thì chuyển về 'all'
           if (selectedChapter === ch.title || selectedChapter === ch.id) {
             setSelectedChapter('all');
             setCurrentPage(1);
           }
 
-          showToast(`Đã xóa chương "${ch.title}" thành công!`, 'success');
+          showToast(`Đã xóa chương "${ch.title}" khỏi kho VDC thành công!`, 'success');
         } catch (err: any) {
           console.error("Lỗi khi xóa chương:", err);
           showToast(`Lỗi khi xóa chương: ${err.message || 'Không xác định'}`, 'error');
         }
       },
       'danger',
-      'Xóa chương'
+      'Xóa khỏi VDC'
     );
   };
 
-  // Lưu thay đổi tên chương
+  // Lưu thay đổi tên chương trong kho VDC
   const handleSaveEditChapter = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingChapter || !editChapterTitle.trim()) return;
@@ -295,17 +309,7 @@ export const VdcQuestionsPanel: React.FC<VdcQuestionsPanelProps> = ({
     try {
       const oldLower = oldTitle.toLowerCase();
 
-      // 1. Cập nhật node trong cấu trúc sách nếu có
-      if (onUpdateNodes) {
-        const updatedNodes = (nodes || []).map(n => 
-          n.id === editingChapter.id || n.title.trim().toLowerCase() === oldLower 
-            ? { ...n, title: newTitle } 
-            : n
-        );
-        onUpdateNodes(updatedNodes);
-      }
-
-      // 2. Cập nhật tất cả câu hỏi có chapter_title cũ
+      // 1. Cập nhật tất cả câu hỏi VDC có chapter_title cũ
       const updatedQuestions = questions.map(q => 
         q.chapter_title?.trim().toLowerCase() === oldLower || q.chapter_id === editingChapter.id
           ? { ...q, chapter_title: newTitle }
@@ -313,7 +317,7 @@ export const VdcQuestionsPanel: React.FC<VdcQuestionsPanelProps> = ({
       );
       setQuestions(updatedQuestions);
 
-      // 3. Cập nhật trong Supabase
+      // 2. Cập nhật trong Supabase
       if (dbStatus === 'connected') {
         await supabase
           .from('vdc_questions')
@@ -322,13 +326,13 @@ export const VdcQuestionsPanel: React.FC<VdcQuestionsPanelProps> = ({
           .ilike('chapter_title', oldTitle);
       }
 
-      // 4. Cập nhật chapterOrder
+      // 3. Cập nhật chapterOrder
       const updatedOrder = chapterOrder.map(t => t.trim().toLowerCase() === oldLower ? newTitle : t);
       if (!updatedOrder.includes(newTitle)) updatedOrder.push(newTitle);
       setChapterOrder(updatedOrder);
       localStorage.setItem(`vdc_chapter_order_g${gradeId}`, JSON.stringify(updatedOrder));
 
-      // 5. Cập nhật app_settings fallback
+      // 4. Cập nhật app_settings fallback cho VDC
       await supabase.from('app_settings').upsert({
         id: 8000 + gradeId,
         data: {
@@ -339,7 +343,7 @@ export const VdcQuestionsPanel: React.FC<VdcQuestionsPanelProps> = ({
         }
       });
 
-      // 6. Cập nhật selectedChapter nếu đang chọn chương này
+      // 5. Cập nhật selectedChapter nếu đang chọn chương này
       if (selectedChapter === oldTitle || selectedChapter === editingChapter.id) {
         setSelectedChapter(newTitle);
       }
@@ -352,7 +356,7 @@ export const VdcQuestionsPanel: React.FC<VdcQuestionsPanelProps> = ({
     }
   };
 
-  // Thêm chương mới
+  // Thêm chương mới vào kho VDC
   const handleSaveAddChapter = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newChapterTitle.trim()) return;
@@ -360,38 +364,22 @@ export const VdcQuestionsPanel: React.FC<VdcQuestionsPanelProps> = ({
     const titleToAdd = newChapterTitle.trim();
 
     try {
-      // 1. Thêm folder node vào cấu trúc sách nếu có callback
-      if (onUpdateNodes) {
-        const nextOrder = (nodes || []).filter(n => n.parentId === null || n.parentId === undefined).length;
-        const newNode: BookNode = {
-          id: `g${gradeId}-folder-${Date.now()}`,
-          title: titleToAdd,
-          type: 'folder',
-          parentId: null,
-          order: nextOrder,
-          lessonResources: [],
-          url: '',
-          imageUrl: ''
-        };
-        onUpdateNodes([...(nodes || []), newNode]);
-      }
-
-      // 2. Bỏ khỏi deletedChapters nếu trước đó từng bị xóa
+      // 1. Bỏ khỏi deletedChapters nếu trước đó từng bị xóa
       const updatedDeleted = deletedChapters.filter(t => t.trim().toLowerCase() !== titleToAdd.toLowerCase());
       setDeletedChapters(updatedDeleted);
       localStorage.setItem(`vdc_deleted_chapters_g${gradeId}`, JSON.stringify(updatedDeleted));
 
-      // 3. Thêm vào chapterOrder
+      // 2. Thêm vào chapterOrder
       const updatedOrder = [...chapterOrder.filter(t => t.trim().toLowerCase() !== titleToAdd.toLowerCase()), titleToAdd];
       setChapterOrder(updatedOrder);
       localStorage.setItem(`vdc_chapter_order_g${gradeId}`, JSON.stringify(updatedOrder));
 
-      // 4. Chọn ngay chương vừa thêm
+      // 3. Chọn ngay chương vừa thêm
       setSelectedChapter(titleToAdd);
       setShowAddChapterModal(false);
       setNewChapterTitle('');
 
-      showToast(`Đã thêm chương "${titleToAdd}" vào menu thành công!`, 'success');
+      showToast(`Đã thêm chương "${titleToAdd}" vào kho VDC thành công!`, 'success');
     } catch (err: any) {
       console.error("Lỗi khi thêm chương:", err);
       showToast(`Lỗi khi thêm chương: ${err.message || 'Không xác định'}`, 'error');
