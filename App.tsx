@@ -1074,7 +1074,6 @@ const MainView: React.FC<{
             onBackToLessons={() => setIsVdcMode(false)}
             showToast={showToast}
             showConfirm={showConfirm}
-            onUpdateNodes={(newNodes) => updateData({ ...data, nodes: newNodes })}
           />
         ) : selectedId ? (
           <>
