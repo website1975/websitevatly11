@@ -102,7 +102,7 @@ export const VdcQuestionsPanel: React.FC<VdcQuestionsPanelProps> = ({
   const [showSqlModal, setShowSqlModal] = useState(false);
   const [copiedSql, setCopiedSql] = useState(false);
 
-  const gradeId = selectedGrade || 11;
+  const gradeId = (selectedGrade === 1 ? 11 : selectedGrade) || 11;
 
   // Thứ tự sắp xếp các chương do người dùng tùy chỉnh
   const [chapterOrder, setChapterOrder] = useState<string[]>(() => {
@@ -127,17 +127,83 @@ export const VdcQuestionsPanel: React.FC<VdcQuestionsPanelProps> = ({
   // State mở menu các chương trên thiết bị di động (iPhone / Tablet)
   const [isMobileChapterMenuOpen, setIsMobileChapterMenuOpen] = useState(false);
 
-  // Cập nhật chapterOrder và deletedChapters khi gradeId thay đổi
+  // ĐỒNG BỘ ĐÁM MÂY SUPABASE: Tải cấu hình chương và thiết lập Realtime giữa các trình duyệt/thiết bị
   useEffect(() => {
+    let isMounted = true;
+
+    // 1. Tải từ localStorage trước để hiển thị tức thì
     try {
       const savedOrder = localStorage.getItem(`vdc_chapter_order_g${gradeId}`);
-      setChapterOrder(savedOrder ? JSON.parse(savedOrder) : []);
+      if (savedOrder) setChapterOrder(JSON.parse(savedOrder));
       const savedDeleted = localStorage.getItem(`vdc_deleted_chapters_g${gradeId}`);
-      setDeletedChapters(savedDeleted ? JSON.parse(savedDeleted) : []);
-    } catch {
-      setChapterOrder([]);
-      setDeletedChapters([]);
-    }
+      if (savedDeleted) setDeletedChapters(JSON.parse(savedDeleted));
+    } catch {}
+
+    // 2. Luôn nạp dữ liệu chính xác nhất từ Supabase app_settings (ID: 8000 + gradeId)
+    const fetchCloudSettings = async () => {
+      try {
+        const { data: vdcSettings, error: sErr } = await supabase
+          .from('app_settings')
+          .select('data')
+          .eq('id', 8000 + gradeId)
+          .maybeSingle();
+
+        if (!sErr && vdcSettings?.data && isMounted) {
+          const sData = vdcSettings.data as any;
+          if (Array.isArray(sData.deleted_chapters)) {
+            setDeletedChapters(sData.deleted_chapters);
+            try {
+              localStorage.setItem(`vdc_deleted_chapters_g${gradeId}`, JSON.stringify(sData.deleted_chapters));
+            } catch {}
+          }
+          if (Array.isArray(sData.chapter_order)) {
+            setChapterOrder(sData.chapter_order);
+            try {
+              localStorage.setItem(`vdc_chapter_order_g${gradeId}`, JSON.stringify(sData.chapter_order));
+            } catch {}
+          }
+        }
+      } catch (err) {
+        console.warn("Lỗi khi tải cấu hình VDC từ đám mây Supabase:", err);
+      }
+    };
+
+    fetchCloudSettings();
+
+    // 3. Đăng ký Supabase Realtime: Khi một trình duyệt xóa/sắp xếp chương, các trình duyệt khác tự cập nhật ngay
+    const channel = supabase
+      .channel(`vdc_sync_realtime_g${gradeId}`)
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'app_settings',
+        filter: `id=eq.${8000 + gradeId}`
+      }, (payload: any) => {
+        if (payload?.new?.data && isMounted) {
+          const sData = payload.new.data as any;
+          if (Array.isArray(sData.deleted_chapters)) {
+            setDeletedChapters(sData.deleted_chapters);
+            try {
+              localStorage.setItem(`vdc_deleted_chapters_g${gradeId}`, JSON.stringify(sData.deleted_chapters));
+            } catch {}
+          }
+          if (Array.isArray(sData.chapter_order)) {
+            setChapterOrder(sData.chapter_order);
+            try {
+              localStorage.setItem(`vdc_chapter_order_g${gradeId}`, JSON.stringify(sData.chapter_order));
+            } catch {}
+          }
+          if (Array.isArray(sData.questions) && sData.questions.length > 0) {
+            setQuestions(sData.questions);
+          }
+        }
+      })
+      .subscribe();
+
+    return () => {
+      isMounted = false;
+      supabase.removeChannel(channel);
+    };
   }, [gradeId]);
 
   // Khôi phục các chương đã ẩn khỏi VDC (lấy lại từ cấu trúc sách)
@@ -239,8 +305,8 @@ export const VdcQuestionsPanel: React.FC<VdcQuestionsPanelProps> = ({
     showConfirm(
       "Xác nhận xóa chương khỏi kho VDC",
       count > 0 
-        ? `Chương "${ch.title}" đang có ${count} câu hỏi VDC. Thầy/cô có chắc chắn muốn xóa chương này khỏi kho VDC và toàn bộ ${count} câu hỏi bên trong không? (Lưu ý: Không ảnh hưởng đến bài học ở màn hình chính)`
-        : `Thầy/cô có chắc chắn muốn xóa chương "${ch.title}" khỏi menu kho VDC không?`,
+        ? `Chương "${ch.title}" đang có ${count} câu hỏi VDC. Thầy/cô có chắc chắn muốn xóa chương này khỏi kho VDC và toàn bộ ${count} câu hỏi bên trong không?\n\n(LƯU Ý: Thao tác này chỉ xóa câu hỏi trong kho VDC, hoàn toàn KHÔNG làm mất chương hay bài học bên ngoài cấu trúc sách ở menu bên trái!)`
+        : `Thầy/cô có chắc chắn muốn xóa/ẩn chương "${ch.title}" khỏi menu kho VDC không?\n\n(LƯU Ý: Thao tác này hoàn toàn KHÔNG ảnh hưởng hay làm mất menu bài học bên ngoài màn hình chính!)`,
       async () => {
         try {
           const lowerTitle = ch.title.trim().toLowerCase();
@@ -386,11 +452,41 @@ export const VdcQuestionsPanel: React.FC<VdcQuestionsPanelProps> = ({
     }
   };
 
-  // Tải danh sách câu hỏi từ Supabase
+  // Tải danh sách câu hỏi & cấu hình Menu chương từ Supabase
   const loadQuestions = useCallback(async () => {
     setLoading(true);
     try {
-      // 1. Thử truy vấn bảng vdc_questions
+      // 1. Luôn tải cấu hình VDC (danh sách chương đã xóa/ẩn, thứ tự chương) từ Supabase app_settings (8000 + gradeId)
+      try {
+        const { data: vdcSettings, error: sErr } = await supabase
+          .from('app_settings')
+          .select('data')
+          .eq('id', 8000 + gradeId)
+          .maybeSingle();
+
+        if (!sErr && vdcSettings?.data) {
+          const sData = vdcSettings.data as any;
+          if (Array.isArray(sData.deleted_chapters)) {
+            setDeletedChapters(sData.deleted_chapters);
+            try {
+              localStorage.setItem(`vdc_deleted_chapters_g${gradeId}`, JSON.stringify(sData.deleted_chapters));
+            } catch {}
+          }
+          if (Array.isArray(sData.chapter_order)) {
+            setChapterOrder(sData.chapter_order);
+            try {
+              localStorage.setItem(`vdc_chapter_order_g${gradeId}`, JSON.stringify(sData.chapter_order));
+            } catch {}
+          }
+          if (Array.isArray(sData.questions) && sData.questions.length > 0) {
+            setQuestions(sData.questions);
+          }
+        }
+      } catch (settingsErr) {
+        console.warn("Lỗi khi tải app_settings VDC:", settingsErr);
+      }
+
+      // 2. Thử truy vấn bảng vdc_questions
       const { data: dbData, error } = await supabase
         .from('vdc_questions')
         .select('*')
@@ -398,40 +494,30 @@ export const VdcQuestionsPanel: React.FC<VdcQuestionsPanelProps> = ({
         .order('order_num', { ascending: true })
         .order('created_at', { ascending: false });
 
-      if (!error && dbData) {
+      if (!error && dbData && dbData.length > 0) {
         setDbStatus('connected');
-        if (dbData.length > 0) {
-          setQuestions(dbData as VdcQuestion[]);
-        } else {
-          // Chưa có câu nào trong DB bảng mới, nạp mẫu của khối hiện tại để giáo viên tham khảo
-          const samplesForGrade = SAMPLE_VDC_QUESTIONS.filter(q => q.grade_id === gradeId);
-          setQuestions(samplesForGrade);
-        }
+        setQuestions(dbData as VdcQuestion[]);
+      } else if (!error && dbData) {
+        setDbStatus('connected');
+        setQuestions(prev => {
+          if (prev && prev.length > 0) return prev;
+          return SAMPLE_VDC_QUESTIONS.filter(q => q.grade_id === gradeId);
+        });
       } else {
         // Lỗi (chưa tạo bảng vdc_questions trên Supabase) -> Dùng Fallback
-        console.warn("Bảng vdc_questions chưa tồn tại trên Supabase, dùng cơ chế Fallback:", error?.message);
         setDbStatus('fallback');
-
-        // Thử lấy từ app_settings ID (8000 + gradeId)
-        const { data: fbData } = await supabase
-          .from('app_settings')
-          .select('data')
-          .eq('id', 8000 + gradeId)
-          .maybeSingle();
-
-        if (fbData?.data && Array.isArray((fbData.data as any).questions) && (fbData.data as any).questions.length > 0) {
-          setQuestions((fbData.data as any).questions);
-        } else {
-          // Lấy mẫu mặc định
-          const samplesForGrade = SAMPLE_VDC_QUESTIONS.filter(q => q.grade_id === gradeId);
-          setQuestions(samplesForGrade);
-        }
+        setQuestions(prev => {
+          if (prev && prev.length > 0) return prev;
+          return SAMPLE_VDC_QUESTIONS.filter(q => q.grade_id === gradeId);
+        });
       }
     } catch (err) {
       console.error("Lỗi khi tải câu hỏi VDC:", err);
       setDbStatus('fallback');
-      const samplesForGrade = SAMPLE_VDC_QUESTIONS.filter(q => q.grade_id === gradeId);
-      setQuestions(samplesForGrade);
+      setQuestions(prev => {
+        if (prev && prev.length > 0) return prev;
+        return SAMPLE_VDC_QUESTIONS.filter(q => q.grade_id === gradeId);
+      });
     } finally {
       setLoading(false);
     }
@@ -884,9 +970,9 @@ ON public.vdc_questions FOR DELETE USING (true);
       </header>
 
       {/* 2. MAIN LAYOUT: SIDEBAR CHƯƠNG + CONTENT VÙNG CÂU HỎI */}
-      <div className="flex-1 flex overflow-hidden">
-        {/* PANEL TRÁI: DANH SÁCH MENU CÁC CHƯƠNG */}
-        <aside className="w-64 sm:w-72 bg-white border-r border-slate-200/80 flex flex-col shrink-0">
+      <div className="flex-1 flex overflow-hidden relative">
+        {/* PANEL TRÁI: DANH SÁCH MENU CÁC CHƯƠNG (Hiển thị trên Desktop md+) */}
+        <aside className="hidden md:flex md:w-64 lg:w-72 bg-white border-r border-slate-200/80 flex-col shrink-0">
           <div className="p-4 border-b border-slate-100 bg-slate-50/50">
             <div className="flex items-center justify-between mb-1">
               <h2 className="text-[10px] font-black uppercase tracking-widest text-slate-500 flex items-center gap-1.5">
@@ -1047,20 +1133,221 @@ ON public.vdc_questions FOR DELETE USING (true);
           </div>
 
           {/* Chân trang thông tin bên menu */}
-          <div className="p-3 border-t border-slate-100 bg-slate-50 text-[11px] text-slate-500 flex items-center justify-between">
-            <span>Tổng cộng: <b>{questions.length} câu</b></span>
-            <button
-              onClick={loadQuestions}
-              className="p-1 hover:bg-slate-200 rounded-lg text-slate-500 transition-colors"
-              title="Làm mới dữ liệu"
-            >
-              <RefreshCw size={13} className={loading ? 'animate-spin' : ''} />
-            </button>
+          <div className="p-3 border-t border-slate-100 bg-slate-50 text-[11px] text-slate-500 space-y-2">
+            <div className="flex items-center justify-between">
+              <span>Tổng cộng: <b>{questions.length} câu</b></span>
+              <button
+                onClick={loadQuestions}
+                className="p-1 hover:bg-slate-200 rounded-lg text-slate-500 transition-colors"
+                title="Làm mới dữ liệu"
+              >
+                <RefreshCw size={13} className={loading ? 'animate-spin' : ''} />
+              </button>
+            </div>
+            {deletedChapters.length > 0 && (
+              <button
+                type="button"
+                onClick={handleRestoreDeletedChapters}
+                className="w-full text-center text-[10px] text-indigo-600 hover:text-indigo-800 font-bold p-1.5 bg-indigo-50 hover:bg-indigo-100 rounded-xl border border-indigo-100 transition-all flex items-center justify-center gap-1.5"
+                title="Bấm để hiển thị lại các chương từ sách đã từng bị ẩn khỏi VDC"
+              >
+                <RotateCcw size={11} /> Khôi phục {deletedChapters.length} chương đã ẩn
+              </button>
+            )}
           </div>
         </aside>
 
+        {/* MOBILE DRAWER: MENU CÁC CHƯƠNG TRÊN IPHONE / MOBILE (< md) */}
+        {isMobileChapterMenuOpen && (
+          <div className="md:hidden fixed inset-0 z-50 flex">
+            {/* Backdrop */}
+            <div 
+              onClick={() => setIsMobileChapterMenuOpen(false)}
+              className="fixed inset-0 bg-slate-950/60 backdrop-blur-xs animate-in fade-in duration-200"
+            />
+            {/* Drawer Sheet */}
+            <div className="relative z-10 w-72 sm:w-80 max-w-[85vw] h-full bg-white shadow-2xl flex flex-col animate-in slide-in-from-left duration-300">
+              <div className="p-4 border-b border-slate-200 bg-slate-50 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Folder size={16} className="text-amber-500 fill-amber-500" />
+                  <h2 className="text-xs font-black uppercase tracking-wider text-slate-800">
+                    Menu các chương
+                  </h2>
+                </div>
+                <div className="flex items-center gap-1">
+                  {isAdmin && (
+                    <button
+                      type="button"
+                      onClick={() => { setNewChapterTitle(''); setShowAddChapterModal(true); }}
+                      className="px-2 py-1 bg-amber-500 hover:bg-amber-600 text-white rounded-lg text-[10px] font-black flex items-center gap-1 shadow-xs"
+                    >
+                      <Plus size={11} strokeWidth={3} /> Thêm
+                    </button>
+                  )}
+                  <button
+                    onClick={() => setIsMobileChapterMenuOpen(false)}
+                    className="p-1.5 hover:bg-slate-200 rounded-lg text-slate-500"
+                  >
+                    <X size={16} />
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex-1 overflow-y-auto p-3 space-y-1.5 custom-scrollbar">
+                {/* Tất cả các chương */}
+                <button
+                  onClick={() => { setSelectedChapter('all'); setCurrentPage(1); setIsMobileChapterMenuOpen(false); }}
+                  className={`w-full text-left px-3.5 py-3 rounded-2xl text-xs font-bold transition-all flex items-center justify-between ${
+                    selectedChapter === 'all'
+                      ? `bg-${themeColor}-600 text-white shadow-md shadow-${themeColor}-200`
+                      : 'text-slate-700 hover:bg-slate-100'
+                  }`}
+                >
+                  <div className="flex items-center gap-2.5 truncate">
+                    <Sparkles size={15} className={selectedChapter === 'all' ? 'text-amber-300' : 'text-slate-400'} />
+                    <span className="truncate">Tất cả các chương</span>
+                  </div>
+                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold ${selectedChapter === 'all' ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-600'}`}>
+                    {questions.length}
+                  </span>
+                </button>
+
+                {/* Danh sách từng chương */}
+                {chaptersList.map((ch, idx) => {
+                  const count = countByChapter[ch.title.trim().toLowerCase()] || 0;
+                  const isSelected = selectedChapter === ch.title || selectedChapter === ch.id;
+                  const isFirst = idx === 0;
+                  const isLast = idx === chaptersList.length - 1;
+
+                  return (
+                    <div
+                      key={ch.id}
+                      className={`relative w-full rounded-2xl transition-all flex items-center justify-between p-1 ${
+                        isSelected
+                          ? `bg-${themeColor}-600 text-white shadow-md shadow-${themeColor}-200`
+                          : 'text-slate-700 hover:bg-slate-100'
+                      }`}
+                    >
+                      <button
+                        onClick={() => { setSelectedChapter(ch.title); setCurrentPage(1); setIsMobileChapterMenuOpen(false); }}
+                        className="flex-1 text-left px-2.5 py-2 flex items-center justify-between min-w-0"
+                      >
+                        <div className="flex items-center gap-2 min-w-0 pr-1">
+                          <BookOpen size={14} className={isSelected ? 'text-amber-300 shrink-0' : 'text-slate-400 shrink-0'} />
+                          <span className="truncate text-xs font-bold">{ch.title}</span>
+                        </div>
+                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold shrink-0 mr-1 ${isSelected ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-600'}`}>
+                          {count}
+                        </span>
+                      </button>
+
+                      {/* Các nút mũi tên ▲ ▼ và Sửa, Xóa */}
+                      <div className="flex items-center gap-0.5 shrink-0 pr-1">
+                        <button
+                          type="button"
+                          disabled={isFirst}
+                          onClick={(e) => { e.stopPropagation(); handleReorderChapter(ch.title, 'up'); }}
+                          className={`p-1.5 rounded-lg ${isFirst ? 'opacity-20 cursor-not-allowed' : isSelected ? 'text-white hover:bg-white/20' : 'text-slate-500 hover:bg-slate-200'}`}
+                          title="Lên trên"
+                        >
+                          <ArrowUp size={13} strokeWidth={2.5} />
+                        </button>
+                        <button
+                          type="button"
+                          disabled={isLast}
+                          onClick={(e) => { e.stopPropagation(); handleReorderChapter(ch.title, 'down'); }}
+                          className={`p-1.5 rounded-lg ${isLast ? 'opacity-20 cursor-not-allowed' : isSelected ? 'text-white hover:bg-white/20' : 'text-slate-500 hover:bg-slate-200'}`}
+                          title="Xuống dưới"
+                        >
+                          <ArrowDown size={13} strokeWidth={2.5} />
+                        </button>
+                        {isAdmin && (
+                          <>
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setEditingChapter(ch);
+                                setEditChapterTitle(ch.title);
+                              }}
+                              className={`p-1.5 rounded-lg ${isSelected ? 'text-white hover:bg-white/20' : 'text-slate-500 hover:text-amber-600 hover:bg-amber-50'}`}
+                              title="Sửa"
+                            >
+                              <Pencil size={12} strokeWidth={2.5} />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteChapter(ch, count);
+                              }}
+                              className={`p-1.5 rounded-lg ${isSelected ? 'text-rose-200 hover:text-white hover:bg-rose-500' : 'text-slate-500 hover:text-rose-600 hover:bg-rose-50'}`}
+                              title="Xóa"
+                            >
+                              <Trash2 size={12} strokeWidth={2.5} />
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div className="p-3 border-t border-slate-200 bg-slate-50 text-[11px] text-slate-500 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span>Tổng cộng: <b>{questions.length} câu</b></span>
+                  <button onClick={loadQuestions} className="p-1 hover:bg-slate-200 rounded-lg text-slate-500">
+                    <RefreshCw size={13} className={loading ? 'animate-spin' : ''} />
+                  </button>
+                </div>
+                {deletedChapters.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={handleRestoreDeletedChapters}
+                    className="w-full text-center text-[10px] text-indigo-600 font-bold p-2 bg-indigo-50 hover:bg-indigo-100 rounded-xl border border-indigo-100 transition-all flex items-center justify-center gap-1.5"
+                  >
+                    <RotateCcw size={11} /> Khôi phục {deletedChapters.length} chương đã ẩn
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* PANEL PHẢI: HIỂN THỊ CÂU HỎI VÀ BÀI GIẢI */}
-        <main className="flex-1 flex flex-col overflow-hidden bg-slate-50/70">
+        <main className="flex-1 w-full min-w-0 flex flex-col overflow-hidden bg-slate-50/70">
+          {/* THANH CHỌN CHƯƠNG TRÊN MOBILE (< md) */}
+          <div className="md:hidden px-3 py-2.5 bg-white border-b border-slate-200 flex items-center justify-between gap-2 shrink-0">
+            <button
+              type="button"
+              onClick={() => setIsMobileChapterMenuOpen(true)}
+              className={`flex-1 flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold border transition-all ${
+                selectedChapter === 'all'
+                  ? 'bg-slate-50 border-slate-200 text-slate-800'
+                  : `bg-${themeColor}-50 border-${themeColor}-200 text-${themeColor}-800`
+              }`}
+            >
+              <div className="flex items-center gap-1.5 min-w-0">
+                <Folder size={14} className={selectedChapter === 'all' ? 'text-amber-500 fill-amber-500' : `text-${themeColor}-600 fill-${themeColor}-600`} />
+                <span className="truncate">
+                  {selectedChapter === 'all' ? 'Tất cả các chương' : selectedChapter}
+                </span>
+              </div>
+              <span className="text-[10px] font-extrabold px-1.5 py-0.5 rounded-full bg-white shadow-xs ml-1 shrink-0 text-slate-600">
+                {filteredQuestions.length} câu ▾
+              </span>
+            </button>
+            {isAdmin && (
+              <button
+                type="button"
+                onClick={handleAddNew}
+                className={`px-3 py-2 bg-gradient-to-r from-${themeColor}-600 to-indigo-700 text-white font-bold text-xs rounded-xl shadow-xs flex items-center gap-1 shrink-0`}
+              >
+                <Plus size={14} /> Thêm câu
+              </button>
+            )}
+          </div>
           {/* Thanh công cụ tìm kiếm và lọc */}
           <div className="p-4 bg-white border-b border-slate-200/80 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 shrink-0">
             {/* Ô tìm kiếm */}
