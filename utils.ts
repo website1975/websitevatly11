@@ -15,18 +15,42 @@ export const getSafeEnv = (key: string): string | undefined => {
 export const renderLatex = (text: string) => {
   if (!text) return null;
   
-  // Xử lý các ký tự thoát đặc biệt nếu cần thiết trước khi split
-  // Đảm bảo dấu gạch chéo ngược được bảo toàn
-  const safeText = text.replace(/\\/g, '\\\\').replace(/\\\\\\\\/g, '\\\\');
-
-  // Split dựa trên $...$ (inline math)
-  // Lưu ý: Chúng ta không dùng safeText ở đây vì split regex sẽ tự xử lý, 
-  // nhưng cần cẩn thận với cách JS xử lý backslash trong string
-  const parts = text.split(/(\$[^\$]+\$)/g);
+  // Tách text thành các phần:
+  // 1. $$...$$ (Công thức khối / Display math trên dòng riêng)
+  // 2. $...$ (Công thức nằm cùng dòng / Inline math)
+  // 3. \r?\n (Dấu xuống dòng khi gõ Enter)
+  const parts = text.split(/(\$\$[\s\S]+?\$\$|\$[^\$]+?\$|\r?\n)/g);
 
   return parts.map((part, i) => {
-    if (part.startsWith('$') && part.endsWith('$')) {
-      const math = part.slice(1, -1);
+    if (!part) return null;
+
+    // Xuống dòng khi người dùng bấm Enter
+    if (part === '\n' || part === '\r\n') {
+      return React.createElement('br', { key: i });
+    }
+
+    // Công thức dạng khối $$...$$
+    if (part.startsWith('$$') && part.endsWith('$$') && part.length >= 4) {
+      const math = part.slice(2, -2).trim();
+      try {
+        const html = katex.renderToString(math, { 
+          throwOnError: false,
+          displayMode: true,
+          strict: false
+        });
+        return React.createElement('div', { 
+          key: i, 
+          className: 'my-2 overflow-x-auto text-center',
+          dangerouslySetInnerHTML: { __html: html } 
+        });
+      } catch (e) { 
+        return React.createElement('div', { key: i, className: 'my-2 text-center text-red-500 font-mono text-xs' }, part); 
+      }
+    }
+
+    // Công thức dạng cùng dòng $...$
+    if (part.startsWith('$') && part.endsWith('$') && part.length >= 2) {
+      const math = part.slice(1, -1).trim();
       try {
         const html = katex.renderToString(math, { 
           throwOnError: false,
@@ -35,13 +59,14 @@ export const renderLatex = (text: string) => {
         });
         return React.createElement('span', { 
           key: i, 
-          className: 'inline-block align-middle',
+          className: 'inline-block align-middle mx-0.5',
           dangerouslySetInnerHTML: { __html: html } 
         });
       } catch (e) { 
         return React.createElement('span', { key: i }, part); 
       }
     }
+
     return React.createElement('span', { key: i }, part);
   });
 };
