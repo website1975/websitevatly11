@@ -26,7 +26,9 @@ import {
   Cloud, 
   Folder, 
   RefreshCw,
-  FileText
+  FileText,
+  ArrowUp,
+  ArrowDown
 } from 'lucide-react';
 import { VdcQuestion, BookNode } from '../types';
 import { SAMPLE_VDC_QUESTIONS } from '../sampleVdcData';
@@ -43,6 +45,7 @@ interface VdcQuestionsPanelProps {
   onBackToLessons?: () => void;
   showToast: (message: string, type?: 'success' | 'error' | 'warning' | 'info', title?: string) => void;
   showConfirm: (title: string, message: string, onConfirm: () => void, type?: 'danger' | 'warning' | 'info', confirmText?: string) => void;
+  onUpdateNodes?: (newNodes: BookNode[]) => void;
 }
 
 export const VdcQuestionsPanel: React.FC<VdcQuestionsPanelProps> = ({
@@ -52,7 +55,8 @@ export const VdcQuestionsPanel: React.FC<VdcQuestionsPanelProps> = ({
   themeColor,
   onBackToLessons,
   showToast,
-  showConfirm
+  showConfirm,
+  onUpdateNodes
 }) => {
   const [questions, setQuestions] = useState<VdcQuestion[]>([]);
   const [loading, setLoading] = useState(true);
@@ -61,6 +65,12 @@ export const VdcQuestionsPanel: React.FC<VdcQuestionsPanelProps> = ({
   const [searchTerm, setSearchTerm] = useState('');
   const [filterLevel, setFilterLevel] = useState<string>('all');
   const [expandedSolutions, setExpandedSolutions] = useState<Record<string, boolean>>({});
+  
+  // Quản lý sửa/xóa/thêm chương
+  const [editingChapter, setEditingChapter] = useState<{ id: string; title: string } | null>(null);
+  const [editChapterTitle, setEditChapterTitle] = useState('');
+  const [showAddChapterModal, setShowAddChapterModal] = useState(false);
+  const [newChapterTitle, setNewChapterTitle] = useState('');
   
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
@@ -94,33 +104,299 @@ export const VdcQuestionsPanel: React.FC<VdcQuestionsPanelProps> = ({
 
   const gradeId = selectedGrade || 11;
 
+  // Thứ tự sắp xếp các chương do người dùng tùy chỉnh
+  const [chapterOrder, setChapterOrder] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem(`vdc_chapter_order_g${gradeId}`);
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  // Danh sách các chương đã bị xóa (để không bị nạp lại từ node hoặc câu hỏi cũ)
+  const [deletedChapters, setDeletedChapters] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem(`vdc_deleted_chapters_g${gradeId}`);
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  // Cập nhật chapterOrder và deletedChapters khi gradeId thay đổi
+  useEffect(() => {
+    try {
+      const savedOrder = localStorage.getItem(`vdc_chapter_order_g${gradeId}`);
+      setChapterOrder(savedOrder ? JSON.parse(savedOrder) : []);
+      const savedDeleted = localStorage.getItem(`vdc_deleted_chapters_g${gradeId}`);
+      setDeletedChapters(savedDeleted ? JSON.parse(savedDeleted) : []);
+    } catch {
+      setChapterOrder([]);
+      setDeletedChapters([]);
+    }
+  }, [gradeId]);
+
   // Lấy danh sách các chương (Folders) từ cấu trúc sách hiện tại
   const chaptersList = useMemo(() => {
-    const list: { id: string; title: string }[] = [];
+    const list: { id: string; title: string; fromNode?: boolean }[] = [];
     const seen = new Set<string>();
+    const deletedSet = new Set(deletedChapters.map(t => t.trim().toLowerCase()));
 
     // 1. Thêm từ các node folder gốc trong sách
     (nodes || [])
       .filter(n => n.type === 'folder' && (n.parentId === null || n.parentId === undefined))
       .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
       .forEach(f => {
-        if (!seen.has(f.title.trim())) {
-          seen.add(f.title.trim());
-          list.push({ id: f.id, title: f.title.trim() });
+        const clean = f.title.trim();
+        if (!seen.has(clean.toLowerCase()) && !deletedSet.has(clean.toLowerCase())) {
+          seen.add(clean.toLowerCase());
+          list.push({ id: f.id, title: clean, fromNode: true });
         }
       });
 
     // 2. Thêm bất kỳ chương nào đã có trong danh sách câu hỏi
     questions.forEach(q => {
       const title = q.chapter_title?.trim();
-      if (title && !seen.has(title)) {
-        seen.add(title);
-        list.push({ id: q.chapter_id || `custom-${title}`, title });
+      if (title && !seen.has(title.toLowerCase()) && !deletedSet.has(title.toLowerCase())) {
+        seen.add(title.toLowerCase());
+        list.push({ id: q.chapter_id || `custom-${title}`, title, fromNode: false });
       }
     });
 
+    // 3. Sắp xếp danh sách chương theo chapterOrder nếu có
+    if (chapterOrder.length > 0) {
+      list.sort((a, b) => {
+        const idxA = chapterOrder.indexOf(a.title.trim());
+        const idxB = chapterOrder.indexOf(b.title.trim());
+        if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+        if (idxA !== -1) return -1;
+        if (idxB !== -1) return 1;
+        return 0;
+      });
+    }
+
     return list;
-  }, [nodes, questions]);
+  }, [nodes, questions, chapterOrder, deletedChapters]);
+
+  // Di chuyển thứ tự chương lên hoặc xuống
+  const handleReorderChapter = async (chapterTitle: string, direction: 'up' | 'down') => {
+    const currentIndex = chaptersList.findIndex(c => c.title.trim().toLowerCase() === chapterTitle.trim().toLowerCase());
+    if (currentIndex === -1) return;
+
+    const targetIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
+    if (targetIndex < 0 || targetIndex >= chaptersList.length) return;
+
+    const newOrderedTitles = chaptersList.map(c => c.title.trim());
+    const temp = newOrderedTitles[currentIndex];
+    newOrderedTitles[currentIndex] = newOrderedTitles[targetIndex];
+    newOrderedTitles[targetIndex] = temp;
+
+    setChapterOrder(newOrderedTitles);
+    try {
+      localStorage.setItem(`vdc_chapter_order_g${gradeId}`, JSON.stringify(newOrderedTitles));
+      // Lưu vào Supabase fallback app_settings
+      await supabase.from('app_settings').upsert({
+        id: 8000 + gradeId,
+        data: {
+          questions,
+          chapter_order: newOrderedTitles,
+          deleted_chapters: deletedChapters,
+          updated_at: new Date().toISOString()
+        }
+      });
+      showToast(`Đã chuyển chương "${chapterTitle}" ${direction === 'up' ? 'lên' : 'xuống'} thành công!`, 'success');
+    } catch (e) {
+      console.warn("Lỗi khi lưu thứ tự chương:", e);
+    }
+  };
+
+  // Xóa chương khỏi menu và hệ thống
+  const handleDeleteChapter = (ch: { id: string; title: string; fromNode?: boolean }, count: number) => {
+    showConfirm(
+      "Xác nhận xóa chương",
+      count > 0 
+        ? `Chương "${ch.title}" đang có ${count} câu hỏi. Thầy/cô có chắc chắn muốn xóa chương này và toàn bộ ${count} câu hỏi bên trong không?`
+        : `Thầy/cô có chắc chắn muốn xóa chương "${ch.title}" khỏi menu không?`,
+      async () => {
+        try {
+          const lowerTitle = ch.title.trim().toLowerCase();
+
+          // 1. Nếu chương này là 1 node trong cấu trúc sách (App.tsx), xóa node đó
+          if (onUpdateNodes) {
+            const matchNode = (nodes || []).find(n => n.id === ch.id || n.title.trim().toLowerCase() === lowerTitle);
+            if (matchNode) {
+              const remainingNodes = (nodes || []).filter(n => n.id !== matchNode.id && n.parentId !== matchNode.id);
+              onUpdateNodes(remainingNodes);
+            }
+          }
+
+          // 2. Xóa các câu hỏi thuộc chương này
+          const remainingQuestions = questions.filter(
+            q => q.chapter_title?.trim().toLowerCase() !== lowerTitle && q.chapter_id !== ch.id
+          );
+          setQuestions(remainingQuestions);
+
+          // 3. Xóa câu hỏi trên Supabase
+          if (dbStatus === 'connected') {
+            await supabase.from('vdc_questions').delete().eq('grade_id', gradeId).ilike('chapter_title', ch.title.trim());
+          }
+
+          // 4. Cập nhật danh sách deletedChapters để không bao giờ bị nạp lại
+          const updatedDeleted = Array.from(new Set([...deletedChapters, ch.title.trim()]));
+          setDeletedChapters(updatedDeleted);
+          localStorage.setItem(`vdc_deleted_chapters_g${gradeId}`, JSON.stringify(updatedDeleted));
+
+          // 5. Cập nhật chapterOrder
+          const updatedOrder = chapterOrder.filter(t => t.trim().toLowerCase() !== lowerTitle);
+          setChapterOrder(updatedOrder);
+          localStorage.setItem(`vdc_chapter_order_g${gradeId}`, JSON.stringify(updatedOrder));
+
+          // 6. Cập nhật backup vào app_settings
+          await supabase.from('app_settings').upsert({
+            id: 8000 + gradeId,
+            data: {
+              questions: remainingQuestions,
+              chapter_order: updatedOrder,
+              deleted_chapters: updatedDeleted,
+              updated_at: new Date().toISOString()
+            }
+          });
+
+          // 7. Nếu đang chọn chương này thì chuyển về 'all'
+          if (selectedChapter === ch.title || selectedChapter === ch.id) {
+            setSelectedChapter('all');
+            setCurrentPage(1);
+          }
+
+          showToast(`Đã xóa chương "${ch.title}" thành công!`, 'success');
+        } catch (err: any) {
+          console.error("Lỗi khi xóa chương:", err);
+          showToast(`Lỗi khi xóa chương: ${err.message || 'Không xác định'}`, 'error');
+        }
+      },
+      'danger',
+      'Xóa chương'
+    );
+  };
+
+  // Lưu thay đổi tên chương
+  const handleSaveEditChapter = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingChapter || !editChapterTitle.trim()) return;
+
+    const oldTitle = editingChapter.title.trim();
+    const newTitle = editChapterTitle.trim();
+    if (oldTitle === newTitle) {
+      setEditingChapter(null);
+      return;
+    }
+
+    try {
+      const oldLower = oldTitle.toLowerCase();
+
+      // 1. Cập nhật node trong cấu trúc sách nếu có
+      if (onUpdateNodes) {
+        const updatedNodes = (nodes || []).map(n => 
+          n.id === editingChapter.id || n.title.trim().toLowerCase() === oldLower 
+            ? { ...n, title: newTitle } 
+            : n
+        );
+        onUpdateNodes(updatedNodes);
+      }
+
+      // 2. Cập nhật tất cả câu hỏi có chapter_title cũ
+      const updatedQuestions = questions.map(q => 
+        q.chapter_title?.trim().toLowerCase() === oldLower || q.chapter_id === editingChapter.id
+          ? { ...q, chapter_title: newTitle }
+          : q
+      );
+      setQuestions(updatedQuestions);
+
+      // 3. Cập nhật trong Supabase
+      if (dbStatus === 'connected') {
+        await supabase
+          .from('vdc_questions')
+          .update({ chapter_title: newTitle })
+          .eq('grade_id', gradeId)
+          .ilike('chapter_title', oldTitle);
+      }
+
+      // 4. Cập nhật chapterOrder
+      const updatedOrder = chapterOrder.map(t => t.trim().toLowerCase() === oldLower ? newTitle : t);
+      if (!updatedOrder.includes(newTitle)) updatedOrder.push(newTitle);
+      setChapterOrder(updatedOrder);
+      localStorage.setItem(`vdc_chapter_order_g${gradeId}`, JSON.stringify(updatedOrder));
+
+      // 5. Cập nhật app_settings fallback
+      await supabase.from('app_settings').upsert({
+        id: 8000 + gradeId,
+        data: {
+          questions: updatedQuestions,
+          chapter_order: updatedOrder,
+          deleted_chapters: deletedChapters,
+          updated_at: new Date().toISOString()
+        }
+      });
+
+      // 6. Cập nhật selectedChapter nếu đang chọn chương này
+      if (selectedChapter === oldTitle || selectedChapter === editingChapter.id) {
+        setSelectedChapter(newTitle);
+      }
+
+      setEditingChapter(null);
+      showToast(`Đã đổi tên chương thành "${newTitle}" thành công!`, 'success');
+    } catch (err: any) {
+      console.error("Lỗi khi sửa tên chương:", err);
+      showToast(`Lỗi khi sửa tên chương: ${err.message || 'Không xác định'}`, 'error');
+    }
+  };
+
+  // Thêm chương mới
+  const handleSaveAddChapter = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newChapterTitle.trim()) return;
+
+    const titleToAdd = newChapterTitle.trim();
+
+    try {
+      // 1. Thêm folder node vào cấu trúc sách nếu có callback
+      if (onUpdateNodes) {
+        const nextOrder = (nodes || []).filter(n => n.parentId === null || n.parentId === undefined).length;
+        const newNode: BookNode = {
+          id: `g${gradeId}-folder-${Date.now()}`,
+          title: titleToAdd,
+          type: 'folder',
+          parentId: null,
+          order: nextOrder,
+          lessonResources: [],
+          url: '',
+          imageUrl: ''
+        };
+        onUpdateNodes([...(nodes || []), newNode]);
+      }
+
+      // 2. Bỏ khỏi deletedChapters nếu trước đó từng bị xóa
+      const updatedDeleted = deletedChapters.filter(t => t.trim().toLowerCase() !== titleToAdd.toLowerCase());
+      setDeletedChapters(updatedDeleted);
+      localStorage.setItem(`vdc_deleted_chapters_g${gradeId}`, JSON.stringify(updatedDeleted));
+
+      // 3. Thêm vào chapterOrder
+      const updatedOrder = [...chapterOrder.filter(t => t.trim().toLowerCase() !== titleToAdd.toLowerCase()), titleToAdd];
+      setChapterOrder(updatedOrder);
+      localStorage.setItem(`vdc_chapter_order_g${gradeId}`, JSON.stringify(updatedOrder));
+
+      // 4. Chọn ngay chương vừa thêm
+      setSelectedChapter(titleToAdd);
+      setShowAddChapterModal(false);
+      setNewChapterTitle('');
+
+      showToast(`Đã thêm chương "${titleToAdd}" vào menu thành công!`, 'success');
+    } catch (err: any) {
+      console.error("Lỗi khi thêm chương:", err);
+      showToast(`Lỗi khi thêm chương: ${err.message || 'Không xác định'}`, 'error');
+    }
+  };
 
   // Tải danh sách câu hỏi từ Supabase
   const loadQuestions = useCallback(async () => {
@@ -624,10 +900,22 @@ ON public.vdc_questions FOR DELETE USING (true);
         {/* PANEL TRÁI: DANH SÁCH MENU CÁC CHƯƠNG */}
         <aside className="w-64 sm:w-72 bg-white border-r border-slate-200/80 flex flex-col shrink-0">
           <div className="p-4 border-b border-slate-100 bg-slate-50/50">
-            <h2 className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1 flex items-center gap-2">
-              <Folder size={12} className="text-amber-500" /> Menu các chương
-            </h2>
-            <p className="text-[11px] text-slate-400">Chọn chương để xem danh sách câu hỏi</p>
+            <div className="flex items-center justify-between mb-1">
+              <h2 className="text-[10px] font-black uppercase tracking-widest text-slate-500 flex items-center gap-1.5">
+                <Folder size={13} className="text-amber-500" /> Menu các chương
+              </h2>
+              {isAdmin && (
+                <button
+                  type="button"
+                  onClick={() => { setNewChapterTitle(''); setShowAddChapterModal(true); }}
+                  className="flex items-center gap-1 px-2 py-1 bg-amber-500 hover:bg-amber-600 text-white rounded-lg text-[10px] font-black transition-all shadow-xs active:scale-95"
+                  title="Thêm chương mới"
+                >
+                  <Plus size={11} strokeWidth={3} /> Thêm
+                </button>
+              )}
+            </div>
+            <p className="text-[11px] text-slate-400">Chọn chương để xem hoặc bấm ▲/▼, Sửa, Xóa</p>
           </div>
 
           <div className="flex-1 overflow-y-auto p-3 space-y-1.5 custom-scrollbar">
@@ -655,35 +943,117 @@ ON public.vdc_questions FOR DELETE USING (true);
               </span>
             </button>
 
-            {/* Danh sách từng chương */}
-            {chaptersList.map(ch => {
+            {/* Danh sách từng chương kèm nút mũi tên lên / xuống để sắp xếp */}
+            {chaptersList.map((ch, idx) => {
               const count = countByChapter[ch.title.trim().toLowerCase()] || 0;
               const isSelected = selectedChapter === ch.title || selectedChapter === ch.id;
+              const isFirst = idx === 0;
+              const isLast = idx === chaptersList.length - 1;
 
               return (
-                <button
+                <div
                   key={ch.id}
-                  onClick={() => { setSelectedChapter(ch.title); setCurrentPage(1); }}
-                  className={`w-full text-left px-3.5 py-3 rounded-2xl text-xs font-bold transition-all flex items-center justify-between group ${
+                  className={`group relative w-full rounded-2xl transition-all flex items-center justify-between p-1 ${
                     isSelected
                       ? `bg-${themeColor}-600 text-white shadow-md shadow-${themeColor}-200`
                       : 'text-slate-700 hover:bg-slate-100'
                   }`}
                 >
-                  <div className="flex items-center gap-2.5 min-w-0 pr-2">
-                    <BookOpen size={14} className={isSelected ? 'text-amber-300 shrink-0' : 'text-slate-400 group-hover:text-indigo-600 shrink-0'} />
-                    <span className="truncate">{ch.title}</span>
-                  </div>
-                  <span
-                    className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold shrink-0 ${
-                      isSelected
-                        ? 'bg-white/20 text-white'
-                        : 'bg-slate-100 text-slate-600 group-hover:bg-slate-200'
-                    }`}
+                  <button
+                    onClick={() => { setSelectedChapter(ch.title); setCurrentPage(1); }}
+                    className="flex-1 text-left px-2.5 py-2 flex items-center justify-between min-w-0"
                   >
-                    {count}
-                  </span>
-                </button>
+                    <div className="flex items-center gap-2 min-w-0 pr-1">
+                      <BookOpen size={14} className={isSelected ? 'text-amber-300 shrink-0' : 'text-slate-400 group-hover:text-indigo-600 shrink-0'} />
+                      <span className="truncate text-xs font-bold">{ch.title}</span>
+                    </div>
+                    <span
+                      className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold shrink-0 mr-1 ${
+                        isSelected
+                          ? 'bg-white/20 text-white'
+                          : 'bg-slate-100 text-slate-600 group-hover:bg-slate-200'
+                      }`}
+                    >
+                      {count}
+                    </span>
+                  </button>
+
+                  {/* Nút thao tác: Lên, Xuống, Sửa, Xóa */}
+                  <div className="flex items-center gap-0.5 shrink-0 pr-1 opacity-80 sm:opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button
+                      type="button"
+                      disabled={isFirst}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleReorderChapter(ch.title, 'up');
+                      }}
+                      className={`p-1 rounded-lg transition-all ${
+                        isFirst
+                          ? 'opacity-20 cursor-not-allowed text-slate-300'
+                          : isSelected
+                            ? 'text-white hover:bg-white/20 active:scale-90'
+                            : 'text-slate-400 hover:text-indigo-600 hover:bg-slate-200 active:scale-90'
+                      }`}
+                      title={isFirst ? "Đang ở vị trí đầu" : "Di chuyển chương lên trên"}
+                    >
+                      <ArrowUp size={12} strokeWidth={2.5} />
+                    </button>
+                    <button
+                      type="button"
+                      disabled={isLast}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleReorderChapter(ch.title, 'down');
+                      }}
+                      className={`p-1 rounded-lg transition-all ${
+                        isLast
+                          ? 'opacity-20 cursor-not-allowed text-slate-300'
+                          : isSelected
+                            ? 'text-white hover:bg-white/20 active:scale-90'
+                            : 'text-slate-400 hover:text-indigo-600 hover:bg-slate-200 active:scale-90'
+                      }`}
+                      title={isLast ? "Đang ở vị trí cuối" : "Di chuyển chương xuống dưới"}
+                    >
+                      <ArrowDown size={12} strokeWidth={2.5} />
+                    </button>
+
+                    {isAdmin && (
+                      <>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setEditingChapter(ch);
+                            setEditChapterTitle(ch.title);
+                          }}
+                          className={`p-1 rounded-lg transition-all ${
+                            isSelected
+                              ? 'text-white hover:bg-white/20 active:scale-90'
+                              : 'text-slate-400 hover:text-amber-600 hover:bg-amber-50 active:scale-90'
+                          }`}
+                          title="Chỉnh sửa tên chương này"
+                        >
+                          <Pencil size={11} strokeWidth={2.5} />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteChapter(ch, count);
+                          }}
+                          className={`p-1 rounded-lg transition-all ${
+                            isSelected
+                              ? 'text-rose-200 hover:text-white hover:bg-rose-500 active:scale-90'
+                              : 'text-slate-400 hover:text-rose-600 hover:bg-rose-50 active:scale-90'
+                          }`}
+                          title="Xóa chương này"
+                        >
+                          <Trash2 size={11} strokeWidth={2.5} />
+                        </button>
+                      </>
+                    )}
+                  </div>
+                </div>
               );
             })}
           </div>
@@ -1473,6 +1843,96 @@ ON public.vdc_questions FOR DELETE USING (true);
             >
               <X size={18} />
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* 6. MODAL SỬA TÊN CHƯƠNG */}
+      {editingChapter && (
+        <div className="fixed inset-0 z-[500] bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="bg-white w-full max-w-md rounded-3xl shadow-2xl border border-slate-100 p-6 space-y-4 animate-in zoom-in-95 duration-200">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <h3 className="font-black text-sm text-slate-800 uppercase tracking-wide flex items-center gap-2">
+                <Pencil size={16} className="text-amber-500" /> Đổi tên chương
+              </h3>
+              <button onClick={() => setEditingChapter(null)} className="p-1 text-slate-400 hover:text-slate-600 rounded-lg">
+                <X size={18} />
+              </button>
+            </div>
+            <form onSubmit={handleSaveEditChapter} className="space-y-4">
+              <div>
+                <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5">Tên chương mới *</label>
+                <input
+                  type="text"
+                  autoFocus
+                  value={editChapterTitle}
+                  onChange={(e) => setEditChapterTitle(e.target.value)}
+                  placeholder="Nhập tên chương mới..."
+                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold outline-none focus:border-indigo-500 focus:bg-white transition-all"
+                  required
+                />
+              </div>
+              <div className="flex gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setEditingChapter(null)}
+                  className="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl text-xs font-bold transition-all"
+                >
+                  Hủy
+                </button>
+                <button
+                  type="submit"
+                  className={`flex-1 py-2.5 bg-${themeColor}-600 hover:bg-${themeColor}-700 text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all shadow-md`}
+                >
+                  Lưu thay đổi
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* 7. MODAL THÊM CHƯƠNG MỚI */}
+      {showAddChapterModal && (
+        <div className="fixed inset-0 z-[500] bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="bg-white w-full max-w-md rounded-3xl shadow-2xl border border-slate-100 p-6 space-y-4 animate-in zoom-in-95 duration-200">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <h3 className="font-black text-sm text-slate-800 uppercase tracking-wide flex items-center gap-2">
+                <Plus size={16} className="text-amber-500" /> Thêm chương mới vào menu
+              </h3>
+              <button onClick={() => setShowAddChapterModal(false)} className="p-1 text-slate-400 hover:text-slate-600 rounded-lg">
+                <X size={18} />
+              </button>
+            </div>
+            <form onSubmit={handleSaveAddChapter} className="space-y-4">
+              <div>
+                <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5">Tên chương mới *</label>
+                <input
+                  type="text"
+                  autoFocus
+                  value={newChapterTitle}
+                  onChange={(e) => setNewChapterTitle(e.target.value)}
+                  placeholder="VD: Chương 2: Sóng cơ..."
+                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold outline-none focus:border-indigo-500 focus:bg-white transition-all"
+                  required
+                />
+              </div>
+              <div className="flex gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowAddChapterModal(false)}
+                  className="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl text-xs font-bold transition-all"
+                >
+                  Hủy
+                </button>
+                <button
+                  type="submit"
+                  className={`flex-1 py-2.5 bg-${themeColor}-600 hover:bg-${themeColor}-700 text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all shadow-md`}
+                >
+                  Thêm chương
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
