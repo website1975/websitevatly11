@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Routes, Route, useNavigate, Navigate } from 'react-router-dom';
-import { Book, Plus, Maximize2, Loader2, BrainCircuit, GraduationCap, ShieldCheck, Search, LogOut, Folder, Globe, Zap, Image as ImageIcon, Settings, ArrowLeft, ArrowRight, Upload, AlertCircle, Users, Cloud, ExternalLink, BookOpen, Sparkles, ChevronRight, Key } from 'lucide-react';
+import { Book, Plus, Maximize2, Loader2, BrainCircuit, GraduationCap, ShieldCheck, Search, LogOut, Folder, Globe, Zap, Image as ImageIcon, Settings, ArrowLeft, ArrowRight, Upload, AlertCircle, Users, Cloud, ExternalLink, BookOpen, Sparkles, ChevronRight, Key, ListOrdered, ArrowUpDown } from 'lucide-react';
 import { uploadFileToGoogleDrive, signInWithGoogleForDrive, getDriveAccessToken, isGoogleDriveUrl, extractDriveFileId } from './googleDrive';
 import { supabase } from './supabaseClient';
 import { AppData, ResourceLink, BookNode, NodeType, Student } from './types';
@@ -18,6 +18,7 @@ import StudentManager from './components/StudentManager';
 import HomeworkPanel from './components/HomeworkPanel';
 import { StudentSpaceModal } from './components/StudentSpaceModal';
 import VdcQuestionsPanel from './components/VdcQuestionsPanel';
+import ChapterReorderModal from './components/ChapterReorderModal';
 import { uploadToImgBB } from './imgbb';
 import { ConfirmModal, ToastNotification, ConfirmState, ToastState } from './components/CustomDialog';
 import { getSafeEnv, SLOGANS } from './utils';
@@ -500,6 +501,7 @@ const MainView: React.FC<{
   }, []);
 
   const [showNodeModal, setShowNodeModal] = useState(false);
+  const [showChapterReorderModal, setShowChapterReorderModal] = useState(false);
   const [nodeModalData, setNodeModalData] = useState<any>({parentId: null, type: 'lesson', title: '', url: '', imageUrl: '', order: 0});
 
   const [showResModal, setShowResModal] = useState(false);
@@ -797,20 +799,36 @@ const MainView: React.FC<{
   const handleReorderNode = (id: string, direction: 'up' | 'down') => {
     const node = data?.nodes?.find(n => n.id === id);
     if (!node) return;
-    const siblings = (data?.nodes || []).filter(n => n.parentId === node.parentId).sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
-    const normalizedSiblings = siblings.map((s, idx) => ({ ...s, order: idx }));
-    const currentIndex = normalizedSiblings.findIndex(n => n.id === id);
+
+    const isRoot = node.parentId === null || node.parentId === undefined;
+    const siblings = (data?.nodes || [])
+      .filter(n => isRoot ? (n.parentId === null || n.parentId === undefined) : n.parentId === node.parentId)
+      .sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+
+    const currentIndex = siblings.findIndex(n => n.id === id);
     const targetIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
-    if (targetIndex < 0 || targetIndex >= normalizedSiblings.length) return;
-    const targetNode = normalizedSiblings[targetIndex];
-    const newNodes = (data?.nodes || []).map(n => {
-      const normalizedMatch = normalizedSiblings.find(s => s.id === n.id);
-      let updatedNode = normalizedMatch ? { ...n, order: normalizedMatch.order } : n;
-      if (updatedNode.id === id) return { ...updatedNode, order: targetNode.order };
-      if (updatedNode.id === targetNode.id) return { ...updatedNode, order: currentIndex };
-      return updatedNode;
+    if (targetIndex < 0 || targetIndex >= siblings.length) return;
+
+    const targetNode = siblings[targetIndex];
+    // Reorder in a new array
+    const reorderedSiblings = [...siblings];
+    reorderedSiblings[currentIndex] = targetNode;
+    reorderedSiblings[targetIndex] = node;
+
+    const orderMap = new Map<string, number>();
+    reorderedSiblings.forEach((s, idx) => {
+      orderMap.set(s.id, idx);
     });
+
+    const newNodes = (data?.nodes || []).map(n => {
+      if (orderMap.has(n.id)) {
+        return { ...n, order: orderMap.get(n.id)! };
+      }
+      return n;
+    });
+
     updateData({ ...data, nodes: newNodes });
+    showToast(`Đã chuyển ${node.type === 'folder' ? 'chương' : 'bài'} "${node.title}" ${direction === 'up' ? 'lên' : 'xuống'}!`, "success");
   };
 
   const handleMoveNode = (id: string, direction: 'in' | 'out') => {
@@ -932,11 +950,20 @@ const MainView: React.FC<{
           </div>
           <div className="flex items-center gap-1">
             {isAdmin && <button onClick={()=>setShowHomeConfig(true)} className="p-1.5 hover:bg-white/20 rounded-lg transition-colors" title="Cấu hình trang chủ"><Settings size={14}/></button>}
+            {isAdmin && (
+              <button 
+                onClick={() => setShowChapterReorderModal(true)} 
+                className="p-1.5 hover:bg-white/20 rounded-lg transition-colors flex items-center gap-1" 
+                title="Sắp xếp thứ tự các chương"
+              >
+                <ListOrdered size={14}/>
+              </button>
+            )}
             {isAdmin && <button onClick={()=>{
-              const nextOrder = (data?.nodes || []).filter(n => n.parentId === null).length;
+              const nextOrder = (data?.nodes || []).filter(n => n.parentId === null || n.parentId === undefined).length;
               setNodeModalData({parentId:null, type:'folder', title:'', url:'', imageUrl: '', order: nextOrder}); 
               setShowNodeModal(true);
-            }} className="p-1.5 hover:bg-white/20 rounded-lg transition-colors"><Plus size={14}/></button>}
+            }} className="p-1.5 hover:bg-white/20 rounded-lg transition-colors" title="Thêm chương mới"><Plus size={14}/></button>}
           </div>
         </header>
 
@@ -1047,6 +1074,7 @@ const MainView: React.FC<{
             onBackToLessons={() => setIsVdcMode(false)}
             showToast={showToast}
             showConfirm={showConfirm}
+            onUpdateNodes={(newNodes) => updateData({ ...data, nodes: newNodes })}
           />
         ) : selectedId ? (
           <>
@@ -1458,6 +1486,15 @@ const MainView: React.FC<{
           }}
         />
       )}
+
+      <ChapterReorderModal
+        isOpen={showChapterReorderModal}
+        onClose={() => setShowChapterReorderModal(false)}
+        nodes={data?.nodes || []}
+        onReorderChapter={handleReorderNode}
+        themeColor={themeColor}
+        selectedGrade={selectedGrade}
+      />
 
       <ConfirmModal state={confirmState} onClose={() => setConfirmState(prev => ({ ...prev, isOpen: false }))} />
       <ToastNotification state={toastState} onClose={() => setToastState(prev => ({ ...prev, isOpen: false }))} />
