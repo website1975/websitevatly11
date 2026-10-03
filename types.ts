@@ -78,3 +78,24 @@ export interface QuizQuestion {
   correctIndex: number;
   explanation: string;
 }
+
+export interface VdcQuestion {
+  id: string;
+  grade_id: number;
+  chapter_id?: string;
+  chapter_title: string;
+  title?: string;
+  content: string;
+  image_url?: string;
+  question_type: 'multiple_choice' | 'essay';
+  options?: string[];
+  correct_answer?: string;
+  solution?: string;
+  solution_image_url?: string;
+  level: 'vdc' | 'hay_suutam' | 'de_thi_thu' | 'phuong_phap_la';
+  source?: string;
+  tags?: string[];
+  order_num?: number;
+  created_at?: string;
+  updated_at?: string;
+}
