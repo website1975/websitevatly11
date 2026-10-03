@@ -132,32 +132,36 @@ const TreeItem: React.FC<TreeItemProps> = ({
         </div>
 
         {isAdmin && (
-          <div className="absolute right-1 flex items-center space-x-0 opacity-0 group-hover:opacity-100 transition-opacity transition-transform translate-x-1 group-hover:translate-x-0 z-10">
+          <div className={`absolute right-1 flex items-center space-x-0 transition-all ${
+            isSelected 
+              ? 'opacity-100 translate-x-0' 
+              : 'opacity-0 group-hover:opacity-100 translate-x-1 group-hover:translate-x-0'
+          } z-10`}>
             <div className={`flex items-center p-0.5 rounded-lg shadow-xl border ${isSelected ? currentThemeAdminBgClass : 'bg-white border-slate-200'}`}>
               <button 
                 onClick={(e) => { e.stopPropagation(); onReorder(node.id, 'up'); }}
-                className={`p-1 rounded transition-all active:scale-75 ${isSelected ? 'hover:bg-white/10 text-white' : 'hover:bg-slate-100 text-slate-400'}`}
-                title="Lên"
+                className={`p-1 rounded transition-all active:scale-75 ${isSelected ? 'hover:bg-white/20 text-white' : 'hover:bg-slate-100 text-slate-600 hover:text-indigo-600'}`}
+                title="Di chuyển lên trên"
               >
-                <ArrowUp size={11} />
+                <ArrowUp size={12} strokeWidth={2.5} />
               </button>
               <button 
                 onClick={(e) => { e.stopPropagation(); onReorder(node.id, 'down'); }}
-                className={`p-1 rounded transition-all active:scale-75 ${isSelected ? 'hover:bg-white/10 text-white' : 'hover:bg-slate-100 text-slate-400'}`}
-                title="Xuống"
+                className={`p-1 rounded transition-all active:scale-75 ${isSelected ? 'hover:bg-white/20 text-white' : 'hover:bg-slate-100 text-slate-600 hover:text-indigo-600'}`}
+                title="Di chuyển xuống dưới"
               >
-                <ArrowDown size={11} />
+                <ArrowDown size={12} strokeWidth={2.5} />
               </button>
               <button 
                 onClick={(e) => { e.stopPropagation(); onMove(node.id, 'in'); }}
-                className={`p-1 rounded transition-all active:scale-75 ${isSelected ? 'hover:bg-white/10 text-white' : 'hover:bg-slate-100 text-slate-400'}`}
+                className={`p-1 rounded transition-all active:scale-75 ${isSelected ? 'hover:bg-white/20 text-white' : 'hover:bg-slate-100 text-slate-400'}`}
                 title="Chuyển vào trong"
               >
                 <ArrowRight size={11} />
               </button>
               <button 
                 onClick={(e) => { e.stopPropagation(); onMove(node.id, 'out'); }}
-                className={`p-1 rounded transition-all active:scale-75 ${isSelected ? 'hover:bg-white/10 text-white' : 'hover:bg-slate-100 text-slate-400'}`}
+                className={`p-1 rounded transition-all active:scale-75 ${isSelected ? 'hover:bg-white/20 text-white' : 'hover:bg-slate-100 text-slate-400'}`}
                 title="Chuyển ra ngoài"
               >
                 <ArrowLeft size={11} />
@@ -165,21 +169,23 @@ const TreeItem: React.FC<TreeItemProps> = ({
               {node.type === 'folder' && (
                 <button 
                   onClick={(e) => { e.stopPropagation(); onAdd(node.id, 'lesson'); }}
-                  className={`p-1 rounded transition-all active:scale-75 ${isSelected ? 'hover:bg-white/10 text-white' : 'hover:bg-indigo-50 text-indigo-500'}`}
-                  title="Thêm"
+                  className={`p-1 rounded transition-all active:scale-75 ${isSelected ? 'hover:bg-white/20 text-white' : 'hover:bg-indigo-50 text-indigo-500'}`}
+                  title="Thêm bài học vào chương này"
                 >
                   <Plus size={11} />
                 </button>
               )}
               <button 
                 onClick={(e) => { e.stopPropagation(); onEdit(node); }}
-                className={`p-1 rounded transition-all active:scale-75 ${isSelected ? 'hover:bg-white/10 text-white' : 'hover:bg-amber-50 text-amber-500'}`}
+                className={`p-1 rounded transition-all active:scale-75 ${isSelected ? 'hover:bg-white/20 text-white' : 'hover:bg-amber-50 text-amber-500'}`}
+                title="Chỉnh sửa"
               >
                 <Pencil size={11} />
               </button>
               <button 
                 onClick={(e) => { e.stopPropagation(); onDelete(node.id); }}
-                className={`p-1 rounded transition-all active:scale-75 ${isSelected ? 'hover:bg-white/10 text-white' : 'hover:bg-red-50 text-red-500'}`}
+                className={`p-1 rounded transition-all active:scale-75 ${isSelected ? 'hover:bg-white/20 text-white' : 'hover:bg-red-50 text-red-500'}`}
+                title="Xóa"
               >
                 <Trash2 size={11} />
               </button>
