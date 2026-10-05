@@ -143,11 +143,26 @@ const RichMarkdownRenderer: React.FC<RichMarkdownRendererProps> = ({
   );
 
   return (
-    <div className={`prose ${isInverted ? 'prose-invert text-slate-100 prose-p:text-slate-100 prose-headings:text-amber-300 prose-strong:text-white prose-li:text-slate-200' : 'prose-slate text-slate-800'} max-w-none leading-relaxed prose-p:my-1 prose-headings:my-2 prose-img:my-2 ${className}`}>
+    <div 
+      className={`prose ${isInverted ? 'prose-invert text-slate-100 prose-p:text-slate-100 prose-headings:text-amber-300 prose-strong:text-white prose-li:text-slate-200' : 'prose-slate text-slate-800'} max-w-none leading-relaxed prose-p:my-1 prose-headings:my-2 prose-img:my-2 ${className}`}
+      style={isInverted ? { color: '#f8fafc' } : undefined}
+    >
       <ReactMarkdown
         remarkPlugins={[remarkGfm, remarkMath, remarkBreaks]}
         rehypePlugins={[rehypeRaw, rehypeKatex]}
         components={{
+          p: ({ node, ...props }) => (
+            <p {...props} className={isInverted ? 'text-slate-100 my-1' : 'my-1'} style={isInverted ? { color: '#f8fafc' } : undefined} />
+          ),
+          span: ({ node, ...props }) => (
+            <span {...props} style={isInverted && !props.style?.color ? { color: '#f8fafc' } : props.style} />
+          ),
+          li: ({ node, ...props }) => (
+            <li {...props} className={isInverted ? 'text-slate-200' : ''} style={isInverted ? { color: '#e2e8f0' } : undefined} />
+          ),
+          strong: ({ node, ...props }) => (
+            <strong {...props} className={isInverted ? 'text-white font-bold' : 'font-bold'} style={isInverted ? { color: '#ffffff' } : undefined} />
+          ),
           img: ({ node, ...props }) => {
             const src = props.src || '';
             return (
@@ -169,7 +184,7 @@ const RichMarkdownRenderer: React.FC<RichMarkdownRendererProps> = ({
               {...props}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-indigo-500 hover:text-indigo-700 underline font-semibold transition-colors"
+              className={isInverted ? 'text-blue-300 hover:text-blue-200 underline font-semibold transition-colors' : 'text-indigo-500 hover:text-indigo-700 underline font-semibold transition-colors'}
             />
           ),
         }}
