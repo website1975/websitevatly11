@@ -18,10 +18,57 @@ body {
   border-radius: 10px;
 }
 
-/* Katex adjustments */
+/* KaTeX core styles & isolation */
+.katex-mathml {
+  display: none !important;
+  clip: rect(1px, 1px, 1px, 1px) !important;
+  border: 0 !important;
+  height: 1px !important;
+  width: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  position: absolute !important;
+}
+
 .katex {
-  font-size: 1.1em;
-  color: inherit;
+  font-size: 1.08em;
+  line-height: normal;
+  text-rendering: auto;
+  white-space: nowrap;
+}
+
+.katex-display {
+  margin: 0.75em 0 !important;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 0.25em 0;
+  text-align: center;
+}
+
+.katex-display > .katex {
+  white-space: normal;
+}
+
+/* HTML Subscript and Superscript tag styling */
+sub,
+.prose sub {
+  font-size: 0.75em;
+  line-height: 1;
+  vertical-align: sub;
+  font-weight: 600;
+  bottom: -0.2em;
+  position: relative;
+}
+
+sup,
+.prose sup {
+  font-size: 0.75em;
+  line-height: 1;
+  vertical-align: super;
+  font-weight: 600;
+  top: -0.35em;
+  position: relative;
 }
 
 /* Custom subtle prose styling for Markdown elements */
@@ -54,7 +101,7 @@ body {
   @apply text-slate-600;
 }
 
-/* Beautiful custom tables with elegant borders and structure */
+/* Tables */
 .prose table {
   @apply w-full border-collapse my-6 text-sm text-left overflow-hidden rounded-xl border border-slate-200/60 shadow-xs;
 }
@@ -93,110 +140,108 @@ body {
 }
 
 /* Inverted (dark background) prose styling */
-.prose-invert,
-.prose.prose-invert,
-.prose-invert *,
-.prose.prose-invert * {
+.prose-invert {
   color: #f8fafc;
 }
 
 .prose-invert p,
 .prose.prose-invert p,
-.prose-invert span,
-.prose.prose-invert span,
-.prose-invert div,
-.prose.prose-invert div,
+.prose-invert span:not(.katex *),
+.prose.prose-invert span:not(.katex *),
+.prose-invert div:not(.katex *),
+.prose.prose-invert div:not(.katex *),
 .prose-invert li,
 .prose.prose-invert li {
-  color: #f8fafc !important;
+  color: #f8fafc;
 }
 
 .prose-invert h1, .prose-invert h2, .prose-invert h3, .prose-invert h4,
 .prose.prose-invert h1, .prose.prose-invert h2, .prose.prose-invert h3, .prose.prose-invert h4 {
-  color: #fde047 !important;
+  color: #fde047;
 }
 
 .prose-invert strong,
 .prose.prose-invert strong,
 .prose-invert b,
 .prose.prose-invert b {
-  color: #ffffff !important;
+  color: #ffffff;
 }
 
 .prose-invert em,
 .prose.prose-invert em,
 .prose-invert i,
 .prose.prose-invert i {
-  color: #cbd5e1 !important;
+  color: #cbd5e1;
 }
 
 .prose-invert blockquote,
 .prose.prose-invert blockquote {
-  border-color: #f59e0b !important;
-  color: #e2e8f0 !important;
-  background-color: rgba(245, 158, 11, 0.15) !important;
+  border-color: #f59e0b;
+  color: #e2e8f0;
+  background-color: rgba(245, 158, 11, 0.15);
 }
 
 .prose-invert code,
 .prose.prose-invert code {
-  color: #a5b4fc !important;
-  background-color: rgba(255, 255, 255, 0.1) !important;
-  border-color: rgba(255, 255, 255, 0.15) !important;
+  color: #a5b4fc;
+  background-color: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.15);
 }
 
 .prose-invert a,
 .prose.prose-invert a {
-  color: #93c5fd !important;
+  color: #93c5fd;
 }
 
 .prose-invert th,
 .prose.prose-invert th {
-  color: #f8fafc !important;
-  background-color: #1e293b !important;
-  border-color: #334155 !important;
+  color: #f8fafc;
+  background-color: #1e293b;
+  border-color: #334155;
 }
 
 .prose-invert td,
 .prose.prose-invert td {
-  color: #cbd5e1 !important;
-  border-color: #334155 !important;
+  color: #cbd5e1;
+  border-color: #334155;
 }
 
+/* KaTeX on dark backgrounds */
 .prose-invert .katex,
 .prose.prose-invert .katex,
-.prose-invert .katex *,
-.prose.prose-invert .katex *,
-.prose-invert .katex-html,
-.prose.prose-invert .katex-html,
-.prose-invert .katex-html *,
-.prose.prose-invert .katex-html * {
-  color: #f8fafc !important;
-  border-color: #f8fafc !important;
+.bg-slate-900 .katex {
+  color: #f8fafc;
 }
 
-/* Any solution box with dark background */
-.bg-slate-900 .prose,
-.bg-slate-900 .prose *,
-.bg-slate-900 .katex,
-.bg-slate-900 .katex *,
-.bg-slate-900 .katex-html,
-.bg-slate-900 .katex-html * {
-  color: #f8fafc !important;
+.prose-invert .katex .frac-line,
+.prose.prose-invert .katex .frac-line,
+.bg-slate-900 .katex .frac-line {
+  border-bottom-color: #f8fafc !important;
+}
+
+.prose-invert .katex .sqrt-line,
+.prose.prose-invert .katex .sqrt-line,
+.bg-slate-900 .katex .sqrt-line {
+  border-top-color: #f8fafc !important;
+}
+
+/* Dark mode solution container */
+.bg-slate-900 .prose {
+  color: #f8fafc;
 }
 
 .bg-slate-900 .prose h1,
 .bg-slate-900 .prose h2,
 .bg-slate-900 .prose h3,
 .bg-slate-900 .prose h4 {
-  color: #fde047 !important;
+  color: #fde047;
 }
 
 .bg-slate-900 .prose a {
-  color: #93c5fd !important;
+  color: #93c5fd;
 }
 
 .bg-slate-900 .prose strong,
 .bg-slate-900 .prose b {
-  color: #ffffff !important;
+  color: #ffffff;
 }
-
