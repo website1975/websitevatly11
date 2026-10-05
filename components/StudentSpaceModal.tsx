@@ -594,7 +594,7 @@ export const StudentSpaceModal: React.FC<StudentSpaceModalProps> = ({
                               </div>
 
                               <div className="text-xs font-semibold text-slate-600 line-clamp-2 prose prose-slate prose-xs">
-                                <ReactMarkdown remarkPlugins={[remarkGfm, remarkMath, remarkBreaks]} rehypePlugins={[rehypeRaw, rehypeKatex]}>
+                                <ReactMarkdown remarkPlugins={[remarkGfm, remarkMath, remarkBreaks]} rehypePlugins={[rehypeRaw, [rehypeKatex, { output: 'html' }]]}>
                                   {item.questionContent.substring(0, 180) + (item.questionContent.length > 180 ? '...' : '')}
                                 </ReactMarkdown>
                               </div>
@@ -658,7 +658,7 @@ export const StudentSpaceModal: React.FC<StudentSpaceModalProps> = ({
                             </div>
 
                             <div className="p-4 bg-white rounded-xl border border-slate-200 prose prose-slate max-w-none text-xs leading-relaxed">
-                              <ReactMarkdown remarkPlugins={[remarkGfm, remarkMath, remarkBreaks]} rehypePlugins={[rehypeRaw, rehypeKatex]}>
+                              <ReactMarkdown remarkPlugins={[remarkGfm, remarkMath, remarkBreaks]} rehypePlugins={[rehypeRaw, [rehypeKatex, { output: 'html' }]]}>
                                 {item.myAnswer.content}
                               </ReactMarkdown>
                             </div>
