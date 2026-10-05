@@ -55,7 +55,7 @@ const renderTextWithMedia = (plainText: string, keyPrefix: string | number) => {
           key: matchKey,
           src: imgUrl,
           alt,
-          className: 'max-h-80 max-w-full object-contain rounded-xl my-2 mx-auto block shadow-sm border border-slate-200 bg-slate-50',
+          className: 'w-full max-w-4xl max-h-[85vh] object-contain rounded-2xl my-3 mx-auto block shadow-md border border-slate-300/60 bg-white/95 cursor-pointer hover:opacity-95 transition-opacity',
           loading: 'lazy'
         })
       );
@@ -68,7 +68,7 @@ const renderTextWithMedia = (plainText: string, keyPrefix: string | number) => {
           key: matchKey,
           src: imgUrl,
           alt: 'Hình ảnh',
-          className: 'max-h-80 max-w-full object-contain rounded-xl my-2 mx-auto block shadow-sm border border-slate-200 bg-slate-50',
+          className: 'w-full max-w-4xl max-h-[85vh] object-contain rounded-2xl my-3 mx-auto block shadow-md border border-slate-300/60 bg-white/95 cursor-pointer hover:opacity-95 transition-opacity',
           loading: 'lazy'
         })
       );
@@ -94,7 +94,7 @@ const renderTextWithMedia = (plainText: string, keyPrefix: string | number) => {
           key: matchKey,
           src: imgUrl,
           alt: 'Hình ảnh',
-          className: 'max-h-80 max-w-full object-contain rounded-xl my-2 mx-auto block shadow-sm border border-slate-200 bg-slate-50',
+          className: 'w-full max-w-4xl max-h-[85vh] object-contain rounded-2xl my-3 mx-auto block shadow-md border border-slate-300/60 bg-white/95 cursor-pointer hover:opacity-95 transition-opacity',
           loading: 'lazy'
         })
       );
