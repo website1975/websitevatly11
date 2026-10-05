@@ -1845,19 +1845,19 @@ ON public.vdc_questions FOR DELETE USING (true);
                         {/* Ảnh đề bài (nếu có) */}
                         {q.image_url && (
                           <div className="pt-2">
-                            <div className="relative inline-block group rounded-2xl overflow-hidden border border-slate-200 bg-slate-50">
+                            <div className="relative block group rounded-2xl overflow-hidden border border-slate-200 bg-slate-50 max-w-4xl mx-auto shadow-sm">
                               <img
                                 src={q.image_url}
                                 alt="Hình minh họa đề bài"
-                                className="max-h-80 object-contain rounded-2xl cursor-pointer transition-transform group-hover:scale-[1.01]"
+                                className="w-full max-h-[85vh] object-contain rounded-2xl cursor-pointer transition-transform group-hover:scale-[1.005]"
                                 onClick={() => setLightboxImage(q.image_url!)}
                               />
                               <button
                                 onClick={() => setLightboxImage(q.image_url!)}
-                                className="absolute bottom-2 right-2 p-1.5 bg-black/60 hover:bg-black/80 text-white rounded-lg backdrop-blur-xs opacity-0 group-hover:opacity-100 transition-opacity"
+                                className="absolute bottom-3 right-3 px-3 py-1.5 bg-black/70 hover:bg-black/90 text-white rounded-xl text-xs font-bold backdrop-blur-xs opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1.5 shadow-lg"
                                 title="Xem ảnh lớn"
                               >
-                                <Maximize2 size={14} />
+                                <Maximize2 size={14} /> Phóng to
                               </button>
                             </div>
                           </div>
@@ -1958,13 +1958,23 @@ ON public.vdc_questions FOR DELETE USING (true);
                             {/* Ảnh minh họa bài giải (nếu có) */}
                             {q.solution_image_url && (
                               <div className="pt-3 border-t border-slate-800/80">
-                                <p className="text-[11px] font-bold text-slate-400 mb-2">Hình vẽ / Giản đồ lời giải:</p>
-                                <img
-                                  src={q.solution_image_url}
-                                  alt="Hình vẽ minh họa lời giải"
-                                  className="max-h-80 object-contain rounded-xl bg-white p-2 border border-slate-700 cursor-pointer"
-                                  onClick={() => setLightboxImage(q.solution_image_url!)}
-                                />
+                                <div className="flex items-center justify-between mb-2">
+                                  <p className="text-[11px] font-bold text-slate-400">Hình vẽ / Giản đồ / Bài giải đính kèm:</p>
+                                  <button
+                                    onClick={() => setLightboxImage(q.solution_image_url!)}
+                                    className="text-[10px] font-black uppercase text-amber-400 hover:underline flex items-center gap-1 cursor-pointer"
+                                  >
+                                    <Maximize2 size={12} /> Bấm để phóng to
+                                  </button>
+                                </div>
+                                <div className="relative group rounded-2xl overflow-hidden border border-slate-700/80 bg-white p-1 max-w-4xl mx-auto shadow-xl">
+                                  <img
+                                    src={q.solution_image_url}
+                                    alt="Hình vẽ minh họa lời giải"
+                                    className="w-full max-h-[85vh] object-contain rounded-xl cursor-pointer hover:opacity-95 transition-opacity"
+                                    onClick={() => setLightboxImage(q.solution_image_url!)}
+                                  />
+                                </div>
                               </div>
                             )}
                           </div>
@@ -2837,7 +2847,8 @@ ON public.vdc_questions FOR DELETE USING (true);
                         <img
                           src={modalForm.image_url}
                           alt="Hình vẽ đề bài"
-                          className="max-h-72 object-contain rounded-2xl border border-slate-200 shadow-xs bg-slate-50 p-2"
+                          className="w-full max-w-4xl max-h-[85vh] object-contain rounded-2xl border border-slate-200 shadow-xs bg-slate-50 p-1 mx-auto block cursor-pointer"
+                          onClick={() => setLightboxImage(modalForm.image_url!)}
                         />
                       </div>
                     )}
@@ -2963,7 +2974,8 @@ ON public.vdc_questions FOR DELETE USING (true);
                               <img
                                 src={modalForm.solution_image_url}
                                 alt="Hình vẽ minh họa lời giải"
-                                className="max-h-72 object-contain rounded-2xl bg-white p-2 border border-slate-700"
+                                className="w-full max-w-4xl max-h-[85vh] object-contain rounded-2xl bg-white p-1 border border-slate-700 mx-auto block cursor-pointer"
+                                onClick={() => setLightboxImage(modalForm.solution_image_url!)}
                               />
                             </div>
                           )}
