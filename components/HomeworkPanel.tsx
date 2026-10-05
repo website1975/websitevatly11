@@ -132,6 +132,10 @@ const HomeworkPanel: React.FC<HomeworkPanelProps> = ({ nodeId, student, isAdmin,
     text = text.replace(/!\[([^\]]*)\]\((https:\/\/(?:drive|docs)\.google\.com\/(?:file\/d\/|open\?id=|uc\?[^)]*id=)([a-zA-Z0-9_-]+)[^)]*)\)/g, (_match, alt, _fullUrl, fileId) => {
       return `![${alt}](https://lh3.googleusercontent.com/d/${fileId})`;
     });
+    // Convert standalone image URLs on their own line to markdown images
+    text = text.replace(/(?:^|\n)(https?:\/\/[^\s]+?\.(?:png|jpe?g|gif|webp|svg|bmp)(?:\?[^\s]*)?)(?=\n|$)/gi, '\n![Hình ảnh]($1)\n');
+    // Convert standalone Google Drive links on their own line
+    text = text.replace(/(?:^|\n)https:\/\/(?:drive|docs)\.google\.com\/(?:file\/d\/|open\?id=|uc\?[^)]*id=)([a-zA-Z0-9_-]+)[^\s]*(?=\n|$)/gi, '\n![Hình ảnh Drive](https://lh3.googleusercontent.com/d/$1)\n');
     return text;
   };
 
@@ -906,7 +910,7 @@ const HomeworkPanel: React.FC<HomeworkPanelProps> = ({ nodeId, student, isAdmin,
             <div className="prose-p:my-0 prose-headings:mb-4">
               <ReactMarkdown 
                 remarkPlugins={[remarkGfm, remarkMath, remarkBreaks]} 
-                rehypePlugins={[rehypeRaw, rehypeKatex]}
+                rehypePlugins={[rehypeRaw, [rehypeKatex, { output: 'html' }]]}
               >
                 {displayMarkdown(content)}
               </ReactMarkdown>
@@ -1220,7 +1224,7 @@ const HomeworkPanel: React.FC<HomeworkPanelProps> = ({ nodeId, student, isAdmin,
                              </div>
 
                              <div className="prose prose-slate max-w-none text-slate-600 font-medium leading-relaxed mb-6">
-                                <ReactMarkdown remarkPlugins={[remarkGfm, remarkMath, remarkBreaks]} rehypePlugins={[rehypeRaw, rehypeKatex]}>
+                                <ReactMarkdown remarkPlugins={[remarkGfm, remarkMath, remarkBreaks]} rehypePlugins={[rehypeRaw, [rehypeKatex, { output: 'html' }]]}>
                                    {displayMarkdown(q.content)}
                                 </ReactMarkdown>
                              </div>
@@ -1285,7 +1289,7 @@ const HomeworkPanel: React.FC<HomeworkPanelProps> = ({ nodeId, student, isAdmin,
                                    )}
 
                                    <div className="bg-slate-50/70 p-6 rounded-3xl border border-slate-100 prose prose-slate max-w-none prose-sm text-slate-700 font-medium leading-relaxed">
-                                      <ReactMarkdown remarkPlugins={[remarkGfm, remarkMath, remarkBreaks]} rehypePlugins={[rehypeRaw, rehypeKatex]}>
+                                      <ReactMarkdown remarkPlugins={[remarkGfm, remarkMath, remarkBreaks]} rehypePlugins={[rehypeRaw, [rehypeKatex, { output: 'html' }]]}>
                                          {displayMarkdown(myAnswer.content)}
                                       </ReactMarkdown>
                                    </div>
@@ -1350,7 +1354,7 @@ const HomeworkPanel: React.FC<HomeworkPanelProps> = ({ nodeId, student, isAdmin,
                                                      <span className="text-slate-400 font-medium">{new Date(ans.createdAt).toLocaleDateString('vi-VN')}</span>
                                                   </div>
                                                   <div className="prose prose-purple max-w-none prose-sm text-slate-700 leading-relaxed font-medium">
-                                                     <ReactMarkdown remarkPlugins={[remarkGfm, remarkMath, remarkBreaks]} rehypePlugins={[rehypeRaw, rehypeKatex]}>
+                                                     <ReactMarkdown remarkPlugins={[remarkGfm, remarkMath, remarkBreaks]} rehypePlugins={[rehypeRaw, [rehypeKatex, { output: 'html' }]]}>
                                                         {displayMarkdown(ans.content)}
                                                      </ReactMarkdown>
                                                   </div>
@@ -1544,7 +1548,7 @@ const HomeworkPanel: React.FC<HomeworkPanelProps> = ({ nodeId, student, isAdmin,
                      </div>
                      
                      <div className="prose prose-slate max-w-none prose-sm text-slate-600 leading-relaxed font-medium">
-                        <ReactMarkdown remarkPlugins={[remarkGfm, remarkMath, remarkBreaks]} rehypePlugins={[rehypeRaw, rehypeKatex]}>
+                        <ReactMarkdown remarkPlugins={[remarkGfm, remarkMath, remarkBreaks]} rehypePlugins={[rehypeRaw, [rehypeKatex, { output: 'html' }]]}>
                           {displayMarkdown(q.content)}
                         </ReactMarkdown>
                      </div>
@@ -1764,7 +1768,7 @@ const HomeworkPanel: React.FC<HomeworkPanelProps> = ({ nodeId, student, isAdmin,
                         
                         <div className="flex-1 min-w-0">
                            <div className="prose prose-emerald max-w-none prose-sm text-slate-700 leading-relaxed font-medium">
-                              <ReactMarkdown remarkPlugins={[remarkGfm, remarkMath, remarkBreaks]} rehypePlugins={[rehypeRaw, rehypeKatex]}>
+                              <ReactMarkdown remarkPlugins={[remarkGfm, remarkMath, remarkBreaks]} rehypePlugins={[rehypeRaw, [rehypeKatex, { output: 'html' }]]}>
                                  {displayMarkdown(a.content)}
                               </ReactMarkdown>
                            </div>
