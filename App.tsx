@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Routes, Route, useNavigate, Navigate } from 'react-router-dom';
-import { Book, Plus, Maximize2, Loader2, BrainCircuit, GraduationCap, ShieldCheck, Search, LogOut, Folder, Globe, Zap, Image as ImageIcon, Settings, ArrowLeft, ArrowRight, Upload, AlertCircle, Users, Cloud, ExternalLink, BookOpen, Sparkles, ChevronRight, Key, ListOrdered, ArrowUpDown } from 'lucide-react';
+import { Book, Plus, Maximize2, Loader2, BrainCircuit, GraduationCap, ShieldCheck, Search, LogOut, Folder, Globe, Zap, Image as ImageIcon, Settings, ArrowLeft, ArrowRight, Upload, AlertCircle, Users, Cloud, ExternalLink, BookOpen, Sparkles, ChevronRight, Key, ListOrdered, ArrowUpDown, Menu, Paperclip, X } from 'lucide-react';
 import { uploadFileToGoogleDrive, signInWithGoogleForDrive, getDriveAccessToken, isGoogleDriveUrl, extractDriveFileId } from './googleDrive';
 import { supabase } from './supabaseClient';
 import { AppData, ResourceLink, BookNode, NodeType, Student } from './types';
@@ -209,6 +209,11 @@ const App: React.FC = () => {
     setSyncError(null);
     try { 
       const { error } = await supabase.from('app_settings').upsert({ id: selectedGrade, data: newData }); 
+      // Đồng bộ cả ID 1 và ID 11 cho khối 11 để đảm bảo các thiết bị/trình duyệt cũ luôn nhận cùng dữ liệu
+      if (selectedGrade === 11 || selectedGrade === 1) {
+        await supabase.from('app_settings').upsert({ id: 1, data: newData });
+        await supabase.from('app_settings').upsert({ id: 11, data: newData });
+      }
       if (error) {
         console.error("Update error:", error);
         setSyncError("Lỗi khi lưu dữ liệu lên đám mây: " + error.message);
@@ -335,6 +340,8 @@ const MainView: React.FC<{
     return localStorage.getItem(`selected_id_${selectedGrade}`);
   });
   const [isVdcMode, setIsVdcMode] = useState<boolean>(false);
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState<boolean>(false);
+  const [isMobileResourcesOpen, setIsMobileResourcesOpen] = useState<boolean>(false);
   const [iframeLoading, setIframeLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<'content' | 'tasks' | 'flashcards' | 'homework'>('content');
   const [showStudentManager, setShowStudentManager] = useState(false);
@@ -916,6 +923,7 @@ const MainView: React.FC<{
     setIsVdcMode(false);
     setSelectedId(id);
     setActiveTab(tab);
+    setIsMobileSidebarOpen(false);
     if (id) {
       localStorage.setItem(`selected_id_${selectedGrade}`, id);
       if (data.nodes.find(n => n.id === id)?.url) setIframeLoading(true);
@@ -925,7 +933,7 @@ const MainView: React.FC<{
   };
 
   return (
-    <div className="flex h-screen overflow-hidden font-sans bg-white text-slate-900 transition-colors duration-300">
+    <div className="flex h-screen h-[100dvh] w-full overflow-hidden font-sans bg-white text-slate-900 transition-colors duration-300 relative">
       {isQuizOpen && selectedNode && (
         <QuizModal 
           nodeId={selectedId!}
@@ -939,16 +947,26 @@ const MainView: React.FC<{
         />
       )}
       
+      {/* MOBILE BACKDROP FOR SIDEBAR */}
+      {isMobileSidebarOpen && (
+        <div 
+          onClick={() => setIsMobileSidebarOpen(false)} 
+          className="md:hidden fixed inset-0 bg-slate-950/60 backdrop-blur-xs z-40 animate-in fade-in duration-200" 
+        />
+      )}
+
       {/* PANEL 1: SIDEBAR */}
-      <aside className="w-[230px] border-r border-slate-100 flex flex-col shrink-0 bg-[#fbfcfd] transition-all">
-        <header className={`px-5 py-4 text-white ${isAdmin ? 'bg-amber-600' : `bg-${themeColor}-600`} flex justify-between items-center shrink-0`}>
-          <div className="flex items-center gap-2">
-            <Book size={16}/>
-            <h1 className="font-bold text-[9px] uppercase tracking-[0.2em]">
+      <aside className={`fixed inset-y-0 left-0 z-50 w-72 max-w-[85vw] bg-[#fbfcfd] border-r border-slate-100 flex flex-col shrink-0 shadow-2xl transition-transform duration-300 md:relative md:w-[230px] md:translate-x-0 md:shadow-none md:z-auto ${
+        isMobileSidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
+      }`}>
+        <header className={`px-4 sm:px-5 py-3.5 sm:py-4 text-white ${isAdmin ? 'bg-amber-600' : `bg-${themeColor}-600`} flex justify-between items-center shrink-0`}>
+          <div className="flex items-center gap-2 min-w-0">
+            <Book size={16} className="shrink-0"/>
+            <h1 className="font-bold text-[9px] uppercase tracking-[0.2em] truncate">
               Cấu trúc sách - Lớp {selectedGrade === 1 ? '11' : selectedGrade}
             </h1>
           </div>
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1 shrink-0">
             {isAdmin && <button onClick={()=>setShowHomeConfig(true)} className="p-1.5 hover:bg-white/20 rounded-lg transition-colors" title="Cấu hình trang chủ"><Settings size={14}/></button>}
             {isAdmin && (
               <button 
@@ -964,6 +982,13 @@ const MainView: React.FC<{
               setNodeModalData({parentId:null, type:'folder', title:'', url:'', imageUrl: '', order: nextOrder}); 
               setShowNodeModal(true);
             }} className="p-1.5 hover:bg-white/20 rounded-lg transition-colors" title="Thêm chương mới"><Plus size={14}/></button>}
+            <button
+              onClick={() => setIsMobileSidebarOpen(false)}
+              className="md:hidden p-1.5 hover:bg-white/20 rounded-lg text-white ml-0.5"
+              title="Đóng menu sách"
+            >
+              <X size={15} />
+            </button>
           </div>
         </header>
 
@@ -973,6 +998,7 @@ const MainView: React.FC<{
             onClick={() => {
               setIsVdcMode(true);
               setSelectedId(null);
+              setIsMobileSidebarOpen(false);
             }}
             className={`w-full flex items-center justify-between px-3 py-2 rounded-xl transition-all text-left group shadow-xs ${
               isVdcMode
@@ -1045,7 +1071,48 @@ const MainView: React.FC<{
       </aside>
 
       {/* PANEL 2: MAIN CONTENT */}
-      <main className="flex-1 flex flex-col overflow-hidden relative bg-white transition-all">
+      <main className="flex-1 w-full min-w-0 flex flex-col overflow-hidden relative bg-white transition-all">
+        {/* MOBILE TOP NAVIGATION BAR (md:hidden) */}
+        <div className="md:hidden flex items-center justify-between px-3 py-2 bg-white border-b border-slate-200 shrink-0 z-20 shadow-xs">
+          <div className="flex items-center gap-2 min-w-0">
+            <button
+              onClick={() => setIsMobileSidebarOpen(true)}
+              className={`p-2 rounded-xl border border-slate-200 text-slate-700 hover:bg-slate-50 flex items-center gap-1.5 active:scale-95 transition-all shadow-xs`}
+              title="Mở menu sách"
+            >
+              <Menu size={16} className={`text-${themeColor}-600`} />
+              <span className="text-[10px] font-black uppercase tracking-wider">Menu</span>
+            </button>
+            <div className="min-w-0">
+              <h2 className="text-xs font-black text-slate-900 truncate uppercase tracking-tight">
+                {isVdcMode ? "Kho VDC & Sưu tầm" : (selectedNode?.title || gradeTitle)}
+              </h2>
+              <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest truncate">
+                Lớp {selectedGrade === 1 ? '11' : selectedGrade} {isAdmin ? '• Giáo viên' : (student ? `• ${student.full_name || student.name}` : '')}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-1.5 shrink-0">
+            {!isVdcMode && (
+              <button
+                onClick={() => setIsMobileResourcesOpen(true)}
+                className={`flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-[10px] font-bold border transition-all ${
+                  (selectedNode?.lessonResources?.length || 0) + (data.globalResources?.length || 0) > 0
+                    ? `bg-${themeColor}-50 border-${themeColor}-200 text-${themeColor}-700`
+                    : 'bg-slate-50 border-slate-200 text-slate-600'
+                }`}
+                title="Mở bảng học liệu"
+              >
+                <Paperclip size={13} />
+                <span className="font-extrabold hidden sm:inline">Học liệu</span>
+                <span className="px-1.5 py-0.2 rounded-full text-[9px] bg-white font-black shadow-xs">
+                  {(selectedNode?.lessonResources?.length || 0) + (data.globalResources?.length || 0)}
+                </span>
+              </button>
+            )}
+          </div>
+        </div>
         {syncError && (
           <div className="bg-red-50 border-b border-red-100 px-6 py-3 flex items-center justify-between animate-in slide-in-from-top duration-500">
             <div className="flex items-center gap-3">
@@ -1086,38 +1153,38 @@ const MainView: React.FC<{
               />
             ) : (
               <>
-                <header className={`px-6 ${activeTab === 'content' ? 'pt-4 pb-0' : 'py-4'} border-b border-slate-100 shrink-0 bg-white`}>
-                  <div className="flex justify-between items-center">
-                    <div className="min-w-0 flex-1 mr-4">
-                      <h2 className="text-lg font-black text-slate-900 uppercase tracking-tight truncate mb-0.5">{selectedNode?.title}</h2>
-                      <p key={sloganIdx} className="text-[9px] font-medium text-slate-400 uppercase tracking-widest opacity-80 italic animate-in slide-in-from-left-4 duration-1000">
+                <header className={`px-4 sm:px-6 ${activeTab === 'content' ? 'pt-3 pb-0 sm:pt-4 sm:pb-0' : 'py-3 sm:py-4'} border-b border-slate-100 shrink-0 bg-white`}>
+                  <div className="flex flex-wrap sm:flex-nowrap justify-between items-center gap-2">
+                    <div className="min-w-0 flex-1 mr-2 sm:mr-4">
+                      <h2 className="text-base sm:text-lg font-black text-slate-900 uppercase tracking-tight truncate mb-0.5">{selectedNode?.title}</h2>
+                      <p key={sloganIdx} className="text-[9px] font-medium text-slate-400 uppercase tracking-widest opacity-80 italic animate-in slide-in-from-left-4 duration-1000 truncate">
                         {SLOGANS[sloganIdx]}
                       </p>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 shrink-0">
                       <div className="flex gap-2">
                         {isAdmin ? (
                             <button 
                               onClick={()=>setIsQuizOpen(true)} 
-                              className="group flex items-center gap-2 px-5 py-2 bg-indigo-600 text-white font-bold text-[10px] uppercase shadow-lg shadow-indigo-100 rounded-full hover:bg-indigo-700 hover:scale-105 transition-all"
+                              className="group flex items-center gap-1.5 sm:gap-2 px-3.5 sm:px-5 py-1.5 sm:py-2 bg-indigo-600 text-white font-bold text-[9px] sm:text-[10px] uppercase shadow-lg shadow-indigo-100 rounded-full hover:bg-indigo-700 hover:scale-105 transition-all"
                             >
-                            <Zap size={14} className="fill-current text-amber-300"/> Soạn Quiz AI
+                            <Zap size={13} className="fill-current text-amber-300"/> Soạn Quiz AI
                           </button>
                         ) : (
                           <>
                             {currentStudent && (
                               <button 
                                 onClick={()=>setIsStudentSpaceOpen(true)} 
-                                className="group flex items-center gap-1.5 px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold text-[10px] uppercase shadow-lg shadow-indigo-100 rounded-full hover:scale-105 transition-all"
+                                className="group flex items-center gap-1.5 px-3 sm:px-4 py-1.5 sm:py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold text-[9px] sm:text-[10px] uppercase shadow-lg shadow-indigo-100 rounded-full hover:scale-105 transition-all"
                               >
-                                <GraduationCap size={14} className="text-amber-300"/> Góc học tập
+                                <GraduationCap size={13} className="text-amber-300"/> <span className="hidden sm:inline">Góc học tập</span>
                               </button>
                             )}
                             <button 
                               onClick={()=>setIsQuizOpen(true)} 
-                              className={`group flex items-center gap-2 px-5 py-2 bg-${themeColor}-600 text-white font-bold text-[10px] uppercase shadow-lg shadow-${themeColor}-100 rounded-full hover:bg-${themeColor}-700 hover:scale-105 transition-all`}
+                              className={`group flex items-center gap-1.5 sm:gap-2 px-3.5 sm:px-5 py-1.5 sm:py-2 bg-${themeColor}-600 text-white font-bold text-[9px] sm:text-[10px] uppercase shadow-lg shadow-${themeColor}-100 rounded-full hover:bg-${themeColor}-700 hover:scale-105 transition-all`}
                             >
-                              <BrainCircuit size={14}/> Rèn luyện
+                              <BrainCircuit size={13}/> Rèn luyện
                             </button>
                           </>
                         )}
@@ -1127,23 +1194,23 @@ const MainView: React.FC<{
                   </div>
                   
                   <div className={`flex justify-between items-center ${activeTab === 'content' ? 'mt-2' : 'mt-3'}`}>
-                    <div className="flex gap-6">
-                      <button onClick={()=>setActiveTab('content')} className={`pb-2 text-[10px] font-bold uppercase tracking-widest border-b-2 transition-all ${activeTab==='content' ? `border-${themeColor}-600 text-${themeColor}-600` : 'border-transparent text-slate-300 hover:text-slate-500'}`}>Học liệu</button>
-                      <button onClick={()=>setActiveTab('flashcards')} className={`pb-2 text-[10px] font-bold uppercase tracking-widest border-b-2 transition-all ${activeTab==='flashcards' ? `border-${themeColor}-600 text-${themeColor}-600` : 'border-transparent text-slate-300 hover:text-slate-500'}`}>Flashcards</button>
+                    <div className="flex gap-4 sm:gap-6 overflow-x-auto no-scrollbar py-0.5">
+                      <button onClick={()=>setActiveTab('content')} className={`pb-2 text-[10px] font-bold uppercase tracking-widest border-b-2 transition-all shrink-0 ${activeTab==='content' ? `border-${themeColor}-600 text-${themeColor}-600` : 'border-transparent text-slate-300 hover:text-slate-500'}`}>Học liệu</button>
+                      <button onClick={()=>setActiveTab('flashcards')} className={`pb-2 text-[10px] font-bold uppercase tracking-widest border-b-2 transition-all shrink-0 ${activeTab==='flashcards' ? `border-${themeColor}-600 text-${themeColor}-600` : 'border-transparent text-slate-300 hover:text-slate-500'}`}>Flashcards</button>
                       {(isAdmin || student) && (
-                        <button onClick={()=>setActiveTab('tasks')} className={`pb-2 text-[10px] font-bold uppercase tracking-widest border-b-2 transition-all ${activeTab==='tasks' ? `border-${themeColor}-600 text-${themeColor}-600` : 'border-transparent text-slate-300 hover:text-slate-500'}`}>Nhiệm vụ</button>
+                        <button onClick={()=>setActiveTab('tasks')} className={`pb-2 text-[10px] font-bold uppercase tracking-widest border-b-2 transition-all shrink-0 ${activeTab==='tasks' ? `border-${themeColor}-600 text-${themeColor}-600` : 'border-transparent text-slate-300 hover:text-slate-500'}`}>Nhiệm vụ</button>
                       )}
                       {(isAdmin || student) && (
-                        <button onClick={()=>setActiveTab('homework')} className={`pb-2 text-[10px] font-bold uppercase tracking-widest border-b-2 transition-all ${activeTab==='homework' ? `border-${themeColor}-600 text-${themeColor}-600` : 'border-transparent text-slate-300 hover:text-slate-500'}`}>Bài tập về nhà</button>
+                        <button onClick={()=>setActiveTab('homework')} className={`pb-2 text-[10px] font-bold uppercase tracking-widest border-b-2 transition-all shrink-0 ${activeTab==='homework' ? `border-${themeColor}-600 text-${themeColor}-600` : 'border-transparent text-slate-300 hover:text-slate-500'}`}>Bài tập về nhà</button>
                       )}
                     </div>
-                    <div className="pb-2 text-[9px] font-bold text-slate-400 uppercase tracking-widest opacity-60">
+                    <div className="hidden sm:block pb-2 text-[9px] font-bold text-slate-400 uppercase tracking-widest opacity-60 shrink-0">
                       {formattedTime}
                     </div>
                   </div>
                 </header>
                 
-                <div className={`flex-1 relative overflow-y-auto custom-scrollbar bg-[#fcfdfe] ${activeTab === 'content' ? 'p-0' : 'p-6'}`}>
+                <div className={`flex-1 relative overflow-y-auto custom-scrollbar bg-[#fcfdfe] ${activeTab === 'content' ? 'p-0' : 'p-3 sm:p-6'}`}>
                   {activeTab === 'content' ? (
                     <div className="h-full relative">
                       {selectedNode?.url ? (
@@ -1237,14 +1304,45 @@ const MainView: React.FC<{
         )}
       </main>
 
-      {/* PANEL 3: RESOURCES */}
+      {/* PANEL 3: RESOURCES (DESKTOP lg+) */}
       {!isVdcMode && (
-        <ResourcesPanel isAdmin={isAdmin} selectedId={selectedId} lessonResources={selectedNode?.lessonResources||[]} globalResources={data.globalResources}
+        <ResourcesPanel 
+          isAdmin={isAdmin} 
+          selectedId={selectedId} 
+          lessonResources={selectedNode?.lessonResources||[]} 
+          globalResources={data.globalResources}
           themeColor={themeColor}
+          className="hidden lg:flex w-56 border-l border-slate-50 bg-[#fbfcfd] flex-col shrink-0 overflow-y-auto custom-scrollbar transition-all"
           onAdd={(isG)=> {setResModalData({title:'', url:'', isGlobal: isG}); setShowResModal(true);}}
           onEdit={(r,isG)=> {setResModalData({...r, isGlobal: isG}); setShowResModal(true);}}
           onDelete={handleDeleteResource}
-          onViewResource={(r)=> setResourceModal(r)}/>
+          onViewResource={(r)=> setResourceModal(r)}
+        />
+      )}
+
+      {/* MOBILE DRAWER: RESOURCES (< lg) */}
+      {isMobileResourcesOpen && !isVdcMode && (
+        <div className="lg:hidden fixed inset-0 z-50 flex justify-end">
+          <div 
+            onClick={() => setIsMobileResourcesOpen(false)} 
+            className="fixed inset-0 bg-slate-950/60 backdrop-blur-xs animate-in fade-in duration-200" 
+          />
+          <div className="relative z-10 w-72 sm:w-80 max-w-[85vw] h-full bg-white shadow-2xl flex flex-col animate-in slide-in-from-right duration-300">
+            <ResourcesPanel 
+              isAdmin={isAdmin} 
+              selectedId={selectedId} 
+              lessonResources={selectedNode?.lessonResources||[]} 
+              globalResources={data.globalResources}
+              themeColor={themeColor}
+              className="w-full h-full flex flex-col overflow-y-auto custom-scrollbar bg-white"
+              onClose={() => setIsMobileResourcesOpen(false)}
+              onAdd={(isG)=> {setResModalData({title:'', url:'', isGlobal: isG}); setShowResModal(true);}}
+              onEdit={(r,isG)=> {setResModalData({...r, isGlobal: isG}); setShowResModal(true);}}
+              onDelete={handleDeleteResource}
+              onViewResource={(r)=> setResourceModal(r)}
+            />
+          </div>
+        </div>
       )}
 
       {/* MODAL VIEW RESOURCE */}
@@ -1365,16 +1463,16 @@ const MainView: React.FC<{
             className="bg-white p-8 rounded-[32px] shadow-2xl w-full max-w-md space-y-4 border border-slate-100 animate-in zoom-in-95">
             <h3 className={`font-black text-center text-${themeColor}-600 uppercase text-[11px] tracking-widest mb-2`}>Cấu trúc bài học</h3>
             <div className="flex gap-2 p-1 bg-slate-100 rounded-xl mb-4">
-              <button type="button" onClick={()=>setNodeModalData({...nodeModalData, type:'folder'})} className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-[10px] font-black uppercase transition-all ${nodeModalData.type==='folder' ? 'bg-white shadow-sm text-amber-600' : 'text-slate-400'}`}>
-                <Folder size={14}/> Thư mục
+              <button type="button" onClick={()=>setNodeModalData({...nodeModalData, type:'folder'})} className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-1 rounded-lg text-[10px] font-black uppercase transition-all ${nodeModalData.type==='folder' ? 'bg-white shadow-xs text-amber-600 ring-1 ring-amber-200' : 'text-slate-400 hover:text-slate-600'}`}>
+                <Folder size={14}/> Thư mục / Chương (Hiện trên VDC)
               </button>
-              <button type="button" onClick={()=>setNodeModalData({...nodeModalData, type:'lesson'})} className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-[10px] font-black uppercase transition-all ${nodeModalData.type==='lesson' ? 'bg-white shadow-sm text-sky-600' : 'text-slate-400'}`}>
+              <button type="button" onClick={()=>setNodeModalData({...nodeModalData, type:'lesson'})} className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-1 rounded-lg text-[10px] font-black uppercase transition-all ${nodeModalData.type==='lesson' ? 'bg-white shadow-xs text-sky-600 ring-1 ring-sky-200' : 'text-slate-400 hover:text-slate-600'}`}>
                 <Globe size={14}/> Bài học
               </button>
             </div>
             <div className="space-y-1">
               <label className="text-[9px] font-bold text-slate-400 uppercase ml-1 tracking-widest">Tiêu đề</label>
-              <input autoFocus value={nodeModalData.title} onChange={e=>setNodeModalData({...nodeModalData, title:e.target.value})} className={`w-full px-4 py-3 text-sm font-medium outline-none bg-slate-50 border border-slate-100 rounded-xl focus:border-${themeColor}-400 transition-all`} placeholder={nodeModalData.type==='folder'?'Tên thư mục...':'Tên bài học...'}/>
+              <input autoFocus value={nodeModalData.title} onChange={e=>setNodeModalData({...nodeModalData, title:e.target.value})} className={`w-full px-4 py-3 text-sm font-medium outline-none bg-slate-50 border border-slate-100 rounded-xl focus:border-${themeColor}-400 transition-all`} placeholder={nodeModalData.type==='folder'?'Tên chương / thư mục (sẽ hiện trên menu sách & kho VDC)...':'Tên bài học...'}/>
             </div>
             {nodeModalData.type === 'lesson' && (
               <>
