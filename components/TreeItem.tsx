@@ -168,9 +168,14 @@ const TreeItem: React.FC<TreeItemProps> = ({
               </button>
               {node.type === 'folder' && (
                 <button 
-                  onClick={(e) => { e.stopPropagation(); onAdd(node.id, 'lesson'); }}
+                  onClick={(e) => { 
+                    e.stopPropagation(); 
+                    // Nếu là thư mục gốc sách (level === 0), ưu tiên thêm thư mục/chương con
+                    const defaultType = level === 0 ? 'folder' : 'lesson';
+                    onAdd(node.id, defaultType); 
+                  }}
                   className={`p-1 rounded transition-all active:scale-75 ${isSelected ? 'hover:bg-white/20 text-white' : 'hover:bg-indigo-50 text-indigo-500'}`}
-                  title="Thêm bài học vào chương này"
+                  title={level === 0 ? "Thêm chương/mục vào sách này" : "Thêm bài học vào chương này"}
                 >
                   <Plus size={11} />
                 </button>
