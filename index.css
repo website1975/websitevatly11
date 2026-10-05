@@ -92,3 +92,111 @@ body {
   @apply text-inherit bg-transparent p-0 border-none rounded-none;
 }
 
+/* Inverted (dark background) prose styling */
+.prose-invert,
+.prose.prose-invert,
+.prose-invert *,
+.prose.prose-invert * {
+  color: #f8fafc;
+}
+
+.prose-invert p,
+.prose.prose-invert p,
+.prose-invert span,
+.prose.prose-invert span,
+.prose-invert div,
+.prose.prose-invert div,
+.prose-invert li,
+.prose.prose-invert li {
+  color: #f8fafc !important;
+}
+
+.prose-invert h1, .prose-invert h2, .prose-invert h3, .prose-invert h4,
+.prose.prose-invert h1, .prose.prose-invert h2, .prose.prose-invert h3, .prose.prose-invert h4 {
+  color: #fde047 !important;
+}
+
+.prose-invert strong,
+.prose.prose-invert strong,
+.prose-invert b,
+.prose.prose-invert b {
+  color: #ffffff !important;
+}
+
+.prose-invert em,
+.prose.prose-invert em,
+.prose-invert i,
+.prose.prose-invert i {
+  color: #cbd5e1 !important;
+}
+
+.prose-invert blockquote,
+.prose.prose-invert blockquote {
+  border-color: #f59e0b !important;
+  color: #e2e8f0 !important;
+  background-color: rgba(245, 158, 11, 0.15) !important;
+}
+
+.prose-invert code,
+.prose.prose-invert code {
+  color: #a5b4fc !important;
+  background-color: rgba(255, 255, 255, 0.1) !important;
+  border-color: rgba(255, 255, 255, 0.15) !important;
+}
+
+.prose-invert a,
+.prose.prose-invert a {
+  color: #93c5fd !important;
+}
+
+.prose-invert th,
+.prose.prose-invert th {
+  color: #f8fafc !important;
+  background-color: #1e293b !important;
+  border-color: #334155 !important;
+}
+
+.prose-invert td,
+.prose.prose-invert td {
+  color: #cbd5e1 !important;
+  border-color: #334155 !important;
+}
+
+.prose-invert .katex,
+.prose.prose-invert .katex,
+.prose-invert .katex *,
+.prose.prose-invert .katex *,
+.prose-invert .katex-html,
+.prose.prose-invert .katex-html,
+.prose-invert .katex-html *,
+.prose.prose-invert .katex-html * {
+  color: #f8fafc !important;
+  border-color: #f8fafc !important;
+}
+
+/* Any solution box with dark background */
+.bg-slate-900 .prose,
+.bg-slate-900 .prose *,
+.bg-slate-900 .katex,
+.bg-slate-900 .katex *,
+.bg-slate-900 .katex-html,
+.bg-slate-900 .katex-html * {
+  color: #f8fafc !important;
+}
+
+.bg-slate-900 .prose h1,
+.bg-slate-900 .prose h2,
+.bg-slate-900 .prose h3,
+.bg-slate-900 .prose h4 {
+  color: #fde047 !important;
+}
+
+.bg-slate-900 .prose a {
+  color: #93c5fd !important;
+}
+
+.bg-slate-900 .prose strong,
+.bg-slate-900 .prose b {
+  color: #ffffff !important;
+}
+
