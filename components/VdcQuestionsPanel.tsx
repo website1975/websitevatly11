@@ -49,7 +49,9 @@ import {
   AlignLeft,
   AlignCenter,
   AlignRight,
-  Code
+  Code,
+  Subscript,
+  Superscript
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -69,8 +71,12 @@ const MATH_FORMULAS = [
   { label: 'PHÂN SỐ', display: 'a/b', value: '$\\frac{a}{b}$' },
   { label: 'CĂN BẬC 2', display: '√x', value: '$\\sqrt{x}$' },
   { label: 'CĂN BẬC N', display: 'ⁿ√x', value: '$\\sqrt[n]{x}$' },
-  { label: 'MŨ', display: 'xⁿ', value: '$x^{n}$' },
-  { label: 'CHỈ SỐ DƯỚI', display: 'xi', value: '$x_{i}$' },
+  { label: 'MŨ / LŨY THỪA', display: 'x²', value: '$x^{2}$' },
+  { label: 'CHỈ SỐ DƯỚI', display: 'x₁', value: '$x_{1}$' },
+  { label: 'VẬN TỐC ĐẦU', display: 'v₀', value: '$v_{0}$' },
+  { label: 'GIA TỐC', display: 'm/s²', value: '$\\text{m/s}^2$' },
+  { label: '10 MŨ ÂM', display: '10⁻³', value: '$10^{-3}$' },
+  { label: 'CHỈ SỐ MAX', display: 'xmax', value: '$x_{\\max}$' },
   { label: 'VECTOR', display: '→v', value: '$\\vec{v}$' },
   { label: 'LỰC VECTOR', display: '→F', value: '$\\vec{F}$' },
   { label: 'TẦN SỐ GÓC', display: 'ω', value: '$\\omega$' },
@@ -86,7 +92,6 @@ const MATH_FORMULAS = [
   { label: 'TÍCH PHÂN (∫)', display: '∫', value: '$\\int_{a}^{b}$' },
   { label: 'GIỚI HẠN (LIM)', display: 'lim', value: '$\\lim_{x \\to \\infty}$' },
   { label: 'ĐƠN VỊ VẬN TỐC', display: 'm/s', value: '$\\text{m/s}$' },
-  { label: 'GIA TỐC', display: 'm/s²', value: '$\\text{m/s}^2$' },
 ];
 
 const FONT_SIZES = [
@@ -119,78 +124,16 @@ interface RichMarkdownRendererProps {
 const RichMarkdownRenderer: React.FC<RichMarkdownRendererProps> = ({
   content,
   className = '',
-  isInverted = false,
-  onImageClick
+  isInverted = false
 }) => {
   if (!content) return null;
 
-  // 1. Chuẩn hóa link ảnh Google Drive trong markdown ![alt](drive_url)
-  let processed = content.replace(
-    /!\[([^\]]*)\]\((https:\/\/(?:drive|docs)\.google\.com\/(?:file\/d\/|open\?id=|uc\?[^)]*id=)([a-zA-Z0-9_-]+)[^)]*)\)/g,
-    (_match, alt, _fullUrl, fileId) => `![${alt}](https://lh3.googleusercontent.com/d/${fileId})`
-  );
-
-  // 2. Chuyển URL ảnh đứng riêng 1 dòng thành ảnh markdown
-  processed = processed.replace(
-    /(?:^|\n)(https?:\/\/[^\s]+?\.(?:png|jpe?g|gif|webp|svg|bmp)(?:\?[^\s]*)?)(?=\n|$)/gi,
-    '\n![Hình ảnh]($1)\n'
-  );
-
-  // 3. Chuyển URL Google Drive đứng riêng 1 dòng thành ảnh markdown
-  processed = processed.replace(
-    /(?:^|\n)https:\/\/(?:drive|docs)\.google\.com\/(?:file\/d\/|open\?id=|uc\?[^)]*id=)([a-zA-Z0-9_-]+)[^\s]*(?=\n|$)/gi,
-    '\n![Hình ảnh Drive](https://lh3.googleusercontent.com/d/$1)\n'
-  );
-
   return (
     <div 
-      className={`prose ${isInverted ? 'prose-invert text-slate-100 prose-p:text-slate-100 prose-headings:text-amber-300 prose-strong:text-white prose-li:text-slate-200' : 'prose-slate text-slate-800'} max-w-none leading-relaxed prose-p:my-1 prose-headings:my-2 prose-img:my-2 ${className}`}
+      className={`leading-relaxed whitespace-pre-line ${isInverted ? 'text-slate-100' : 'text-slate-800'} ${className}`}
       style={isInverted ? { color: '#f8fafc' } : undefined}
     >
-      <ReactMarkdown
-        remarkPlugins={[remarkGfm, remarkMath, remarkBreaks]}
-        rehypePlugins={[rehypeRaw, rehypeKatex]}
-        components={{
-          p: ({ node, ...props }) => (
-            <p {...props} className={isInverted ? 'text-slate-100 my-1' : 'my-1'} style={isInverted ? { color: '#f8fafc' } : undefined} />
-          ),
-          span: ({ node, ...props }) => (
-            <span {...props} style={isInverted && !props.style?.color ? { color: '#f8fafc' } : props.style} />
-          ),
-          li: ({ node, ...props }) => (
-            <li {...props} className={isInverted ? 'text-slate-200' : ''} style={isInverted ? { color: '#e2e8f0' } : undefined} />
-          ),
-          strong: ({ node, ...props }) => (
-            <strong {...props} className={isInverted ? 'text-white font-bold' : 'font-bold'} style={isInverted ? { color: '#ffffff' } : undefined} />
-          ),
-          img: ({ node, ...props }) => {
-            const src = props.src || '';
-            return (
-              <span className="block my-2.5">
-                <img
-                  {...props}
-                  className="max-h-80 sm:max-h-96 max-w-full object-contain rounded-2xl border border-slate-200/80 shadow-xs bg-slate-50 cursor-pointer hover:shadow-md hover:scale-[1.01] transition-all mx-auto"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    if (src && onImageClick) onImageClick(src);
-                  }}
-                  title="Nhấn để phóng to ảnh"
-                />
-              </span>
-            );
-          },
-          a: ({ node, ...props }) => (
-            <a
-              {...props}
-              target="_blank"
-              rel="noopener noreferrer"
-              className={isInverted ? 'text-blue-300 hover:text-blue-200 underline font-semibold transition-colors' : 'text-indigo-500 hover:text-indigo-700 underline font-semibold transition-colors'}
-            />
-          ),
-        }}
-      >
-        {processed}
-      </ReactMarkdown>
+      {renderLatex(content)}
     </div>
   );
 };
@@ -2372,6 +2315,22 @@ ON public.vdc_questions FOR DELETE USING (true);
                       title="Gạch chân (Underline)"
                     >
                       <Underline size={15} />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => wrapText('<sub>', '</sub>')}
+                      className="p-1.5 text-slate-600 hover:text-indigo-600 hover:bg-white rounded-lg transition-all"
+                      title="Chỉ số dưới (Subscript, ví dụ: x₁ hoặc v₀)"
+                    >
+                      <Subscript size={15} />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => wrapText('<sup>', '</sup>')}
+                      className="p-1.5 text-slate-600 hover:text-indigo-600 hover:bg-white rounded-lg transition-all"
+                      title="Chỉ số trên / Mũ (Superscript, ví dụ: x² hoặc 10⁻³)"
+                    >
+                      <Superscript size={15} />
                     </button>
                     <button
                       type="button"
