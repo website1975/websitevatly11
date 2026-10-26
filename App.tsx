@@ -19,6 +19,7 @@ import HomeworkPanel from './components/HomeworkPanel';
 import { StudentSpaceModal } from './components/StudentSpaceModal';
 import VdcQuestionsPanel from './components/VdcQuestionsPanel';
 import ChapterReorderModal from './components/ChapterReorderModal';
+import { MediaViewer, MediaViewerModal } from './components/MediaViewer';
 import { uploadToImgBB } from './imgbb';
 import { ConfirmModal, ToastNotification, ConfirmState, ToastState } from './components/CustomDialog';
 import { getSafeEnv, SLOGANS } from './utils';
@@ -1214,52 +1215,12 @@ const MainView: React.FC<{
                   {activeTab === 'content' ? (
                     <div className="h-full relative">
                       {selectedNode?.url ? (
-                        isNotebookLMUrl(selectedNode.url) ? (
-                          <div className="h-full flex flex-col items-center justify-center p-8 text-center bg-slate-50/50 rounded-2xl border border-slate-100/80 m-4">
-                            <div className="w-16 h-16 bg-purple-100 text-purple-600 rounded-3xl flex items-center justify-center mb-4 shadow-sm">
-                              <BookOpen size={28} />
-                            </div>
-                            <h3 className="text-lg font-black text-slate-800 mb-2">Sổ tay Google NotebookLM</h3>
-                            <p className="text-xs text-slate-500 max-w-md mb-6 leading-relaxed">
-                              Liên kết này tới tài liệu sổ tay thông minh Google NotebookLM. Vì lý do bảo mật và phân quyền tài khoản Google, trang này cần mở trực tiếp trong thẻ mới để tương tác đầy đủ.
-                            </p>
-                            <a
-                              href={selectedNode.url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="px-6 py-3.5 bg-purple-600 text-white rounded-2xl font-bold text-xs shadow-lg shadow-purple-200 hover:bg-purple-700 hover:shadow-xl transition-all flex items-center gap-2"
-                            >
-                              <ExternalLink size={16} />
-                              Mở Google NotebookLM trong tab mới
-                            </a>
-                          </div>
-                        ) : (
-                          <div className="h-full flex flex-col relative">
-                            {isGoogleDriveUrl(selectedNode.url) && (
-                              <div className="bg-amber-50/90 border-b border-amber-200/60 px-4 py-2 flex items-center justify-between text-xs text-amber-900 shrink-0 z-10 backdrop-blur-sm">
-                                <div className="flex items-center gap-2 overflow-hidden mr-2">
-                                  <AlertCircle size={15} className="text-amber-600 shrink-0" />
-                                  <span className="truncate text-[11px] font-medium">
-                                    Nếu thấy báo lỗi từ Google Drive: Hãy đảm bảo file đã bật chia sẻ <b>"Bất kỳ ai có liên kết"</b> (hoặc dùng Google Apps Script Web App đã chọn <i>"Who has access: Anyone"</i>).
-                                  </span>
-                                </div>
-                                <a
-                                  href={selectedNode.url}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="px-3 py-1 bg-amber-600 hover:bg-amber-700 text-white font-bold text-[10px] rounded-lg shrink-0 flex items-center gap-1 shadow-sm transition-all"
-                                >
-                                  <ExternalLink size={12} />
-                                  Mở tab mới
-                                </a>
-                              </div>
-                            )}
-                            <div className="flex-1 relative overflow-hidden">
-                              {iframeLoading && <div className="absolute inset-0 flex flex-col items-center justify-center z-10 bg-white/90 backdrop-blur-sm"><Loader2 className={`animate-spin text-${themeColor}-500 mb-2`} size={32}/><p className="text-[10px] uppercase font-bold text-slate-300 tracking-widest">Đang tải...</p></div>}
-                              <iframe src={formatUrlForIframe(selectedNode.url)} title={selectedNode.title} className={`w-full h-full border-none transition-opacity duration-500 ${iframeLoading ? 'opacity-0' : 'opacity-100'}`} onLoad={()=>setIframeLoading(false)}/>
-                            </div>
-                          </div>
-                        )
+                        <MediaViewer
+                          url={selectedNode.url}
+                          title={selectedNode.title}
+                          themeColor={themeColor}
+                          className="w-full h-full"
+                        />
                       ) : (
                         <div className="h-full flex items-center justify-center italic text-slate-200 text-xl font-light tracking-widest">Nội dung chưa cập nhật...</div>
                       )}
@@ -1347,33 +1308,12 @@ const MainView: React.FC<{
 
       {/* MODAL VIEW RESOURCE */}
       {resourceModal && (
-        <div className="fixed inset-0 z-[400] bg-slate-950/80 backdrop-blur-md flex flex-col animate-in fade-in duration-300">
-          <div className="p-3 bg-slate-900 border-b border-slate-800 flex justify-between items-center text-white shrink-0">
-            <h3 className="font-bold text-xs tracking-wide uppercase text-indigo-400 truncate max-w-md">
-              Học liệu: {resourceModal.title}
-            </h3>
-            <div className="flex items-center gap-2">
-              <a
-                href={resourceModal.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="px-3 py-1 bg-indigo-600 hover:bg-indigo-500 rounded-lg text-xs font-bold text-white transition-colors flex items-center gap-1"
-              >
-                <ExternalLink size={12} /> Mở tab mới
-              </a>
-              <button onClick={() => setResourceModal(null)} className="px-3 py-1 bg-slate-800 hover:bg-slate-700 rounded-lg text-xs font-bold text-slate-300 transition-colors">
-                Đóng
-              </button>
-            </div>
-          </div>
-          <div className="flex-1 w-full h-full overflow-hidden bg-white">
-            <iframe
-              src={formatUrlForIframe(resourceModal.url)}
-              title={resourceModal.title}
-              className="w-full h-full border-none"
-            />
-          </div>
-        </div>
+        <MediaViewerModal
+          url={resourceModal.url}
+          title={resourceModal.title}
+          themeColor={themeColor}
+          onClose={() => setResourceModal(null)}
+        />
       )}
 
 
