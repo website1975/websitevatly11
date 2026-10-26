@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Send, Trash2, Image as ImageIcon, Wifi, WifiOff, RefreshCw, ChevronDown, ChevronUp, Eye, EyeOff, AlertCircle, Home, BookOpen, Clock, CheckCircle2, Bold, Italic, List, Table as TableIcon, Link, Type, Palette, AlignLeft, AlignCenter, AlignRight, AlignJustify, Heading3, Calculator, X, Search, Edit2, Users, Cloud, Lock, Check, Filter, ShieldCheck, MessageSquare, Star, Sparkles } from 'lucide-react';
+import { Send, Trash2, Image as ImageIcon, Wifi, WifiOff, RefreshCw, ChevronDown, ChevronUp, Eye, EyeOff, AlertCircle, Home, BookOpen, Clock, CheckCircle2, Bold, Italic, List, Table as TableIcon, Link, Type, Palette, AlignLeft, AlignCenter, AlignRight, AlignJustify, Heading3, Calculator, X, Search, Edit2, Users, Cloud, Lock, Check, Filter, ShieldCheck, MessageSquare, Star, Sparkles, Copy, ClipboardList } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import remarkMath from 'remark-math';
@@ -94,6 +94,177 @@ const HomeworkPanel: React.FC<HomeworkPanelProps> = ({ nodeId, student, isAdmin,
   const [isImageModalOpen, setIsImageModalOpen] = useState(false);
   const [confirmState, setConfirmState] = useState<ConfirmState>({ isOpen: false, title: '', message: '', onConfirm: () => {} });
   const [toastState, setToastState] = useState<ToastState>({ isOpen: false, message: '' });
+  const [classStudents, setClassStudents] = useState<Student[]>([]);
+  const [showCopyDropdown, setShowCopyDropdown] = useState(false);
+
+  const fetchClassStudents = useCallback(async () => {
+    try {
+      let query = supabase.from('students').select('*');
+      if (gradeId) {
+        query = query.eq('grade_id', gradeId);
+      }
+      const { data, error } = await query.order('name');
+      if (!error && data) {
+        setClassStudents(data);
+      }
+    } catch (err) {
+      console.error("Error fetching class students:", err);
+    }
+  }, [gradeId]);
+
+  useEffect(() => {
+    fetchClassStudents();
+  }, [fetchClassStudents]);
+
+  const getSubmissionStatusLists = (targetQId?: string | null) => {
+    const scopeAnswers = targetQId ? getAnswersForQuestion(targetQId) : answers;
+    
+    const approvedMap = new Map<string, string>();
+    const pendingMap = new Map<string, string>();
+    const submittedAuthorSet = new Set<string>();
+
+    scopeAnswers.forEach(a => {
+      const authorStr = a.author.trim();
+      const cleanAuth = authorStr.replace(/^\[(.*?)\]/, '$1').trim().toLowerCase();
+      submittedAuthorSet.add(cleanAuth);
+      submittedAuthorSet.add(authorStr.toLowerCase());
+
+      if (a.isApproved) {
+        approvedMap.set(authorStr.toLowerCase(), authorStr);
+      } else {
+        if (!approvedMap.has(authorStr.toLowerCase())) {
+          pendingMap.set(authorStr.toLowerCase(), authorStr);
+        }
+      }
+    });
+
+    const approvedList = Array.from(approvedMap.values());
+    const pendingList = Array.from(pendingMap.values());
+
+    let uncompletedList: string[] = [];
+    if (classStudents && classStudents.length > 0) {
+      uncompletedList = classStudents
+        .filter(s => {
+          const nameCode = (s.name || '').trim().toLowerCase();
+          const fullName = (s.full_name || '').trim().toLowerCase();
+          const combined = `[${s.name}] ${s.full_name || ''}`.trim().toLowerCase();
+
+          const isSubmitted = 
+            (nameCode && Array.from(submittedAuthorSet).some(auth => auth.includes(nameCode))) ||
+            (fullName && Array.from(submittedAuthorSet).some(auth => auth.includes(fullName))) ||
+            submittedAuthorSet.has(combined);
+
+          return !isSubmitted;
+        })
+        .map(s => s.full_name ? `[${s.name}] ${s.full_name}` : s.name);
+    }
+
+    return {
+      approvedList,
+      pendingList,
+      uncompletedList,
+      totalSubmitted: scopeAnswers.length,
+      totalStudents: classStudents.length
+    };
+  };
+
+  const fallbackCopyTextToClipboard = (text: string) => {
+    const textArea = document.createElement("textarea");
+    textArea.value = text;
+    textArea.style.position = "fixed";
+    textArea.style.left = "-999999px";
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+    try {
+      document.execCommand('copy');
+      showToast('Đã sao chép danh sách nhắc nhở vào Bộ nhớ tạm (Clipboard)!', 'success', 'Sao chép thành công');
+    } catch (err) {
+      showToast('Không thể sao chép tự động. Vui lòng thử chọn và chép thủ công.', 'error');
+    }
+    document.body.removeChild(textArea);
+  };
+
+  const handleCopyReminderList = (type: 'all' | 'uncompleted' | 'approved', targetQId?: string | null) => {
+    const qIndex = targetQId ? questions.findIndex(q => q.id === targetQId) : -1;
+    const missionTitle = qIndex >= 0 ? `NHIỆM VỤ ${qIndex + 1}` : 'TẤT CẢ NHIỆM VỤ';
+    const { approvedList, pendingList, uncompletedList, totalSubmitted, totalStudents } = getSubmissionStatusLists(targetQId);
+
+    let text = '';
+
+    if (type === 'uncompleted') {
+      text += `⚠️ THÔNG BÁO NHẮC NHỞ NỘP BÀI TẬP (${missionTitle})\n`;
+      text += `----------------------------------------\n`;
+      if (uncompletedList.length > 0) {
+        text += `📌 Danh sách các em CHƯA HOÀN THÀNH / CHƯA NỘP BÀI (${uncompletedList.length} em):\n`;
+        uncompletedList.forEach((name, idx) => {
+          text += `${idx + 1}. ${name}\n`;
+        });
+        text += `\n👉 Đề nghị các em khẩn trương hoàn thành và nộp bài lên hệ thống!\n`;
+      } else {
+        text += `🎉 Tất cả học sinh trong lớp đều đã hoàn thành bài nộp!\n`;
+      }
+    } else if (type === 'approved') {
+      text += `🎉 DANH SÁCH HỌC SINH ĐÃ HOÀN THÀNH BÀI TẬP (${missionTitle})\n`;
+      text += `----------------------------------------\n`;
+      text += `📌 Danh sách đã được Giáo viên duyệt đạt (${approvedList.length} em):\n`;
+      if (approvedList.length > 0) {
+        approvedList.forEach((name, idx) => {
+          text += `${idx + 1}. ${name}\n`;
+        });
+      } else {
+        text += `(Chưa có học sinh nào được duyệt đạt)\n`;
+      }
+      if (pendingList.length > 0) {
+        text += `\n⏳ Đang chờ duyệt (${pendingList.length} em):\n`;
+        pendingList.forEach((name, idx) => {
+          text += `${idx + 1}. ${name}\n`;
+        });
+      }
+    } else {
+      text += `📋 BÁO CÁO TIẾN ĐỘ NỘP BÀI - ${missionTitle}\n`;
+      text += `----------------------------------------\n`;
+      text += `📊 Thống kê: ${totalSubmitted} bài nộp | Đã duyệt: ${approvedList.length}`;
+      if (pendingList.length > 0) text += ` | Chờ duyệt: ${pendingList.length}`;
+      if (totalStudents > 0) text += ` | Chưa nộp: ${uncompletedList.length}/${totalStudents}`;
+      text += `\n\n`;
+
+      if (approvedList.length > 0) {
+        text += `✅ ĐÃ HOÀN THÀNH (ĐÃ DUYỆT - ${approvedList.length} em):\n`;
+        approvedList.forEach((name, idx) => {
+          text += `${idx + 1}. ${name}\n`;
+        });
+        text += `\n`;
+      }
+
+      if (pendingList.length > 0) {
+        text += `⏳ BÀI NỘP ĐANG CHỜ DUYỆT (${pendingList.length} em):\n`;
+        pendingList.forEach((name, idx) => {
+          text += `${idx + 1}. ${name}\n`;
+        });
+        text += `\n`;
+      }
+
+      if (uncompletedList.length > 0) {
+        text += `⚠️ CHƯA NỘP BÀI (${uncompletedList.length} em):\n`;
+        uncompletedList.forEach((name, idx) => {
+          text += `${idx + 1}. ${name}\n`;
+        });
+        text += `\n👉 Đề nghị các em chưa nộp khẩn trương hoàn thiện bài làm!\n`;
+      }
+    }
+
+    const finalStr = text.trim();
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(finalStr).then(() => {
+        showToast('Đã sao chép danh sách vào bộ nhớ tạm (Clipboard)!', 'success', 'Sao chép thành công');
+      }).catch(() => {
+        fallbackCopyTextToClipboard(finalStr);
+      });
+    } else {
+      fallbackCopyTextToClipboard(finalStr);
+    }
+  };
 
   const isGuest = !isAdmin && (!student || student.is_guest === true || student.name === 'Khách' || student.name === 'Khách vãng lai' || student.full_name === 'Khách vãng lai' || (student.id ? student.id.startsWith('00000000-0000-4000-a000-') : false));
 
@@ -1645,14 +1816,70 @@ const HomeworkPanel: React.FC<HomeworkPanelProps> = ({ nodeId, student, isAdmin,
                            </button>
                         </div>
 
-                        {isAdmin && pendingCount > 0 && (
-                           <button 
-                             onClick={() => handleBatchApproveAll(selectedQuestionId || undefined)}
-                             className="px-4 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-md shadow-emerald-100 flex items-center gap-2 transition-all"
-                           >
-                              <ShieldCheck size={14} /> Duyệt tất cả ({pendingCount} bài chờ)
-                           </button>
-                        )}
+                        <div className="flex items-center gap-2">
+                           {/* COPY REMINDER LIST BUTTON */}
+                           <div className="relative">
+                              <button 
+                                onClick={() => setShowCopyDropdown(!showCopyDropdown)}
+                                className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-md shadow-indigo-100 flex items-center gap-2 transition-all hover:scale-105"
+                                title="Sao chép danh sách học sinh đã nộp / chưa nộp bài để gửi nhắc nhở"
+                              >
+                                 <ClipboardList size={14} />
+                                 <span>Copy DS nhắc nhở</span>
+                                 <ChevronDown size={12} className={`transition-transform ${showCopyDropdown ? 'rotate-180' : ''}`} />
+                              </button>
+
+                              {showCopyDropdown && (
+                                <div className="absolute right-0 top-full mt-2 w-72 bg-white border border-slate-200 rounded-2xl shadow-2xl z-[1100] p-2 space-y-1 animate-in fade-in slide-in-from-top-2">
+                                   <div className="px-3 py-1.5 text-[9px] font-black text-slate-400 uppercase tracking-wider border-b border-slate-100">
+                                      Chọn nội dung sao chép
+                                   </div>
+                                   
+                                   <button
+                                     onClick={() => { handleCopyReminderList('all', selectedQuestionId); setShowCopyDropdown(false); }}
+                                     className="w-full px-3 py-2 text-left hover:bg-slate-50 rounded-xl text-[10px] font-bold text-slate-700 flex items-center gap-2.5 transition-colors"
+                                   >
+                                      <ClipboardList size={15} className="text-indigo-600 shrink-0" />
+                                      <div>
+                                         <p className="font-black text-slate-800">📋 Báo cáo tổng hợp đầy đủ</p>
+                                         <p className="text-[9px] text-slate-400 font-normal">Bao gồm đã duyệt, chờ duyệt & chưa nộp</p>
+                                      </div>
+                                   </button>
+
+                                   <button
+                                     onClick={() => { handleCopyReminderList('uncompleted', selectedQuestionId); setShowCopyDropdown(false); }}
+                                     className="w-full px-3 py-2 text-left hover:bg-amber-50 rounded-xl text-[10px] font-bold text-amber-900 flex items-center gap-2.5 transition-colors"
+                                   >
+                                      <AlertCircle size={15} className="text-amber-600 shrink-0" />
+                                      <div>
+                                         <p className="font-black text-amber-950">⚠️ DS CÁC EM CHƯA NỘP</p>
+                                         <p className="text-[9px] text-amber-700 font-normal">Gửi Zalo/FB nhắc nhở nộp bài gấp</p>
+                                      </div>
+                                   </button>
+
+                                   <button
+                                     onClick={() => { handleCopyReminderList('approved', selectedQuestionId); setShowCopyDropdown(false); }}
+                                     className="w-full px-3 py-2 text-left hover:bg-emerald-50 rounded-xl text-[10px] font-bold text-emerald-900 flex items-center gap-2.5 transition-colors"
+                                   >
+                                      <CheckCircle2 size={15} className="text-emerald-600 shrink-0" />
+                                      <div>
+                                         <p className="font-black text-emerald-950">✅ DS ĐÃ HOÀN THÀNH</p>
+                                         <p className="text-[9px] text-emerald-700 font-normal">Danh sách học sinh đã được duyệt đạt</p>
+                                      </div>
+                                   </button>
+                                </div>
+                              )}
+                           </div>
+
+                           {isAdmin && pendingCount > 0 && (
+                              <button 
+                                onClick={() => handleBatchApproveAll(selectedQuestionId || undefined)}
+                                className="px-4 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-md shadow-emerald-100 flex items-center gap-2 transition-all"
+                              >
+                                 <ShieldCheck size={14} /> Duyệt tất cả ({pendingCount} bài chờ)
+                              </button>
+                           )}
+                        </div>
                      </div>
                   );
                })()}
