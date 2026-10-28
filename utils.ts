@@ -15,6 +15,7 @@ export const getSafeEnv = (key: string): string | undefined => {
 export const normalizeImageUrl = (url: string): string => {
   if (!url) return '';
   const trimmed = url.trim();
+  if (trimmed.startsWith('data:image/')) return trimmed;
   const driveMatch = trimmed.match(/(?:drive|docs)\.google\.com\/(?:file\/d\/|open\?id=|uc\?[^)]*id=)([a-zA-Z0-9_-]+)/);
   if (driveMatch && driveMatch[1]) {
     return `https://lh3.googleusercontent.com/d/${driveMatch[1]}`;
@@ -22,16 +23,18 @@ export const normalizeImageUrl = (url: string): string => {
   return trimmed;
 };
 
-// Render đoạn text có chứa markdown hình ảnh ![alt](url), link [text](url), thẻ <img> hoặc url ảnh trực tiếp
+// Render đoạn text có chứa markdown hình ảnh ![alt](url), link [text](url), thẻ <img> hoặc url ảnh trực tiếp (bao gồm Base64 & http/https)
 const renderTextWithMedia = (plainText: string, keyPrefix: string | number) => {
   if (!plainText) return null;
 
   // Regex nhận diện:
-  // 1. Markdown image: !\[(.*?)\]\((.*?)\)
-  // 2. HTML image: <img\s+[^>]*src=["'](.*?)["'][^>]*\/?>
-  // 3. Markdown link: \[((?!img).*?)\]\((.*?)\)
-  // 4. URL ảnh đứng trực tiếp: https://... (png|jpg|jpeg|gif|webp|svg)
-  const mediaRegex = /(!\[(.*?)\]\((https?:\/\/[^\s\)]+)\)|<img\s+[^>]*src=["'](https?:\/\/[^"']+)["'][^>]*\/?>|\[(.*?)\]\((https?:\/\/[^\s\)]+)\)|(?:\b)(https?:\/\/[^\s<]+\.(?:png|jpe?g|gif|webp|svg|bmp)(?:\?[^\s<]*)?))/gi;
+  // 1. Markdown image: !\[(.*?)\]\(((?:data:image\/[^\)]+|https?:\/\/[^\s\)]+))\)
+  // 2. Enclosed base64 image: !?\(?(data:image\/[a-zA-Z0-9+/=;,:-]+)\)?
+  // 3. HTML image: <img\s+[^>]*src=["']((?:data:image\/[^"']+|https?:\/\/[^"']+))["'][^>]*\/?>
+  // 4. Markdown link: \[((?!img).*?)\]\((https?:\/\/[^\s\)]+)\)
+  // 5. Standalone direct image URL: https://... (png|jpg|jpeg|gif|webp|svg)
+  // 6. Standalone raw base64 data URL
+  const mediaRegex = /(!\[([\s\S]*?)\]\(((?:data:image\/[^\)]+|https?:\/\/[^\s\)]+))\)|!?\(?(data:image\/[a-zA-Z0-9+/=;,:-]+)\)?|<img\s+[^>]*src=["']((?:data:image\/[^"']+|https?:\/\/[^"']+))["'][^>]*\/?>|\[(.*?)\]\((https?:\/\/[^\s\)]+)\)|(?:\b)(https?:\/\/[^\s<]+\.(?:png|jpe?g|gif|webp|svg|bmp)(?:\?[^\s<]*)?))/gi;
 
   const elements: React.ReactNode[] = [];
   let lastIndex = 0;
@@ -54,14 +57,26 @@ const renderTextWithMedia = (plainText: string, keyPrefix: string | number) => {
         React.createElement('img', {
           key: matchKey,
           src: imgUrl,
-          alt,
+          alt: alt.trim() || 'Hình ảnh',
+          className: 'w-full max-w-4xl max-h-[85vh] object-contain rounded-2xl my-3 mx-auto block shadow-md border border-slate-300/60 bg-white/95 cursor-pointer hover:opacity-95 transition-opacity',
+          loading: 'lazy'
+        })
+      );
+    } else if (match[4]) {
+      // Base64 image (wrapped in parens, !(data:image...), or raw data:image/...)
+      const base64Data = match[4];
+      elements.push(
+        React.createElement('img', {
+          key: matchKey,
+          src: base64Data,
+          alt: 'Hình ảnh',
           className: 'w-full max-w-4xl max-h-[85vh] object-contain rounded-2xl my-3 mx-auto block shadow-md border border-slate-300/60 bg-white/95 cursor-pointer hover:opacity-95 transition-opacity',
           loading: 'lazy'
         })
       );
     } else if (fullMatch.toLowerCase().startsWith('<img')) {
       // HTML img
-      const rawUrl = match[4];
+      const rawUrl = match[5];
       const imgUrl = normalizeImageUrl(rawUrl);
       elements.push(
         React.createElement('img', {
@@ -74,8 +89,8 @@ const renderTextWithMedia = (plainText: string, keyPrefix: string | number) => {
       );
     } else if (fullMatch.startsWith('[')) {
       // Markdown link [text](url)
-      const linkText = match[5] || match[6];
-      const linkUrl = match[6];
+      const linkText = match[6] || match[7];
+      const linkUrl = match[7];
       elements.push(
         React.createElement('a', {
           key: matchKey,
@@ -86,8 +101,8 @@ const renderTextWithMedia = (plainText: string, keyPrefix: string | number) => {
         }, linkText)
       );
     } else {
-      // Direct image URL
-      const rawUrl = match[7];
+      // Direct http(s) image URL
+      const rawUrl = match[8];
       const imgUrl = normalizeImageUrl(rawUrl);
       elements.push(
         React.createElement('img', {
@@ -113,11 +128,17 @@ const renderTextWithMedia = (plainText: string, keyPrefix: string | number) => {
 export const renderLatex = (text: string) => {
   if (!text) return null;
   
+  // Clean up any accidentally separated markdown image syntax ![alt] \n (url) or ![alt] (url)
+  const cleanedText = text
+    .replace(/!\[([^\]]*)\]\s*[\r\n]+\s*\(\s*(data:image\/[^\)]+|https?:\/\/[^\s\)]+)\s*\)/gi, '![$1]($2)')
+    .replace(/!\[([^\]]*)\]\s+\(\s*(data:image\/[^\)]+|https?:\/\/[^\s\)]+)\s*\)/gi, '![$1]($2)')
+    .replace(/!\[([^\]]*)\][\r\n]+\(data:image\//gi, '![image](data:image/');
+
   // Tách text thành các phần:
   // 1. $$...$$ (Công thức khối / Display math trên dòng riêng)
   // 2. $...$ (Công thức nằm cùng dòng / Inline math)
   // 3. \r?\n (Dấu xuống dòng khi gõ Enter)
-  const parts = text.split(/(\$\$[\s\S]+?\$\$|\$[^\$]+?\$|\r?\n)/g);
+  const parts = cleanedText.split(/(\$\$[\s\S]+?\$\$|\$[^\$]+?\$|\r?\n)/g);
 
   return parts.map((part, i) => {
     if (!part) return null;

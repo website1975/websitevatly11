@@ -11,9 +11,18 @@ import {
   Key, 
   Settings,
   Sparkles,
-  ExternalLink
+  ExternalLink,
+  HardDrive,
+  Database,
+  Zap,
+  Cloud
 } from 'lucide-react';
-import { uploadToImgBB } from '../imgbb';
+import { 
+  uploadImageFlexible, 
+  getImageServerMode, 
+  setImageServerMode, 
+  ImageServerMode 
+} from '../imgbb';
 
 interface ImageUploadModalProps {
   isOpen: boolean;
@@ -29,6 +38,8 @@ export const ImageUploadModal: React.FC<ImageUploadModalProps> = ({
   isAdmin = false,
 }) => {
   const [activeTab, setActiveTab] = useState<'upload' | 'url'>('upload');
+  const [serverMode, setServerMode] = useState<ImageServerMode>(() => getImageServerMode());
+  const [usedServerMode, setUsedServerMode] = useState<ImageServerMode | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -59,8 +70,15 @@ export const ImageUploadModal: React.FC<ImageUploadModalProps> = ({
       setAltText('');
       setCustomUrl('');
       setSavedKeySuccess(false);
+      setServerMode(getImageServerMode());
+      setUsedServerMode(null);
     }
   }, [isOpen]);
+
+  const handleServerModeChange = (newMode: ImageServerMode) => {
+    setServerMode(newMode);
+    setImageServerMode(newMode);
+  };
 
   // Global paste handler when modal is open
   useEffect(() => {
@@ -84,7 +102,7 @@ export const ImageUploadModal: React.FC<ImageUploadModalProps> = ({
 
     window.addEventListener('paste', handlePaste);
     return () => window.removeEventListener('paste', handlePaste);
-  }, [isOpen, customApiKey]);
+  }, [isOpen, customApiKey, serverMode]);
 
   if (!isOpen) return null;
 
@@ -96,20 +114,27 @@ export const ImageUploadModal: React.FC<ImageUploadModalProps> = ({
     const objectUrl = URL.createObjectURL(selectedFile);
     setPreviewUrl(objectUrl);
     setUploading(true);
-    setUploadProgress('Đang tải ảnh lên ImgBB...');
+
+    const modeLabels: Record<ImageServerMode, string> = {
+      STORE: 'máy chủ Supabase Storage',
+      SBASE64: 'mã hóa Base64 nội bộ',
+      IMGBB: 'máy chủ ImgBB'
+    };
+    setUploadProgress(`Đang xử lý ảnh qua ${modeLabels[serverMode]}...`);
 
     try {
-      const result = await uploadToImgBB(selectedFile, customApiKey);
+      const result = await uploadImageFlexible(selectedFile, serverMode, customApiKey);
       setUploadedUrl(result.url);
+      setUsedServerMode(result.modeUsed);
       setUploading(false);
-      setUploadProgress('Tải lên thành công!');
+      setUploadProgress('Xử lý ảnh thành công!');
       
       const defaultAlt = (selectedFile instanceof File ? selectedFile.name.replace(/\.[^/.]+$/, "") : "Hình ảnh bài tập");
       setAltText(defaultAlt);
     } catch (err: any) {
       console.error("Upload error:", err);
       setUploading(false);
-      setErrorMessage(err.message || 'Lỗi khi tải ảnh lên ImgBB. Vui lòng thử lại.');
+      setErrorMessage(err.message || 'Lỗi khi xử lý hình ảnh. Vui lòng thử chọn phương thức khác (STORE / SBASE64).');
     }
   };
 
@@ -234,6 +259,68 @@ export const ImageUploadModal: React.FC<ImageUploadModalProps> = ({
         <div className="p-6 overflow-y-auto space-y-4">
           {activeTab === 'upload' ? (
             <div className="space-y-4">
+              {/* Server Selection Mode Selector */}
+              <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-3.5 space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-black uppercase text-slate-700 tracking-wider flex items-center gap-1.5">
+                    <HardDrive size={14} className="text-indigo-600" /> Chọn máy chủ / Nơi lưu trữ ảnh:
+                  </span>
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700">
+                    {serverMode === 'STORE' ? '1. STORE' : serverMode === 'SBASE64' ? '2. SBASE64' : '3. IMGBB'}
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-3 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => handleServerModeChange('STORE')}
+                    className={`p-2.5 rounded-xl text-xs font-bold transition-all flex flex-col items-center justify-center gap-1 border text-center ${
+                      serverMode === 'STORE'
+                        ? 'bg-indigo-600 text-white border-indigo-600 shadow-md shadow-indigo-200 ring-2 ring-indigo-200'
+                        : 'bg-white text-slate-700 border-slate-200 hover:border-indigo-300 hover:bg-indigo-50/50'
+                    }`}
+                  >
+                    <Database size={16} />
+                    <span className="text-[11px] font-black">STORE</span>
+                    <span className="text-[9px] opacity-85 font-semibold">Supabase Storage</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => handleServerModeChange('SBASE64')}
+                    className={`p-2.5 rounded-xl text-xs font-bold transition-all flex flex-col items-center justify-center gap-1 border text-center ${
+                      serverMode === 'SBASE64'
+                        ? 'bg-emerald-600 text-white border-emerald-600 shadow-md shadow-emerald-200 ring-2 ring-emerald-200'
+                        : 'bg-white text-slate-700 border-slate-200 hover:border-emerald-300 hover:bg-emerald-50/50'
+                    }`}
+                  >
+                    <Zap size={16} />
+                    <span className="text-[11px] font-black">SBASE64</span>
+                    <span className="text-[9px] opacity-85 font-semibold">An toàn, không bị xóa</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => handleServerModeChange('IMGBB')}
+                    className={`p-2.5 rounded-xl text-xs font-bold transition-all flex flex-col items-center justify-center gap-1 border text-center ${
+                      serverMode === 'IMGBB'
+                        ? 'bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-200 ring-2 ring-blue-200'
+                        : 'bg-white text-slate-700 border-slate-200 hover:border-blue-300 hover:bg-blue-50/50'
+                    }`}
+                  >
+                    <Cloud size={16} />
+                    <span className="text-[11px] font-black">IMGBB</span>
+                    <span className="text-[9px] opacity-85 font-semibold">API ImgBB</span>
+                  </button>
+                </div>
+
+                <p className="text-[10px] text-slate-500 font-medium px-1 leading-relaxed">
+                  {serverMode === 'STORE' && '📌 STORE: Tải ảnh lên bộ nhớ Supabase Storage an toàn, ổn định cao và không bị tự xóa.'}
+                  {serverMode === 'SBASE64' && '⚡ SBASE64: Mã hóa dữ liệu ảnh nhúng trực tiếp. Không phụ thuộc máy chủ bên ngoài, tuyệt đối không bao giờ mất ảnh.'}
+                  {serverMode === 'IMGBB' && '🌐 IMGBB: Tải lên máy chủ ImgBB thông qua API công cộng.'}
+                </p>
+              </div>
+
               {/* Dropzone & Paste area */}
               {!uploadedUrl && !uploading && (
                 <div
@@ -242,14 +329,14 @@ export const ImageUploadModal: React.FC<ImageUploadModalProps> = ({
                   onDragLeave={handleDragLeave}
                   onDrop={handleDrop}
                   onClick={() => fileInputRef.current?.click()}
-                  className={`border-2 border-dashed rounded-2xl p-8 text-center cursor-pointer transition-all flex flex-col items-center justify-center gap-3 ${
+                  className={`border-2 border-dashed rounded-2xl p-7 text-center cursor-pointer transition-all flex flex-col items-center justify-center gap-3 ${
                     isDragging 
                       ? 'border-indigo-600 bg-indigo-50/50 scale-[0.99]' 
                       : 'border-slate-200 bg-slate-50/50 hover:bg-indigo-50/20 hover:border-indigo-300'
                   }`}
                 >
-                  <div className="p-4 bg-indigo-50 text-indigo-600 rounded-full shadow-sm">
-                    <UploadCloud size={32} />
+                  <div className="p-3.5 bg-indigo-50 text-indigo-600 rounded-full shadow-sm">
+                    <UploadCloud size={28} />
                   </div>
                   <div>
                     <p className="text-sm font-black text-slate-700">
@@ -286,7 +373,7 @@ export const ImageUploadModal: React.FC<ImageUploadModalProps> = ({
                   </div>
                   <div>
                     <p className="text-sm font-black text-indigo-700">{uploadProgress}</p>
-                    <p className="text-xs text-indigo-500 font-medium mt-0.5">Đang gửi lên máy chủ ảnh ImgBB tốc độ cao...</p>
+                    <p className="text-xs text-indigo-500 font-medium mt-0.5">Phương thức đã chọn: <span className="font-bold uppercase">{serverMode}</span></p>
                   </div>
                 </div>
               )}
@@ -302,10 +389,10 @@ export const ImageUploadModal: React.FC<ImageUploadModalProps> = ({
                     />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1.5 text-emerald-700 text-xs font-black">
-                        <Check size={14} className="shrink-0" /> Tải lên ImgBB thành công!
+                        <Check size={14} className="shrink-0" /> Xử lý ảnh [{usedServerMode || serverMode}] thành công!
                       </div>
-                      <p className="text-[11px] text-slate-500 font-mono truncate mt-1 bg-white px-2 py-1 rounded border border-emerald-100">
-                        {uploadedUrl}
+                      <p className="text-[10px] text-slate-500 font-mono truncate mt-1 bg-white px-2 py-1 rounded border border-emerald-100 max-w-full">
+                        {uploadedUrl.length > 80 ? `${uploadedUrl.substring(0, 80)}...` : uploadedUrl}
                       </p>
                       <button 
                         onClick={() => { setUploadedUrl(null); setFile(null); setPreviewUrl(null); }}

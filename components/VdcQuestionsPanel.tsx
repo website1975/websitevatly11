@@ -63,7 +63,7 @@ import { VdcQuestion, BookNode } from '../types';
 import { SAMPLE_VDC_QUESTIONS } from '../sampleVdcData';
 import { supabase } from '../supabaseClient';
 import { renderLatex } from '../utils';
-import { uploadToImgBB } from '../imgbb';
+import { uploadToImgBB, uploadImageFlexible, getImageServerMode } from '../imgbb';
 import { uploadFileToGoogleDrive, signInWithGoogleForDrive, getDriveAccessToken } from '../googleDrive';
 import { ImageUploadModal } from './ImageUploadModal';
 
@@ -277,7 +277,7 @@ export const VdcQuestionsPanel: React.FC<VdcQuestionsPanelProps> = ({
     }, 50);
   };
 
-  // Hỗ trợ dán ảnh trực tiếp từ bộ nhớ tạm (Ctrl + V) và upload lên ImgBB
+  // Hỗ trợ dán ảnh trực tiếp từ bộ nhớ tạm (Ctrl + V) và upload theo server mode chọn
   const handleTextareaPaste = async (e: React.ClipboardEvent<HTMLTextAreaElement>, target: 'content' | 'solution') => {
     const items = e.clipboardData?.items;
     if (!items) return;
@@ -287,9 +287,10 @@ export const VdcQuestionsPanel: React.FC<VdcQuestionsPanelProps> = ({
         const blob = items[i].getAsFile();
         if (blob) {
           e.preventDefault();
-          showToast('Đang tự động tải ảnh dán từ clipboard (Ctrl+V) lên ImgBB...', 'info', 'Đang xử lý ảnh');
+          const currentMode = getImageServerMode();
+          showToast(`Đang tự động xử lý ảnh dán từ clipboard (Ctrl+V) qua [${currentMode}]...`, 'info', 'Đang xử lý ảnh');
           try {
-            const result = await uploadToImgBB(blob);
+            const result = await uploadImageFlexible(blob, currentMode);
             const snippet = `\n\n![Ảnh dán](${result.url})\n\n`;
             
             const targetRef = target === 'solution' ? solutionTextareaRef : contentTextareaRef;
@@ -313,9 +314,9 @@ export const VdcQuestionsPanel: React.FC<VdcQuestionsPanelProps> = ({
               }, 50);
             }
             
-            showToast('Đã tải và chèn ảnh dán thành công!', 'success');
+            showToast(`Đã tải và chèn ảnh dán thành công qua [${result.modeUsed}]!`, 'success');
           } catch (err: any) {
-            showToast(err.message || 'Không thể tải ảnh dán lên ImgBB.', 'error');
+            showToast(err.message || 'Không thể xử lý ảnh dán.', 'error');
           }
           break;
         }
@@ -1057,26 +1058,26 @@ export const VdcQuestionsPanel: React.FC<VdcQuestionsPanelProps> = ({
     }
   };
 
-  // Upload hình ảnh câu hỏi hoặc hình ảnh lời giải (Ưu tiên ImgBB)
+  // Upload hình ảnh câu hỏi hoặc hình ảnh lời giải theo chế độ người dùng chọn (STORE, SBASE64, IMGBB)
   const handleUploadImage = async (e: React.ChangeEvent<HTMLInputElement>, target: 'image_url' | 'solution_image_url') => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     setIsUploadingImage(true);
     try {
-      // 1. Ưu tiên số 1: Tải lên ImgBB qua uploadToImgBB
-      const imgbbRes = await uploadToImgBB(file);
-      if (imgbbRes && imgbbRes.url) {
-        setModalForm(prev => ({ ...prev, [target]: imgbbRes.url }));
-        showToast('Đã tải ảnh lên ImgBB thành công!', 'success');
+      const currentMode = getImageServerMode();
+      const res = await uploadImageFlexible(file, currentMode);
+      if (res && res.url) {
+        setModalForm(prev => ({ ...prev, [target]: res.url }));
+        showToast(`Đã xử lý ảnh thành công qua phương thức [${res.modeUsed}]!`, 'success');
         setIsUploadingImage(false);
         e.target.value = '';
         return;
       }
     } catch (imgbbErr: any) {
-      console.warn("Tải lên ImgBB gặp sự cố, tự động dùng bộ nhớ dự phòng:", imgbbErr);
+      console.warn("Tải lên ảnh gặp sự cố, thử dùng bộ nhớ dự phòng:", imgbbErr);
       
-      // 2. Dự phòng 1: Supabase Storage
+      // Dự phòng 1: Supabase Storage
       try {
         const fileExt = file.name.split('.').pop() || 'png';
         const fileName = `vdc_${Date.now()}_${Math.random().toString(36).substring(2, 7)}.${fileExt}`;
@@ -1092,7 +1093,7 @@ export const VdcQuestionsPanel: React.FC<VdcQuestionsPanelProps> = ({
         }
       } catch (sbErr) {}
 
-      // 3. Dự phòng 2: Google Drive
+      // Dự phòng 2: Google Drive
       try {
         if (!getDriveAccessToken()) {
           await signInWithGoogleForDrive();

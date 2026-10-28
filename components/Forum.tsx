@@ -6,6 +6,8 @@ import { ForumComment } from '../types';
 import { renderLatex } from '../utils';
 import { ConfirmModal, ToastNotification, ConfirmState, ToastState } from './CustomDialog';
 
+import { uploadImageFlexible, getImageServerMode } from '../imgbb';
+
 interface ForumProps {
   nodeId: string;
   isAdmin: boolean;
@@ -43,6 +45,31 @@ const Forum: React.FC<ForumProps> = ({ nodeId, isAdmin, themeColor }) => {
       setToastState(prev => ({ ...prev, isOpen: false }));
     }, 5000);
   };
+
+  const handleForumPaste = async (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
+    const items = e.clipboardData?.items;
+    if (!items) return;
+
+    for (let i = 0; i < items.length; i++) {
+      if (items[i].type.indexOf('image') !== -1) {
+        const blob = items[i].getAsFile();
+        if (blob) {
+          e.preventDefault();
+          const mode = getImageServerMode();
+          showToast(`Đang tự động xử lý ảnh dán qua máy chủ [${mode}]...`, 'info', 'Đang xử lý ảnh');
+          try {
+            const result = await uploadImageFlexible(blob, mode);
+            const snippet = `\n\n![Ảnh thảo luận](${result.url})\n\n`;
+            setContent(prev => prev + snippet);
+            showToast(`Đã tải ảnh dán qua [${result.modeUsed}] thành công!`, 'success');
+          } catch (err: any) {
+            showToast(err.message || 'Không thể xử lý ảnh dán.', 'error');
+          }
+          break;
+        }
+      }
+    }
+  };
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -62,10 +89,8 @@ const Forum: React.FC<ForumProps> = ({ nodeId, isAdmin, themeColor }) => {
 
   const fetchComments = async (silent = false) => {
     if (!silent) setIsRefreshing(true);
-    // Try to fetch everything and handle potential column name differences in mapping
     const { data, error } = await supabase.from('forum_comments').select('*');
     if (data) {
-      // Manual filtering and mapping to handle potential node_id vs nodeId naming issues
       const filtered = data.filter((item: any) => (item.nodeId || item.node_id) === nodeId);
       const mappedData = filtered.map((item: any) => ({
         id: item.id,
@@ -82,7 +107,6 @@ const Forum: React.FC<ForumProps> = ({ nodeId, isAdmin, themeColor }) => {
     }
     if (error) {
       console.error("Fetch error:", error);
-      // Fallback specific query if total fetch fails
       const { data: retryData } = await supabase.from('forum_comments').select('*').eq('nodeId', nodeId);
       if (retryData) setComments(retryData);
     }
@@ -147,16 +171,15 @@ const Forum: React.FC<ForumProps> = ({ nodeId, isAdmin, themeColor }) => {
   };
 
   const uploadImage = async (file: File): Promise<string | null> => {
-    const fileExt = file.name.split('.').pop();
-    const fileName = `${Date.now()}.${fileExt}`;
-    // Use 'resources' bucket instead of forum_attachments for simpler setup
-    const { error } = await supabase.storage.from('resources').upload(`forum/${fileName}`, file);
-    if (error) {
-      console.error("Forum Upload error:", error);
-      alert(`Không thể tải ảnh thảo luận: ${error.message}\n\nBạn cần cấp quyền 'INSERT' cho bucket 'resources' trong phần Policies của Supabase.`);
+    try {
+      const mode = getImageServerMode();
+      const res = await uploadImageFlexible(file, mode);
+      return res.url;
+    } catch (err: any) {
+      console.error("Forum Upload error:", err);
+      showToast(err.message || 'Lỗi khi tải ảnh thảo luận', 'error');
       return null;
     }
-    return supabase.storage.from('resources').getPublicUrl(`forum/${fileName}`).data.publicUrl;
   };
 
   const handleSubmit = async (e?: React.FormEvent) => {
@@ -301,8 +324,9 @@ const Forum: React.FC<ForumProps> = ({ nodeId, isAdmin, themeColor }) => {
             <textarea 
               value={content} 
               onChange={e => setContent(e.target.value)} 
+              onPaste={handleForumPaste}
               onKeyDown={(e) => { if (e.key === 'Enter' && e.ctrlKey) handleSubmit(); }}
-              placeholder="Nhập câu hỏi... (Nhấn Ctrl + Enter để gửi)" 
+              placeholder="Nhập câu hỏi... (Hỗ trợ Ctrl + V dán ảnh trực tiếp, Ctrl + Enter để gửi)" 
               className={`w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl text-sm outline-none ${currentThemeBorderClass} focus:bg-white transition-all min-h-[50px] max-h-[120px]`} 
             />
           </div>

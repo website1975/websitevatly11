@@ -69,11 +69,26 @@ class ErrorBoundary extends React.Component<any, any> {
 
 const TEACHER_PWD = getSafeEnv('TEACHER_PASSWORD') || '123';
 
+const normalizeAppData = (raw: any): AppData => {
+  if (!raw || typeof raw !== 'object') return INITIAL_DATA;
+  return {
+    nodes: Array.isArray(raw.nodes) ? raw.nodes : INITIAL_DATA.nodes,
+    globalResources: Array.isArray(raw.globalResources) ? raw.globalResources : INITIAL_DATA.globalResources,
+    homeUrl: typeof raw.homeUrl === 'string' ? raw.homeUrl : INITIAL_DATA.homeUrl
+  };
+};
+
 const App: React.FC = () => {
   const [selectedGrade, setSelectedGrade] = useState<number | null>(() => {
-    const saved = localStorage.getItem('selected_grade');
-    if (saved === '1') return 11; // Migrate Khối 11 from ID 1 to ID 11
-    return saved ? parseInt(saved) : null;
+    try {
+      const saved = localStorage.getItem('selected_grade');
+      if (!saved || saved === 'null' || saved === 'undefined') return null;
+      if (saved === '1') return 11; // Migrate Khối 11 from ID 1 to ID 11
+      const parsed = parseInt(saved, 10);
+      return isNaN(parsed) ? null : parsed;
+    } catch (e) {
+      return null;
+    }
   });
   const [data, setData] = useState<AppData>(INITIAL_DATA);
   const [visitorCount, setVisitorCount] = useState<number>(0);
@@ -85,10 +100,11 @@ const App: React.FC = () => {
     // Tự động đăng nhập student nếu đã có ID lưu trong máy
     const savedId = localStorage.getItem('student_auth_id');
     if (savedId && selectedGrade) {
-       supabase.from('students').select('*').eq('id', savedId).eq('grade_id', selectedGrade).maybeSingle()
+       Promise.resolve(supabase.from('students').select('*').eq('id', savedId).eq('grade_id', selectedGrade).maybeSingle())
          .then(({ data: sData }) => {
             if (sData) setStudent(sData);
-         });
+         })
+         .catch((err) => console.warn("Auto-login student failed:", err));
     }
   }, [selectedGrade]);
 
@@ -119,7 +135,7 @@ const App: React.FC = () => {
         if (gradeId === 11 && cloudError.code === 'PGRST116') {
              const { data: fallback, error: fbError } = await supabase.from('app_settings').select('data').eq('id', 1).single();
              if (!fbError && fallback?.data) {
-                setData(fallback.data);
+                setData(normalizeAppData(fallback.data));
                 setIsSyncing(false);
                 return;
              }
@@ -151,7 +167,7 @@ const App: React.FC = () => {
           // Giữ nguyên data hiện tại hoặc để trống thay vì nạp template làm người dùng hoang mang
         }
       } else if (cloud?.data) {
-        setData(cloud.data);
+        setData(normalizeAppData(cloud.data));
         setIsSyncing(false); // Thành công, tắt loading
       } else {
         setData(INITIAL_DATA);
@@ -338,7 +354,13 @@ const MainView: React.FC<{
   onLogout?: () => void;
 }> = ({ isAdmin, data, updateData, isSyncing, visitorCount, selectedGrade, syncError, fetchCloudData, student, onLogout }) => {
   const [selectedId, setSelectedId] = useState<string | null>(() => {
-    return localStorage.getItem(`selected_id_${selectedGrade}`);
+    try {
+      const saved = localStorage.getItem(`selected_id_${selectedGrade}`);
+      if (!saved || saved === 'null' || saved === 'undefined') return null;
+      return saved;
+    } catch (e) {
+      return null;
+    }
   });
   const [isVdcMode, setIsVdcMode] = useState<boolean>(false);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState<boolean>(false);

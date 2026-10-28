@@ -332,11 +332,11 @@ export const MediaViewer: React.FC<MediaViewerProps> = ({
 
   // EXTERNAL LINKS (GENERAL WEBSITE SHARE LINKS)
   return (
-    <div className={`flex flex-col bg-slate-50 ${className}`}>
+    <div className={`flex flex-col bg-slate-50 w-full h-full ${className}`}>
       {/* Banner warning & Open in new tab recommendation */}
-      <div className="bg-slate-900 text-white px-4 py-2.5 flex flex-wrap items-center justify-between gap-2 text-xs shrink-0 border-b border-slate-800 z-10 shadow-sm">
+      <div className="bg-slate-900 text-white px-4 py-2 flex flex-wrap items-center justify-between gap-2 text-xs shrink-0 border-b border-slate-800 z-10 shadow-sm">
         <div className="flex items-center gap-2 min-w-0">
-          <Globe size={16} className="text-sky-400 shrink-0" />
+          <Globe size={15} className="text-sky-400 shrink-0" />
           <div className="min-w-0">
             <span className="font-bold text-white truncate block text-[11px]">{title}</span>
             <span className="text-[9px] text-slate-400 truncate block">Nguồn: {domain}</span>
@@ -348,13 +348,13 @@ export const MediaViewer: React.FC<MediaViewerProps> = ({
             className="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-[10px] font-bold border border-slate-700 transition-colors flex items-center gap-1"
             title="Đổi chế độ hiển thị"
           >
-            <Monitor size={12} /> {viewMode === 'embed' ? 'Thẻ chuyển hướng' : 'Thử nhúng Web'}
+            <Monitor size={12} /> {viewMode === 'embed' ? 'Thẻ chuyển hướng' : 'Xem dạng nhúng'}
           </button>
           <a
             href={url}
             target="_blank"
             rel="noopener noreferrer"
-            className="px-3.5 py-1 bg-sky-500 hover:bg-sky-600 text-white font-black text-[10px] uppercase rounded-lg flex items-center gap-1.5 shadow-sm transition-all"
+            className="px-3 py-1 bg-sky-500 hover:bg-sky-600 text-white font-black text-[10px] uppercase rounded-lg flex items-center gap-1.5 shadow-sm transition-all"
           >
             <ExternalLink size={12} /> Mở tab mới
           </a>
@@ -378,12 +378,12 @@ export const MediaViewer: React.FC<MediaViewerProps> = ({
             </div>
             <div className="space-y-1">
               <span className="text-[9px] font-black uppercase text-sky-600 tracking-widest bg-sky-50 px-3 py-1 rounded-full border border-sky-100">
-                Liên kết web ngoài ({domain})
+                Liên kết web chia sẻ ({domain})
               </span>
               <h3 className="text-base font-black text-slate-900 pt-2 line-clamp-2">{title}</h3>
             </div>
             <p className="text-xs text-slate-500 leading-relaxed">
-              Trang web chia sẻ từ <b>{domain}</b> có thể từ chối hiển thị trực tiếp trong ô nhúng do chính sách bảo mật X-Frame-Options. Vui lòng chuyển hướng sang tab mới để truy cập đầy đủ.
+              Trang web chia sẻ từ <b>{domain}</b> có thể không hỗ trợ nhúng trực tiếp trong khung hình do chính sách bảo mật X-Frame-Options. Vui lòng bấm chuyển hướng sang tab mới để xem đầy đủ nội dung.
             </p>
             <div className="flex flex-col sm:flex-row gap-3 w-full pt-2">
               <button
@@ -404,12 +404,12 @@ export const MediaViewer: React.FC<MediaViewerProps> = ({
           </div>
         </div>
       ) : (
-        <div className="flex-1 relative w-full h-full overflow-hidden">
+        <div className="flex-1 flex flex-col relative w-full h-full min-h-0 overflow-hidden">
           {/* Subtle note bar inside frame container */}
-          <div className="bg-amber-50 border-b border-amber-200/60 px-3 py-1.5 flex items-center justify-between text-[10px] text-amber-800 shrink-0">
+          <div className="bg-amber-50/90 border-b border-amber-200/80 px-3 py-1 flex items-center justify-between text-[10px] text-amber-900 shrink-0 z-10">
             <span className="flex items-center gap-1.5 truncate">
               <AlertCircle size={13} className="text-amber-600 shrink-0" />
-              <span>Nếu trang hiển thị trắng hoặc bị báo lỗi kết nối: hãy bấm nút <b>"Mở tab mới"</b> ở góc phải.</span>
+              <span>Nếu trang bị trắng hoặc lỗi kết nối: hãy bấm nút <b>"Mở tab mới"</b> ở góc phải.</span>
             </span>
             <a
               href={url}
@@ -417,13 +417,15 @@ export const MediaViewer: React.FC<MediaViewerProps> = ({
               rel="noopener noreferrer"
               className="px-2 py-0.5 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded text-[9px] shrink-0 ml-2"
             >
-              Mở ngay
+              Mở tab mới
             </a>
           </div>
           <iframe
             src={formattedUrl}
             title={title}
-            className="w-full h-full border-0 bg-white"
+            className="w-full h-full flex-1 border-0 bg-white min-h-0"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            allowFullScreen
           />
         </div>
       )}

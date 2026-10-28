@@ -9,7 +9,7 @@ import rehypeKatex from 'rehype-katex';
 import rehypeRaw from 'rehype-raw';
 import { supabase } from '../supabaseClient';
 import { uploadFileToGoogleDrive, signInWithGoogleForDrive, getDriveAccessToken } from '../googleDrive';
-import { uploadToImgBB } from '../imgbb';
+import { uploadToImgBB, uploadImageFlexible, getImageServerMode } from '../imgbb';
 import { ImageUploadModal } from './ImageUploadModal';
 import { ForumComment, Student } from '../types';
 import { ConfirmModal, ToastNotification, ConfirmState, ToastState } from './CustomDialog';
@@ -343,14 +343,15 @@ const HomeworkPanel: React.FC<HomeworkPanelProps> = ({ nodeId, student, isAdmin,
         const blob = items[i].getAsFile();
         if (blob) {
           e.preventDefault();
-          showToast('Đang tự động tải ảnh dán từ clipboard lên ImgBB...', 'info', 'Đang xử lý ảnh');
+          const mode = getImageServerMode();
+          showToast(`Đang tự động xử lý ảnh dán từ Clipboard qua phương thức [${mode}]...`, 'info', 'Đang xử lý ảnh');
           try {
-            const result = await uploadToImgBB(blob);
+            const result = await uploadImageFlexible(blob, mode);
             const snippet = `\n\n![Ảnh dán](${result.url})\n\n`;
             handleInsertImageSnippet(snippet);
-            showToast('Đã tải ảnh lên ImgBB và chèn vào bài thành công!', 'success');
+            showToast(`Đã lưu ảnh qua [${result.modeUsed}] và chèn vào bài làm thành công!`, 'success');
           } catch (err: any) {
-            showToast(err.message || 'Không thể tải ảnh dán lên ImgBB.', 'error');
+            showToast(err.message || 'Không thể xử lý ảnh dán.', 'error');
           }
           break;
         }
@@ -554,11 +555,14 @@ const HomeworkPanel: React.FC<HomeworkPanelProps> = ({ nodeId, student, isAdmin,
   };
 
   const uploadImage = async (file: File): Promise<string | null> => {
-    const fileExt = file.name.split('.').pop();
-    const fileName = `${Date.now()}.${fileExt}`;
-    const { error } = await supabase.storage.from('resources').upload(`homework/${fileName}`, file);
-    if (error) return null;
-    return supabase.storage.from('resources').getPublicUrl(`homework/${fileName}`).data.publicUrl;
+    try {
+      const mode = getImageServerMode();
+      const res = await uploadImageFlexible(file, mode);
+      return res.url;
+    } catch (err: any) {
+      console.error("Homework upload image error:", err);
+      return null;
+    }
   };
 
   const insertRecordToSupabase = async (payload: {
