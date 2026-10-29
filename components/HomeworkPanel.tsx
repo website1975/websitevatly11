@@ -343,6 +343,10 @@ const HomeworkPanel: React.FC<HomeworkPanelProps> = ({ nodeId, student, isAdmin,
         const blob = items[i].getAsFile();
         if (blob) {
           e.preventDefault();
+          if (!isAdmin) {
+            showToast("Tính năng dán ảnh trực tiếp đang tạm khóa đối với học sinh để tiết kiệm dung lượng hệ thống.", "info", "Tạm khóa");
+            return;
+          }
           const mode = getImageServerMode();
           showToast(`Đang tự động xử lý ảnh dán từ Clipboard qua phương thức [${mode}]...`, 'info', 'Đang xử lý ảnh');
           try {
@@ -1044,11 +1048,17 @@ const HomeworkPanel: React.FC<HomeworkPanelProps> = ({ nodeId, student, isAdmin,
 
         <button 
           type="button" 
-          onClick={() => setIsImageModalOpen(true)} 
-          className="p-2 text-slate-500 hover:text-indigo-600 hover:bg-white rounded-lg transition-all flex items-center gap-1 group/btn" 
-          title="Tải ảnh lên ImgBB / Dán ảnh (Ctrl + V)"
+          onClick={() => {
+            if (!isAdmin) {
+              showToast("Tính năng tải ảnh trực tiếp đang tạm khóa đối với học sinh để tiết kiệm dung lượng hệ thống.", "info", "Tạm khóa");
+              return;
+            }
+            setIsImageModalOpen(true);
+          }} 
+          className={`p-2 rounded-lg transition-all flex items-center gap-1 group/btn ${!isAdmin ? 'opacity-40 cursor-not-allowed text-slate-300' : 'text-slate-500 hover:text-indigo-600 hover:bg-white'}`} 
+          title={isAdmin ? "Tải ảnh lên / Dán ảnh (Ctrl + V)" : "Tính năng tải ảnh đang tạm khóa đối với học sinh"}
         >
-          <ImageIcon size={18} className="group-hover/btn:scale-110 transition-transform"/>
+          <ImageIcon size={18} className={isAdmin ? "group-hover/btn:scale-110 transition-transform" : ""} />
         </button>
       </div>
     </div>
