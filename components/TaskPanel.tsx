@@ -1,6 +1,6 @@
 
-import React, { useState, useEffect, useCallback } from 'react';
-import { ClipboardCheck, Clock, CheckCircle2, AlertCircle, Loader2, Search, X, Users, RefreshCw } from 'lucide-react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { ClipboardCheck, Clock, CheckCircle2, AlertCircle, Loader2, Search, X, Users, RefreshCw, FileSpreadsheet, Download, Filter } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 import { LessonTask, StudyLog, Student } from '../types';
 import { ConfirmModal, ToastNotification, ConfirmState, ToastState } from './CustomDialog';
@@ -23,6 +23,7 @@ const TaskPanel: React.FC<TaskPanelProps> = ({ nodeId, student, isAdmin, themeCo
   const [loadingIncomplete, setLoadingIncomplete] = useState(false);
   const [incompleteStudentsData, setIncompleteStudentsData] = useState<any[]>([]);
   const [incompleteSearch, setIncompleteSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'incomplete' | 'completed'>('all');
 
   const [confirmState, setConfirmState] = useState<ConfirmState>({ isOpen: false, title: '', message: '', onConfirm: () => {} });
   const [toastState, setToastState] = useState<ToastState>({ isOpen: false, message: '' });
@@ -67,12 +68,139 @@ const TaskPanel: React.FC<TaskPanelProps> = ({ nodeId, student, isAdmin, themeCo
         };
       });
 
-      setIncompleteStudentsData(processed.filter(p => !p.fullyCompleted));
+      setIncompleteStudentsData(processed);
     } catch (err) {
       console.error("Error fetching incomplete students:", err);
     } finally {
       setLoadingIncomplete(false);
     }
+  };
+
+  const filteredStudents = useMemo(() => {
+    return incompleteStudentsData.filter(s => {
+      // Status filter
+      if (statusFilter === 'incomplete' && s.fullyCompleted) return false;
+      if (statusFilter === 'completed' && !s.fullyCompleted) return false;
+
+      // Search filter (Mã HS or Họ tên)
+      if (incompleteSearch.trim()) {
+        const q = incompleteSearch.trim().toLowerCase();
+        const matchName = (s.name || '').toLowerCase().includes(q);
+        const matchFullName = (s.fullName || '').toLowerCase().includes(q);
+        return matchName || matchFullName;
+      }
+      return true;
+    });
+  }, [incompleteStudentsData, statusFilter, incompleteSearch]);
+
+  const handleExportExcel = () => {
+    if (filteredStudents.length === 0) {
+      showToast("Không có dữ liệu học sinh để xuất Excel", "warning");
+      return;
+    }
+
+    const searchTag = incompleteSearch.trim() ? `_Lop_${incompleteSearch.trim()}` : '';
+    const dateTag = new Date().toISOString().slice(0, 10);
+    const fileName = `Tien_Do_Hoc_Tap${searchTag}_${dateTag}.xls`;
+
+    const formatSec = (sec: number) => {
+      const m = Math.floor(sec / 60);
+      const s = sec % 60;
+      return `${m}p ${s}s`;
+    };
+
+    const minMat = task?.minMaterialTime || 0;
+    const minFlash = task?.minFlashcardTime || 0;
+
+    let html = `
+      <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+      <head>
+        <meta charset="utf-8"/>
+        <!--[if gte mso 9]>
+        <xml>
+          <x:ExcelWorkbook>
+            <x:ExcelWorksheets>
+              <x:ExcelWorksheet>
+                <x:Name>Tiến độ học tập</x:Name>
+                <x:WorksheetOptions>
+                  <x:DisplayGridlines/>
+                </x:WorksheetOptions>
+              </x:ExcelWorksheet>
+            </x:ExcelWorksheets>
+          </x:ExcelWorkbook>
+        </xml>
+        <![endif]-->
+        <style>
+          body { font-family: Arial, sans-serif; }
+          table { border-collapse: collapse; width: 100%; margin-top: 15px; }
+          th { background-color: #1e40af; color: #ffffff; font-weight: bold; border: 1px solid #1e3a8a; padding: 10px; text-align: center; }
+          td { border: 1px solid #cbd5e1; padding: 8px; text-align: left; }
+          .center { text-align: center; }
+          .completed { color: #15803d; font-weight: bold; }
+          .incomplete { color: #b91c1c; font-weight: bold; }
+          .title { font-size: 16pt; font-weight: bold; text-align: center; margin-bottom: 5px; color: #0f172a; }
+          .subtitle { font-size: 11pt; text-align: center; margin-bottom: 15px; color: #475569; }
+          .meta-box { margin-bottom: 10px; font-size: 10pt; color: #334155; }
+        </style>
+      </head>
+      <body>
+        <div class="title">BÁO CÁO TIẾN ĐỘ THỰC HIỆN NHIỆM VỤ HỌC TẬP</div>
+        <div class="subtitle">
+          ${incompleteSearch.trim() ? 'Lớp / Từ khóa lọc: <b>' + incompleteSearch.trim() + '</b> | ' : ''}
+          Yêu cầu tối thiểu: Học liệu (${minMat} phút) &bull; Flashcard (${minFlash} phút)
+        </div>
+        <div class="meta-box">
+          <b>Tổng số học sinh xuất dữ liệu:</b> ${filteredStudents.length} em &bull; 
+          <b>Ngày xuất báo cáo:</b> ${new Date().toLocaleDateString('vi-VN')} ${new Date().toLocaleTimeString('vi-VN')}
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>STT</th>
+              <th>Mã HS</th>
+              <th>Họ và Tên</th>
+              <th>Thời gian Học liệu</th>
+              <th>Trạng thái Học liệu</th>
+              <th>Thời gian Flashcard</th>
+              <th>Trạng thái Flashcard</th>
+              <th>Đánh giá Nhiệm vụ</th>
+            </tr>
+          </thead>
+          <tbody>
+    `;
+
+    filteredStudents.forEach((s, idx) => {
+      html += `
+        <tr>
+          <td class="center">${idx + 1}</td>
+          <td class="center">${s.name || ''}</td>
+          <td>${s.fullName || s.name || ''}</td>
+          <td class="center">${formatSec(s.matTime)}</td>
+          <td class="center ${s.matCompleted ? 'completed' : 'incomplete'}">${s.matCompleted ? 'Đã đạt' : 'Chưa đạt'}</td>
+          <td class="center">${formatSec(s.flashTime)}</td>
+          <td class="center ${s.flashCompleted ? 'completed' : 'incomplete'}">${s.flashCompleted ? 'Đã đạt' : 'Chưa đạt'}</td>
+          <td class="center ${s.fullyCompleted ? 'completed' : 'incomplete'}">${s.fullyCompleted ? 'Hoàn thành' : 'Chưa hoàn thành'}</td>
+        </tr>
+      `;
+    });
+
+    html += `
+          </tbody>
+        </table>
+      </body>
+      </html>
+    `;
+
+    const blob = new Blob(['\uFEFF' + html], { type: 'application/vnd.ms-excel;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    showToast(`Đã xuất file Excel cho ${filteredStudents.length} học sinh thành công!`, 'success');
   };
 
   const fetchTaskData = useCallback(async () => {
@@ -464,18 +592,19 @@ const TaskPanel: React.FC<TaskPanelProps> = ({ nodeId, student, isAdmin, themeCo
            )}
         </div>
       )}
-      {/* INCOMPLETE STUDENTS MODAL */}
+
+      {/* STUDENTS TASK PROGRESS MODAL */}
       {showIncompleteModal && (
         <div className="fixed inset-0 z-[1000] bg-slate-900/60 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-300">
           <div className="bg-white w-full max-w-5xl h-[90vh] rounded-[48px] shadow-2xl flex flex-col overflow-hidden animate-in zoom-in-95 duration-300">
-            <header className="p-8 bg-slate-50 border-b border-slate-100 shrink-0 flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <header className="p-6 md:p-8 bg-slate-50 border-b border-slate-100 shrink-0 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-2xl bg-amber-600 text-white flex items-center justify-center shadow-lg shadow-amber-100">
+                  <div className="w-12 h-12 rounded-2xl bg-amber-600 text-white flex items-center justify-center shadow-lg shadow-amber-100 shrink-0">
                      <AlertCircle size={24} />
                   </div>
                   <div>
                      <h3 className="text-xl font-black text-slate-800 tracking-tight uppercase">
-                        Học sinh chưa hoàn thành
+                        HỌC SINH THỰC HIỆN NHIỆM VỤ
                      </h3>
                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">
                         TIẾN ĐỘ THỰC HIỆN NHIỆM VỤ HỌC TẬP
@@ -483,22 +612,79 @@ const TaskPanel: React.FC<TaskPanelProps> = ({ nodeId, student, isAdmin, themeCo
                   </div>
                </div>
                
-               <div className="flex items-center gap-4">
-                  <div className="relative group flex-1 md:w-80">
+               <div className="flex flex-wrap items-center gap-3">
+                  {/* Status Filter Tabs */}
+                  <div className="flex bg-slate-200/70 p-1 rounded-2xl">
+                    <button
+                      type="button"
+                      onClick={() => setStatusFilter('all')}
+                      className={`px-3 py-1.5 rounded-xl text-xs font-black uppercase transition-all ${statusFilter === 'all' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}
+                    >
+                      Tất cả
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setStatusFilter('incomplete')}
+                      className={`px-3 py-1.5 rounded-xl text-xs font-black uppercase transition-all ${statusFilter === 'incomplete' ? 'bg-amber-500 text-white shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}
+                    >
+                      Chưa hoàn thành
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setStatusFilter('completed')}
+                      className={`px-3 py-1.5 rounded-xl text-xs font-black uppercase transition-all ${statusFilter === 'completed' ? 'bg-emerald-600 text-white shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}
+                    >
+                      Đã hoàn thành
+                    </button>
+                  </div>
+
+                  {/* Search Box */}
+                  <div className="relative group flex-1 min-w-[180px] md:w-64">
                      <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-amber-500 transition-all" size={16} />
                      <input 
                        type="text" 
-                       placeholder="Tìm theo Mã HS hoặc Họ tên..." 
+                       placeholder="Lọc Mã HS / Lớp (vd: C06)..." 
                        value={incompleteSearch}
                        onChange={e => setIncompleteSearch(e.target.value)}
-                       className="w-full pl-12 pr-6 py-3 bg-white border border-slate-200 focus:border-amber-400 rounded-2xl outline-none text-sm font-bold text-slate-700 transition-all shadow-sm"
+                       className="w-full pl-11 pr-4 py-2.5 bg-white border border-slate-200 focus:border-amber-400 rounded-2xl outline-none text-xs font-bold text-slate-700 transition-all shadow-sm"
                      />
                   </div>
-                  <button onClick={() => { setShowIncompleteModal(false); setIncompleteStudentsData([]); }} className="p-3 bg-white text-slate-400 hover:text-slate-600 rounded-2xl border border-slate-100 hover:border-slate-200 transition-all shadow-sm">
-                     <X size={20} />
+
+                  {/* Excel Export Button */}
+                  <button
+                    type="button"
+                    onClick={handleExportExcel}
+                    className="flex items-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl text-xs font-black uppercase tracking-wider shadow-lg shadow-emerald-200 transition-all hover:scale-105 shrink-0"
+                    title="Xuất danh sách đang lọc ra file Excel (.xls)"
+                  >
+                    <FileSpreadsheet size={16} />
+                    <span>Xuất Excel</span>
+                  </button>
+
+                  <button 
+                    type="button"
+                    onClick={() => { setShowIncompleteModal(false); setIncompleteStudentsData([]); setIncompleteSearch(''); }} 
+                    className="p-2.5 bg-white text-slate-400 hover:text-slate-600 rounded-2xl border border-slate-100 hover:border-slate-200 transition-all shadow-sm"
+                  >
+                     <X size={18} />
                   </button>
                </div>
             </header>
+
+            {/* Filter Metadata Sub-bar */}
+            <div className="px-8 py-2.5 bg-amber-50/50 border-b border-amber-100/50 flex flex-wrap items-center justify-between text-xs font-bold text-slate-600 gap-2 shrink-0">
+              <div className="flex items-center gap-2">
+                <span>Hiển thị <b>{filteredStudents.length}</b> / {incompleteStudentsData.length} học sinh</span>
+                {incompleteSearch.trim() && (
+                  <span className="px-2 py-0.5 bg-amber-100 text-amber-800 rounded-lg text-[11px] font-black">
+                    Lọc: "{incompleteSearch.trim()}"
+                  </span>
+                )}
+              </div>
+              <div className="text-[11px] font-bold text-slate-400">
+                Yêu cầu: Học liệu ({task?.minMaterialTime || 0}p) &bull; Flashcard ({task?.minFlashcardTime || 0}p)
+              </div>
+            </div>
 
             <div className="flex-1 overflow-y-auto p-8 bg-slate-50/30">
                {loadingIncomplete ? (
@@ -508,24 +694,19 @@ const TaskPanel: React.FC<TaskPanelProps> = ({ nodeId, student, isAdmin, themeCo
                   </div>
                ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {incompleteStudentsData
-                      .filter(s => 
-                        s.name.toLowerCase().includes(incompleteSearch.toLowerCase()) || 
-                        (s.fullName || '').toLowerCase().includes(incompleteSearch.toLowerCase())
-                      )
-                      .map(s => (
-                        <div key={s.id} className="bg-white p-6 rounded-[32px] border border-slate-100 shadow-sm hover:shadow-xl transition-all border-l-4 border-l-amber-500">
+                    {filteredStudents.map(s => (
+                        <div key={s.id} className={`bg-white p-6 rounded-[32px] border shadow-sm hover:shadow-xl transition-all border-l-4 ${s.fullyCompleted ? 'border-slate-100 border-l-emerald-500' : 'border-slate-100 border-l-amber-500'}`}>
                            <div className="flex items-center gap-3 mb-4">
                               <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center text-xs font-black text-slate-400 border border-slate-100 shrink-0">
                                  {s.name.charAt(0).toUpperCase()}
                               </div>
                               <div className="min-w-0">
                                  <h5 className="text-[11px] font-black text-slate-800 uppercase tracking-tight truncate">{s.fullName || s.name}</h5>
-                                 <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Mã HS: {s.name}</p>
+                                 <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">MÃ HS: {s.name}</p>
                               </div>
                            </div>
 
-                           <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
+                           <div className="grid grid-cols-2 gap-3 mb-4">
                               <div className={`p-3 rounded-2xl border ${s.matCompleted ? 'bg-emerald-50 border-emerald-100' : 'bg-slate-50 border-slate-100'}`}>
                                  <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Học liệu</p>
                                  <p className={`text-[10px] font-black ${s.matCompleted ? 'text-emerald-600' : 'text-slate-400'}`}>
@@ -556,10 +737,12 @@ const TaskPanel: React.FC<TaskPanelProps> = ({ nodeId, student, isAdmin, themeCo
                       ))
                     }
                     
-                    {incompleteStudentsData.length === 0 && !loadingIncomplete && (
+                    {filteredStudents.length === 0 && !loadingIncomplete && (
                       <div className="col-span-full py-20 text-center opacity-40">
                          <CheckCircle2 size={48} className="mx-auto text-emerald-500 mb-4" />
-                         <p className="text-sm font-black uppercase tracking-widest text-slate-500">Tất cả học sinh đã hoàn thành!</p>
+                         <p className="text-sm font-black uppercase tracking-widest text-slate-500">
+                           {incompleteSearch.trim() ? `Không tìm thấy học sinh nào với mã/lớp "${incompleteSearch}"` : 'Tất cả học sinh đã hoàn thành!'}
+                         </p>
                       </div>
                     )}
                   </div>
