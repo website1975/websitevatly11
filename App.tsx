@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Routes, Route, useNavigate, Navigate } from 'react-router-dom';
-import { Book, Plus, Maximize2, Loader2, BrainCircuit, GraduationCap, ShieldCheck, Search, LogOut, Folder, Globe, Zap, Image as ImageIcon, Settings, ArrowLeft, ArrowRight, Upload, AlertCircle, Users, Cloud, ExternalLink, BookOpen, Sparkles, ChevronRight, Key, ListOrdered, ArrowUpDown, Menu, Paperclip, X } from 'lucide-react';
+import { Book, Plus, Maximize2, Loader2, BrainCircuit, GraduationCap, ShieldCheck, Search, LogOut, Folder, Globe, Zap, Image as ImageIcon, Settings, ArrowLeft, ArrowRight, Upload, AlertCircle, Users, Cloud, ExternalLink, BookOpen, Sparkles, ChevronRight, Key, ListOrdered, ArrowUpDown, Menu, Paperclip, X, ClipboardCheck } from 'lucide-react';
 import { uploadFileToGoogleDrive, signInWithGoogleForDrive, getDriveAccessToken, isGoogleDriveUrl, extractDriveFileId } from './googleDrive';
 import { supabase } from './supabaseClient';
 import { AppData, ResourceLink, BookNode, NodeType, Student } from './types';
@@ -1217,14 +1217,30 @@ const MainView: React.FC<{
                   </div>
                   
                   <div className={`flex justify-between items-center ${activeTab === 'content' ? 'mt-2' : 'mt-3'}`}>
-                    <div className="flex gap-4 sm:gap-6 overflow-x-auto no-scrollbar py-0.5">
-                      <button onClick={()=>setActiveTab('content')} className={`pb-2 text-[10px] font-bold uppercase tracking-widest border-b-2 transition-all shrink-0 ${activeTab==='content' ? `border-${themeColor}-600 text-${themeColor}-600` : 'border-transparent text-slate-300 hover:text-slate-500'}`}>Học liệu</button>
-                      <button onClick={()=>setActiveTab('flashcards')} className={`pb-2 text-[10px] font-bold uppercase tracking-widest border-b-2 transition-all shrink-0 ${activeTab==='flashcards' ? `border-${themeColor}-600 text-${themeColor}-600` : 'border-transparent text-slate-300 hover:text-slate-500'}`}>Flashcards</button>
+                    <div className="flex gap-3 sm:gap-5 overflow-x-auto no-scrollbar py-0.5 items-center">
+                      <div className="flex gap-3 sm:gap-4 items-center">
+                        <button onClick={()=>setActiveTab('content')} className={`pb-1.5 text-[10px] font-bold uppercase tracking-widest border-b-2 transition-all shrink-0 ${activeTab==='content' ? `border-${themeColor}-600 text-${themeColor}-600 font-black` : 'border-transparent text-slate-400 hover:text-slate-600'}`}>Học liệu</button>
+                        <button onClick={()=>setActiveTab('flashcards')} className={`pb-1.5 text-[10px] font-bold uppercase tracking-widest border-b-2 transition-all shrink-0 ${activeTab==='flashcards' ? `border-${themeColor}-600 text-${themeColor}-600 font-black` : 'border-transparent text-slate-400 hover:text-slate-600'}`}>Flashcards</button>
+                        {(isAdmin || student) && (
+                          <button onClick={()=>setActiveTab('homework')} className={`pb-1.5 text-[10px] font-bold uppercase tracking-widest border-b-2 transition-all shrink-0 ${activeTab==='homework' ? `border-${themeColor}-600 text-${themeColor}-600 font-black` : 'border-transparent text-slate-400 hover:text-slate-600'}`}>Bài tập về nhà</button>
+                        )}
+                      </div>
+
                       {(isAdmin || student) && (
-                        <button onClick={()=>setActiveTab('tasks')} className={`pb-2 text-[10px] font-bold uppercase tracking-widest border-b-2 transition-all shrink-0 ${activeTab==='tasks' ? `border-${themeColor}-600 text-${themeColor}-600` : 'border-transparent text-slate-300 hover:text-slate-500'}`}>Nhiệm vụ</button>
-                      )}
-                      {(isAdmin || student) && (
-                        <button onClick={()=>setActiveTab('homework')} className={`pb-2 text-[10px] font-bold uppercase tracking-widest border-b-2 transition-all shrink-0 ${activeTab==='homework' ? `border-${themeColor}-600 text-${themeColor}-600` : 'border-transparent text-slate-300 hover:text-slate-500'}`}>Bài tập về nhà</button>
+                        <>
+                          <div className="h-4 w-px bg-slate-200 shrink-0"></div>
+                          <button 
+                            onClick={()=>setActiveTab('tasks')} 
+                            className={`px-3.5 py-1 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shrink-0 flex items-center gap-1.5 shadow-sm ${
+                              activeTab==='tasks' 
+                                ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-white shadow-md shadow-amber-200 ring-2 ring-amber-300' 
+                                : 'bg-amber-50/80 text-amber-700 hover:bg-amber-100 border border-amber-200/80'
+                            }`}
+                          >
+                            <ClipboardCheck size={13} className={activeTab==='tasks' ? 'text-white' : 'text-amber-600'} />
+                            <span>Nhiệm vụ</span>
+                          </button>
+                        </>
                       )}
                     </div>
                     <div className="hidden sm:block pb-2 text-[9px] font-bold text-slate-400 uppercase tracking-widest opacity-60 shrink-0">
@@ -1256,6 +1272,7 @@ const MainView: React.FC<{
                       isAdmin={isAdmin} 
                       themeColor={themeColor} 
                       gradeId={selectedGrade}
+                      onSwitchTab={setActiveTab}
                     />
                   ) : (
                     <HomeworkPanel 

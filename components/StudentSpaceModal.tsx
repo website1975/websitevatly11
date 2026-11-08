@@ -23,7 +23,9 @@ import {
   ChevronRight,
   ShieldCheck,
   RefreshCw,
-  Star
+  Star,
+  ClipboardCheck,
+  Filter
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -62,6 +64,54 @@ interface AssignmentItem {
   status: 'completed_approved' | 'completed_pending' | 'not_submitted';
 }
 
+interface LessonCompletionStatus {
+  lessonId: string;
+  lessonTitle: string;
+  chapterTitle: string;
+  hasTaskAssigned: boolean;
+  minMaterialMinutes: number;
+  actualMaterialMinutes: number;
+  materialSatisfied: boolean;
+  minFlashcardMinutes: number;
+  actualFlashcardMinutes: number;
+  flashcardSatisfied: boolean;
+  requireHomework: boolean;
+  homeworkStatus: 'approved' | 'pending' | 'not_submitted' | 'none';
+  homeworkSatisfied: boolean;
+  startDate?: string;
+  endDate?: string;
+  isExpired: boolean;
+  isCompleted: boolean;
+}
+
+const formatDateVN = (dateStr?: string) => {
+  if (!dateStr || !dateStr.trim()) return '';
+  try {
+    const clean = dateStr.trim();
+    if (clean.includes('-')) {
+      const parts = clean.split('T')[0].split('-');
+      if (parts.length === 3) return `${parts[2]}/${parts[1]}/${parts[0]}`;
+    }
+    const d = new Date(clean);
+    if (isNaN(d.getTime())) return dateStr;
+    return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
+  } catch {
+    return dateStr;
+  }
+};
+
+const checkIsExpired = (endDateStr?: string) => {
+  if (!endDateStr || !endDateStr.trim()) return false;
+  try {
+    const clean = endDateStr.trim().split('T')[0];
+    const end = new Date(clean);
+    end.setHours(23, 59, 59, 999);
+    return new Date().getTime() > end.getTime();
+  } catch {
+    return false;
+  }
+};
+
 export const StudentSpaceModal: React.FC<StudentSpaceModalProps> = ({
   isOpen,
   onClose,
@@ -72,14 +122,16 @@ export const StudentSpaceModal: React.FC<StudentSpaceModalProps> = ({
   onSelectLessonAndTab,
   onStudentUpdated,
 }) => {
-  const [activeTab, setActiveTab] = useState<'assignments' | 'profile' | 'stats'>('assignments');
+  const [activeTab, setActiveTab] = useState<'assignments' | 'profile' | 'stats'>('stats');
   const [filterStatus, setFilterStatus] = useState<'all' | 'pending' | 'approved' | 'not_submitted'>('all');
+  const [lessonFilter, setLessonFilter] = useState<'all' | 'has_task' | 'completed' | 'incomplete' | 'expired' | 'no_task'>('all');
   const [searchTerm, setSearchTerm] = useState('');
   
   // Data loading state
   const [loading, setLoading] = useState(false);
   const [rawComments, setRawComments] = useState<any[]>([]);
   const [studyLogs, setStudyLogs] = useState<any[]>([]);
+  const [lessonTasks, setLessonTasks] = useState<any[]>([]);
 
   // Password change state
   const [currentPasswordInput, setCurrentPasswordInput] = useState('');
@@ -92,7 +144,7 @@ export const StudentSpaceModal: React.FC<StudentSpaceModalProps> = ({
   // Expanded item view
   const [expandedItemId, setExpandedItemId] = useState<string | null>(null);
 
-  // Fetch all homework comments and study logs for this student and grade
+  // Fetch all homework comments, study logs and lesson tasks for this student
   const loadStudentData = async () => {
     if (!student || student.is_guest) return;
     setLoading(true);
@@ -114,6 +166,16 @@ export const StudentSpaceModal: React.FC<StudentSpaceModalProps> = ({
       if (!logsError) {
         setStudyLogs(logsData || []);
       }
+
+      // 3. Fetch lesson_tasks
+      try {
+        const { data: tasksData } = await supabase.from('lesson_tasks').select('*');
+        if (tasksData) {
+          setLessonTasks(tasksData);
+        }
+      } catch (e) {
+        console.log("Error or missing lesson_tasks table:", e);
+      }
     } catch (err) {
       console.error("Error loading student space data:", err);
     } finally {
@@ -133,10 +195,6 @@ export const StudentSpaceModal: React.FC<StudentSpaceModalProps> = ({
   }, [isOpen, student?.id, selectedGrade]);
 
   // Map nodes to dictionary for fast lookup
-  const lessonNodes = useMemo(() => {
-    return (data?.nodes || []).filter(n => n && n.type === 'lesson');
-  }, [data?.nodes]);
-
   const nodeMap = useMemo(() => {
     const map = new Map<string, BookNode>();
     (data?.nodes || []).forEach(n => {
@@ -237,6 +295,140 @@ export const StudentSpaceModal: React.FC<StudentSpaceModalProps> = ({
     });
   }, [rawComments, nodeMap, student?.name, selectedGrade]);
 
+  // Build Lesson Completion Status List for ALL lessons in current grade
+  const lessonCompletionList: LessonCompletionStatus[] = useMemo(() => {
+    const studentTag = student?.name ? `[${student.name}]` : '';
+    const myAnswers = (rawComments || []).filter(c => {
+      const author = c.author || '';
+      return studentTag ? author.includes(studentTag) : false;
+    });
+
+    // Return ALL lesson nodes matching selectedGrade so the menu tree list is complete
+    const targetLessons = (data?.nodes || []).filter(n => {
+      if (!n || n.type !== 'lesson') return false;
+      const parentFolder = n.parentId ? nodeMap.get(n.parentId) : null;
+      const itemGrade = (n as any).gradeId || (parentFolder as any)?.gradeId;
+      if (selectedGrade && itemGrade && String(itemGrade) !== String(selectedGrade)) {
+        return false;
+      }
+      if (selectedGrade && !itemGrade && !n.id.startsWith(`g${selectedGrade}-`) && !n.id.startsWith(`${selectedGrade}-`)) {
+        // Fallback for grade check if needed
+      }
+      return true;
+    });
+
+    return targetLessons.map(lesson => {
+      const parentFolder = lesson.parentId ? nodeMap.get(lesson.parentId) : null;
+      
+      // Find task configuration record if exists
+      const taskRecord = (lessonTasks || []).find(t => (t.node_id || t.nodeId) === lesson.id);
+      let minMat = taskRecord?.min_material_time ?? taskRecord?.min_material_minutes ?? 0;
+      let minFlash = taskRecord?.min_flashcard_time ?? taskRecord?.min_flashcard_minutes ?? 0;
+      let reqHw = taskRecord?.require_homework === true || taskRecord?.requireHomework === true;
+      let startD = taskRecord?.start_date || '';
+      let endD = taskRecord?.end_date || '';
+      let isDraft = taskRecord?.is_draft === true;
+      let desc = (taskRecord?.description || '').replace(/<!--task_meta:.*?-->/g, '').trim();
+
+      if (taskRecord?.description && taskRecord.description.includes('<!--task_meta:')) {
+        try {
+          const match = taskRecord.description.match(/<!--task_meta:(.*?)-->/);
+          if (match && match[1]) {
+            const meta = JSON.parse(match[1]);
+            if (meta.minMaterialTime !== undefined) minMat = meta.minMaterialTime;
+            if (meta.minFlashcardTime !== undefined) minFlash = meta.minFlashcardTime;
+            if (meta.requireHomework !== undefined) reqHw = meta.requireHomework;
+            if (meta.startDate !== undefined) startD = meta.startDate;
+            if (meta.endDate !== undefined) endD = meta.endDate;
+            if (meta.isDraft !== undefined) isDraft = meta.isDraft;
+          }
+        } catch (e) {
+          console.error(e);
+        }
+      }
+
+      // Homework questions in forum_comments check - MUST match this lesson only
+      const homeworkNodeId = `homework_${lesson.id}`;
+      const teacherQuestions = (rawComments || []).filter(c => {
+        const nid = c.node_id || c.nodeId || '';
+        return nid === homeworkNodeId && (c.is_admin === true || c.isAdmin === true || !(c.author || '').includes('['));
+      });
+
+      // Does this lesson have a task set by teacher? (Draft tasks are hidden from students)
+      const hasTaskAssigned = !isDraft && Boolean(
+        minMat > 0 || 
+        minFlash > 0 || 
+        reqHw || 
+        Boolean(startD) || 
+        Boolean(endD) || 
+        Boolean(desc) || 
+        teacherQuestions.length > 0
+      );
+
+      // Calculate material study time from logs
+      const matLogs = (studyLogs || []).filter(l => (l.node_id || l.lesson_id) === lesson.id && (l.type === 'material' || !l.type));
+      const actualMatSec = matLogs.reduce((acc, curr) => acc + (curr.duration || 0), 0);
+      const actualMatMin = Math.floor(actualMatSec / 60);
+      const materialSatisfied = minMat === 0 ? true : actualMatMin >= minMat;
+
+      // Calculate flashcard study time from logs
+      const flashLogs = (studyLogs || []).filter(l => (l.node_id || l.lesson_id) === lesson.id && l.type === 'flashcard');
+      const actualFlashSec = flashLogs.reduce((acc, curr) => acc + (curr.duration || 0), 0);
+      const actualFlashMin = Math.floor(actualFlashSec / 60);
+      const flashcardSatisfied = minFlash === 0 ? true : actualFlashMin >= minFlash;
+
+      // Homework requirements and student approval check
+      const isHwRequired = reqHw || teacherQuestions.length > 0;
+      let homeworkStatus: 'approved' | 'pending' | 'not_submitted' | 'none' = 'none';
+      let homeworkSatisfied = true;
+
+      if (isHwRequired) {
+        const studentAns = myAnswers.find(a => {
+          const nid = a.node_id || a.nodeId || '';
+          return nid === homeworkNodeId || nid.startsWith(`${homeworkNodeId}_ans_`);
+        });
+
+        if (studentAns) {
+          const rawContent = studentAns.content || '';
+          const isApproved = studentAns.is_approved === true || studentAns.isApproved === true || rawContent.includes('<!--status:approved-->');
+          if (isApproved) {
+            homeworkStatus = 'approved';
+            homeworkSatisfied = true;
+          } else {
+            homeworkStatus = 'pending';
+            homeworkSatisfied = false;
+          }
+        } else {
+          homeworkStatus = 'not_submitted';
+          homeworkSatisfied = false;
+        }
+      }
+
+      const isExpired = checkIsExpired(endD);
+      const isCompleted = hasTaskAssigned ? (materialSatisfied && flashcardSatisfied && homeworkSatisfied) : false;
+
+      return {
+        lessonId: lesson.id,
+        lessonTitle: lesson.title,
+        chapterTitle: parentFolder?.title || 'Chủ đề học',
+        hasTaskAssigned,
+        minMaterialMinutes: minMat,
+        actualMaterialMinutes: actualMatMin,
+        materialSatisfied,
+        minFlashcardMinutes: minFlash,
+        actualFlashcardMinutes: actualFlashMin,
+        flashcardSatisfied,
+        requireHomework: isHwRequired,
+        homeworkStatus,
+        homeworkSatisfied,
+        startDate: startD,
+        endDate: endD,
+        isExpired,
+        isCompleted
+      };
+    });
+  }, [data?.nodes, nodeMap, selectedGrade, lessonTasks, studyLogs, rawComments, student?.name]);
+
   // Filtered assignments
   const filteredAssignments = useMemo(() => {
     return assignments.filter(item => {
@@ -254,13 +446,39 @@ export const StudentSpaceModal: React.FC<StudentSpaceModalProps> = ({
     });
   }, [assignments, filterStatus, searchTerm]);
 
-  // Statistics
+  // Filtered lesson completion list
+  const filteredLessonList = useMemo(() => {
+    return lessonCompletionList.filter(item => {
+      const matchSearch = searchTerm === '' ||
+        item.lessonTitle.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        item.chapterTitle.toLowerCase().includes(searchTerm.toLowerCase());
+
+      if (!matchSearch) return false;
+
+      if (lessonFilter === 'all') return true;
+      if (lessonFilter === 'has_task') return item.hasTaskAssigned;
+      if (lessonFilter === 'completed') return item.hasTaskAssigned && item.isCompleted;
+      if (lessonFilter === 'incomplete') return item.hasTaskAssigned && !item.isCompleted && !item.isExpired;
+      if (lessonFilter === 'expired') return item.hasTaskAssigned && !item.isCompleted && item.isExpired;
+      if (lessonFilter === 'no_task') return !item.hasTaskAssigned;
+      return true;
+    });
+  }, [lessonCompletionList, lessonFilter, searchTerm]);
+
+  // Overall statistics
+  const totalLessonsCount = lessonCompletionList.length;
+  const assignedTasksCount = lessonCompletionList.filter(l => l.hasTaskAssigned).length;
+  const completedAssignedTasksCount = lessonCompletionList.filter(l => l.hasTaskAssigned && l.isCompleted).length;
+  const pendingAssignedTasksCount = lessonCompletionList.filter(l => l.hasTaskAssigned && !l.isCompleted && !l.isExpired).length;
+  const expiredLessonsCount = lessonCompletionList.filter(l => l.hasTaskAssigned && !l.isCompleted && l.isExpired).length;
+  const noTaskCount = lessonCompletionList.filter(l => !l.hasTaskAssigned).length;
+
+  const completionRate = assignedTasksCount > 0 ? Math.round((completedAssignedTasksCount / assignedTasksCount) * 100) : 0;
+
   const totalTasks = assignments.length;
-  const completedTasks = assignments.filter(a => a.status !== 'not_submitted').length;
   const approvedTasks = assignments.filter(a => a.status === 'completed_approved').length;
   const pendingTasks = assignments.filter(a => a.status === 'completed_pending').length;
   const missingTasks = assignments.filter(a => a.status === 'not_submitted').length;
-  const completionRate = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
 
   // Study log duration
   const totalStudyMinutes = useMemo(() => {
@@ -324,7 +542,7 @@ export const StudentSpaceModal: React.FC<StudentSpaceModalProps> = ({
   };
 
   const handleGoToLesson = (lessonId: string, questionId?: string) => {
-    onSelectLessonAndTab(lessonId, 'homework');
+    onSelectLessonAndTab(lessonId, questionId ? 'homework' : 'tasks');
     onClose();
     if (questionId) {
       setTimeout(() => {
@@ -393,21 +611,6 @@ export const StudentSpaceModal: React.FC<StudentSpaceModalProps> = ({
         {/* NAVIGATION TABS */}
         <div className="px-6 sm:px-8 border-b border-slate-100 bg-white flex items-center gap-3 shrink-0 overflow-x-auto">
           <button
-            onClick={() => setActiveTab('assignments')}
-            className={`flex items-center gap-2 py-4 px-3 text-xs font-black uppercase tracking-wider border-b-2 transition-all shrink-0 ${
-              activeTab === 'assignments' 
-                ? 'border-indigo-600 text-indigo-600' 
-                : 'border-transparent text-slate-400 hover:text-slate-600'
-            }`}
-          >
-            <Layers size={16} /> 
-            Nhiệm vụ được giao 
-            <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 text-[10px] font-bold">
-              {totalTasks}
-            </span>
-          </button>
-
-          <button
             onClick={() => setActiveTab('stats')}
             className={`flex items-center gap-2 py-4 px-3 text-xs font-black uppercase tracking-wider border-b-2 transition-all shrink-0 ${
               activeTab === 'stats' 
@@ -416,6 +619,21 @@ export const StudentSpaceModal: React.FC<StudentSpaceModalProps> = ({
             }`}
           >
             <TrendingUp size={16} /> Tiến độ học tập ({completionRate}%)
+          </button>
+
+          <button
+            onClick={() => setActiveTab('assignments')}
+            className={`flex items-center gap-2 py-4 px-3 text-xs font-black uppercase tracking-wider border-b-2 transition-all shrink-0 ${
+              activeTab === 'assignments' 
+                ? 'border-indigo-600 text-indigo-600' 
+                : 'border-transparent text-slate-400 hover:text-slate-600'
+            }`}
+          >
+            <Layers size={16} /> 
+            Nhiệm vụ & BTVN 
+            <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 text-[10px] font-bold">
+              {totalTasks}
+            </span>
           </button>
 
           <button
@@ -432,7 +650,292 @@ export const StudentSpaceModal: React.FC<StudentSpaceModalProps> = ({
 
         {/* MAIN BODY CONTENT */}
         <div className="flex-1 overflow-y-auto p-6 sm:p-8 bg-[#f8fafc]">
-          {/* TAB 1: ASSIGNMENTS & HOMEWORK */}
+          {/* TAB 1: STATS & LESSON COMPLETION LIST (PRIMARY DASHBOARD) */}
+          {activeTab === 'stats' && (
+            <div className="space-y-6">
+              <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-100 shadow-sm space-y-6">
+                <div className="flex items-center gap-3 pb-4 border-b border-slate-100">
+                  <div className="p-3 bg-indigo-50 text-indigo-600 rounded-2xl">
+                    <GraduationCap size={24} />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-black text-slate-800 uppercase tracking-tight">Thống kê tiến độ & rèn luyện</h3>
+                    <p className="text-xs font-semibold text-slate-400">Đánh giá kết quả học tập Vật lý Khối {selectedGrade || student.grade_id}</p>
+                  </div>
+                </div>
+
+                {/* PROGRESS BAR */}
+                <div>
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-xs font-black text-slate-700 uppercase tracking-wider">Tỉ lệ hoàn thành nhiệm vụ</span>
+                    <span className="text-sm font-black text-indigo-600">
+                      {completionRate}% ({completedAssignedTasksCount}/{assignedTasksCount} bài có nhiệm vụ)
+                    </span>
+                  </div>
+                  <div className="w-full h-4 bg-slate-100 rounded-full overflow-hidden p-0.5">
+                    <div 
+                      className="h-full bg-gradient-to-r from-indigo-500 to-emerald-500 rounded-full transition-all duration-1000"
+                      style={{ width: `${completionRate}%` }}
+                    />
+                  </div>
+                </div>
+
+                {/* 3 STATS CARDS */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
+                  <div className="p-5 rounded-2xl bg-indigo-50/50 border border-indigo-100">
+                    <p className="text-[10px] font-black uppercase text-indigo-600 tracking-widest">Thời lượng học tập ghi nhận</p>
+                    <p className="text-2xl font-black text-slate-800 mt-1">{totalStudyMinutes} <span className="text-xs font-bold text-slate-500">phút</span></p>
+                    <p className="text-[11px] text-slate-400 mt-1">Bao gồm đọc học liệu & lướt thẻ flashcards</p>
+                  </div>
+
+                  <div className="p-5 rounded-2xl bg-emerald-50/50 border border-emerald-100">
+                    <p className="text-[10px] font-black uppercase text-emerald-600 tracking-widest">Bài nộp đạt yêu cầu</p>
+                    <p className="text-2xl font-black text-emerald-700 mt-1">{approvedTasks} <span className="text-xs font-bold text-emerald-500">bài</span></p>
+                    <p className="text-[11px] text-slate-400 mt-1">Đã được giáo viên phê duyệt chính thức</p>
+                  </div>
+
+                  <div className="p-5 rounded-2xl bg-amber-50/50 border border-amber-100">
+                    <p className="text-[10px] font-black uppercase text-amber-600 tracking-widest">Bài đang chờ chấm</p>
+                    <p className="text-2xl font-black text-amber-700 mt-1">{pendingTasks} <span className="text-xs font-bold text-amber-500">bài</span></p>
+                    <p className="text-[11px] text-slate-400 mt-1">Đang chờ giáo viên kiểm tra và nhận xét</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* BẢNG LIỆT KÊ DANH SÁCH TẤT CẢ BÀI HỌC VÀ TRẠNG THÁI HOÀN THÀNH */}
+              <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm space-y-4">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
+                  <div>
+                    <h4 className="text-sm font-black text-slate-800 uppercase tracking-tight flex items-center gap-2">
+                      <ClipboardCheck className="text-indigo-600" size={18} />
+                      Danh sách Bài học & Trạng thái Hoàn thành Nhiệm vụ
+                    </h4>
+                    <p className="text-[11px] text-slate-400 font-medium mt-0.5">
+                      Liệt kê tất cả bài học trong menu. Những bài có nhiệm vụ hiển thị tiến độ, bài chưa có nhiệm vụ hiển thị "Chưa có".
+                    </p>
+                  </div>
+
+                  <div className="flex items-center gap-1.5 overflow-x-auto w-full sm:w-auto">
+                    <button 
+                      onClick={() => setLessonFilter('all')}
+                      className={`px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all whitespace-nowrap ${
+                        lessonFilter === 'all' ? 'bg-slate-800 text-white' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
+                      }`}
+                    >
+                      Tất cả ({totalLessonsCount})
+                    </button>
+                    <button 
+                      onClick={() => setLessonFilter('completed')}
+                      className={`px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all whitespace-nowrap ${
+                        lessonFilter === 'completed' ? 'bg-emerald-600 text-white' : 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100'
+                      }`}
+                    >
+                      Đã hoàn thành ({completedAssignedTasksCount})
+                    </button>
+                    <button 
+                      onClick={() => setLessonFilter('incomplete')}
+                      className={`px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all whitespace-nowrap ${
+                        lessonFilter === 'incomplete' ? 'bg-amber-500 text-white' : 'bg-amber-50 text-amber-600 hover:bg-amber-100'
+                      }`}
+                    >
+                      Chưa hoàn thành ({pendingAssignedTasksCount})
+                    </button>
+                    <button 
+                      onClick={() => setLessonFilter('no_task')}
+                      className={`px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all whitespace-nowrap ${
+                        lessonFilter === 'no_task' ? 'bg-slate-700 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                      }`}
+                    >
+                      Chưa có nhiệm vụ ({noTaskCount})
+                    </button>
+                    {expiredLessonsCount > 0 && (
+                      <button 
+                        onClick={() => setLessonFilter('expired')}
+                        className={`px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all whitespace-nowrap ${
+                          lessonFilter === 'expired' ? 'bg-rose-600 text-white' : 'bg-rose-50 text-rose-600 hover:bg-rose-100'
+                        }`}
+                      >
+                        Đã quá hạn ({expiredLessonsCount})
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {/* SEARCH BAR FOR LESSONS */}
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={searchTerm}
+                    onChange={e => setSearchTerm(e.target.value)}
+                    placeholder="Tìm kiếm bài học theo tên..."
+                    className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-700 outline-none focus:border-indigo-500 focus:bg-white"
+                  />
+                  <FileText size={14} className="absolute left-3 top-3 text-slate-400" />
+                </div>
+
+                {/* LESSON LIST ITEMS */}
+                {filteredLessonList.length === 0 ? (
+                  <div className="p-8 text-center text-slate-500 text-xs bg-slate-50/60 rounded-2xl border border-dashed border-slate-200">
+                    <p className="font-bold text-slate-700 text-sm mb-1">
+                      Không tìm thấy bài học nào phù hợp
+                    </p>
+                    <p className="text-[11px] text-slate-400 mt-1">
+                      Vui lòng thử thay đổi từ khóa tìm kiếm hoặc chọn bộ lọc khác.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {filteredLessonList.map((item) => (
+                      <div 
+                        key={item.lessonId}
+                        className={`p-4 rounded-2xl border transition-all ${
+                          item.hasTaskAssigned
+                            ? item.isCompleted
+                              ? 'bg-emerald-50/30 border-emerald-200/80 hover:border-emerald-300'
+                              : item.isExpired
+                              ? 'bg-rose-50/30 border-rose-200/80 hover:border-rose-300'
+                              : 'bg-amber-50/30 border-amber-200/80 hover:border-amber-300'
+                            : 'bg-slate-50/40 border-slate-100 hover:border-slate-200'
+                        }`}
+                      >
+                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+                          {/* LEFT INFO */}
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-1 flex-wrap">
+                              <span className="text-[10px] font-black uppercase text-slate-400 tracking-wider">
+                                {item.chapterTitle}
+                              </span>
+                              {(item.startDate || item.endDate) && (
+                                <span className="px-2 py-0.5 rounded-md text-[9px] font-bold bg-slate-100 text-slate-600 flex items-center gap-1">
+                                  <Calendar size={10} />
+                                  {formatDateVN(item.startDate) || '...'} - {formatDateVN(item.endDate) || 'Không giới hạn'}
+                                </span>
+                              )}
+                            </div>
+
+                            <h5 className="text-xs font-black text-slate-800 uppercase tracking-tight line-clamp-1">
+                              {item.lessonTitle}
+                            </h5>
+
+                            {/* THREE CONDITIONS PROGRESS ROW / OR UNASSIGNED NOTICE */}
+                            {item.hasTaskAssigned ? (
+                              <div className="flex items-center gap-2 sm:gap-3 mt-2.5 flex-wrap text-[11px]">
+                                {/* 1. HỌC LIỆU */}
+                                <div className={`px-2.5 py-1 rounded-xl border flex items-center gap-1.5 ${
+                                  item.materialSatisfied 
+                                    ? 'bg-emerald-50 text-emerald-700 border-emerald-200 font-bold' 
+                                    : 'bg-amber-50 text-amber-700 border-amber-200 font-medium'
+                                }`}>
+                                  <BookOpen size={13} />
+                                  <span>
+                                    Học liệu: <strong>{item.actualMaterialMinutes}p</strong>
+                                    {item.minMaterialMinutes > 0 ? `/${item.minMaterialMinutes}p` : ''}
+                                  </span>
+                                  {item.materialSatisfied ? (
+                                    <CheckCircle2 size={12} className="text-emerald-600 shrink-0" />
+                                  ) : (
+                                    <Clock size={12} className="text-amber-600 shrink-0" />
+                                  )}
+                                </div>
+
+                                {/* 2. FLASHCARD */}
+                                <div className={`px-2.5 py-1 rounded-xl border flex items-center gap-1.5 ${
+                                  item.flashcardSatisfied 
+                                    ? 'bg-emerald-50 text-emerald-700 border-emerald-200 font-bold' 
+                                    : 'bg-amber-50 text-amber-700 border-amber-200 font-medium'
+                                }`}>
+                                  <Sparkles size={13} />
+                                  <span>
+                                    Flashcard: <strong>{item.actualFlashcardMinutes}p</strong>
+                                    {item.minFlashcardMinutes > 0 ? `/${item.minFlashcardMinutes}p` : ''}
+                                  </span>
+                                  {item.flashcardSatisfied ? (
+                                    <CheckCircle2 size={12} className="text-emerald-600 shrink-0" />
+                                  ) : (
+                                    <Clock size={12} className="text-amber-600 shrink-0" />
+                                  )}
+                                </div>
+
+                                {/* 3. BTVN */}
+                                <div className={`px-2.5 py-1 rounded-xl border flex items-center gap-1.5 ${
+                                  item.homeworkSatisfied
+                                    ? 'bg-emerald-50 text-emerald-700 border-emerald-200 font-bold'
+                                    : item.homeworkStatus === 'pending'
+                                    ? 'bg-amber-50 text-amber-700 border-amber-200 font-medium'
+                                    : item.homeworkStatus === 'not_submitted'
+                                    ? 'bg-rose-50 text-rose-700 border-rose-200 font-medium'
+                                    : 'bg-slate-100 text-slate-500 border-slate-200 font-medium'
+                                }`}>
+                                  <FileText size={13} />
+                                  <span>
+                                    BTVN: <strong>
+                                      {item.homeworkStatus === 'approved' ? 'GV đã duyệt' :
+                                       item.homeworkStatus === 'pending' ? 'Chờ GV duyệt' :
+                                       item.homeworkStatus === 'not_submitted' ? 'Chưa nộp' : 'Không yêu cầu'}
+                                    </strong>
+                                  </span>
+                                  {item.homeworkSatisfied ? (
+                                    <CheckCircle2 size={12} className="text-emerald-600 shrink-0" />
+                                  ) : (
+                                    <Clock size={12} className="text-amber-600 shrink-0" />
+                                  )}
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="mt-2.5 flex items-center gap-2">
+                                <span className="px-2.5 py-1 rounded-xl bg-slate-100 text-slate-500 text-[10px] font-bold border border-slate-200">
+                                  Chưa có nhiệm vụ
+                                </span>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* RIGHT: STATUS BADGE & ACTION BUTTON */}
+                          <div className="flex items-center gap-2.5 shrink-0 self-end md:self-center">
+                            {item.hasTaskAssigned ? (
+                              <>
+                                {item.isCompleted ? (
+                                  <span className="px-3 py-1.5 rounded-xl bg-emerald-600 text-white text-[10px] font-black uppercase tracking-wider flex items-center gap-1 shadow-sm shadow-emerald-200">
+                                    <CheckCircle2 size={13} /> Đã hoàn thành
+                                  </span>
+                                ) : item.isExpired ? (
+                                  <span className="px-3 py-1.5 rounded-xl bg-rose-600 text-white text-[10px] font-black uppercase tracking-wider flex items-center gap-1 shadow-sm shadow-rose-200">
+                                    <Lock size={13} /> Đã quá hạn
+                                  </span>
+                                ) : (
+                                  <span className="px-3 py-1.5 rounded-xl bg-amber-500 text-white text-[10px] font-black uppercase tracking-wider flex items-center gap-1 shadow-sm shadow-amber-200">
+                                    <Clock size={13} /> Chưa hoàn thành
+                                  </span>
+                                )}
+
+                                <button
+                                  onClick={() => handleGoToLesson(item.lessonId)}
+                                  className="px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-[10px] font-black uppercase tracking-wider transition-all flex items-center gap-1 shadow-md shadow-indigo-100"
+                                >
+                                  Làm ngay <ChevronRight size={13} />
+                                </button>
+                              </>
+                            ) : (
+                              <button
+                                onClick={() => handleGoToLesson(item.lessonId)}
+                                className="px-3.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 border border-slate-200 shadow-xs"
+                                title="Bài học này chưa có nhiệm vụ - Bấm để vào xem bài học"
+                              >
+                                <AlertCircle size={13} className="text-slate-400" />
+                                <span>Chưa có nhiệm vụ</span>
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* TAB 2: ASSIGNMENTS & HOMEWORK */}
           {activeTab === 'assignments' && (
             <div className="space-y-6">
               {/* TOP STATS CARDS */}
@@ -679,57 +1182,6 @@ export const StudentSpaceModal: React.FC<StudentSpaceModalProps> = ({
                   })}
                 </div>
               )}
-            </div>
-          )}
-
-          {/* TAB 2: STATS & OVERVIEW */}
-          {activeTab === 'stats' && (
-            <div className="space-y-6">
-              <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-100 shadow-sm space-y-6">
-                <div className="flex items-center gap-3 pb-4 border-b border-slate-100">
-                  <div className="p-3 bg-indigo-50 text-indigo-600 rounded-2xl">
-                    <GraduationCap size={24} />
-                  </div>
-                  <div>
-                    <h3 className="text-base font-black text-slate-800 uppercase tracking-tight">Thống kê tiến độ & rèn luyện</h3>
-                    <p className="text-xs font-semibold text-slate-400">Đánh giá kết quả học tập Vật lý Khối {selectedGrade || student.grade_id}</p>
-                  </div>
-                </div>
-
-                {/* PROGRESS BAR */}
-                <div>
-                  <div className="flex justify-between items-center mb-2">
-                    <span className="text-xs font-black text-slate-700 uppercase tracking-wider">Tỉ lệ hoàn thành nhiệm vụ</span>
-                    <span className="text-sm font-black text-indigo-600">{completionRate}% ({completedTasks}/{totalTasks} bài)</span>
-                  </div>
-                  <div className="w-full h-4 bg-slate-100 rounded-full overflow-hidden p-0.5">
-                    <div 
-                      className="h-full bg-gradient-to-r from-indigo-500 to-emerald-500 rounded-full transition-all duration-1000"
-                      style={{ width: `${completionRate}%` }}
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
-                  <div className="p-5 rounded-2xl bg-indigo-50/50 border border-indigo-100">
-                    <p className="text-[10px] font-black uppercase text-indigo-600 tracking-widest">Thời lượng học tập ghi nhận</p>
-                    <p className="text-2xl font-black text-slate-800 mt-1">{totalStudyMinutes} <span className="text-xs font-bold text-slate-500">phút</span></p>
-                    <p className="text-[11px] text-slate-400 mt-1">Bao gồm đọc học liệu & lướt thẻ flashcards</p>
-                  </div>
-
-                  <div className="p-5 rounded-2xl bg-emerald-50/50 border border-emerald-100">
-                    <p className="text-[10px] font-black uppercase text-emerald-600 tracking-widest">Bài nộp đạt yêu cầu</p>
-                    <p className="text-2xl font-black text-emerald-700 mt-1">{approvedTasks} <span className="text-xs font-bold text-emerald-500">bài</span></p>
-                    <p className="text-[11px] text-slate-400 mt-1">Đã được giáo viên phê duyệt chính thức</p>
-                  </div>
-
-                  <div className="p-5 rounded-2xl bg-amber-50/50 border border-amber-100">
-                    <p className="text-[10px] font-black uppercase text-amber-600 tracking-widest">Bài đang chờ chấm</p>
-                    <p className="text-2xl font-black text-amber-700 mt-1">{pendingTasks} <span className="text-xs font-bold text-amber-500">bài</span></p>
-                    <p className="text-[11px] text-slate-400 mt-1">Đang chờ giáo viên kiểm tra và nhận xét</p>
-                  </div>
-                </div>
-              </div>
             </div>
           )}
 

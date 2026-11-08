@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { ClipboardCheck, Clock, CheckCircle2, AlertCircle, Loader2, Search, X, Users, RefreshCw, FileSpreadsheet, Download, Filter } from 'lucide-react';
+import { ClipboardCheck, Clock, CheckCircle2, AlertCircle, Loader2, Search, X, Users, RefreshCw, FileSpreadsheet, Download, Filter, Calendar, Lock, ShieldAlert, FileText, ArrowRight, Trash2, Send, FileEdit, Eye, EyeOff } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 import { LessonTask, StudyLog, Student } from '../types';
 import { ConfirmModal, ToastNotification, ConfirmState, ToastState } from './CustomDialog';
@@ -11,14 +11,55 @@ interface TaskPanelProps {
   isAdmin: boolean;
   themeColor: string;
   gradeId?: number | null;
+  onSwitchTab?: (tab: 'content' | 'flashcards' | 'tasks' | 'homework') => void;
 }
 
-const TaskPanel: React.FC<TaskPanelProps> = ({ nodeId, student, isAdmin, themeColor, gradeId }) => {
+const formatDateVN = (dateStr?: string) => {
+  if (!dateStr || !dateStr.trim()) return '';
+  try {
+    const clean = dateStr.trim();
+    if (clean.includes('-')) {
+      const parts = clean.split('T')[0].split('-');
+      if (parts.length === 3) {
+        return `${parts[2]}/${parts[1]}/${parts[0]}`;
+      }
+    }
+    const d = new Date(clean);
+    if (isNaN(d.getTime())) return dateStr;
+    return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
+  } catch {
+    return dateStr;
+  }
+};
+
+const checkIsExpired = (endDateStr?: string) => {
+  if (!endDateStr || !endDateStr.trim()) return false;
+  try {
+    const clean = endDateStr.trim().split('T')[0];
+    const end = new Date(clean);
+    end.setHours(23, 59, 59, 999);
+    return new Date().getTime() > end.getTime();
+  } catch {
+    return false;
+  }
+};
+
+const TaskPanel: React.FC<TaskPanelProps> = ({ nodeId, student, isAdmin, themeColor, gradeId, onSwitchTab }) => {
   const [task, setTask] = useState<LessonTask | null>(null);
   const [logs, setLogs] = useState<StudyLog[]>([]);
+  const [hwComments, setHwComments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
-  const [formData, setFormData] = useState({ description: '', minMaterialTime: 10, minFlashcardTime: 5, minQuizTime: 0 });
+  const [formData, setFormData] = useState({ 
+    description: '', 
+    minMaterialTime: 10, 
+    minFlashcardTime: 5, 
+    minQuizTime: 0,
+    requireHomework: false,
+    startDate: '',
+    endDate: '',
+    isDraft: false
+  });
   const [showIncompleteModal, setShowIncompleteModal] = useState(false);
   const [loadingIncomplete, setLoadingIncomplete] = useState(false);
   const [incompleteStudentsData, setIncompleteStudentsData] = useState<any[]>([]);
@@ -41,11 +82,20 @@ const TaskPanel: React.FC<TaskPanelProps> = ({ nodeId, student, isAdmin, themeCo
     try {
       const minMat = task?.minMaterialTime || 0;
       const minFlash = task?.minFlashcardTime || 0;
+      const requireHw = task?.requireHomework || false;
+      const isTaskExpired = checkIsExpired(task?.endDate);
 
       const { data: students } = await supabase.from('students').select('*').eq('grade_id', gradeId);
       if (!students) return;
 
       const { data: allLogs } = await supabase.from('study_logs').select('*').eq('node_id', nodeId);
+      const { data: allHw } = await supabase.from('forum_comments').select('*');
+
+      const homeworkNodeId = `homework_${nodeId}`;
+      const relevantHw = (allHw || []).filter((c: any) => {
+        const id = c.nodeId || c.node_id || '';
+        return id === homeworkNodeId || id.startsWith(`${homeworkNodeId}_ans_`);
+      });
       
       const processed = students.map(s => {
         const studentLogs = allLogs?.filter(l => l.student_id === s.id) || [];
@@ -54,7 +104,36 @@ const TaskPanel: React.FC<TaskPanelProps> = ({ nodeId, student, isAdmin, themeCo
         
         const matCompleted = (matSec / 60) >= minMat;
         const flashCompleted = (flashSec / 60) >= minFlash;
-        const fullyCompleted = matCompleted && flashCompleted;
+
+        const sName = (s.name || '').toLowerCase();
+        const sFullName = (s.full_name || s.name || '').toLowerCase();
+        
+        const sHwList = relevantHw.filter((c: any) => {
+          const auth = (c.author || '').toLowerCase();
+          return (sName && auth.includes(sName)) || (sFullName && auth.includes(sFullName));
+        });
+
+        const hwSubmitted = sHwList.length > 0;
+        const hwApproved = sHwList.some((c: any) => {
+          const raw = c.content || '';
+          return (
+            c.isApproved === true || 
+            c.isApproved === 'true' || 
+            c.is_approved === true || 
+            c.is_approved === 'true' || 
+            raw.includes('<!--status:approved-->')
+          );
+        });
+
+        const hwCompleted = !requireHw || hwApproved;
+        const fullyCompleted = matCompleted && flashCompleted && hwCompleted;
+
+        let hwStatusStr = 'Không yêu cầu';
+        if (requireHw) {
+          if (hwApproved) hwStatusStr = 'Đã duyệt';
+          else if (hwSubmitted) hwStatusStr = 'Chờ duyệt';
+          else hwStatusStr = 'Chưa nộp';
+        }
 
         return {
           id: s.id,
@@ -64,7 +143,12 @@ const TaskPanel: React.FC<TaskPanelProps> = ({ nodeId, student, isAdmin, themeCo
           flashTime: flashSec,
           matCompleted,
           flashCompleted,
-          fullyCompleted
+          hwSubmitted,
+          hwApproved,
+          hwCompleted,
+          hwStatusStr,
+          fullyCompleted,
+          isExpiredAndIncomplete: isTaskExpired && !fullyCompleted
         };
       });
 
@@ -101,7 +185,7 @@ const TaskPanel: React.FC<TaskPanelProps> = ({ nodeId, student, isAdmin, themeCo
 
     const searchTag = incompleteSearch.trim() ? `_Lop_${incompleteSearch.trim()}` : '';
     const dateTag = new Date().toISOString().slice(0, 10);
-    const fileName = `Tien_Do_Hoc_Tap${searchTag}_${dateTag}.xls`;
+    const fileName = `Tien_Do_Nhiem_Vu${searchTag}_${dateTag}.xls`;
 
     const formatSec = (sec: number) => {
       const m = Math.floor(sec / 60);
@@ -111,6 +195,8 @@ const TaskPanel: React.FC<TaskPanelProps> = ({ nodeId, student, isAdmin, themeCo
 
     const minMat = task?.minMaterialTime || 0;
     const minFlash = task?.minFlashcardTime || 0;
+    const requireHw = task?.requireHomework || false;
+    const dateRangeStr = (task?.startDate || task?.endDate) ? `${formatDateVN(task?.startDate)} -> ${formatDateVN(task?.endDate)}` : 'Không giới hạn';
 
     let html = `
       <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
@@ -147,11 +233,11 @@ const TaskPanel: React.FC<TaskPanelProps> = ({ nodeId, student, isAdmin, themeCo
         <div class="title">BÁO CÁO TIẾN ĐỘ THỰC HIỆN NHIỆM VỤ HỌC TẬP</div>
         <div class="subtitle">
           ${incompleteSearch.trim() ? 'Lớp / Từ khóa lọc: <b>' + incompleteSearch.trim() + '</b> | ' : ''}
-          Yêu cầu tối thiểu: Học liệu (${minMat} phút) &bull; Flashcard (${minFlash} phút)
+          Thời hạn: <b>${dateRangeStr}</b> &bull; Yêu cầu: Học liệu (${minMat}p), Flashcard (${minFlash}p), BTVN (${requireHw ? 'Có yêu cầu GV duyệt' : 'Không'})
         </div>
         <div class="meta-box">
-          <b>Tổng số học sinh xuất dữ liệu:</b> ${filteredStudents.length} em &bull; 
-          <b>Ngày xuất báo cáo:</b> ${new Date().toLocaleDateString('vi-VN')} ${new Date().toLocaleTimeString('vi-VN')}
+          <b>Tổng số học sinh:</b> ${filteredStudents.length} em &bull; 
+          <b>Ngày xuất:</b> ${new Date().toLocaleDateString('vi-VN')} ${new Date().toLocaleTimeString('vi-VN')}
         </div>
         <table>
           <thead>
@@ -163,13 +249,18 @@ const TaskPanel: React.FC<TaskPanelProps> = ({ nodeId, student, isAdmin, themeCo
               <th>Trạng thái Học liệu</th>
               <th>Thời gian Flashcard</th>
               <th>Trạng thái Flashcard</th>
-              <th>Đánh giá Nhiệm vụ</th>
+              <th>Bài tập về nhà (BTVN)</th>
+              <th>Thời hạn nhiệm vụ</th>
+              <th>Đánh giá Tổng thể</th>
             </tr>
           </thead>
           <tbody>
     `;
 
     filteredStudents.forEach((s, idx) => {
+      const deadlineText = s.isExpiredAndIncomplete ? 'Quá hạn đóng bằng' : (s.fullyCompleted ? 'Đúng hạn' : 'Trong hạn');
+      const finalEvalText = s.isExpiredAndIncomplete ? 'Quá hạn đóng bằng' : (s.fullyCompleted ? 'Hoàn thành' : 'Chưa hoàn thành');
+
       html += `
         <tr>
           <td class="center">${idx + 1}</td>
@@ -179,7 +270,9 @@ const TaskPanel: React.FC<TaskPanelProps> = ({ nodeId, student, isAdmin, themeCo
           <td class="center ${s.matCompleted ? 'completed' : 'incomplete'}">${s.matCompleted ? 'Đã đạt' : 'Chưa đạt'}</td>
           <td class="center">${formatSec(s.flashTime)}</td>
           <td class="center ${s.flashCompleted ? 'completed' : 'incomplete'}">${s.flashCompleted ? 'Đã đạt' : 'Chưa đạt'}</td>
-          <td class="center ${s.fullyCompleted ? 'completed' : 'incomplete'}">${s.fullyCompleted ? 'Hoàn thành' : 'Chưa hoàn thành'}</td>
+          <td class="center ${s.hwApproved ? 'completed' : 'incomplete'}">${s.hwStatusStr}</td>
+          <td class="center ${s.isExpiredAndIncomplete ? 'incomplete' : 'completed'}">${deadlineText}</td>
+          <td class="center ${s.fullyCompleted ? 'completed' : 'incomplete'}">${finalEvalText}</td>
         </tr>
       `;
     });
@@ -234,27 +327,54 @@ const TaskPanel: React.FC<TaskPanelProps> = ({ nodeId, student, isAdmin, themeCo
         // 3. Dự phòng cho dữ liệu cũ
         return true;
       });
-      
+
+      let requireHw = taskData?.require_homework || false;
+      let startDateVal = taskData?.start_date || '';
+      let endDateVal = taskData?.end_date || '';
+      let isDraftVal = taskData?.is_draft === true;
+      let cleanDesc = taskData?.description || '';
+
+      // Parse metadata from description if stored
+      const metaMatch = cleanDesc.match(/<!--task_meta:([\s\S]*?)-->/);
+      if (metaMatch && metaMatch[1]) {
+        try {
+          const parsed = JSON.parse(metaMatch[1]);
+          if (parsed.requireHomework !== undefined) requireHw = parsed.requireHomework;
+          if (parsed.startDate !== undefined) startDateVal = parsed.startDate;
+          if (parsed.endDate !== undefined) endDateVal = parsed.endDate;
+          if (parsed.isDraft !== undefined) isDraftVal = parsed.isDraft;
+          cleanDesc = cleanDesc.replace(/<!--task_meta:[\s\S]*?-->/g, '').trim();
+        } catch (e) {}
+      }
+
       setTask(taskData ? {
         id: taskData.id,
         nodeId: taskData.node_id,
-        description: taskData.description,
+        description: cleanDesc,
         minMaterialTime: taskData.min_material_time,
         minFlashcardTime: taskData.min_flashcard_time,
         minQuizTime: taskData.min_quiz_time || 0,
+        requireHomework: requireHw,
+        startDate: startDateVal,
+        endDate: endDateVal,
+        isDraft: isDraftVal,
         createdAt: taskData.created_at
       } : null);
 
       if (taskData) {
         setFormData({
-          description: taskData.description,
+          description: cleanDesc,
           minMaterialTime: taskData.min_material_time,
           minFlashcardTime: taskData.min_flashcard_time,
-          minQuizTime: taskData.min_quiz_time || 0
+          minQuizTime: taskData.min_quiz_time || 0,
+          requireHomework: requireHw,
+          startDate: startDateVal,
+          endDate: endDateVal,
+          isDraft: isDraftVal
         });
       }
 
-      // Fetch logs for this student and node
+      // Fetch study logs for this student and node
       if (student) {
         const { data: logData } = await supabase
           .from('study_logs')
@@ -263,6 +383,20 @@ const TaskPanel: React.FC<TaskPanelProps> = ({ nodeId, student, isAdmin, themeCo
           .eq('node_id', nodeId);
         
         if (logData) setLogs(logData);
+      }
+
+      // Fetch homework comments to verify BTVN submission & teacher approval
+      const homeworkNodeId = `homework_${nodeId}`;
+      const { data: hwData } = await supabase
+        .from('forum_comments')
+        .select('*');
+
+      if (hwData) {
+        const filtered = hwData.filter((c: any) => {
+          const id = c.nodeId || c.node_id || '';
+          return id === homeworkNodeId || id.startsWith(`${homeworkNodeId}_ans_`);
+        });
+        setHwComments(filtered);
       }
     } catch (err) {
       console.error('Error fetching task data:', err);
@@ -275,15 +409,30 @@ const TaskPanel: React.FC<TaskPanelProps> = ({ nodeId, student, isAdmin, themeCo
     fetchTaskData();
   }, [fetchTaskData]);
 
-  const handleSaveTask = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSaveTask = async (e?: React.FormEvent, asDraft?: boolean) => {
+    if (e) e.preventDefault();
     try {
-      const payload = {
+      const isDraftTarget = asDraft !== undefined ? asDraft : formData.isDraft;
+      const metaObj = {
+        requireHomework: formData.requireHomework,
+        startDate: formData.startDate,
+        endDate: formData.endDate,
+        isDraft: isDraftTarget
+      };
+      const metaSnippet = `<!--task_meta:${JSON.stringify(metaObj)}-->`;
+      const cleanDesc = formData.description.replace(/<!--task_meta:[\s\S]*?-->/g, '').trim();
+      const fullDesc = `${cleanDesc}\n\n${metaSnippet}`;
+
+      const payload: any = {
         node_id: nodeId,
         grade_id: String(gradeId),
-        description: formData.description,
+        description: fullDesc,
         min_material_time: formData.minMaterialTime,
         min_flashcard_time: formData.minFlashcardTime,
+        require_homework: formData.requireHomework,
+        is_draft: isDraftTarget,
+        start_date: formData.startDate || null,
+        end_date: formData.endDate || null,
         created_at: new Date().toISOString()
       };
 
@@ -293,9 +442,9 @@ const TaskPanel: React.FC<TaskPanelProps> = ({ nodeId, student, isAdmin, themeCo
           .update(payload)
           .eq('id', task.id);
         if (error) {
-           console.warn("Update with grade_id failed, trying without:", error);
+           console.warn("Update with new columns failed, trying fallback payload:", error);
            const { error: error2 } = await supabase.from('lesson_tasks').update({
-             description: formData.description,
+             description: fullDesc,
              min_material_time: formData.minMaterialTime,
              min_flashcard_time: formData.minFlashcardTime
            }).eq('id', task.id);
@@ -306,10 +455,10 @@ const TaskPanel: React.FC<TaskPanelProps> = ({ nodeId, student, isAdmin, themeCo
           .from('lesson_tasks')
           .insert([payload]);
         if (error) {
-           console.error("Task insert error, retrying without grade_id:", error);
+           console.error("Task insert error, trying fallback payload:", error);
            const { error: error2 } = await supabase.from('lesson_tasks').insert([{
              node_id: payload.node_id,
-             description: payload.description,
+             description: fullDesc,
              min_material_time: payload.min_material_time,
              min_flashcard_time: payload.min_flashcard_time
            }]);
@@ -319,10 +468,100 @@ const TaskPanel: React.FC<TaskPanelProps> = ({ nodeId, student, isAdmin, themeCo
 
       setIsEditing(false);
       fetchTaskData();
-      showToast("Đã lưu yêu cầu nhiệm vụ thành công", "success");
+      if (isDraftTarget) {
+        showToast("Đã lưu bản nháp nhiệm vụ! Học sinh chưa nhìn thấy nhiệm vụ này.", "info", "Đã lưu bản nháp");
+      } else {
+        showToast("Đã giao nhiệm vụ chính thức cho học sinh!", "success", "Giao bài thành công");
+      }
     } catch (err: any) {
       console.error('Error saving task:', err);
       showToast('Lỗi lưu nhiệm vụ: ' + (err.message || "Kiểm tra quyền CSDL"), "error");
+    }
+  };
+
+  const handleQuickPublish = () => {
+    if (!task) return;
+    setConfirmState({
+      isOpen: true,
+      title: "Giao nhiệm vụ chính thức",
+      message: "Bạn có chắc chắn muốn giao nhiệm vụ này cho học sinh không? Học sinh sẽ bắt đầu nhìn thấy và thực hiện các yêu cầu.",
+      confirmText: "Giao chính thức ngay",
+      type: "info",
+      onConfirm: async () => {
+        await handleSaveTask(undefined, false);
+      }
+    });
+  };
+
+  const handleDeleteTask = async () => {
+    if (!task) return;
+    try {
+      // Check if any students have study logs or homework answers
+      const { data: logsData } = await supabase
+        .from('study_logs')
+        .select('id')
+        .eq('node_id', nodeId);
+
+      const homeworkNodeId = `homework_${nodeId}`;
+      const { data: hwData } = await supabase
+        .from('forum_comments')
+        .select('id')
+        .like('node_id', `${homeworkNodeId}_ans_%`);
+
+      const logsCount = logsData?.length || 0;
+      const hwCount = hwData?.length || 0;
+      const totalActivities = logsCount + hwCount;
+
+      let confirmTitle = "Xác nhận xóa nhiệm vụ";
+      let confirmMessage = task.isDraft
+        ? "Bạn có chắc chắn muốn xóa bản nháp nhiệm vụ này không? Thao tác này sẽ xóa sạch thiết lập nháp của bài học."
+        : "Bạn có chắc chắn muốn xóa nhiệm vụ này không? Bài học sẽ trở về trạng thái chưa có nhiệm vụ.";
+
+      if (totalActivities > 0 && !task.isDraft) {
+        confirmTitle = "⚠️ Cảnh báo: Nhiệm vụ đã có dữ liệu học tập";
+        confirmMessage = `Đã có dữ liệu học tập liên quan (${logsCount} lượt đọc/flashcard, ${hwCount} bài nộp BTVN). Nếu bạn xóa nhiệm vụ này, bài học sẽ trở về chưa có nhiệm vụ. Bạn có chắc chắn muốn xóa không?`;
+      }
+
+      setConfirmState({
+        isOpen: true,
+        title: confirmTitle,
+        message: confirmMessage,
+        confirmText: "Xác nhận xóa",
+        type: "danger",
+        onConfirm: async () => {
+          try {
+            setLoading(true);
+            const { error } = await supabase
+              .from('lesson_tasks')
+              .delete()
+              .eq('id', task.id);
+
+            if (error) {
+              await supabase.from('lesson_tasks').delete().eq('node_id', nodeId);
+            }
+
+            setTask(null);
+            setIsEditing(false);
+            setFormData({
+              description: '',
+              minMaterialTime: 10,
+              minFlashcardTime: 5,
+              minQuizTime: 0,
+              requireHomework: false,
+              startDate: '',
+              endDate: '',
+              isDraft: false
+            });
+            showToast("Đã xóa nhiệm vụ học tập thành công!", "success");
+          } catch (err: any) {
+            showToast("Lỗi khi xóa nhiệm vụ: " + err.message, "error");
+          } finally {
+            setLoading(false);
+          }
+        }
+      });
+    } catch (err: any) {
+      showToast("Lỗi kiểm tra dữ liệu: " + err.message, "error");
     }
   };
 
@@ -387,8 +626,33 @@ const TaskPanel: React.FC<TaskPanelProps> = ({ nodeId, student, isAdmin, themeCo
 
   const matPercent = Math.min(100, matMinSec > 0 ? (matTime / matMinSec) * 100 : 100);
   const flashPercent = Math.min(100, flashMinSec > 0 ? (flashTime / flashMinSec) * 100 : 100);
+  const matCompleted = matTime >= matMinSec;
+  const flashCompleted = flashTime >= flashMinSec;
 
-  const isCompleted = matTime >= matMinSec && flashTime >= flashMinSec;
+  // BTVN Check for current student
+  const studentNameCode = (student?.name || '').toLowerCase();
+  const studentFullName = (student?.full_name || student?.name || '').toLowerCase();
+  const studentHwList = hwComments.filter((c: any) => {
+    const auth = (c.author || '').toLowerCase();
+    return (studentNameCode && auth.includes(studentNameCode)) || (studentFullName && auth.includes(studentFullName));
+  });
+
+  const hwSubmitted = studentHwList.length > 0;
+  const hwApproved = studentHwList.some((c: any) => {
+    const raw = c.content || '';
+    return (
+      c.isApproved === true || 
+      c.isApproved === 'true' || 
+      c.is_approved === true || 
+      c.is_approved === 'true' || 
+      raw.includes('<!--status:approved-->')
+    );
+  });
+
+  const hwCompleted = !task?.requireHomework || hwApproved;
+  const isFullyCompleted = matCompleted && flashCompleted && hwCompleted;
+  const isExpired = checkIsExpired(task?.endDate);
+  const isLocked = isExpired && !isFullyCompleted;
 
   return (
     <div className="space-y-6">
@@ -409,17 +673,60 @@ const TaskPanel: React.FC<TaskPanelProps> = ({ nodeId, student, isAdmin, themeCo
             </button>
          </div>
       )}
-      <div className="flex items-center justify-between">
+
+      {/* Expiration Freeze Warning Banner */}
+      {isLocked && !isAdmin && (
+        <div className="bg-rose-50 border-2 border-rose-200 p-5 rounded-3xl flex items-center gap-4 animate-in slide-in-from-top-4 shadow-lg shadow-rose-100">
+           <div className="w-12 h-12 rounded-2xl bg-rose-600 text-white flex items-center justify-center shrink-0 shadow-md">
+              <Lock size={24} />
+           </div>
+           <div>
+              <h4 className="text-sm font-black text-rose-800 uppercase tracking-wide flex items-center gap-2">
+                 🔒 ĐÃ HẾT HẠN - NHIỆM VỤ ĐÃ BỊ ĐÓNG BẰNG
+              </h4>
+              <p className="text-xs font-medium text-rose-600 mt-1 leading-relaxed">
+                 Rất tiếc! Hạn chót hoàn thành nhiệm vụ bài học này là ngày <b>{formatDateVN(task?.endDate)}</b>. 
+                 Do chưa hoàn thành đủ các yêu cầu trước thời hạn, nhiệm vụ bài này hiện đã bị đóng băng.
+              </p>
+           </div>
+        </div>
+      )}
+
+      <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <h3 className="text-xl font-black text-slate-800 tracking-tight flex items-center gap-2 uppercase">
-            <ClipboardCheck className={`text-${themeColor}-600`} size={20} />
+            <ClipboardCheck className={`text-${themeColor}-600`} size={22} />
             Nhiệm vụ học tập
           </h3>
           <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">
-            {isAdmin ? 'Quản lý yêu cầu bắt buộc' : 'Tiến độ hoàn thành của em'}
+            {isAdmin ? 'Thiết lập yêu cầu & Quản lý thời hạn' : 'Tiến độ hoàn thành 3 hạng mục'}
           </p>
         </div>
-        <div className="flex items-center gap-3">
+
+        <div className="flex flex-wrap items-center gap-3">
+          {/* Draft status badge for Teacher */}
+          {isAdmin && task && !isEditing && (
+            task.isDraft ? (
+              <span className="px-3 py-1.5 bg-amber-100 text-amber-800 text-[10px] font-black uppercase rounded-xl border border-amber-200 flex items-center gap-1.5 shadow-xs">
+                <FileEdit size={12} className="text-amber-700" /> Bản nháp (Học sinh chưa thấy)
+              </span>
+            ) : (
+              <span className="px-3 py-1.5 bg-emerald-100 text-emerald-800 text-[10px] font-black uppercase rounded-xl border border-emerald-200 flex items-center gap-1.5 shadow-xs">
+                <CheckCircle2 size={12} className="text-emerald-700" /> Đã giao chính thức
+              </span>
+            )
+          )}
+
+          {/* Date range badge */}
+          {(task?.startDate || task?.endDate) && (
+            <div className="px-3.5 py-1.5 bg-indigo-50 border border-indigo-100 rounded-2xl flex items-center gap-2 text-indigo-700 text-xs font-bold shadow-xs">
+              <Calendar size={14} className="text-indigo-600" />
+              <span>
+                Thời hạn: {task.startDate ? formatDateVN(task.startDate) : 'Từ trước'} → {task.endDate ? formatDateVN(task.endDate) : 'Không giới hạn'}
+              </span>
+            </div>
+          )}
+
           {isAdmin && task && !isEditing && (
             <button 
               onClick={handleBatchUpdateGrade}
@@ -437,149 +744,362 @@ const TaskPanel: React.FC<TaskPanelProps> = ({ nodeId, student, isAdmin, themeCo
               <Users size={14} /> Danh sách
             </button>
           )}
+          {isAdmin && task && !isEditing && (
+            <button 
+              onClick={handleDeleteTask}
+              className="px-3.5 py-2 bg-rose-50 hover:bg-rose-100 text-rose-600 text-[10px] font-black uppercase rounded-xl transition-all shadow-sm border border-rose-200 flex items-center gap-1.5"
+              title="Xóa nhiệm vụ bài học này"
+            >
+              <Trash2 size={13} /> Xóa nhiệm vụ
+            </button>
+          )}
           {isAdmin && !isEditing && (
             <button 
               onClick={() => setIsEditing(true)}
               className={`px-4 py-2 bg-${themeColor}-600 text-white text-[10px] font-black uppercase rounded-xl shadow-lg shadow-${themeColor}-100 transition-all hover:scale-105 flex items-center gap-2`}
             >
-              {task ? 'Chỉnh sửa nhiệm vụ' : 'Tạo nhiệm vụ'}
+              <FileEdit size={13} /> {task ? 'Chỉnh sửa' : 'Tạo nhiệm vụ'}
             </button>
           )}
         </div>
       </div>
 
       {isEditing ? (
-        <form onSubmit={handleSaveTask} className="bg-white p-8 rounded-3xl border border-slate-100 shadow-xl space-y-4 animate-in zoom-in-95">
+        <form onSubmit={handleSaveTask} className="bg-white p-8 rounded-3xl border border-slate-100 shadow-xl space-y-5 animate-in zoom-in-95">
           <div className="space-y-2">
-            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Mô tả nhiệm vụ</label>
+            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Mô tả nhiệm vụ bài học</label>
             <textarea 
               value={formData.description}
               onChange={e => setFormData({ ...formData, description: e.target.value })}
               className="w-full p-4 bg-slate-50 border-2 border-transparent focus:border-indigo-400 rounded-2xl outline-none transition-all min-h-[100px] text-sm font-medium"
-              placeholder="Nhập yêu cầu học tập (Vd: Xem video bài giảng và rèn luyện flashcard)..."
+              placeholder="Nhập yêu cầu học tập (Ví dụ: Xem video bài giảng 10 phút, luyện Flashcard 5 phút và làm Bài tập về nhà)..."
               required
             />
           </div>
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-slate-500 font-medium">
             <div className="space-y-2">
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Thời gian học liệu (Phút)</label>
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">1. Thời gian xem Học liệu (Phút)</label>
               <input 
                 type="number"
+                min={0}
                 value={formData.minMaterialTime}
-                onChange={e => setFormData({ ...formData, minMaterialTime: parseInt(e.target.value) })}
-                className="w-full p-4 bg-slate-50 border-2 border-transparent focus:border-indigo-400 rounded-2xl outline-none"
+                onChange={e => setFormData({ ...formData, minMaterialTime: parseInt(e.target.value) || 0 })}
+                className="w-full p-4 bg-slate-50 border-2 border-transparent focus:border-indigo-400 rounded-2xl outline-none text-sm font-bold text-slate-800"
               />
             </div>
             <div className="space-y-2">
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Thời gian Flashcard (Phút)</label>
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">2. Thời gian luyện Flashcard (Phút)</label>
               <input 
                 type="number"
+                min={0}
                 value={formData.minFlashcardTime}
-                onChange={e => setFormData({ ...formData, minFlashcardTime: parseInt(e.target.value) })}
-                className="w-full p-4 bg-slate-50 border-2 border-transparent focus:border-indigo-400 rounded-2xl outline-none"
+                onChange={e => setFormData({ ...formData, minFlashcardTime: parseInt(e.target.value) || 0 })}
+                className="w-full p-4 bg-slate-50 border-2 border-transparent focus:border-indigo-400 rounded-2xl outline-none text-sm font-bold text-slate-800"
               />
             </div>
           </div>
-          <div className="flex justify-end gap-3 pt-4">
-            <button type="button" onClick={() => setIsEditing(false)} className="px-6 py-2 text-slate-400 font-bold text-xs uppercase tracking-widest">Hủy</button>
-            <button type="submit" className={`px-8 py-2 bg-${themeColor}-600 text-white font-bold text-xs uppercase rounded-xl tracking-widest shadow-lg shadow-${themeColor}-100`}>Lưu nhiệm vụ</button>
+
+          {/* BTVN & Date Range Setup */}
+          <div className="bg-slate-50 p-6 rounded-2xl border border-slate-200/80 space-y-4">
+            <div className="flex items-center gap-3">
+              <input 
+                type="checkbox"
+                id="requireHomework"
+                checked={formData.requireHomework}
+                onChange={e => setFormData({ ...formData, requireHomework: e.target.checked })}
+                className="w-5 h-5 text-indigo-600 rounded-md border-slate-300 focus:ring-indigo-500 cursor-pointer"
+              />
+              <label htmlFor="requireHomework" className="text-xs font-black text-slate-800 uppercase tracking-wide cursor-pointer flex items-center gap-2">
+                <FileText size={16} className="text-indigo-600" />
+                3. Yêu cầu làm Bài tập về nhà (BTVN phải được Giáo viên duyệt mới tính hoàn thành)
+              </label>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-slate-200">
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-1">
+                  <Calendar size={12} className="text-indigo-600" /> Ngày bắt đầu giao nhiệm vụ:
+                </label>
+                <input 
+                  type="date"
+                  value={formData.startDate}
+                  onChange={e => setFormData({ ...formData, startDate: e.target.value })}
+                  className="w-full px-4 py-2.5 bg-white border border-slate-300 rounded-xl text-xs font-bold text-slate-800 outline-none focus:border-indigo-500"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-1">
+                  <Clock size={12} className="text-rose-600" /> Hạn chót hoàn thành (Khóa sau ngày này):
+                </label>
+                <input 
+                  type="date"
+                  value={formData.endDate}
+                  onChange={e => setFormData({ ...formData, endDate: e.target.value })}
+                  className="w-full px-4 py-2.5 bg-white border border-slate-300 rounded-xl text-xs font-bold text-slate-800 outline-none focus:border-indigo-500"
+                />
+              </div>
+            </div>
+            <p className="text-[10px] text-slate-400 italic">
+              * Sau ngày hạn chót, học sinh chưa làm đủ các nhiệm vụ sẽ tự động bị chuyển sang trạng thái <b>"Đóng bằng quá hạn"</b>.
+            </p>
+          </div>
+
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-3 border-t border-slate-100">
+            <div>
+              {task && (
+                <button 
+                  type="button" 
+                  onClick={handleDeleteTask} 
+                  className="px-4 py-2.5 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-xl font-bold text-xs uppercase tracking-wider transition-all border border-rose-200 flex items-center gap-1.5"
+                >
+                  <Trash2 size={14} /> Xóa nhiệm vụ này
+                </button>
+              )}
+            </div>
+
+            <div className="flex items-center gap-2.5 w-full sm:w-auto justify-end flex-wrap">
+              <button 
+                type="button" 
+                onClick={() => setIsEditing(false)} 
+                className="px-5 py-2.5 text-slate-400 hover:text-slate-600 font-bold text-xs uppercase tracking-widest transition-all"
+              >
+                Hủy
+              </button>
+
+              <button 
+                type="button" 
+                onClick={(e) => handleSaveTask(e, true)} 
+                className="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs uppercase rounded-xl tracking-wider transition-all border border-slate-300 flex items-center gap-1.5"
+                title="Lưu lại nháp để chỉnh sửa sau, học sinh chưa nhìn thấy"
+              >
+                <FileEdit size={14} /> Lưu bản nháp
+              </button>
+
+              <button 
+                type="button" 
+                onClick={(e) => handleSaveTask(e, false)} 
+                className={`px-6 py-2.5 bg-${themeColor}-600 hover:bg-${themeColor}-700 text-white font-bold text-xs uppercase rounded-xl tracking-wider shadow-lg shadow-${themeColor}-100 hover:scale-105 transition-all flex items-center gap-1.5`}
+                title="Giao chính thức cho học sinh"
+              >
+                <Send size={14} /> Giao chính thức
+              </button>
+            </div>
           </div>
         </form>
-      ) : task ? (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="md:col-span-2 space-y-6">
-            <div className="bg-white p-8 rounded-[32px] border border-slate-100 shadow-sm relative overflow-hidden">
+      ) : (task && (isAdmin || !task.isDraft)) ? (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2 space-y-6">
+            {/* Draft Banner for Teacher */}
+            {isAdmin && task.isDraft && (
+              <div className="bg-amber-50/90 border border-amber-200 p-5 rounded-[28px] flex flex-col sm:flex-row sm:items-center justify-between gap-4 animate-in fade-in shadow-xs">
+                <div className="flex items-center gap-3.5">
+                  <div className="p-3 bg-amber-100 text-amber-700 rounded-2xl shrink-0">
+                    <FileEdit size={22} />
+                  </div>
+                  <div>
+                    <h5 className="text-xs font-black text-amber-900 uppercase tracking-wide flex items-center gap-2">
+                      <span>BẢN NHÁP NHIỆM VỤ</span>
+                      <span className="px-2.5 py-0.5 rounded-full text-[9px] bg-amber-200 text-amber-800 font-bold">Chưa giao cho học sinh</span>
+                    </h5>
+                    <p className="text-[11px] text-amber-700 mt-0.5 font-medium">
+                      Học sinh hiện tại <strong>CHƯA nhìn thấy</strong> nhiệm vụ này. Thầy/cô có thể chỉnh sửa, xóa hoặc bấm "Giao chính thức" để phát hành.
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 self-end sm:self-center shrink-0">
+                  <button
+                    type="button"
+                    onClick={handleDeleteTask}
+                    className="px-3.5 py-2 bg-white hover:bg-rose-50 text-rose-600 rounded-xl text-xs font-black uppercase tracking-wider border border-rose-200 transition-all flex items-center gap-1.5 shadow-xs"
+                    title="Xóa bản nháp này"
+                  >
+                    <Trash2 size={14} /> Xóa nháp
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleQuickPublish}
+                    className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all shadow-md shadow-emerald-100 flex items-center gap-1.5"
+                  >
+                    <Send size={14} /> Giao chính thức ngay
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Teacher instructions */}
+            <div className="bg-white p-6 sm:p-8 rounded-[32px] border border-slate-100 shadow-sm relative overflow-hidden">
                <div className={`absolute top-0 left-0 w-1.5 h-full bg-${themeColor}-600`}></div>
-               <h4 className="text-[10px] font-black text-slate-300 uppercase tracking-widest mb-3">Yêu cầu từ giáo viên</h4>
+               <div className="flex items-center justify-between mb-3">
+                 <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Yêu cầu từ giáo viên</h4>
+                 {(task.startDate || task.endDate) && (
+                   <span className="text-[10px] font-bold text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-full border border-indigo-100">
+                     Thời hạn: {formatDateVN(task.startDate) || 'Mở'} đến {formatDateVN(task.endDate) || 'Không giới hạn'}
+                   </span>
+                 )}
+               </div>
                <div className="text-slate-700 leading-relaxed font-medium whitespace-pre-wrap">
                  {task.description}
                </div>
             </div>
 
+            {/* Student 3 Task Items Progress */}
             {!isAdmin && (
-              <div className="bg-white p-8 rounded-[32px] border border-slate-100 shadow-sm space-y-6">
-                <h4 className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Tiến độ thực hiện</h4>
+              <div className="bg-white p-6 sm:p-8 rounded-[32px] border border-slate-100 shadow-sm space-y-6">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Chi tiết 3 hạng mục nhiệm vụ</h4>
+                  <span className={`text-[10px] font-black px-3 py-1 rounded-full uppercase ${
+                    isLocked ? 'bg-rose-100 text-rose-700' : isFullyCompleted ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'
+                  }`}>
+                    {isLocked ? '🔒 Đã quá hạn' : isFullyCompleted ? '✅ Đã đạt tất cả' : '⏳ Đang thực hiện'}
+                  </span>
+                </div>
                 
                 <div className="space-y-6">
-                  <div className="space-y-2">
+                  {/* Task 1: Học liệu */}
+                  <div className="space-y-2 p-4 bg-slate-50/70 rounded-2xl border border-slate-100">
                     <div className="flex justify-between items-end">
-                      <span className="text-xs font-bold text-slate-600 uppercase tracking-wide">Xem học liệu</span>
-                      <span className="text-[10px] font-black text-slate-400 tracking-tighter">
-                        {Math.floor(matTime / 60)}p {matTime % 60}s <span className="text-slate-200">/</span> {task.minMaterialTime}p
+                      <span className="text-xs font-bold text-slate-700 uppercase tracking-wide flex items-center gap-1.5">
+                        <Clock size={14} className="text-indigo-600" /> 1. Xem học liệu bài học
+                      </span>
+                      <span className="text-[10px] font-black text-slate-500 tracking-tighter">
+                        {Math.floor(matTime / 60)}p {matTime % 60}s <span className="text-slate-300">/</span> {task.minMaterialTime}p
                       </span>
                     </div>
-                    <div className="h-3 bg-slate-50 rounded-full overflow-hidden border border-slate-100">
+                    <div className="h-3 bg-slate-200/80 rounded-full overflow-hidden border border-slate-100">
                       <div 
                         className={`h-full bg-${themeColor}-600 transition-all duration-1000 shadow-sm`} 
                         style={{ width: `${matPercent}%` }}
                       ></div>
                     </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <div className="flex justify-between items-end">
-                      <span className="text-xs font-bold text-slate-600 uppercase tracking-wide">Luyện Flashcards</span>
-                      <span className="text-[10px] font-black text-slate-400 tracking-tighter">
-                        {Math.floor(flashTime / 60)}p {flashTime % 60}s <span className="text-slate-200">/</span> {task.minFlashcardTime}p
+                    <div className="flex items-center justify-between pt-1">
+                      <span className={`text-[10px] font-bold ${matCompleted ? 'text-emerald-600' : 'text-amber-600'} flex items-center gap-1`}>
+                        {matCompleted ? <CheckCircle2 size={12} /> : <AlertCircle size={12} />}
+                        {matCompleted ? 'Đã xem đủ thời gian yêu cầu' : 'Chưa xem đủ thời gian'}
                       </span>
                     </div>
-                    <div className="h-3 bg-slate-50 rounded-full overflow-hidden border border-slate-100">
+                  </div>
+
+                  {/* Task 2: Flashcards */}
+                  <div className="space-y-2 p-4 bg-slate-50/70 rounded-2xl border border-slate-100">
+                    <div className="flex justify-between items-end">
+                      <span className="text-xs font-bold text-slate-700 uppercase tracking-wide flex items-center gap-1.5">
+                        <Clock size={14} className="text-cyan-600" /> 2. Luyện tập Flashcards
+                      </span>
+                      <span className="text-[10px] font-black text-slate-500 tracking-tighter">
+                        {Math.floor(flashTime / 60)}p {flashTime % 60}s <span className="text-slate-300">/</span> {task.minFlashcardTime}p
+                      </span>
+                    </div>
+                    <div className="h-3 bg-slate-200/80 rounded-full overflow-hidden border border-slate-100">
                       <div 
                         className={`h-full bg-${themeColor}-600 transition-all duration-1000 shadow-sm`} 
                         style={{ width: `${flashPercent}%` }}
                       ></div>
                     </div>
+                    <div className="flex items-center justify-between pt-1">
+                      <span className={`text-[10px] font-bold ${flashCompleted ? 'text-emerald-600' : 'text-amber-600'} flex items-center gap-1`}>
+                        {flashCompleted ? <CheckCircle2 size={12} /> : <AlertCircle size={12} />}
+                        {flashCompleted ? 'Đã rèn luyện đủ thời gian' : 'Flashcard chưa đạt thời gian'}
+                      </span>
+                    </div>
                   </div>
+
+                  {/* Task 3: BTVN */}
+                  {task.requireHomework && (
+                    <div className="space-y-2 p-4 bg-indigo-50/40 rounded-2xl border border-indigo-100">
+                      <div className="flex justify-between items-center">
+                        <span className="text-xs font-bold text-indigo-900 uppercase tracking-wide flex items-center gap-1.5">
+                          <FileText size={14} className="text-indigo-600" /> 3. Bài tập về nhà (BTVN)
+                        </span>
+                        <span className={`text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase ${
+                          hwApproved ? 'bg-emerald-100 text-emerald-800' : hwSubmitted ? 'bg-amber-100 text-amber-800' : 'bg-red-100 text-red-700'
+                        }`}>
+                          {hwApproved ? 'GV đã duyệt' : hwSubmitted ? 'Chờ GV duyệt' : 'Chưa nộp'}
+                        </span>
+                      </div>
+                      
+                      <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-indigo-100/60">
+                        <p className="text-[11px] font-medium text-slate-600">
+                          {hwApproved 
+                            ? '✅ Bài tập về nhà của em đã được Giáo viên chấm đạt!' 
+                            : hwSubmitted 
+                              ? '⏳ Bài nộp của em đang chờ Giáo viên kiểm tra và phê duyệt.' 
+                              : '⚠️ Em cần nộp bài tập về nhà và được Giáo viên duyệt bài.'}
+                        </p>
+                        {onSwitchTab && !hwApproved && (
+                          <button
+                            type="button"
+                            onClick={() => onSwitchTab('homework')}
+                            className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-[10px] font-black uppercase tracking-wider shadow-sm transition-all flex items-center gap-1"
+                          >
+                            <span>Làm BTVN ngay</span> <ArrowRight size={12} />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
           </div>
 
+          {/* Right Status Sidebar */}
           <div className="flex flex-col gap-6">
              <div className={`bg-white p-8 rounded-[32px] border border-slate-100 shadow-sm flex flex-col items-center text-center space-y-4`}>
-                <div className={`w-20 h-20 rounded-[28px] flex items-center justify-center transition-all ${isCompleted ? 'bg-emerald-50 text-emerald-600 shadow-lg shadow-emerald-100' : 'bg-slate-50 text-slate-300'}`}>
-                   {isCompleted ? <CheckCircle2 size={40} /> : <AlertCircle size={40} />}
+                <div className={`w-20 h-20 rounded-[28px] flex items-center justify-center transition-all ${
+                  isLocked ? 'bg-rose-50 text-rose-600 shadow-lg shadow-rose-100' : isFullyCompleted ? 'bg-emerald-50 text-emerald-600 shadow-lg shadow-emerald-100' : 'bg-slate-50 text-slate-300'
+                }`}>
+                   {isLocked ? <Lock size={40} /> : isFullyCompleted ? <CheckCircle2 size={40} /> : <AlertCircle size={40} />}
                 </div>
                 <div>
-                   <h5 className={`font-black uppercase tracking-tight text-lg ${isCompleted ? 'text-emerald-600' : 'text-slate-400'}`}>
-                     {isCompleted ? 'Đã hoàn thành' : 'Chưa hoàn thành'}
+                   <h5 className={`font-black uppercase tracking-tight text-lg ${
+                     isLocked ? 'text-rose-600' : isFullyCompleted ? 'text-emerald-600' : 'text-amber-500'
+                   }`}>
+                     {isLocked ? 'Đóng bằng quá hạn' : isFullyCompleted ? 'Đã hoàn thành' : 'Chưa hoàn thành'}
                    </h5>
-                   <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1">Trạng thái nhiệm vụ</p>
+                   <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1">Trạng thái tổng thể</p>
                 </div>
-                {isCompleted && (
+                {isFullyCompleted && !isLocked && (
                   <div className="px-4 py-1.5 bg-emerald-50 text-emerald-700 text-[9px] font-black uppercase tracking-widest rounded-full border border-emerald-100 animate-bounce">
-                    Rất tốt!
+                    Xuất sắc!
                   </div>
                 )}
              </div>
 
-             <div className="bg-slate-900 p-8 rounded-[32px] shadow-xl space-y-4">
-                <div className="flex items-center gap-2 text-white opacity-40">
+             <div className="bg-slate-900 p-6 rounded-[32px] shadow-xl space-y-4 text-white">
+                <div className="flex items-center gap-2 opacity-50">
                    <Clock size={14} />
-                   <span className="text-[9px] font-black uppercase tracking-widest">Thời gian tối thiểu</span>
+                   <span className="text-[9px] font-black uppercase tracking-widest">Yêu cầu từ giáo viên</span>
                 </div>
-                <div className="grid grid-cols-1 gap-4">
-                   <div className="p-4 bg-white/5 rounded-2xl border border-white/5">
-                      <p className="text-[8px] font-bold text-white/30 uppercase tracking-widest">Học liệu</p>
-                      <p className="text-xl font-black text-white">{task.minMaterialTime}p</p>
+                <div className="space-y-2.5">
+                   <div className="p-3.5 bg-white/5 rounded-2xl border border-white/5 flex items-center justify-between">
+                      <span className="text-xs font-medium opacity-60">1. Học liệu</span>
+                      <span className="text-base font-black text-white">{task.minMaterialTime} phút</span>
                    </div>
-                   <div className="p-4 bg-white/5 rounded-2xl border border-white/5">
-                      <p className="text-[8px] font-bold text-white/30 uppercase tracking-widest">Flashcard</p>
-                      <p className="text-xl font-black text-white">{task.minFlashcardTime}p</p>
+                   <div className="p-3.5 bg-white/5 rounded-2xl border border-white/5 flex items-center justify-between">
+                      <span className="text-xs font-medium opacity-60">2. Flashcard</span>
+                      <span className="text-base font-black text-white">{task.minFlashcardTime} phút</span>
+                   </div>
+                   <div className="p-3.5 bg-white/5 rounded-2xl border border-white/5 flex items-center justify-between">
+                      <span className="text-xs font-medium opacity-60">3. BTVN</span>
+                      <span className="text-xs font-bold text-amber-300">
+                        {task.requireHomework ? 'Bắt buộc (GV duyệt)' : 'Tùy chọn'}
+                      </span>
                    </div>
                 </div>
              </div>
           </div>
         </div>
       ) : (
-        <div className="bg-slate-50 border-2 border-dashed border-slate-200 rounded-[40px] p-20 flex flex-col items-center justify-center text-center space-y-4">
+        <div className="bg-slate-50 border-2 border-dashed border-slate-200 rounded-[40px] p-16 flex flex-col items-center justify-center text-center space-y-4">
            <div className="w-20 h-20 bg-white rounded-3xl flex items-center justify-center shadow-sm">
               <ClipboardCheck size={40} className="text-slate-200" />
            </div>
            <div>
-              <h4 className="text-xl font-black text-slate-400 uppercase tracking-tight">Chưa có nhiệm vụ</h4>
+              <h4 className="text-xl font-black text-slate-400 uppercase tracking-tight">Chưa có nhiệm vụ bài học</h4>
               <p className="text-slate-400 text-sm font-medium mt-1 max-w-xs">
-                {isAdmin ? 'Mục này giúp em quản lý yêu cầu học tập cho học sinh.' : 'Giáo viên chưa giao nhiệm vụ cụ thể cho bài học này.'}
+                {isAdmin ? 'Thiết lập yêu cầu thời gian xem học liệu, rèn luyện flashcard, nộp BTVN và thời hạn hoàn thành.' : 'Giáo viên chưa giao nhiệm vụ cụ thể cho bài học này.'}
               </p>
            </div>
            {isAdmin && (
@@ -682,7 +1202,7 @@ const TaskPanel: React.FC<TaskPanelProps> = ({ nodeId, student, isAdmin, themeCo
                 )}
               </div>
               <div className="text-[11px] font-bold text-slate-400">
-                Yêu cầu: Học liệu ({task?.minMaterialTime || 0}p) &bull; Flashcard ({task?.minFlashcardTime || 0}p)
+                Yêu cầu: Học liệu ({task?.minMaterialTime || 0}p) &bull; Flashcard ({task?.minFlashcardTime || 0}p) &bull; BTVN ({task?.requireHomework ? 'Bắt buộc' : 'Tùy chọn'})
               </div>
             </div>
 
@@ -695,43 +1215,62 @@ const TaskPanel: React.FC<TaskPanelProps> = ({ nodeId, student, isAdmin, themeCo
                ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {filteredStudents.map(s => (
-                        <div key={s.id} className={`bg-white p-6 rounded-[32px] border shadow-sm hover:shadow-xl transition-all border-l-4 ${s.fullyCompleted ? 'border-slate-100 border-l-emerald-500' : 'border-slate-100 border-l-amber-500'}`}>
-                           <div className="flex items-center gap-3 mb-4">
-                              <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center text-xs font-black text-slate-400 border border-slate-100 shrink-0">
-                                 {s.name.charAt(0).toUpperCase()}
+                        <div key={s.id} className={`bg-white p-6 rounded-[32px] border shadow-sm hover:shadow-xl transition-all border-l-4 ${
+                          s.isExpiredAndIncomplete ? 'border-slate-100 border-l-rose-500' : s.fullyCompleted ? 'border-slate-100 border-l-emerald-500' : 'border-slate-100 border-l-amber-500'
+                        }`}>
+                           <div className="flex items-center justify-between gap-3 mb-4">
+                              <div className="flex items-center gap-3 min-w-0">
+                                <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center text-xs font-black text-slate-400 border border-slate-100 shrink-0">
+                                   {s.name.charAt(0).toUpperCase()}
+                                </div>
+                                <div className="min-w-0">
+                                   <h5 className="text-[11px] font-black text-slate-800 uppercase tracking-tight truncate">{s.fullName || s.name}</h5>
+                                   <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">MÃ HS: {s.name}</p>
+                                </div>
                               </div>
-                              <div className="min-w-0">
-                                 <h5 className="text-[11px] font-black text-slate-800 uppercase tracking-tight truncate">{s.fullName || s.name}</h5>
-                                 <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">MÃ HS: {s.name}</p>
-                              </div>
+                              {s.isExpiredAndIncomplete && (
+                                <span className="px-2 py-0.5 bg-rose-100 text-rose-700 text-[9px] font-black rounded-md uppercase shrink-0">
+                                  🔒 Quá hạn
+                                </span>
+                              )}
                            </div>
 
                            <div className="grid grid-cols-2 gap-3 mb-4">
                               <div className={`p-3 rounded-2xl border ${s.matCompleted ? 'bg-emerald-50 border-emerald-100' : 'bg-slate-50 border-slate-100'}`}>
-                                 <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Học liệu</p>
+                                 <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">1. Học liệu</p>
                                  <p className={`text-[10px] font-black ${s.matCompleted ? 'text-emerald-600' : 'text-slate-400'}`}>
                                     {Math.floor(s.matTime / 60)}p {s.matTime % 60}s
                                  </p>
                               </div>
                               <div className={`p-3 rounded-2xl border ${s.flashCompleted ? 'bg-emerald-50 border-emerald-100' : 'bg-slate-50 border-slate-100'}`}>
-                                 <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Flashcard</p>
+                                 <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">2. Flashcard</p>
                                  <p className={`text-[10px] font-black ${s.flashCompleted ? 'text-emerald-600' : 'text-slate-400'}`}>
                                     {Math.floor(s.flashTime / 60)}p {s.flashTime % 60}s
                                  </p>
                               </div>
                            </div>
 
-                           <div className="flex items-center gap-2">
-                              {s.matCompleted ? <CheckCircle2 size={12} className="text-emerald-500"/> : <AlertCircle size={12} className="text-amber-500"/>}
-                              <p className="text-[9px] font-bold text-slate-400 uppercase tracking-tight">
-                                 {s.matCompleted ? 'Đã xem học liệu' : 'Chưa xem đủ thời gian'}
-                              </p>
-                           </div>
-                           <div className="flex items-center gap-2 mt-1">
-                              {s.flashCompleted ? <CheckCircle2 size={12} className="text-emerald-500"/> : <AlertCircle size={12} className="text-amber-500"/>}
-                              <p className="text-[9px] font-bold text-slate-400 uppercase tracking-tight">
-                                 {s.flashCompleted ? 'Đã luyện Flashcard' : 'Flashcard chưa đạt'}
-                              </p>
+                           <div className="space-y-1 border-t border-slate-100 pt-3">
+                             <div className="flex items-center gap-2">
+                                {s.matCompleted ? <CheckCircle2 size={12} className="text-emerald-500"/> : <AlertCircle size={12} className="text-amber-500"/>}
+                                <p className="text-[9px] font-bold text-slate-500 uppercase tracking-tight">
+                                   {s.matCompleted ? 'Đã xem đủ học liệu' : 'Chưa xem đủ thời gian'}
+                                </p>
+                             </div>
+                             <div className="flex items-center gap-2">
+                                {s.flashCompleted ? <CheckCircle2 size={12} className="text-emerald-500"/> : <AlertCircle size={12} className="text-amber-500"/>}
+                                <p className="text-[9px] font-bold text-slate-500 uppercase tracking-tight">
+                                   {s.flashCompleted ? 'Đã luyện Flashcard' : 'Flashcard chưa đạt'}
+                                </p>
+                             </div>
+                             {task?.requireHomework && (
+                               <div className="flex items-center gap-2">
+                                  {s.hwApproved ? <CheckCircle2 size={12} className="text-emerald-500"/> : <AlertCircle size={12} className="text-indigo-500"/>}
+                                  <p className="text-[9px] font-bold text-slate-500 uppercase tracking-tight">
+                                     BTVN: <span className={s.hwApproved ? 'text-emerald-600 font-black' : s.hwSubmitted ? 'text-amber-600 font-black' : 'text-red-500'}>{s.hwStatusStr}</span>
+                                  </p>
+                               </div>
+                             )}
                            </div>
                         </div>
                       ))

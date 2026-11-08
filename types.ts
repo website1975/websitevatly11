@@ -69,6 +69,10 @@ export interface LessonTask {
   minMaterialTime: number; // minutes
   minFlashcardTime: number; // minutes
   minQuizTime: number; // minutes
+  requireHomework?: boolean; // Yêu cầu Bài tập về nhà (GV duyệt)
+  startDate?: string; // Ngày bắt đầu (YYYY-MM-DD)
+  endDate?: string; // Ngày kết thúc / Hạn chót (YYYY-MM-DD)
+  isDraft?: boolean; // Bản nháp (chỉ GV thấy, chưa giao cho HS)
   createdAt: string;
 }
 
