@@ -115,11 +115,19 @@ const StudentManager: React.FC<StudentManagerProps> = ({
     }, 5000);
   };
 
-  // Node lookup map
+  // Node lookup map and index order map
   const nodeMap = useMemo(() => {
     const map = new Map<string, BookNode>();
     nodes.forEach(n => {
       if (n && n.id) map.set(n.id, n);
+    });
+    return map;
+  }, [nodes]);
+
+  const nodeIndexMap = useMemo(() => {
+    const map = new Map<string, number>();
+    (nodes || []).forEach((n, idx) => {
+      if (n && n.id) map.set(n.id, idx);
     });
     return map;
   }, [nodes]);
@@ -164,7 +172,7 @@ const StudentManager: React.FC<StudentManagerProps> = ({
 
   // Parse all tasks with their metadata
   const parsedLessonTasks = useMemo(() => {
-    return (lessonTasks || []).map(t => {
+    const list = (lessonTasks || []).map(t => {
       let requireHw = t.require_homework || false;
       let startDateVal = t.start_date || '';
       let endDateVal = t.end_date || '';
@@ -208,7 +216,16 @@ const StudentManager: React.FC<StudentManagerProps> = ({
         lessonNode
       };
     }).filter(t => !t.isDraft && t.lessonNode && t.lessonNode.type === 'lesson');
-  }, [lessonTasks, nodeMap]);
+
+    // Sắp xếp thứ tự danh sách bài học/nhiệm vụ theo đúng thứ tự Cây Sách (Chương 1 -> Chương 2 -> Chương 3...)
+    list.sort((a, b) => {
+      const idxA = nodeIndexMap.get(a.nodeId) ?? 999999;
+      const idxB = nodeIndexMap.get(b.nodeId) ?? 999999;
+      return idxA - idxB;
+    });
+
+    return list;
+  }, [lessonTasks, nodeMap, nodeIndexMap]);
 
   // Compute comprehensive progress for each student
   const studentsProgressList: StudentProgressSummary[] = useMemo(() => {
