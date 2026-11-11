@@ -202,3 +202,77 @@ export const SLOGANS = [
   "\"Trên đời này không có gì đáng sợ, chỉ có những thứ chưa được hiểu rõ.\" — Marie Curie",
   "\"Những gì chúng ta biết chỉ là một giọt nước, những gì chúng ta chưa biết là cả một đại dương.\" — Isaac Newton"
 ];
+
+// Trích xuất mã lớp thông minh từ mã học sinh (VD: HS08C07 -> C07, 10A1_05 -> 10A1)
+export const extractClassCode = (studentCode: string): string => {
+  if (!studentCode) return 'Chung';
+  const clean = studentCode.trim().toUpperCase();
+
+  // Pattern like 10A1, 11B2, 12A3, 10C7
+  const matchGradeClass = clean.match(/(1[0-2][A-Z]\d{1,2})/);
+  if (matchGradeClass) return matchGradeClass[1];
+
+  // Pattern like HS08C07 or 08C07 or C07 (Letter + digits at end)
+  const matchSuffixClass = clean.match(/([A-Z]+\d{1,3})$/);
+  if (matchSuffixClass) return matchSuffixClass[1];
+
+  // Pattern with separator: HS_10A1_01 or HS-C07-08
+  const parts = clean.split(/[-_./\s]+/);
+  if (parts.length > 1) {
+    for (const part of parts) {
+      if (/^[0-9]{1,2}[A-Z]/.test(part) || /^[A-Z][0-9]/.test(part)) {
+        return part;
+      }
+    }
+  }
+
+  // Fallback regex for any letter + number combo (like C07, A12)
+  const matchGeneral = clean.match(/([A-Z]\d{2,3})/);
+  if (matchGeneral) return matchGeneral[1];
+
+  return 'Chung';
+};
+
+// Kiểm tra một nhiệm vụ có áp dụng cho học sinh cụ thể hay không
+export const isTaskAssignedToStudent = (task: any, student: any): boolean => {
+  if (!task || !student) return false;
+  // Nếu là bản nháp, học sinh không được thấy
+  if (task.isDraft === true || task.is_draft === true) return false;
+
+  const targetType = task.targetType || 'all';
+  if (targetType === 'all') return true;
+
+  const sName = (student.name || '').trim().toUpperCase();
+  const sFullName = (student.full_name || '').trim().toUpperCase();
+  const sId = String(student.id || '');
+  const sClass = extractClassCode(sName);
+
+  if (targetType === 'class') {
+    const targetClasses: string[] = Array.isArray(task.targetClasses) 
+      ? task.targetClasses.map((c: string) => String(c).trim().toUpperCase()) 
+      : [];
+    if (targetClasses.length === 0) return true;
+
+    return targetClasses.some(tc => 
+      sClass === tc || 
+      sName.includes(tc) || 
+      (sFullName && sFullName.includes(tc))
+    );
+  }
+
+  if (targetType === 'students') {
+    const targetStudents: string[] = Array.isArray(task.targetStudentIds) 
+      ? task.targetStudentIds.map((id: string) => String(id).trim().toUpperCase()) 
+      : [];
+    if (targetStudents.length === 0) return true;
+
+    return targetStudents.some(target => 
+      target === sId.toUpperCase() || 
+      target === sName || 
+      (sFullName && target === sFullName)
+    );
+  }
+
+  return true;
+};
+

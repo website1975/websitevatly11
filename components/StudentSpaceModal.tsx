@@ -25,7 +25,8 @@ import {
   RefreshCw,
   Star,
   ClipboardCheck,
-  Filter
+  Filter,
+  MessageSquare
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -35,6 +36,14 @@ import rehypeKatex from 'rehype-katex';
 import rehypeRaw from 'rehype-raw';
 import { supabase } from '../supabaseClient';
 import { Student, BookNode, AppData, ForumComment } from '../types';
+import { isTaskAssignedToStudent } from '../utils';
+
+const customUrlTransform = (url: string) => {
+  if (!url) return '';
+  const trimmed = url.trim();
+  if (trimmed.toLowerCase().startsWith('javascript:')) return '';
+  return trimmed;
+};
 
 interface StudentSpaceModalProps {
   isOpen: boolean;
@@ -60,6 +69,13 @@ interface AssignmentItem {
     createdAt: string;
     isApproved: boolean;
     isPublic?: boolean;
+    feedbacks?: {
+      id: string;
+      author: string;
+      content: string;
+      createdAt: string;
+      isAdmin: boolean;
+    }[];
   } | null;
   status: 'completed_approved' | 'completed_pending' | 'not_submitted';
 }
@@ -220,32 +236,62 @@ export const StudentSpaceModal: React.FC<StudentSpaceModalProps> = ({
   const assignments: AssignmentItem[] = useMemo(() => {
     if (!rawComments || rawComments.length === 0) return [];
 
-    // Filter teacher questions (nodeId starts with 'homework_' and doesn't contain '_ans_')
+    // Filter teacher questions (nodeId starts with 'homework_' and doesn't contain '_ans_' or '_feedback_')
     const teacherQuestions = rawComments.filter(c => {
-      const nodeId = c.node_id || c.nodeId;
+      const nodeId = c.node_id || c.nodeId || '';
       const isAdmin = c.is_admin || c.isAdmin;
-      const isTeacherQuestion = nodeId && nodeId.startsWith('homework_') && !nodeId.includes('_ans_') && (isAdmin === true || !(c.author || '').includes('['));
-      if (!isTeacherQuestion) return false;
 
-      const itemGrade = c.grade_id || c.gradeId;
+      // BẮT BUỘC: Phải bắt đầu bằng 'homework_' và TUYỆT ĐỐI KHÔNG chứa '_ans_' (bài làm) hoặc '_feedback_' (nhận xét giáo viên)
+      if (!nodeId.startsWith('homework_')) return false;
+      if (nodeId.includes('_ans_') || nodeId.includes('_feedback_')) return false;
+
+      // Chỉ lấy câu hỏi của giáo viên (isAdmin hoặc tác giả không có mã học sinh [tên])
+      const isTeacher = isAdmin === true || !(c.author || '').includes('[');
+      if (!isTeacher) return false;
+
       const lessonId = nodeId.replace('homework_', '');
+      // BẮT BUỘC: lessonId phải là một bài học thực tế hợp lệ tồn tại trong cây bài học
+      const lesson = nodeMap.get(lessonId);
+      if (!lesson || lesson.type !== 'lesson') return false;
 
-      // 1. Nếu có grade_id rõ ràng:
-      if (selectedGrade && itemGrade) {
-        return String(itemGrade) === String(selectedGrade);
+      // Kiểm tra khối lớp của bài học
+      const parentFolder = lesson.parentId ? nodeMap.get(lesson.parentId) : null;
+      const lessonGrade = (lesson as any).gradeId || (parentFolder as any)?.gradeId;
+      const itemGrade = c.grade_id || c.gradeId;
+
+      if (selectedGrade) {
+        if (lessonGrade && String(lessonGrade) !== String(selectedGrade)) return false;
+        if (itemGrade && String(itemGrade) !== String(selectedGrade)) return false;
+        if (!lessonGrade && !itemGrade && !lessonId.startsWith(`g${selectedGrade}-`) && !lessonId.startsWith(`${selectedGrade}-`)) {
+          return false;
+        }
       }
 
-      // 2. Nếu chưa có grade_id nhưng bài học nằm trong cây bài học của khối hiện tại:
-      if (nodeMap.has(lessonId)) {
-        return true;
+      // Kiểm tra xem bài học này có nhiệm vụ giao riêng không (nếu là nháp hoặc không giao cho học sinh này thì không hiển thị)
+      const taskRecord = (lessonTasks || []).find(t => (t.node_id || t.nodeId) === lessonId);
+      if (taskRecord) {
+        let isDraft = false;
+        let targetTypeVal = 'all';
+        let targetClassesVal: string[] = [];
+        let targetStudentIdsVal: string[] = [];
+        if (taskRecord.description) {
+          try {
+            const meta = JSON.parse(taskRecord.description);
+            if (meta.isDraft !== undefined) isDraft = meta.isDraft;
+            if (meta.targetType !== undefined) targetTypeVal = meta.targetType;
+            if (meta.targetClasses !== undefined) targetClassesVal = meta.targetClasses;
+            if (meta.targetStudentIds !== undefined) targetStudentIdsVal = meta.targetStudentIds;
+          } catch (e) {
+            console.error(e);
+          }
+        }
+        if (isDraft) return false;
+        if (!isTaskAssignedToStudent({ isDraft, targetType: targetTypeVal, targetClasses: targetClassesVal, targetStudentIds: targetStudentIdsVal }, student)) {
+          return false;
+        }
       }
 
-      // 3. Khớp theo tiền tố khối trong ID bài học
-      if (selectedGrade && (lessonId.startsWith(`g${selectedGrade}-`) || lessonId.startsWith(`${selectedGrade}-`))) {
-        return true;
-      }
-
-      return !selectedGrade;
+      return true;
     });
 
     // Student answers for this specific student
@@ -272,12 +318,29 @@ export const StudentSpaceModal: React.FC<StudentSpaceModalProps> = ({
         const rawContent = myAns.content || '';
         const isApproved = myAns.is_approved === true || myAns.isApproved === true || rawContent.includes('<!--status:approved-->');
         const isPublic = (myAns.is_public === true || myAns.isPublic === true || rawContent.includes('<!--public:true-->')) && !rawContent.includes('<!--public:false-->');
+
+        // Tìm các nhận xét/phản hồi của giáo viên dành riêng cho bài làm của học sinh này
+        const feedbackTargetNodeId = `homework_${lessonId}_feedback_${myAns.id}`;
+        const answerFeedbacks = (rawComments || [])
+          .filter(c => {
+            const nid = c.node_id || c.nodeId || '';
+            return nid === feedbackTargetNodeId;
+          })
+          .map(f => ({
+            id: f.id,
+            author: f.author || 'Giáo viên',
+            content: cleanMarkdown(f.content || ''),
+            createdAt: f.created_at || f.createdAt,
+            isAdmin: f.is_admin || f.isAdmin || false,
+          }));
+
         myAnswerObj = {
           id: myAns.id,
           content: cleanMarkdown(rawContent),
           createdAt: myAns.created_at || myAns.createdAt,
           isApproved: isApproved,
           isPublic: isPublic,
+          feedbacks: answerFeedbacks,
         };
         status = isApproved ? 'completed_approved' : 'completed_pending';
       }
@@ -293,7 +356,7 @@ export const StudentSpaceModal: React.FC<StudentSpaceModalProps> = ({
         status: status,
       };
     });
-  }, [rawComments, nodeMap, student?.name, selectedGrade]);
+  }, [rawComments, nodeMap, student, selectedGrade, lessonTasks]);
 
   // Build Lesson Completion Status List for ALL lessons in current grade
   const lessonCompletionList: LessonCompletionStatus[] = useMemo(() => {
@@ -328,6 +391,9 @@ export const StudentSpaceModal: React.FC<StudentSpaceModalProps> = ({
       let startD = taskRecord?.start_date || '';
       let endD = taskRecord?.end_date || '';
       let isDraft = taskRecord?.is_draft === true;
+      let targetTypeVal: 'all' | 'class' | 'students' = 'all';
+      let targetClassesVal: string[] = [];
+      let targetStudentIdsVal: string[] = [];
       let desc = (taskRecord?.description || '').replace(/<!--task_meta:.*?-->/g, '').trim();
 
       if (taskRecord?.description && taskRecord.description.includes('<!--task_meta:')) {
@@ -341,6 +407,9 @@ export const StudentSpaceModal: React.FC<StudentSpaceModalProps> = ({
             if (meta.startDate !== undefined) startD = meta.startDate;
             if (meta.endDate !== undefined) endD = meta.endDate;
             if (meta.isDraft !== undefined) isDraft = meta.isDraft;
+            if (meta.targetType !== undefined) targetTypeVal = meta.targetType;
+            if (meta.targetClasses !== undefined) targetClassesVal = meta.targetClasses;
+            if (meta.targetStudentIds !== undefined) targetStudentIdsVal = meta.targetStudentIds;
           }
         } catch (e) {
           console.error(e);
@@ -354,8 +423,17 @@ export const StudentSpaceModal: React.FC<StudentSpaceModalProps> = ({
         return nid === homeworkNodeId && (c.is_admin === true || c.isAdmin === true || !(c.author || '').includes('['));
       });
 
-      // Does this lesson have a task set by teacher? (Draft tasks are hidden from students)
-      const hasTaskAssigned = !isDraft && Boolean(
+      const taskObj = {
+        isDraft,
+        targetType: targetTypeVal,
+        targetClasses: targetClassesVal,
+        targetStudentIds: targetStudentIdsVal
+      };
+
+      const isAssigned = isTaskAssignedToStudent(taskObj, student);
+
+      // Does this lesson have a task set by teacher for this student? (Draft tasks and unassigned tasks are hidden)
+      const hasTaskAssigned = !isDraft && isAssigned && Boolean(
         minMat > 0 || 
         minFlash > 0 || 
         reqHw || 
@@ -1097,7 +1175,11 @@ export const StudentSpaceModal: React.FC<StudentSpaceModalProps> = ({
                               </div>
 
                               <div className="text-xs font-semibold text-slate-600 line-clamp-2 prose prose-slate prose-xs">
-                                <ReactMarkdown remarkPlugins={[remarkGfm, remarkMath, remarkBreaks]} rehypePlugins={[rehypeRaw, [rehypeKatex, { output: 'html' }]]}>
+                                <ReactMarkdown 
+                                  remarkPlugins={[remarkGfm, remarkMath, remarkBreaks]} 
+                                  rehypePlugins={[rehypeRaw, [rehypeKatex, { output: 'html' }]]}
+                                  urlTransform={customUrlTransform}
+                                >
                                   {item.questionContent.substring(0, 180) + (item.questionContent.length > 180 ? '...' : '')}
                                 </ReactMarkdown>
                               </div>
@@ -1161,10 +1243,39 @@ export const StudentSpaceModal: React.FC<StudentSpaceModalProps> = ({
                             </div>
 
                             <div className="p-4 bg-white rounded-xl border border-slate-200 prose prose-slate max-w-none text-xs leading-relaxed">
-                              <ReactMarkdown remarkPlugins={[remarkGfm, remarkMath, remarkBreaks]} rehypePlugins={[rehypeRaw, [rehypeKatex, { output: 'html' }]]}>
+                              <ReactMarkdown 
+                                remarkPlugins={[remarkGfm, remarkMath, remarkBreaks]} 
+                                rehypePlugins={[rehypeRaw, [rehypeKatex, { output: 'html' }]]}
+                                urlTransform={customUrlTransform}
+                              >
                                 {item.myAnswer.content}
                               </ReactMarkdown>
                             </div>
+
+                            {item.myAnswer.feedbacks && item.myAnswer.feedbacks.length > 0 && (
+                              <div className="mt-3 pt-3 border-t border-slate-200/80 space-y-2">
+                                <span className="text-[10px] font-black uppercase text-amber-700 tracking-wider flex items-center gap-1.5">
+                                  <MessageSquare size={12} className="text-amber-600" /> Nhận xét & dặn dò của Giáo viên:
+                                </span>
+                                <div className="space-y-2">
+                                  {item.myAnswer.feedbacks.map(fb => (
+                                    <div key={fb.id} className="p-3 bg-amber-50/90 border border-amber-200 rounded-xl space-y-1">
+                                      <div className="flex items-center justify-between text-[10px]">
+                                        <span className="font-bold text-amber-900">{fb.author}</span>
+                                        <span className="text-slate-400 font-medium">
+                                          {fb.createdAt ? new Date(fb.createdAt).toLocaleString('vi-VN') : ''}
+                                        </span>
+                                      </div>
+                                      <div className="prose prose-slate max-w-none text-xs text-slate-700 leading-relaxed font-medium">
+                                        <ReactMarkdown remarkPlugins={[remarkGfm, remarkMath, remarkBreaks]} rehypePlugins={[rehypeRaw, [rehypeKatex, { output: 'html' }]]} urlTransform={customUrlTransform}>
+                                          {fb.content}
+                                        </ReactMarkdown>
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
 
                             <div className="flex justify-between items-center text-[10px] text-slate-400 font-semibold">
                               <span>Nộp lúc: {item.myAnswer.createdAt ? new Date(item.myAnswer.createdAt).toLocaleString('vi-VN') : 'Không rõ'}</span>

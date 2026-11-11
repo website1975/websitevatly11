@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Routes, Route, useNavigate, Navigate } from 'react-router-dom';
-import { Book, Plus, Maximize2, Loader2, BrainCircuit, GraduationCap, ShieldCheck, Search, LogOut, Folder, Globe, Zap, Image as ImageIcon, Settings, ArrowLeft, ArrowRight, Upload, AlertCircle, Users, Cloud, ExternalLink, BookOpen, Sparkles, ChevronRight, Key, ListOrdered, ArrowUpDown, Menu, Paperclip, X, ClipboardCheck } from 'lucide-react';
+import { Book, Plus, Maximize2, Loader2, BrainCircuit, GraduationCap, ShieldCheck, Search, LogOut, Folder, Globe, Zap, Image as ImageIcon, Settings, ArrowLeft, ArrowRight, Upload, AlertCircle, Users, Cloud, ExternalLink, BookOpen, Sparkles, ChevronRight, Key, ListOrdered, ArrowUpDown, Menu, Paperclip, X, ClipboardCheck, BarChart3 } from 'lucide-react';
 import { uploadFileToGoogleDrive, signInWithGoogleForDrive, getDriveAccessToken, isGoogleDriveUrl, extractDriveFileId } from './googleDrive';
 import { supabase } from './supabaseClient';
 import { AppData, ResourceLink, BookNode, NodeType, Student } from './types';
@@ -990,6 +990,15 @@ const MainView: React.FC<{
             </h1>
           </div>
           <div className="flex items-center gap-1 shrink-0">
+            {isAdmin && (
+              <button 
+                onClick={()=>setShowStudentManager(true)} 
+                className="p-1.5 hover:bg-white/20 rounded-lg transition-colors flex items-center gap-1" 
+                title="Quản lý & Thống kê Tiến độ Học sinh theo Lớp"
+              >
+                <Users size={14}/>
+              </button>
+            )}
             {isAdmin && <button onClick={()=>setShowHomeConfig(true)} className="p-1.5 hover:bg-white/20 rounded-lg transition-colors" title="Cấu hình trang chủ"><Settings size={14}/></button>}
             {isAdmin && (
               <button 
@@ -1187,12 +1196,22 @@ const MainView: React.FC<{
                     <div className="flex items-center gap-2 shrink-0">
                       <div className="flex gap-2">
                         {isAdmin ? (
+                          <>
+                            <button 
+                              onClick={()=>setShowStudentManager(true)} 
+                              className="group flex items-center gap-1.5 px-3.5 sm:px-4 py-1.5 sm:py-2 bg-gradient-to-r from-indigo-600 to-indigo-700 text-white font-bold text-[9px] sm:text-[10px] uppercase shadow-lg shadow-indigo-100 rounded-full hover:bg-indigo-800 hover:scale-105 transition-all"
+                              title="Bảng điều khiển Thống kê Tiến độ Học sinh theo Lớp"
+                            >
+                              <BarChart3 size={13} className="text-amber-300"/> 
+                              <span className="hidden sm:inline">Thống kê Học sinh</span>
+                            </button>
                             <button 
                               onClick={()=>setIsQuizOpen(true)} 
                               className="group flex items-center gap-1.5 sm:gap-2 px-3.5 sm:px-5 py-1.5 sm:py-2 bg-indigo-600 text-white font-bold text-[9px] sm:text-[10px] uppercase shadow-lg shadow-indigo-100 rounded-full hover:bg-indigo-700 hover:scale-105 transition-all"
                             >
-                            <Zap size={13} className="fill-current text-amber-300"/> Soạn Quiz AI
-                          </button>
+                              <Zap size={13} className="fill-current text-amber-300"/> Soạn Quiz AI
+                            </button>
+                          </>
                         ) : (
                           <>
                             {currentStudent && (
@@ -1420,7 +1439,13 @@ const MainView: React.FC<{
          <StudentManager 
            gradeId={selectedGrade || 1} 
            themeColor={themeColor} 
+           nodes={data.nodes}
            onClose={() => setShowStudentManager(false)} 
+           onSelectLessonAndTab={(lessonId, tab) => {
+             setShowStudentManager(false);
+             setSelectedId(lessonId);
+             setActiveTab(tab);
+           }}
          />
       )}
       {showNodeModal && (

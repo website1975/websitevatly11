@@ -1,9 +1,10 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { ClipboardCheck, Clock, CheckCircle2, AlertCircle, Loader2, Search, X, Users, RefreshCw, FileSpreadsheet, Download, Filter, Calendar, Lock, ShieldAlert, FileText, ArrowRight, Trash2, Send, FileEdit, Eye, EyeOff } from 'lucide-react';
+import { ClipboardCheck, Clock, CheckCircle2, AlertCircle, Loader2, Search, X, Users, RefreshCw, FileSpreadsheet, Download, Filter, Calendar, Lock, ShieldAlert, FileText, ArrowRight, Trash2, Send, FileEdit, Eye, EyeOff, Plus, Check } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 import { LessonTask, StudyLog, Student } from '../types';
 import { ConfirmModal, ToastNotification, ConfirmState, ToastState } from './CustomDialog';
+import { extractClassCode, isTaskAssignedToStudent } from '../utils';
 
 interface TaskPanelProps {
   nodeId: string;
@@ -46,6 +47,9 @@ const checkIsExpired = (endDateStr?: string) => {
 
 const TaskPanel: React.FC<TaskPanelProps> = ({ nodeId, student, isAdmin, themeColor, gradeId, onSwitchTab }) => {
   const [task, setTask] = useState<LessonTask | null>(null);
+  const [allTasksForLesson, setAllTasksForLesson] = useState<LessonTask[]>([]);
+  const [selectedTaskIndex, setSelectedTaskIndex] = useState<number>(0);
+  const [gradeStudents, setGradeStudents] = useState<Student[]>([]);
   const [logs, setLogs] = useState<StudyLog[]>([]);
   const [hwComments, setHwComments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -58,8 +62,13 @@ const TaskPanel: React.FC<TaskPanelProps> = ({ nodeId, student, isAdmin, themeCo
     requireHomework: false,
     startDate: '',
     endDate: '',
-    isDraft: false
+    isDraft: false,
+    targetType: 'all' as 'all' | 'class' | 'students',
+    targetClasses: [] as string[],
+    targetStudentIds: [] as string[]
   });
+  const [targetStudentSearch, setTargetStudentSearch] = useState('');
+  const [targetClassFilter, setTargetClassFilter] = useState('all');
   const [showIncompleteModal, setShowIncompleteModal] = useState(false);
   const [loadingIncomplete, setLoadingIncomplete] = useState(false);
   const [incompleteStudentsData, setIncompleteStudentsData] = useState<any[]>([]);
@@ -76,6 +85,37 @@ const TaskPanel: React.FC<TaskPanelProps> = ({ nodeId, student, isAdmin, themeCo
     }, 5000);
   };
 
+  const availableClasses = useMemo(() => {
+    const set = new Set<string>();
+    gradeStudents.forEach(s => {
+      const cls = extractClassCode(s.name);
+      if (cls && cls !== 'Chung' && cls !== 'Khác') set.add(cls);
+    });
+    return Array.from(set).sort();
+  }, [gradeStudents]);
+
+  const filteredTargetStudents = useMemo(() => {
+    return gradeStudents.filter(s => {
+      const sClass = extractClassCode(s.name);
+      if (targetClassFilter !== 'all' && sClass !== targetClassFilter && !s.name.toUpperCase().includes(targetClassFilter.toUpperCase())) {
+        return false;
+      }
+      if (targetStudentSearch.trim()) {
+        const q = targetStudentSearch.trim().toLowerCase();
+        const matchName = (s.name || '').toLowerCase().includes(q);
+        const matchFullName = (s.full_name || '').toLowerCase().includes(q);
+        return matchName || matchFullName;
+      }
+      return true;
+    });
+  }, [gradeStudents, targetClassFilter, targetStudentSearch]);
+
+  const handleSelectAllFilteredStudents = () => {
+    const idsToAdd = filteredTargetStudents.map(s => s.id);
+    const set = new Set([...formData.targetStudentIds, ...idsToAdd]);
+    setFormData({ ...formData, targetStudentIds: Array.from(set) });
+  };
+
   const fetchIncompleteStudents = async () => {
     if (!gradeId) return;
     setLoadingIncomplete(true);
@@ -88,6 +128,9 @@ const TaskPanel: React.FC<TaskPanelProps> = ({ nodeId, student, isAdmin, themeCo
       const { data: students } = await supabase.from('students').select('*').eq('grade_id', gradeId);
       if (!students) return;
 
+      // Only evaluate students who are assigned to THIS task
+      const assignedStudents = students.filter(s => isTaskAssignedToStudent(task, s));
+
       const { data: allLogs } = await supabase.from('study_logs').select('*').eq('node_id', nodeId);
       const { data: allHw } = await supabase.from('forum_comments').select('*');
 
@@ -97,7 +140,7 @@ const TaskPanel: React.FC<TaskPanelProps> = ({ nodeId, student, isAdmin, themeCo
         return id === homeworkNodeId || id.startsWith(`${homeworkNodeId}_ans_`);
       });
       
-      const processed = students.map(s => {
+      const processed = assignedStudents.map(s => {
         const studentLogs = allLogs?.filter(l => l.student_id === s.id) || [];
         const matSec = studentLogs.filter(l => l.type === 'material').reduce((acc, curr) => acc + curr.duration, 0);
         const flashSec = studentLogs.filter(l => l.type === 'flashcard').reduce((acc, curr) => acc + curr.duration, 0);
@@ -299,6 +342,11 @@ const TaskPanel: React.FC<TaskPanelProps> = ({ nodeId, student, isAdmin, themeCo
   const fetchTaskData = useCallback(async () => {
     setLoading(true);
     try {
+      if (gradeId) {
+        const { data: stData } = await supabase.from('students').select('*').eq('grade_id', gradeId).order('name');
+        if (stData) setGradeStudents(stData);
+      }
+
       // Fetch task for this node
       let query = supabase
         .from('lesson_tasks')
@@ -310,67 +358,84 @@ const TaskPanel: React.FC<TaskPanelProps> = ({ nodeId, student, isAdmin, themeCo
       if (error) throw error;
 
       // Filter by grade_id and prefix logic to ensure isolation
-      const taskData = allTasks?.find((t: any) => {
+      const gradeTasks = (allTasks || []).filter((t: any) => {
         const id = t.node_id || '';
         const tGradeId = t.grade_id || t.gradeId;
-        
-        // 1. Khớp theo grade_id rõ ràng
-        if (gradeId && tGradeId) {
-          return tGradeId == gradeId;
-        }
-
-        // 2. Khớp theo tiền tố ID
+        if (gradeId && tGradeId) return tGradeId == gradeId;
         if (id.startsWith('g10-')) return gradeId == 10;
         if (id.startsWith('g11-')) return gradeId == 11;
         if (id.startsWith('g12-')) return gradeId == 12;
-
-        // 3. Dự phòng cho dữ liệu cũ
         return true;
       });
 
-      let requireHw = taskData?.require_homework || false;
-      let startDateVal = taskData?.start_date || '';
-      let endDateVal = taskData?.end_date || '';
-      let isDraftVal = taskData?.is_draft === true;
-      let cleanDesc = taskData?.description || '';
+      const parsedTasks: LessonTask[] = gradeTasks.map((t: any) => {
+        let requireHw = t.require_homework || false;
+        let startDateVal = t.start_date || '';
+        let endDateVal = t.end_date || '';
+        let isDraftVal = t.is_draft === true;
+        let targetTypeVal: 'all' | 'class' | 'students' = 'all';
+        let targetClassesVal: string[] = [];
+        let targetStudentIdsVal: string[] = [];
+        let cleanDesc = t.description || '';
 
-      // Parse metadata from description if stored
-      const metaMatch = cleanDesc.match(/<!--task_meta:([\s\S]*?)-->/);
-      if (metaMatch && metaMatch[1]) {
-        try {
-          const parsed = JSON.parse(metaMatch[1]);
-          if (parsed.requireHomework !== undefined) requireHw = parsed.requireHomework;
-          if (parsed.startDate !== undefined) startDateVal = parsed.startDate;
-          if (parsed.endDate !== undefined) endDateVal = parsed.endDate;
-          if (parsed.isDraft !== undefined) isDraftVal = parsed.isDraft;
-          cleanDesc = cleanDesc.replace(/<!--task_meta:[\s\S]*?-->/g, '').trim();
-        } catch (e) {}
-      }
+        const metaMatch = cleanDesc.match(/<!--task_meta:([\s\S]*?)-->/);
+        if (metaMatch && metaMatch[1]) {
+          try {
+            const parsed = JSON.parse(metaMatch[1]);
+            if (parsed.requireHomework !== undefined) requireHw = parsed.requireHomework;
+            if (parsed.startDate !== undefined) startDateVal = parsed.startDate;
+            if (parsed.endDate !== undefined) endDateVal = parsed.endDate;
+            if (parsed.isDraft !== undefined) isDraftVal = parsed.isDraft;
+            if (parsed.targetType !== undefined) targetTypeVal = parsed.targetType;
+            if (parsed.targetClasses !== undefined) targetClassesVal = parsed.targetClasses;
+            if (parsed.targetStudentIds !== undefined) targetStudentIdsVal = parsed.targetStudentIds;
+            cleanDesc = cleanDesc.replace(/<!--task_meta:[\s\S]*?-->/g, '').trim();
+          } catch (e) {}
+        }
 
-      setTask(taskData ? {
-        id: taskData.id,
-        nodeId: taskData.node_id,
-        description: cleanDesc,
-        minMaterialTime: taskData.min_material_time,
-        minFlashcardTime: taskData.min_flashcard_time,
-        minQuizTime: taskData.min_quiz_time || 0,
-        requireHomework: requireHw,
-        startDate: startDateVal,
-        endDate: endDateVal,
-        isDraft: isDraftVal,
-        createdAt: taskData.created_at
-      } : null);
-
-      if (taskData) {
-        setFormData({
+        return {
+          id: t.id,
+          nodeId: t.node_id,
           description: cleanDesc,
-          minMaterialTime: taskData.min_material_time,
-          minFlashcardTime: taskData.min_flashcard_time,
-          minQuizTime: taskData.min_quiz_time || 0,
+          minMaterialTime: t.min_material_time || 0,
+          minFlashcardTime: t.min_flashcard_time || 0,
+          minQuizTime: t.min_quiz_time || 0,
           requireHomework: requireHw,
           startDate: startDateVal,
           endDate: endDateVal,
-          isDraft: isDraftVal
+          isDraft: isDraftVal,
+          targetType: targetTypeVal,
+          targetClasses: targetClassesVal,
+          targetStudentIds: targetStudentIdsVal,
+          createdAt: t.created_at
+        };
+      });
+
+      setAllTasksForLesson(parsedTasks);
+
+      let activeTask: LessonTask | null = null;
+      if (student) {
+        // Find task assigned to this student (excluding drafts)
+        activeTask = parsedTasks.find(t => !t.isDraft && isTaskAssignedToStudent(t, student)) || null;
+      } else {
+        // Teacher mode: select task by selected index
+        activeTask = parsedTasks[selectedTaskIndex] || parsedTasks[0] || null;
+      }
+
+      setTask(activeTask);
+      if (activeTask) {
+        setFormData({
+          description: activeTask.description,
+          minMaterialTime: activeTask.minMaterialTime,
+          minFlashcardTime: activeTask.minFlashcardTime,
+          minQuizTime: activeTask.minQuizTime || 0,
+          requireHomework: Boolean(activeTask.requireHomework),
+          startDate: activeTask.startDate || '',
+          endDate: activeTask.endDate || '',
+          isDraft: Boolean(activeTask.isDraft),
+          targetType: activeTask.targetType || 'all',
+          targetClasses: activeTask.targetClasses || [],
+          targetStudentIds: activeTask.targetStudentIds || []
         });
       }
 
@@ -417,7 +482,10 @@ const TaskPanel: React.FC<TaskPanelProps> = ({ nodeId, student, isAdmin, themeCo
         requireHomework: formData.requireHomework,
         startDate: formData.startDate,
         endDate: formData.endDate,
-        isDraft: isDraftTarget
+        isDraft: isDraftTarget,
+        targetType: formData.targetType,
+        targetClasses: formData.targetClasses,
+        targetStudentIds: formData.targetStudentIds
       };
       const metaSnippet = `<!--task_meta:${JSON.stringify(metaObj)}-->`;
       const cleanDesc = formData.description.replace(/<!--task_meta:[\s\S]*?-->/g, '').trim();
@@ -550,7 +618,10 @@ const TaskPanel: React.FC<TaskPanelProps> = ({ nodeId, student, isAdmin, themeCo
               requireHomework: false,
               startDate: '',
               endDate: '',
-              isDraft: false
+              isDraft: false,
+              targetType: 'all',
+              targetClasses: [],
+              targetStudentIds: []
             });
             showToast("Đã xóa nhiệm vụ học tập thành công!", "success");
           } catch (err: any) {
@@ -764,6 +835,78 @@ const TaskPanel: React.FC<TaskPanelProps> = ({ nodeId, student, isAdmin, themeCo
         </div>
       </div>
 
+      {/* TEACHER MULTI-TASK SELECTOR BAR */}
+      {isAdmin && allTasksForLesson.length > 0 && !isEditing && (
+        <div className="flex flex-wrap items-center gap-2 p-3 bg-slate-100 rounded-2xl border border-slate-200">
+          <span className="text-[10px] font-black uppercase tracking-wider text-slate-500 mr-1 flex items-center gap-1">
+            <ClipboardCheck size={14} className="text-indigo-600" /> Nhiệm vụ trong bài ({allTasksForLesson.length}):
+          </span>
+          {allTasksForLesson.map((t, idx) => {
+            const isSel = task?.id === t.id;
+            let label = t.targetType === 'class' 
+              ? `Lớp ${(t.targetClasses || []).join(', ')}` 
+              : t.targetType === 'students' 
+                ? `${(t.targetStudentIds || []).length} học sinh` 
+                : 'Toàn khối';
+            return (
+              <button
+                key={t.id}
+                type="button"
+                onClick={() => {
+                  setSelectedTaskIndex(idx);
+                  setTask(t);
+                  setFormData({
+                    description: t.description,
+                    minMaterialTime: t.minMaterialTime,
+                    minFlashcardTime: t.minFlashcardTime,
+                    minQuizTime: t.minQuizTime || 0,
+                    requireHomework: Boolean(t.requireHomework),
+                    startDate: t.startDate || '',
+                    endDate: t.endDate || '',
+                    isDraft: Boolean(t.isDraft),
+                    targetType: t.targetType || 'all',
+                    targetClasses: t.targetClasses || [],
+                    targetStudentIds: t.targetStudentIds || []
+                  });
+                }}
+                className={`px-3 py-1.5 rounded-xl text-xs font-black uppercase transition-all flex items-center gap-1.5 ${
+                  isSel ? 'bg-indigo-600 text-white shadow-xs' : 'bg-white text-slate-700 hover:bg-slate-200/80 border border-slate-200'
+                }`}
+              >
+                <span>Nhiệm vụ {idx + 1}: {label}</span>
+                {t.isDraft && <span className="px-1.5 py-0.2 rounded text-[9px] bg-amber-200 text-amber-800">Nháp</span>}
+              </button>
+            );
+          })}
+
+          <button
+            type="button"
+            onClick={() => {
+              setTask(null);
+              setFormData({
+                description: '',
+                minMaterialTime: 10,
+                minFlashcardTime: 5,
+                minQuizTime: 0,
+                requireHomework: false,
+                startDate: '',
+                endDate: '',
+                isDraft: false,
+                targetType: 'class',
+                targetClasses: [],
+                targetStudentIds: []
+              });
+              setIsEditing(true);
+            }}
+            className="px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-xl text-xs font-black uppercase border border-emerald-200 transition-all flex items-center gap-1 shadow-xs"
+            title="Giao thêm nhiệm vụ cho lớp hoặc nhóm học sinh khác trong cùng bài học này"
+          >
+            <Plus size={13} />
+            <span>+ Giao thêm đối tượng khác</span>
+          </button>
+        </div>
+      )}
+
       {isEditing ? (
         <form onSubmit={handleSaveTask} className="bg-white p-8 rounded-3xl border border-slate-100 shadow-xl space-y-5 animate-in zoom-in-95">
           <div className="space-y-2">
@@ -846,6 +989,203 @@ const TaskPanel: React.FC<TaskPanelProps> = ({ nodeId, student, isAdmin, themeCo
             </p>
           </div>
 
+          {/* TARGET ASSIGNMENT SETUP (ĐỐI TƯỢNG GIAO NHIỆM VỤ) */}
+          <div className="bg-indigo-50/50 p-6 rounded-2xl border border-indigo-100 space-y-4">
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-black text-indigo-900 uppercase tracking-wide flex items-center gap-2">
+                <Users size={16} className="text-indigo-600" />
+                Đối tượng giao nhiệm vụ
+              </label>
+              <span className="text-[10px] font-bold text-indigo-700 bg-indigo-100 px-2.5 py-0.5 rounded-full border border-indigo-200">
+                {formData.targetType === 'all' 
+                  ? '🌐 Tất cả học sinh khối' 
+                  : formData.targetType === 'class' 
+                    ? `🏫 Giao cho ${formData.targetClasses.length} lớp` 
+                    : `👤 Giao cho ${formData.targetStudentIds.length} học sinh`}
+              </span>
+            </div>
+
+            {/* 3 Target Modes */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+              <button
+                type="button"
+                onClick={() => setFormData({ ...formData, targetType: 'all' })}
+                className={`p-3 rounded-xl border text-left transition-all ${
+                  formData.targetType === 'all'
+                    ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
+                    : 'bg-white text-slate-700 border-slate-200 hover:border-indigo-300'
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <span className="text-sm">🌐</span>
+                  <span className="font-black text-xs uppercase">Toàn khối {gradeId}</span>
+                </div>
+                <p className={`text-[10px] mt-1 ${formData.targetType === 'all' ? 'text-indigo-100' : 'text-slate-400'}`}>
+                  Tất cả học sinh trong khối đều nhận
+                </p>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setFormData({ ...formData, targetType: 'class' })}
+                className={`p-3 rounded-xl border text-left transition-all ${
+                  formData.targetType === 'class'
+                    ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
+                    : 'bg-white text-slate-700 border-slate-200 hover:border-indigo-300'
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <span className="text-sm">🏫</span>
+                  <span className="font-black text-xs uppercase">Theo Lớp học</span>
+                </div>
+                <p className={`text-[10px] mt-1 ${formData.targetType === 'class' ? 'text-indigo-100' : 'text-slate-400'}`}>
+                  Gán cho 1 hoặc nhiều lớp cụ thể
+                </p>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setFormData({ ...formData, targetType: 'students' })}
+                className={`p-3 rounded-xl border text-left transition-all ${
+                  formData.targetType === 'students'
+                    ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
+                    : 'bg-white text-slate-700 border-slate-200 hover:border-indigo-300'
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <span className="text-sm">👤</span>
+                  <span className="font-black text-xs uppercase">Học sinh chỉ định</span>
+                </div>
+                <p className={`text-[10px] mt-1 ${formData.targetType === 'students' ? 'text-indigo-100' : 'text-slate-400'}`}>
+                  Lọc và chọn từng học sinh
+                </p>
+              </button>
+            </div>
+
+            {/* Class Selector when targetType === 'class' */}
+            {formData.targetType === 'class' && (
+              <div className="pt-2 border-t border-indigo-100 space-y-2">
+                <span className="text-[10px] font-black uppercase tracking-wider text-slate-500">
+                  Chọn các lớp nhận nhiệm vụ này:
+                </span>
+                {availableClasses.length === 0 ? (
+                  <p className="text-xs text-slate-400 italic">
+                    Chưa tìm thấy lớp nào từ danh sách học sinh. Hãy nhập mã học sinh có kèm lớp (VD: HS08C07 &rarr; C07).
+                  </p>
+                ) : (
+                  <div className="flex flex-wrap gap-2">
+                    {availableClasses.map(cls => {
+                      const isChecked = formData.targetClasses.includes(cls);
+                      return (
+                        <button
+                          type="button"
+                          key={cls}
+                          onClick={() => {
+                            const updated = isChecked
+                              ? formData.targetClasses.filter(c => c !== cls)
+                              : [...formData.targetClasses, cls];
+                            setFormData({ ...formData, targetClasses: updated });
+                          }}
+                          className={`px-3.5 py-1.5 rounded-xl text-xs font-black uppercase transition-all flex items-center gap-1.5 ${
+                            isChecked
+                              ? 'bg-indigo-600 text-white shadow-sm'
+                              : 'bg-white text-slate-600 border border-slate-200 hover:border-indigo-300'
+                          }`}
+                        >
+                          <span>{isChecked ? '✓' : '+'}</span>
+                          <span>Lớp {cls}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Student Picker when targetType === 'students' */}
+            {formData.targetType === 'students' && (
+              <div className="pt-2 border-t border-indigo-100 space-y-3">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <select
+                      value={targetClassFilter}
+                      onChange={e => setTargetClassFilter(e.target.value)}
+                      className="px-2.5 py-1 bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-700 outline-none"
+                    >
+                      <option value="all">Tất cả các lớp</option>
+                      {availableClasses.map(cls => (
+                        <option key={cls} value={cls}>Lớp {cls}</option>
+                      ))}
+                    </select>
+
+                    <button
+                      type="button"
+                      onClick={handleSelectAllFilteredStudents}
+                      className="text-[10px] font-bold text-indigo-600 hover:text-indigo-800 underline"
+                    >
+                      Chọn tất cả hiển thị
+                    </button>
+                    <span className="text-slate-300">&bull;</span>
+                    <button
+                      type="button"
+                      onClick={() => setFormData({ ...formData, targetStudentIds: [] })}
+                      className="text-[10px] font-bold text-rose-500 hover:text-rose-700 underline"
+                    >
+                      Bỏ chọn tất cả
+                    </button>
+                  </div>
+
+                  <input
+                    type="text"
+                    value={targetStudentSearch}
+                    onChange={e => setTargetStudentSearch(e.target.value)}
+                    placeholder="Tìm tên hoặc mã HS..."
+                    className="px-3 py-1 bg-white border border-slate-200 rounded-lg text-xs outline-none focus:border-indigo-400 w-44"
+                  />
+                </div>
+
+                <div className="max-h-56 overflow-y-auto p-2 bg-white rounded-xl border border-slate-200 grid grid-cols-1 sm:grid-cols-2 gap-1.5 custom-scrollbar">
+                  {filteredTargetStudents.map(s => {
+                    const sClass = extractClassCode(s.name);
+                    const isSelected = formData.targetStudentIds.includes(s.id) || formData.targetStudentIds.includes(s.name);
+                    return (
+                      <label
+                        key={s.id}
+                        className={`flex items-center gap-2.5 p-2 rounded-lg cursor-pointer transition-colors ${
+                          isSelected ? 'bg-indigo-50 border border-indigo-200' : 'hover:bg-slate-50 border border-transparent'
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={e => {
+                            let updated = [...formData.targetStudentIds];
+                            if (e.target.checked) {
+                              if (!updated.includes(s.id)) updated.push(s.id);
+                            } else {
+                              updated = updated.filter(id => id !== s.id && id !== s.name);
+                            }
+                            setFormData({ ...formData, targetStudentIds: updated });
+                          }}
+                          className="w-4 h-4 text-indigo-600 rounded border-slate-300 focus:ring-indigo-500"
+                        />
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-xs font-bold text-slate-800 truncate">{s.full_name || s.name}</span>
+                            <span className="text-[9px] font-black uppercase px-1.5 py-0.2 bg-slate-100 text-slate-600 rounded">
+                              {sClass}
+                            </span>
+                          </div>
+                          <p className="text-[10px] font-mono text-slate-400">{s.name}</p>
+                        </div>
+                      </label>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+
           <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-3 border-t border-slate-100">
             <div>
               {task && (
@@ -888,7 +1228,7 @@ const TaskPanel: React.FC<TaskPanelProps> = ({ nodeId, student, isAdmin, themeCo
             </div>
           </div>
         </form>
-      ) : (task && (isAdmin || !task.isDraft)) ? (
+      ) : (task && (isAdmin || (!task.isDraft && isTaskAssignedToStudent(task, student)))) ? (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 space-y-6">
             {/* Draft Banner for Teacher */}
@@ -931,8 +1271,15 @@ const TaskPanel: React.FC<TaskPanelProps> = ({ nodeId, student, isAdmin, themeCo
             {/* Teacher instructions */}
             <div className="bg-white p-6 sm:p-8 rounded-[32px] border border-slate-100 shadow-sm relative overflow-hidden">
                <div className={`absolute top-0 left-0 w-1.5 h-full bg-${themeColor}-600`}></div>
-               <div className="flex items-center justify-between mb-3">
-                 <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Yêu cầu từ giáo viên</h4>
+               <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+                 <div className="flex items-center gap-2">
+                   <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Yêu cầu từ giáo viên</h4>
+                   {task.targetType && (
+                     <span className="text-[10px] font-bold text-indigo-700 bg-indigo-50 px-2.5 py-0.5 rounded-full border border-indigo-100">
+                       Đối tượng: {task.targetType === 'class' ? `Lớp ${(task.targetClasses || []).join(', ')}` : task.targetType === 'students' ? `${(task.targetStudentIds || []).length} học sinh` : 'Toàn khối'}
+                     </span>
+                   )}
+                 </div>
                  {(task.startDate || task.endDate) && (
                    <span className="text-[10px] font-bold text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-full border border-indigo-100">
                      Thời hạn: {formatDateVN(task.startDate) || 'Mở'} đến {formatDateVN(task.endDate) || 'Không giới hạn'}
@@ -1099,7 +1446,7 @@ const TaskPanel: React.FC<TaskPanelProps> = ({ nodeId, student, isAdmin, themeCo
            <div>
               <h4 className="text-xl font-black text-slate-400 uppercase tracking-tight">Chưa có nhiệm vụ bài học</h4>
               <p className="text-slate-400 text-sm font-medium mt-1 max-w-xs">
-                {isAdmin ? 'Thiết lập yêu cầu thời gian xem học liệu, rèn luyện flashcard, nộp BTVN và thời hạn hoàn thành.' : 'Giáo viên chưa giao nhiệm vụ cụ thể cho bài học này.'}
+                {isAdmin ? 'Thiết lập yêu cầu thời gian xem học liệu, rèn luyện flashcard, nộp BTVN và thời hạn hoàn thành.' : 'Giáo viên chưa giao nhiệm vụ cụ thể cho bài học này hoặc nhiệm vụ không áp dụng cho bạn.'}
               </p>
            </div>
            {isAdmin && (

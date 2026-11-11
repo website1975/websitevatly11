@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Send, Trash2, Image as ImageIcon, Wifi, WifiOff, RefreshCw, ChevronDown, ChevronUp, Eye, EyeOff, AlertCircle, Home, BookOpen, Clock, CheckCircle2, Bold, Italic, List, Table as TableIcon, Link, Type, Palette, AlignLeft, AlignCenter, AlignRight, AlignJustify, Heading3, Calculator, X, Search, Edit2, Users, Cloud, Lock, Check, Filter, ShieldCheck, MessageSquare, Star, Sparkles, Copy, ClipboardList } from 'lucide-react';
+import { Send, Trash2, Image as ImageIcon, Wifi, WifiOff, RefreshCw, ChevronDown, ChevronUp, Eye, EyeOff, AlertCircle, Home, BookOpen, Clock, CheckCircle2, Bold, Italic, List, Table as TableIcon, Link, Link2, Settings, Type, Palette, AlignLeft, AlignCenter, AlignRight, AlignJustify, Heading3, Calculator, X, Search, Edit2, Users, Cloud, Lock, Check, Filter, ShieldCheck, MessageSquare, Star, Sparkles, Copy, ClipboardList } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import remarkMath from 'remark-math';
@@ -16,6 +16,13 @@ import { ConfirmModal, ToastNotification, ConfirmState, ToastState } from './Cus
 
 // Import Katex CSS
 const KATEX_CSS = "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css";
+
+export const customUrlTransform = (url: string) => {
+  if (!url) return '';
+  const trimmed = url.trim();
+  if (trimmed.toLowerCase().startsWith('javascript:')) return '';
+  return trimmed;
+};
 
 interface HomeworkPanelProps {
   nodeId: string;
@@ -75,8 +82,10 @@ const HomeworkPanel: React.FC<HomeworkPanelProps> = ({ nodeId, student, isAdmin,
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [isUploadingDrive, setIsUploadingDrive] = useState(false);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [isImageRemoved, setIsImageRemoved] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [showPreview, setShowPreview] = useState(true);
@@ -271,11 +280,13 @@ const HomeworkPanel: React.FC<HomeworkPanelProps> = ({ nodeId, student, isAdmin,
   const handleStartEditQuestion = (q: ForumComment) => {
     setEditingId(q.id);
     setContent(displayMarkdown(q.content));
+    setIsImageRemoved(false);
     if (q.imageUrl) {
       setPreviewUrl(q.imageUrl);
     } else {
       setPreviewUrl(null);
     }
+    setSelectedFile(null);
     // Smooth scroll to the inline card so it stays comfortably in view without jumping to top
     setTimeout(() => {
       const el = document.getElementById(`homework-item-${q.id}`);
@@ -290,6 +301,7 @@ const HomeworkPanel: React.FC<HomeworkPanelProps> = ({ nodeId, student, isAdmin,
     setContent('');
     setSelectedFile(null);
     setPreviewUrl(null);
+    setIsImageRemoved(false);
     setReplyingToId(null);
   };
 
@@ -307,6 +319,8 @@ const HomeworkPanel: React.FC<HomeworkPanelProps> = ({ nodeId, student, isAdmin,
     text = text.replace(/(?:^|\n)(https?:\/\/[^\s]+?\.(?:png|jpe?g|gif|webp|svg|bmp)(?:\?[^\s]*)?)(?=\n|$)/gi, '\n![Hình ảnh]($1)\n');
     // Convert standalone Google Drive links on their own line
     text = text.replace(/(?:^|\n)https:\/\/(?:drive|docs)\.google\.com\/(?:file\/d\/|open\?id=|uc\?[^)]*id=)([a-zA-Z0-9_-]+)[^\s]*(?=\n|$)/gi, '\n![Hình ảnh Drive](https://lh3.googleusercontent.com/d/$1)\n');
+    // Convert standalone data:image URLs on their own line
+    text = text.replace(/(?:^|\n)(data:image\/[a-zA-Z0-9.+-]+;base64,[A-Za-z0-9+/=]+)(?=\n|$)/gi, '\n![Ảnh]($1)\n');
     return text;
   };
 
@@ -553,9 +567,40 @@ const HomeworkPanel: React.FC<HomeworkPanelProps> = ({ nodeId, student, isAdmin,
     return () => { supabase.removeChannel(channel); };
   }, [nodeId, homeworkNodeId]);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleRemoveAttachedImage = () => {
+    setSelectedFile(null);
+    setPreviewUrl(null);
+    setIsImageRemoved(true);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+    showToast("Đã gỡ ảnh đính kèm. Nhấn 'Cập nhật' để lưu thay đổi.", "info", "Đã gỡ ảnh");
+  };
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) { setSelectedFile(file); setPreviewUrl(URL.createObjectURL(file)); }
+    if (!file) return;
+
+    const mode = getImageServerMode();
+    setIsUploadingImage(true);
+    showToast(`Đang tải ảnh lên hệ thống qua [${mode}]...`, 'info', 'Đang tải ảnh');
+    try {
+      const result = await uploadImageFlexible(file, mode);
+      const fileName = file.name || 'Ảnh đính kèm';
+      const snippet = `\n\n![${fileName}](${result.url})\n\n`;
+      handleInsertImageSnippet(snippet);
+      showToast(`Đã tải ảnh lên qua [${result.modeUsed}] và chèn đường dẫn vào bài! Bạn có thể xóa đường dẫn này bất cứ lúc nào trong khung soạn thảo.`, 'success', 'Thành công');
+    } catch (err: any) {
+      console.error("Image upload error in HomeworkPanel:", err);
+      showToast(err.message || 'Lỗi khi tải ảnh lên.', 'error', 'Tải ảnh thất bại');
+    } finally {
+      setIsUploadingImage(false);
+      if (e.target) e.target.value = '';
+    }
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    handleImageUpload(e);
   };
 
   const uploadImage = async (file: File): Promise<string | null> => {
@@ -665,6 +710,8 @@ const HomeworkPanel: React.FC<HomeworkPanelProps> = ({ nodeId, student, isAdmin,
         const updatePayload: Record<string, any> = { content: finalContent };
         if (imageUrl) {
           updatePayload.imageUrl = imageUrl;
+        } else if (isImageRemoved || (!previewUrl && !selectedFile)) {
+          updatePayload.imageUrl = null;
         }
 
         result = await supabase
@@ -672,11 +719,17 @@ const HomeworkPanel: React.FC<HomeworkPanelProps> = ({ nodeId, student, isAdmin,
           .update(updatePayload)
           .eq('id', editingId);
         
-        if (result.error && imageUrl) {
+        if (result.error) {
           // Fallback update if imageUrl column is snake_case
+          const snakePayload: Record<string, any> = { content: finalContent };
+          if (imageUrl) {
+            snakePayload.image_url = imageUrl;
+          } else if (isImageRemoved || (!previewUrl && !selectedFile)) {
+            snakePayload.image_url = null;
+          }
           result = await supabase
             .from('forum_comments')
-            .update({ content: finalContent, image_url: imageUrl })
+            .update(snakePayload)
             .eq('id', editingId);
           
           if (result.error) {
@@ -705,6 +758,7 @@ const HomeworkPanel: React.FC<HomeworkPanelProps> = ({ nodeId, student, isAdmin,
       setContent(''); 
       setSelectedFile(null); 
       setPreviewUrl(null);
+      setIsImageRemoved(false);
       setReplyingToId(null);
       setEditingId(null);
       // Immediately refresh list for better UX
@@ -1071,15 +1125,54 @@ const HomeworkPanel: React.FC<HomeworkPanelProps> = ({ nodeId, student, isAdmin,
         value={content} 
         onChange={e => setContent(e.target.value)} 
         onPaste={handleTextareaPaste}
-        placeholder={isAdmin ? "Nhập nội dung bài viết tin tức tại đây (sử dụng Markdown, hỗ trợ dán ảnh trực tiếp Ctrl+V)..." : "Em viết bài trả lời tại đây (sử dụng Markdown, hỗ trợ dán ảnh trực tiếp Ctrl+V)..."} 
+        placeholder={isAdmin ? "Nhập nội dung bài tập / nhiệm vụ tại đây (sử dụng Markdown, hỗ trợ dán ảnh trực tiếp Ctrl+V hoặc bấm 'Đính kèm ảnh' để chèn đường dẫn)..." : "Em viết bài trả lời tại đây (sử dụng Markdown, hỗ trợ công thức Toán)..."} 
         className="w-full flex-1 p-8 text-slate-600 text-lg font-medium outline-none transition-all resize-none selection:bg-indigo-100 leading-relaxed placeholder:text-slate-300 min-h-[300px]" 
       />
       
       {previewUrl && (
-         <div className="absolute bottom-4 left-8 group/preview">
-           <img src={previewUrl} className="h-16 w-16 object-cover rounded-xl border-2 border-indigo-100 shadow-lg" />
-           <button onClick={() => { setSelectedFile(null); setPreviewUrl(null); }} className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover/preview:opacity-100 transition-all shadow-md"><X size={10}/></button>
-         </div>
+        <div className="mx-8 mb-4 p-4 bg-amber-50/90 border border-amber-200 rounded-2xl flex items-center justify-between gap-4 flex-wrap animate-in fade-in duration-200 shadow-sm">
+          <div className="flex items-center gap-3">
+            <img 
+              src={previewUrl} 
+              alt="Ảnh đính kèm" 
+              className="h-16 w-16 object-cover rounded-xl border-2 border-amber-300 shadow-sm shrink-0" 
+            />
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-black text-amber-900 uppercase tracking-wider flex items-center gap-1.5">
+                  <ImageIcon size={14} className="text-amber-600" /> Ảnh đính kèm của bài viết
+                </span>
+                <span className="text-[10px] bg-amber-200/80 text-amber-800 px-2 py-0.5 rounded-full font-bold">
+                  {editingId ? 'Đang gắn trong bài' : 'Đã chọn tệp'}
+                </span>
+              </div>
+              <p className="text-[11px] text-amber-700 mt-0.5">
+                Bạn có thể chèn ảnh này thành đường dẫn Markdown vào bài, hoặc bấm nút đỏ để xóa hẳn ảnh khỏi bài.
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                handleInsertImageSnippet(`\n\n![Ảnh đính kèm](${previewUrl})\n\n`);
+                showToast("Đã chèn đường dẫn ảnh vào nội dung bài!", "success");
+              }}
+              className="px-3.5 py-2 bg-white hover:bg-amber-100 text-amber-800 border border-amber-300 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-1.5 shadow-sm"
+              title="Chèn ảnh này vào vị trí con trỏ trong văn bản để tự do sửa/xóa"
+            >
+              <Link2 size={13} /> Chèn link vào bài
+            </button>
+            <button
+              type="button"
+              onClick={handleRemoveAttachedImage}
+              className="px-3.5 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-1.5 shadow-sm shadow-red-200"
+              title="Xóa hẳn ảnh đính kèm này khỏi bài viết"
+            >
+              <Trash2 size={13} /> Xóa ảnh đính kèm
+            </button>
+          </div>
+        </div>
       )}
     </div>
   );
@@ -1096,6 +1189,7 @@ const HomeworkPanel: React.FC<HomeworkPanelProps> = ({ nodeId, student, isAdmin,
               <ReactMarkdown 
                 remarkPlugins={[remarkGfm, remarkMath, remarkBreaks]} 
                 rehypePlugins={[rehypeRaw, [rehypeKatex, { output: 'html' }]]}
+                urlTransform={customUrlTransform}
               >
                 {displayMarkdown(content)}
               </ReactMarkdown>
@@ -1124,10 +1218,26 @@ const HomeworkPanel: React.FC<HomeworkPanelProps> = ({ nodeId, student, isAdmin,
 
          {isAdmin && (
            <>
-             <button type="button" onClick={() => fileInputRef.current?.click()} className="flex items-center gap-2 px-6 py-3 bg-white text-slate-500 rounded-2xl hover:bg-indigo-50 hover:text-indigo-600 border border-slate-200 transition-all font-black uppercase text-[10px] tracking-widest shadow-sm">
-                <ImageIcon size={18} /> Đính kèm ảnh
+             <button 
+               type="button" 
+               onClick={() => fileInputRef.current?.click()} 
+               disabled={isUploadingImage}
+               className="flex items-center gap-2 px-5 py-3 bg-white text-slate-700 rounded-2xl hover:bg-indigo-50 hover:text-indigo-600 border border-slate-200 transition-all font-black uppercase text-[10px] tracking-widest shadow-sm"
+               title="Tải ảnh từ máy và chèn đường dẫn vào bài (có thể tự do xóa hoặc di chuyển)"
+             >
+                {isUploadingImage ? <RefreshCw size={16} className="animate-spin text-indigo-600" /> : <ImageIcon size={16} />}
+                {isUploadingImage ? 'Đang tải ảnh...' : 'Đính kèm ảnh (Chèn link vào bài)'}
              </button>
              <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept="image/*" />
+
+             <button
+               type="button"
+               onClick={() => setIsImageModalOpen(true)}
+               className="flex items-center gap-1.5 px-4 py-3 bg-slate-100 text-slate-600 rounded-2xl hover:bg-indigo-50 hover:text-indigo-600 border border-slate-200 transition-all font-black uppercase text-[10px] tracking-widest shadow-sm"
+               title="Cấu hình phương thức lưu ảnh (Supabase Store, Base64, ImgBB)"
+             >
+                <Settings size={15} /> Máy chủ ảnh ({getImageServerMode()})
+             </button>
            </>
          )}
       </div>
@@ -1409,7 +1519,7 @@ const HomeworkPanel: React.FC<HomeworkPanelProps> = ({ nodeId, student, isAdmin,
                              </div>
 
                              <div className="prose prose-slate max-w-none text-slate-600 font-medium leading-relaxed mb-6">
-                                <ReactMarkdown remarkPlugins={[remarkGfm, remarkMath, remarkBreaks]} rehypePlugins={[rehypeRaw, [rehypeKatex, { output: 'html' }]]}>
+                                <ReactMarkdown remarkPlugins={[remarkGfm, remarkMath, remarkBreaks]} rehypePlugins={[rehypeRaw, [rehypeKatex, { output: 'html' }]]} urlTransform={customUrlTransform}>
                                    {displayMarkdown(q.content)}
                                 </ReactMarkdown>
                              </div>
@@ -1474,7 +1584,7 @@ const HomeworkPanel: React.FC<HomeworkPanelProps> = ({ nodeId, student, isAdmin,
                                    )}
 
                                    <div className="bg-slate-50/70 p-6 rounded-3xl border border-slate-100 prose prose-slate max-w-none prose-sm text-slate-700 font-medium leading-relaxed">
-                                      <ReactMarkdown remarkPlugins={[remarkGfm, remarkMath, remarkBreaks]} rehypePlugins={[rehypeRaw, [rehypeKatex, { output: 'html' }]]}>
+                                      <ReactMarkdown remarkPlugins={[remarkGfm, remarkMath, remarkBreaks]} rehypePlugins={[rehypeRaw, [rehypeKatex, { output: 'html' }]]} urlTransform={customUrlTransform}>
                                          {displayMarkdown(myAnswer.content)}
                                       </ReactMarkdown>
                                    </div>
@@ -1539,7 +1649,7 @@ const HomeworkPanel: React.FC<HomeworkPanelProps> = ({ nodeId, student, isAdmin,
                                                      <span className="text-slate-400 font-medium">{new Date(ans.createdAt).toLocaleDateString('vi-VN')}</span>
                                                   </div>
                                                   <div className="prose prose-purple max-w-none prose-sm text-slate-700 leading-relaxed font-medium">
-                                                     <ReactMarkdown remarkPlugins={[remarkGfm, remarkMath, remarkBreaks]} rehypePlugins={[rehypeRaw, [rehypeKatex, { output: 'html' }]]}>
+                                                     <ReactMarkdown remarkPlugins={[remarkGfm, remarkMath, remarkBreaks]} rehypePlugins={[rehypeRaw, [rehypeKatex, { output: 'html' }]]} urlTransform={customUrlTransform}>
                                                         {displayMarkdown(ans.content)}
                                                      </ReactMarkdown>
                                                   </div>
@@ -1733,7 +1843,7 @@ const HomeworkPanel: React.FC<HomeworkPanelProps> = ({ nodeId, student, isAdmin,
                      </div>
                      
                      <div className="prose prose-slate max-w-none prose-sm text-slate-600 leading-relaxed font-medium">
-                        <ReactMarkdown remarkPlugins={[remarkGfm, remarkMath, remarkBreaks]} rehypePlugins={[rehypeRaw, [rehypeKatex, { output: 'html' }]]}>
+                        <ReactMarkdown remarkPlugins={[remarkGfm, remarkMath, remarkBreaks]} rehypePlugins={[rehypeRaw, [rehypeKatex, { output: 'html' }]]} urlTransform={customUrlTransform}>
                           {displayMarkdown(q.content)}
                         </ReactMarkdown>
                      </div>
@@ -2009,7 +2119,7 @@ const HomeworkPanel: React.FC<HomeworkPanelProps> = ({ nodeId, student, isAdmin,
                         
                         <div className="flex-1 min-w-0">
                            <div className="prose prose-emerald max-w-none prose-sm text-slate-700 leading-relaxed font-medium">
-                              <ReactMarkdown remarkPlugins={[remarkGfm, remarkMath, remarkBreaks]} rehypePlugins={[rehypeRaw, [rehypeKatex, { output: 'html' }]]}>
+                              <ReactMarkdown remarkPlugins={[remarkGfm, remarkMath, remarkBreaks]} rehypePlugins={[rehypeRaw, [rehypeKatex, { output: 'html' }]]} urlTransform={customUrlTransform}>
                                  {displayMarkdown(a.content)}
                               </ReactMarkdown>
                            </div>

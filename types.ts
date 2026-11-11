@@ -73,6 +73,9 @@ export interface LessonTask {
   startDate?: string; // Ngày bắt đầu (YYYY-MM-DD)
   endDate?: string; // Ngày kết thúc / Hạn chót (YYYY-MM-DD)
   isDraft?: boolean; // Bản nháp (chỉ GV thấy, chưa giao cho HS)
+  targetType?: 'all' | 'class' | 'students'; // 'all': toàn khối, 'class': theo lớp, 'students': theo HS chỉ định
+  targetClasses?: string[]; // Danh sách mã lớp (VD: ['C07', '10A1'])
+  targetStudentIds?: string[]; // Danh sách ID hoặc mã học sinh (VD: ['HS08C07', ...])
   createdAt: string;
 }
 
