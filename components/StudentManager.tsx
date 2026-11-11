@@ -207,7 +207,7 @@ const StudentManager: React.FC<StudentManagerProps> = ({
         createdAt: t.created_at,
         lessonNode
       };
-    }).filter(t => !t.isDraft); // Exclude drafts from student stats
+    }).filter(t => !t.isDraft && t.lessonNode && t.lessonNode.type === 'lesson');
   }, [lessonTasks, nodeMap]);
 
   // Compute comprehensive progress for each student
@@ -228,15 +228,15 @@ const StudentManager: React.FC<StudentManagerProps> = ({
 
       // Filter tasks assigned to THIS student
       const assigned = parsedLessonTasks.filter(task => {
-        // Also check grade match
         const taskLesson = task.lessonNode;
-        if (taskLesson) {
-          const pFolder = taskLesson.parentId ? nodeMap.get(taskLesson.parentId) : null;
-          const itemGrade = (taskLesson as any).gradeId || (pFolder as any)?.gradeId;
-          if (gradeId && itemGrade && String(itemGrade) !== String(gradeId)) {
-            return false;
-          }
+        if (!taskLesson) return false;
+
+        const pFolder = taskLesson.parentId ? nodeMap.get(taskLesson.parentId) : null;
+        const itemGrade = (taskLesson as any).gradeId || (pFolder as any)?.gradeId;
+        if (gradeId && itemGrade && String(itemGrade) !== String(gradeId)) {
+          return false;
         }
+
         return isTaskAssignedToStudent(task, student);
       });
 
