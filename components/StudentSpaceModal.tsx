@@ -219,6 +219,14 @@ export const StudentSpaceModal: React.FC<StudentSpaceModalProps> = ({
     return map;
   }, [data?.nodes]);
 
+  const nodeIndexMap = useMemo(() => {
+    const map = new Map<string, number>();
+    (data?.nodes || []).forEach((n, idx) => {
+      if (n && n.id) map.set(n.id, idx);
+    });
+    return map;
+  }, [data?.nodes]);
+
   // Clean and parse markdown helper
   const cleanMarkdown = (rawText: string) => {
     if (!rawText) return '';
@@ -301,7 +309,7 @@ export const StudentSpaceModal: React.FC<StudentSpaceModalProps> = ({
       return studentTag ? author.includes(studentTag) : false;
     });
 
-    return teacherQuestions.map(q => {
+    const list = teacherQuestions.map(q => {
       const qNodeId = q.node_id || q.nodeId;
       const lessonId = qNodeId.replace('homework_', '');
       const lesson = nodeMap.get(lessonId);
@@ -356,7 +364,16 @@ export const StudentSpaceModal: React.FC<StudentSpaceModalProps> = ({
         status: status,
       };
     });
-  }, [rawComments, nodeMap, student, selectedGrade, lessonTasks]);
+
+    // Sắp xếp thứ tự danh sách bài tập/nhiệm vụ theo thứ tự môn học (Chương 1 -> Chương 2 -> Chương 3...)
+    list.sort((a, b) => {
+      const idxA = nodeIndexMap.get(a.lessonId) ?? 999999;
+      const idxB = nodeIndexMap.get(b.lessonId) ?? 999999;
+      return idxA - idxB;
+    });
+
+    return list;
+  }, [rawComments, nodeMap, student, selectedGrade, lessonTasks, nodeIndexMap]);
 
   // Build Lesson Completion Status List for ALL lessons in current grade
   const lessonCompletionList: LessonCompletionStatus[] = useMemo(() => {
