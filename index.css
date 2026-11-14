@@ -122,6 +122,11 @@ sup,
   @apply transition-colors hover:bg-slate-50/50;
 }
 
+/* Links */
+.prose a {
+  @apply text-blue-600 underline decoration-blue-500/80 underline-offset-2 font-medium hover:text-blue-800 transition-colors break-words cursor-pointer;
+}
+
 /* Blockquotes & code */
 .prose blockquote {
   @apply border-l-4 border-indigo-500 pl-4 py-1 my-4 text-slate-500 italic bg-indigo-50/20 rounded-r-lg;

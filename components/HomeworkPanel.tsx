@@ -24,6 +24,17 @@ export const customUrlTransform = (url: string) => {
   return trimmed;
 };
 
+export const markdownComponents = {
+  a: ({ node, ...props }: any) => (
+    <a
+      {...props}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="text-blue-600 hover:text-blue-800 underline decoration-blue-500/80 underline-offset-2 font-medium break-words cursor-pointer"
+    />
+  ),
+};
+
 interface HomeworkPanelProps {
   nodeId: string;
   student: Student | null;
@@ -105,6 +116,11 @@ const HomeworkPanel: React.FC<HomeworkPanelProps> = ({ nodeId, student, isAdmin,
   const [toastState, setToastState] = useState<ToastState>({ isOpen: false, message: '' });
   const [classStudents, setClassStudents] = useState<Student[]>([]);
   const [showCopyDropdown, setShowCopyDropdown] = useState(false);
+  const [showLinkModal, setShowLinkModal] = useState(false);
+  const [linkTitle, setLinkTitle] = useState('');
+  const [linkUrl, setLinkUrl] = useState('');
+  const [linkError, setLinkError] = useState('');
+  const [linkSelection, setLinkSelection] = useState<{ start: number; end: number } | null>(null);
 
   const fetchClassStudents = useCallback(async () => {
     try {
@@ -321,6 +337,8 @@ const HomeworkPanel: React.FC<HomeworkPanelProps> = ({ nodeId, student, isAdmin,
     text = text.replace(/(?:^|\n)https:\/\/(?:drive|docs)\.google\.com\/(?:file\/d\/|open\?id=|uc\?[^)]*id=)([a-zA-Z0-9_-]+)[^\s]*(?=\n|$)/gi, '\n![Hình ảnh Drive](https://lh3.googleusercontent.com/d/$1)\n');
     // Convert standalone data:image URLs on their own line
     text = text.replace(/(?:^|\n)(data:image\/[a-zA-Z0-9.+-]+;base64,[A-Za-z0-9+/=]+)(?=\n|$)/gi, '\n![Ảnh]($1)\n');
+    // Separate URLs glued directly onto previous text (e.g. "xem tạihttps://...") so remark-gfm autolinks them
+    text = text.replace(/([a-zA-Z0-9\u00C0-\u1EF9])(https?:\/\/)/g, '$1 $2');
     return text;
   };
 
@@ -461,6 +479,63 @@ const HomeworkPanel: React.FC<HomeworkPanelProps> = ({ nodeId, student, isAdmin,
   const applyStyle = (property: string, value: string) => {
     wrapText(`<span style="${property}: ${value}">`, "</span>");
     setActiveDropdown(null);
+  };
+
+  const handleOpenLinkModal = () => {
+    const textarea = textareaRef.current;
+    const start = textarea ? (textarea.selectionStart ?? content.length) : content.length;
+    const end = textarea ? (textarea.selectionEnd ?? content.length) : content.length;
+    const selectedText = content.substring(start, end).trim();
+
+    setLinkSelection({ start, end });
+    setLinkError('');
+
+    if (selectedText && /^(https?:\/\/|www\.)/i.test(selectedText)) {
+      setLinkUrl(selectedText);
+      setLinkTitle('');
+    } else {
+      setLinkTitle(selectedText);
+      setLinkUrl('');
+    }
+    setShowLinkModal(true);
+  };
+
+  const handleConfirmInsertLink = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    const rawUrl = linkUrl.trim();
+    if (!rawUrl) {
+      setLinkError('Vui lòng nhập đường dẫn (URL).');
+      return;
+    }
+
+    const normalizedUrl = /^(https?:\/\/|mailto:|\/|#)/i.test(rawUrl)
+      ? rawUrl
+      : `https://${rawUrl}`;
+
+    const displayTitle = linkTitle.trim() || normalizedUrl;
+    const markdownLink = `[${displayTitle}](${normalizedUrl})`;
+
+    const textarea = textareaRef.current;
+    const start = linkSelection?.start ?? (textarea?.selectionStart ?? content.length);
+    const end = linkSelection?.end ?? (textarea?.selectionEnd ?? content.length);
+
+    const before = content.substring(0, start);
+    const after = content.substring(end);
+    const updated = before + markdownLink + after;
+    setContent(updated);
+    setShowLinkModal(false);
+    setLinkTitle('');
+    setLinkUrl('');
+    setLinkError('');
+    setLinkSelection(null);
+
+    setTimeout(() => {
+      if (textareaRef.current) {
+        textareaRef.current.focus();
+        const cursorPos = start + markdownLink.length;
+        textareaRef.current.setSelectionRange(cursorPos, cursorPos);
+      }
+    }, 50);
   };
 
   const fetchComments = async (silent = false) => {
@@ -1020,7 +1095,7 @@ const HomeworkPanel: React.FC<HomeworkPanelProps> = ({ nodeId, student, isAdmin,
       <div className="flex items-center gap-0.5 pr-2 mr-2 border-r border-slate-200">
         <button onClick={() => wrapText("- ")} className="p-2 text-slate-500 hover:text-indigo-600 hover:bg-white rounded-lg transition-all" title="Unordered List"><List size={18} /></button>
         <button onClick={() => wrapText("\n| Header | Header |\n| :--- | :--- |\n| Cell | Cell |\n")} className="p-2 text-slate-500 hover:text-indigo-600 hover:bg-white rounded-lg transition-all" title="Table"><TableIcon size={18} /></button>
-        <button onClick={() => wrapText("[", "](url)")} className="p-2 text-slate-500 hover:text-indigo-600 hover:bg-white rounded-lg transition-all" title="Link"><Link size={18} /></button>
+        <button type="button" onClick={handleOpenLinkModal} className="p-2 text-slate-500 hover:text-indigo-600 hover:bg-white rounded-lg transition-all" title="Chèn liên kết (Tên & Đường dẫn)"><Link size={18} /></button>
         
         <div className="relative">
           <button onClick={() => setShowMathDialog(!showMathDialog)} className={`p-2 rounded-lg transition-all flex items-center gap-1 ${showMathDialog ? 'bg-orange-50 text-orange-600' : 'text-slate-500 hover:text-orange-600 hover:bg-white'}`} title="Math Formula">
@@ -1190,6 +1265,7 @@ const HomeworkPanel: React.FC<HomeworkPanelProps> = ({ nodeId, student, isAdmin,
                 remarkPlugins={[remarkGfm, remarkMath, remarkBreaks]} 
                 rehypePlugins={[rehypeRaw, [rehypeKatex, { output: 'html' }]]}
                 urlTransform={customUrlTransform}
+                components={markdownComponents}
               >
                 {displayMarkdown(content)}
               </ReactMarkdown>
@@ -1357,8 +1433,15 @@ const HomeworkPanel: React.FC<HomeworkPanelProps> = ({ nodeId, student, isAdmin,
                       )}
                     </div>
                   </div>
-                  <div className="prose prose-sm max-w-none text-slate-700 whitespace-pre-wrap font-medium">
-                    {displayMarkdown(f.content)}
+                  <div className="prose prose-sm max-w-none text-slate-700 font-medium prose-p:my-0">
+                    <ReactMarkdown
+                      remarkPlugins={[remarkGfm, remarkMath, remarkBreaks]}
+                      rehypePlugins={[rehypeRaw, [rehypeKatex, { output: 'html' }]]}
+                      urlTransform={customUrlTransform}
+                      components={markdownComponents}
+                    >
+                      {displayMarkdown(f.content)}
+                    </ReactMarkdown>
                   </div>
                 </div>
               );
@@ -1519,7 +1602,7 @@ const HomeworkPanel: React.FC<HomeworkPanelProps> = ({ nodeId, student, isAdmin,
                              </div>
 
                              <div className="prose prose-slate max-w-none text-slate-600 font-medium leading-relaxed mb-6">
-                                <ReactMarkdown remarkPlugins={[remarkGfm, remarkMath, remarkBreaks]} rehypePlugins={[rehypeRaw, [rehypeKatex, { output: 'html' }]]} urlTransform={customUrlTransform}>
+                                <ReactMarkdown remarkPlugins={[remarkGfm, remarkMath, remarkBreaks]} rehypePlugins={[rehypeRaw, [rehypeKatex, { output: 'html' }]]} urlTransform={customUrlTransform} components={markdownComponents}>
                                    {displayMarkdown(q.content)}
                                 </ReactMarkdown>
                              </div>
@@ -1584,7 +1667,7 @@ const HomeworkPanel: React.FC<HomeworkPanelProps> = ({ nodeId, student, isAdmin,
                                    )}
 
                                    <div className="bg-slate-50/70 p-6 rounded-3xl border border-slate-100 prose prose-slate max-w-none prose-sm text-slate-700 font-medium leading-relaxed">
-                                      <ReactMarkdown remarkPlugins={[remarkGfm, remarkMath, remarkBreaks]} rehypePlugins={[rehypeRaw, [rehypeKatex, { output: 'html' }]]} urlTransform={customUrlTransform}>
+                                      <ReactMarkdown remarkPlugins={[remarkGfm, remarkMath, remarkBreaks]} rehypePlugins={[rehypeRaw, [rehypeKatex, { output: 'html' }]]} urlTransform={customUrlTransform} components={markdownComponents}>
                                          {displayMarkdown(myAnswer.content)}
                                       </ReactMarkdown>
                                    </div>
@@ -1649,7 +1732,7 @@ const HomeworkPanel: React.FC<HomeworkPanelProps> = ({ nodeId, student, isAdmin,
                                                      <span className="text-slate-400 font-medium">{new Date(ans.createdAt).toLocaleDateString('vi-VN')}</span>
                                                   </div>
                                                   <div className="prose prose-purple max-w-none prose-sm text-slate-700 leading-relaxed font-medium">
-                                                     <ReactMarkdown remarkPlugins={[remarkGfm, remarkMath, remarkBreaks]} rehypePlugins={[rehypeRaw, [rehypeKatex, { output: 'html' }]]} urlTransform={customUrlTransform}>
+                                                     <ReactMarkdown remarkPlugins={[remarkGfm, remarkMath, remarkBreaks]} rehypePlugins={[rehypeRaw, [rehypeKatex, { output: 'html' }]]} urlTransform={customUrlTransform} components={markdownComponents}>
                                                         {displayMarkdown(ans.content)}
                                                      </ReactMarkdown>
                                                   </div>
@@ -1843,7 +1926,7 @@ const HomeworkPanel: React.FC<HomeworkPanelProps> = ({ nodeId, student, isAdmin,
                      </div>
                      
                      <div className="prose prose-slate max-w-none prose-sm text-slate-600 leading-relaxed font-medium">
-                        <ReactMarkdown remarkPlugins={[remarkGfm, remarkMath, remarkBreaks]} rehypePlugins={[rehypeRaw, [rehypeKatex, { output: 'html' }]]} urlTransform={customUrlTransform}>
+                        <ReactMarkdown remarkPlugins={[remarkGfm, remarkMath, remarkBreaks]} rehypePlugins={[rehypeRaw, [rehypeKatex, { output: 'html' }]]} urlTransform={customUrlTransform} components={markdownComponents}>
                           {displayMarkdown(q.content)}
                         </ReactMarkdown>
                      </div>
@@ -2119,7 +2202,7 @@ const HomeworkPanel: React.FC<HomeworkPanelProps> = ({ nodeId, student, isAdmin,
                         
                         <div className="flex-1 min-w-0">
                            <div className="prose prose-emerald max-w-none prose-sm text-slate-700 leading-relaxed font-medium">
-                              <ReactMarkdown remarkPlugins={[remarkGfm, remarkMath, remarkBreaks]} rehypePlugins={[rehypeRaw, [rehypeKatex, { output: 'html' }]]} urlTransform={customUrlTransform}>
+                              <ReactMarkdown remarkPlugins={[remarkGfm, remarkMath, remarkBreaks]} rehypePlugins={[rehypeRaw, [rehypeKatex, { output: 'html' }]]} urlTransform={customUrlTransform} components={markdownComponents}>
                                  {displayMarkdown(a.content)}
                               </ReactMarkdown>
                            </div>
@@ -2137,6 +2220,93 @@ const HomeworkPanel: React.FC<HomeworkPanelProps> = ({ nodeId, student, isAdmin,
                })()}
             </div>
           </div>
+        </div>
+      )}
+
+      {/* MODAL CHÈN LIÊN KẾT (HYPERLINK) */}
+      {showLinkModal && (
+        <div className="fixed inset-0 z-[500] bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <form
+            onSubmit={handleConfirmInsertLink}
+            className="bg-white rounded-[28px] shadow-2xl w-full max-w-md border border-slate-100 overflow-hidden animate-in zoom-in-95 duration-200"
+          >
+            <div className="px-6 py-4 bg-gradient-to-r from-indigo-600 to-blue-600 text-white flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 bg-white/20 rounded-xl flex items-center justify-center">
+                  <Link size={16} />
+                </div>
+                <div>
+                  <h4 className="text-sm font-black uppercase tracking-wider">Chèn liên kết (Hyperlink)</h4>
+                  <p className="text-[11px] text-indigo-100">Nhập tên hiển thị và dán đường dẫn trang web</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowLinkModal(false)}
+                className="p-1.5 hover:bg-white/20 rounded-xl transition-colors"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-4">
+              <div className="space-y-1.5">
+                <label className="text-[11px] font-black uppercase tracking-wider text-slate-600 block">
+                  Tên hiển thị trong bài <span className="text-slate-400 font-semibold normal-case">(Không bắt buộc)</span>
+                </label>
+                <input
+                  type="text"
+                  autoFocus={!linkTitle}
+                  value={linkTitle}
+                  onChange={e => setLinkTitle(e.target.value)}
+                  placeholder="VD: Bài làm của em, Tài liệu tham khảo..."
+                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 focus:border-indigo-500 focus:bg-white rounded-xl outline-none text-sm font-medium text-slate-800 transition-all"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-[11px] font-black uppercase tracking-wider text-slate-600 block">
+                  Đường dẫn liên kết (URL) <span className="text-rose-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  autoFocus={Boolean(linkTitle)}
+                  value={linkUrl}
+                  onChange={e => {
+                    setLinkUrl(e.target.value);
+                    if (linkError) setLinkError('');
+                  }}
+                  placeholder="https://..."
+                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 focus:border-indigo-500 focus:bg-white rounded-xl outline-none text-sm font-mono text-blue-700 transition-all"
+                />
+                {linkError && (
+                  <p className="text-xs text-rose-600 font-bold flex items-center gap-1 pt-0.5">
+                    <AlertCircle size={13} /> {linkError}
+                  </p>
+                )}
+              </div>
+
+              <div className="p-3 bg-blue-50/70 border border-blue-100 rounded-xl text-[11px] text-blue-800 leading-relaxed">
+                <strong>Mẹo nhỏ:</strong> Bạn cũng có thể dán trực tiếp link (ví dụ <code className="bg-white px-1 py-0.5 rounded border border-blue-200 text-blue-700">https://...</code>) vào khung soạn thảo, hệ thống sẽ tự động hiển thị thành chữ xanh gạch chân có thể bấm mở được.
+              </div>
+            </div>
+
+            <div className="px-6 py-4 bg-slate-50 border-t border-slate-100 flex items-center justify-end gap-2.5">
+              <button
+                type="button"
+                onClick={() => setShowLinkModal(false)}
+                className="px-4 py-2 text-xs font-bold uppercase tracking-wider text-slate-500 hover:bg-slate-200/70 rounded-xl transition-all"
+              >
+                Hủy bỏ
+              </button>
+              <button
+                type="submit"
+                className="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-black uppercase tracking-wider rounded-xl shadow-md shadow-indigo-200 transition-all flex items-center gap-1.5"
+              >
+                <Check size={15} /> Chèn liên kết
+              </button>
+            </div>
+          </form>
         </div>
       )}
 

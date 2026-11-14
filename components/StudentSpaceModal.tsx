@@ -45,6 +45,17 @@ const customUrlTransform = (url: string) => {
   return trimmed;
 };
 
+const markdownComponents = {
+  a: ({ node, ...props }: any) => (
+    <a
+      {...props}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="text-blue-600 hover:text-blue-800 underline decoration-blue-500/80 underline-offset-2 font-medium break-words cursor-pointer"
+    />
+  ),
+};
+
 interface StudentSpaceModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -237,6 +248,7 @@ export const StudentSpaceModal: React.FC<StudentSpaceModalProps> = ({
     text = text.replace(/!\[([^\]]*)\]\((https:\/\/(?:drive|docs)\.google\.com\/(?:file\/d\/|open\?id=|uc\?[^)]*id=)([a-zA-Z0-9_-]+)[^)]*)\)/g, (_m, alt, _u, id) => {
       return `![${alt}](https://lh3.googleusercontent.com/d/${id})`;
     });
+    text = text.replace(/([a-zA-Z0-9\u00C0-\u1EF9])(https?:\/\/)/g, '$1 $2');
     return text;
   };
 
@@ -1196,6 +1208,7 @@ export const StudentSpaceModal: React.FC<StudentSpaceModalProps> = ({
                                   remarkPlugins={[remarkGfm, remarkMath, remarkBreaks]} 
                                   rehypePlugins={[rehypeRaw, [rehypeKatex, { output: 'html' }]]}
                                   urlTransform={customUrlTransform}
+                                  components={markdownComponents}
                                 >
                                   {item.questionContent.substring(0, 180) + (item.questionContent.length > 180 ? '...' : '')}
                                 </ReactMarkdown>
@@ -1264,6 +1277,7 @@ export const StudentSpaceModal: React.FC<StudentSpaceModalProps> = ({
                                 remarkPlugins={[remarkGfm, remarkMath, remarkBreaks]} 
                                 rehypePlugins={[rehypeRaw, [rehypeKatex, { output: 'html' }]]}
                                 urlTransform={customUrlTransform}
+                                components={markdownComponents}
                               >
                                 {item.myAnswer.content}
                               </ReactMarkdown>
@@ -1284,7 +1298,7 @@ export const StudentSpaceModal: React.FC<StudentSpaceModalProps> = ({
                                         </span>
                                       </div>
                                       <div className="prose prose-slate max-w-none text-xs text-slate-700 leading-relaxed font-medium">
-                                        <ReactMarkdown remarkPlugins={[remarkGfm, remarkMath, remarkBreaks]} rehypePlugins={[rehypeRaw, [rehypeKatex, { output: 'html' }]]} urlTransform={customUrlTransform}>
+                                        <ReactMarkdown remarkPlugins={[remarkGfm, remarkMath, remarkBreaks]} rehypePlugins={[rehypeRaw, [rehypeKatex, { output: 'html' }]]} urlTransform={customUrlTransform} components={markdownComponents}>
                                           {fb.content}
                                         </ReactMarkdown>
                                       </div>
