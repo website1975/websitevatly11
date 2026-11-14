@@ -657,56 +657,51 @@ const StudentManager: React.FC<StudentManagerProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-[400] bg-slate-900/60 flex items-center justify-center p-2 sm:p-4 md:p-6 backdrop-blur-md animate-in fade-in duration-300">
-      <div className="bg-white rounded-[36px] shadow-2xl w-full max-w-6xl h-[92vh] max-h-[900px] flex flex-col overflow-hidden border border-slate-100 animate-in zoom-in-95">
+    <div className="fixed inset-0 z-[400] bg-slate-900/60 flex items-center justify-center p-0 animate-in fade-in duration-200">
+      <div className="bg-white w-screen h-screen flex flex-col overflow-hidden">
         
-        {/* TOP HEADER */}
-        <header className="px-6 py-5 bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white shrink-0 border-b border-indigo-900/50">
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <div className="flex items-center gap-3.5">
-              <div className="w-11 h-11 bg-indigo-600/90 rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-600/40 border border-indigo-400/30">
-                <BarChart3 size={22} className="text-white" />
+        {/* TOP HEADER (COMPACT) */}
+        <header className="px-5 py-3 bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white shrink-0 border-b border-indigo-900/50">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 bg-indigo-600/90 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-600/40 border border-indigo-400/30">
+                <BarChart3 size={18} className="text-white" />
               </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <h3 className="text-lg font-black uppercase tracking-tight text-white">
-                    Quản lý & Thống kê Học sinh
-                  </h3>
-                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-indigo-500/30 text-indigo-200 border border-indigo-400/30">
-                    Khối {gradeId}
-                  </span>
-                </div>
-                <p className="text-[11px] font-medium text-indigo-200/70 mt-0.5">
-                  Theo dõi tiến độ hoàn thành nhiệm vụ theo lớp, học sinh & quản lý tài khoản
-                </p>
+              <div className="flex items-center gap-2.5">
+                <h3 className="text-base font-black uppercase tracking-tight text-white">
+                  Quản lý & Thống kê Học sinh
+                </h3>
+                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-indigo-500/30 text-indigo-200 border border-indigo-400/30">
+                  Khối {gradeId}
+                </span>
               </div>
             </div>
 
             {/* TAB SELECTOR & CLOSE BUTTON */}
-            <div className="flex items-center gap-3">
-              <div className="flex bg-white/10 p-1 rounded-2xl border border-white/10">
+            <div className="flex items-center gap-2.5">
+              <div className="flex bg-white/10 p-1 rounded-xl border border-white/10">
                 <button
                   type="button"
                   onClick={() => setActiveMainTab('stats')}
-                  className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-2 ${
+                  className={`px-3.5 py-1.5 rounded-lg text-xs font-black uppercase tracking-wider transition-all flex items-center gap-1.5 ${
                     activeMainTab === 'stats'
                       ? 'bg-indigo-600 text-white shadow-md shadow-indigo-700/50'
                       : 'text-indigo-200 hover:text-white hover:bg-white/5'
                   }`}
                 >
-                  <BarChart3 size={15} />
+                  <BarChart3 size={14} />
                   <span>Tiến độ & Thống kê</span>
                 </button>
                 <button
                   type="button"
                   onClick={() => setActiveMainTab('students')}
-                  className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-2 ${
+                  className={`px-3.5 py-1.5 rounded-lg text-xs font-black uppercase tracking-wider transition-all flex items-center gap-1.5 ${
                     activeMainTab === 'students'
                       ? 'bg-indigo-600 text-white shadow-md shadow-indigo-700/50'
                       : 'text-indigo-200 hover:text-white hover:bg-white/5'
                   }`}
                 >
-                  <Users size={15} />
+                  <Users size={14} />
                   <span>Danh sách Học sinh ({students.length})</span>
                 </button>
               </div>
@@ -715,19 +710,19 @@ const StudentManager: React.FC<StudentManagerProps> = ({
                 type="button"
                 onClick={fetchData}
                 disabled={loading}
-                className="p-2.5 bg-white/10 hover:bg-white/20 text-indigo-200 hover:text-white rounded-2xl transition-all border border-white/10"
+                className="p-2 bg-white/10 hover:bg-white/20 text-indigo-200 hover:text-white rounded-xl transition-all border border-white/10"
                 title="Làm mới dữ liệu"
               >
-                <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
+                <RefreshCw size={15} className={loading ? 'animate-spin' : ''} />
               </button>
 
               <button
                 type="button"
                 onClick={onClose}
-                className="p-2.5 bg-white/10 hover:bg-rose-500/30 text-indigo-200 hover:text-rose-200 rounded-2xl transition-all border border-white/10"
+                className="p-2 bg-white/10 hover:bg-rose-500/30 text-indigo-200 hover:text-rose-200 rounded-xl transition-all border border-white/10"
                 title="Đóng cửa sổ"
               >
-                <X size={18} />
+                <X size={16} />
               </button>
             </div>
           </div>
@@ -735,101 +730,102 @@ const StudentManager: React.FC<StudentManagerProps> = ({
 
         {/* TAB 1: THỐNG KÊ & TIẾN ĐỘ NHIỆM VỤ */}
         {activeMainTab === 'stats' && (
-          <div className="flex-1 flex flex-col overflow-hidden bg-slate-50">
+          <div className="flex-1 min-h-0 flex flex-col overflow-hidden bg-slate-50">
             
-            {/* 4 SUMMARY STATS CARDS */}
-            <div className="px-6 py-4 bg-white border-b border-slate-100 shrink-0">
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                <div className="p-3.5 rounded-2xl bg-indigo-50/70 border border-indigo-100/80">
-                  <span className="text-[10px] font-black uppercase tracking-wider text-indigo-600 flex items-center gap-1.5">
-                    <Users size={13} /> Số học sinh lọc
-                  </span>
-                  <p className="text-xl font-black text-slate-800 mt-1">
-                    {overallMetrics.totalCount} <span className="text-xs font-bold text-slate-400">em</span>
-                  </p>
-                  <p className="text-[10px] text-slate-400 mt-0.5">
-                    {selectedClassFilter === 'all' ? 'Toàn bộ các lớp' : `Lớp ${selectedClassFilter}`}
+            {/* 4 SUMMARY STATS CARDS (COMPACT HORIZONTAL STRIP) */}
+            <div className="px-5 py-2.5 bg-white border-b border-slate-100 shrink-0">
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5">
+                <div className="px-3.5 py-2 rounded-xl bg-indigo-50/70 border border-indigo-100/80 flex items-center justify-between gap-2">
+                  <div>
+                    <span className="text-[10px] font-black uppercase tracking-wider text-indigo-600 flex items-center gap-1">
+                      <Users size={12} /> Số HS lọc
+                    </span>
+                    <p className="text-[10px] text-slate-400">
+                      {selectedClassFilter === 'all' ? 'Tất cả các lớp' : `Lớp ${selectedClassFilter}`}
+                    </p>
+                  </div>
+                  <p className="text-lg font-black text-slate-800">
+                    {overallMetrics.totalCount} <span className="text-[11px] font-bold text-slate-400">em</span>
                   </p>
                 </div>
 
-                <div className="p-3.5 rounded-2xl bg-emerald-50/70 border border-emerald-100/80">
-                  <span className="text-[10px] font-black uppercase tracking-wider text-emerald-700 flex items-center gap-1.5">
-                    <CheckCircle2 size={13} /> Tỷ lệ hoàn thành TB
-                  </span>
-                  <p className="text-xl font-black text-emerald-700 mt-1">
+                <div className="px-3.5 py-2 rounded-xl bg-emerald-50/70 border border-emerald-100/80 flex items-center justify-between gap-2">
+                  <div>
+                    <span className="text-[10px] font-black uppercase tracking-wider text-emerald-700 flex items-center gap-1">
+                      <CheckCircle2 size={12} /> Tỷ lệ hoàn thành TB
+                    </span>
+                    <p className="text-[10px] text-slate-400">Trung bình nhóm lọc</p>
+                  </div>
+                  <p className="text-lg font-black text-emerald-700">
                     {overallMetrics.avgRate}%
-                  </p>
-                  <p className="text-[10px] text-slate-400 mt-0.5">
-                    Trung bình của các em đang hiển thị
                   </p>
                 </div>
 
                 <div 
                   onClick={() => setStatusFilter(prev => prev === 'has_pending_hw' ? 'all' : 'has_pending_hw')}
-                  className={`p-3.5 rounded-2xl border transition-all cursor-pointer ${
+                  className={`px-3.5 py-2 rounded-xl border transition-all cursor-pointer flex items-center justify-between gap-2 ${
                     statusFilter === 'has_pending_hw' 
                       ? 'bg-amber-100 border-amber-300 ring-2 ring-amber-400' 
                       : 'bg-amber-50/70 border-amber-100/80 hover:bg-amber-100/50'
                   }`}
                   title="Nhấn để lọc nhanh các học sinh có bài tập chờ chấm"
                 >
-                  <span className="text-[10px] font-black uppercase tracking-wider text-amber-700 flex items-center gap-1.5">
-                    <Clock size={13} /> BTVN chờ GV chấm
-                  </span>
-                  <p className="text-xl font-black text-amber-700 mt-1">
-                    {overallMetrics.totalPendingHw} <span className="text-xs font-bold text-slate-400">bài nộp</span>
-                  </p>
-                  <p className="text-[10px] text-amber-600 mt-0.5 font-medium">
-                    {statusFilter === 'has_pending_hw' ? '✓ Đang lọc nhóm này' : 'Nhấn để lọc ngay'}
+                  <div>
+                    <span className="text-[10px] font-black uppercase tracking-wider text-amber-700 flex items-center gap-1">
+                      <Clock size={12} /> BTVN chờ chấm
+                    </span>
+                    <p className="text-[10px] text-amber-600 font-medium">
+                      {statusFilter === 'has_pending_hw' ? '✓ Đang lọc' : 'Nhấn để lọc'}
+                    </p>
+                  </div>
+                  <p className="text-lg font-black text-amber-700">
+                    {overallMetrics.totalPendingHw} <span className="text-[11px] font-bold text-slate-400">bài</span>
                   </p>
                 </div>
 
-                <div className="p-3.5 rounded-2xl bg-purple-50/70 border border-purple-100/80">
-                  <span className="text-[10px] font-black uppercase tracking-wider text-purple-700 flex items-center gap-1.5">
-                    <FileText size={13} /> Nhiệm vụ đã ban hành
-                  </span>
-                  <p className="text-xl font-black text-purple-700 mt-1">
-                    {overallMetrics.totalAssignedTasks} <span className="text-xs font-bold text-slate-400">bài học</span>
-                  </p>
-                  <p className="text-[10px] text-slate-400 mt-0.5">
-                    Đã giao chính thức cho học sinh
+                <div className="px-3.5 py-2 rounded-xl bg-purple-50/70 border border-purple-100/80 flex items-center justify-between gap-2">
+                  <div>
+                    <span className="text-[10px] font-black uppercase tracking-wider text-purple-700 flex items-center gap-1">
+                      <FileText size={12} /> Nhiệm vụ đã giao
+                    </span>
+                    <p className="text-[10px] text-slate-400">Đã ban hành chính thức</p>
+                  </div>
+                  <p className="text-lg font-black text-purple-700">
+                    {overallMetrics.totalAssignedTasks} <span className="text-[11px] font-bold text-slate-400">bài</span>
                   </p>
                 </div>
               </div>
             </div>
 
-            {/* FILTER TOOLBAR */}
-            <div className="px-6 py-3 bg-white border-b border-slate-200/70 shrink-0 flex flex-wrap items-center justify-between gap-3">
-              <div className="flex flex-wrap items-center gap-3">
-                {/* Class selector */}
-                <div className="flex items-center gap-1.5">
-                  <span className="text-xs font-black text-slate-500 uppercase tracking-wider">Lớp:</span>
-                  <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl">
-                    <button
-                      type="button"
-                      onClick={() => setSelectedClassFilter('all')}
-                      className={`px-3 py-1 rounded-lg text-xs font-black uppercase transition-all ${
-                        selectedClassFilter === 'all' 
-                          ? 'bg-indigo-600 text-white shadow-xs' 
-                          : 'text-slate-600 hover:text-slate-900'
-                      }`}
+            {/* FILTER TOOLBAR (SINGLE COMPACT BAR) */}
+            <div className="px-5 py-2.5 bg-white border-b border-slate-200/70 shrink-0 flex flex-wrap items-center justify-between gap-2.5">
+              <div className="flex flex-wrap items-center gap-2.5">
+                {/* Compact Class Filter: "Tất cả" button + Dropdown */}
+                <div className="flex items-center gap-1.5 bg-slate-100 p-1 rounded-xl">
+                  <button
+                    type="button"
+                    onClick={() => setSelectedClassFilter('all')}
+                    className={`px-3 py-1 rounded-lg text-xs font-black uppercase transition-all ${
+                      selectedClassFilter === 'all' 
+                        ? 'bg-indigo-600 text-white shadow-xs' 
+                        : 'text-slate-600 hover:text-slate-900'
+                    }`}
+                  >
+                    Tất cả
+                  </button>
+                  <div className="flex items-center gap-1 pl-1 pr-1.5">
+                    <Filter size={13} className="text-slate-400 shrink-0" />
+                    <select
+                      value={selectedClassFilter}
+                      onChange={e => setSelectedClassFilter(e.target.value)}
+                      className="bg-white border border-slate-200 rounded-lg px-2.5 py-1 text-xs font-bold text-slate-700 outline-none focus:border-indigo-500 cursor-pointer"
+                      aria-label="Lọc theo lớp"
                     >
-                      Tất cả
-                    </button>
-                    {availableClasses.map(cls => (
-                      <button
-                        key={cls}
-                        type="button"
-                        onClick={() => setSelectedClassFilter(cls)}
-                        className={`px-3 py-1 rounded-lg text-xs font-black uppercase transition-all ${
-                          selectedClassFilter === cls 
-                            ? 'bg-indigo-600 text-white shadow-xs' 
-                            : 'text-slate-600 hover:text-slate-900'
-                        }`}
-                      >
-                        {cls}
-                      </button>
-                    ))}
+                      <option value="all">Lọc theo lớp (Tất cả)</option>
+                      {availableClasses.map(cls => (
+                        <option key={cls} value={cls}>Lớp {cls}</option>
+                      ))}
+                    </select>
                   </div>
                 </div>
 
@@ -872,15 +868,15 @@ const StudentManager: React.FC<StudentManagerProps> = ({
               </div>
 
               {/* Search & Export Excel button */}
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2.5">
                 <div className="relative">
-                  <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={15} />
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
                   <input
                     type="text"
                     value={searchTerm}
                     onChange={e => setSearchTerm(e.target.value)}
                     placeholder="Tìm tên hoặc mã HS..."
-                    className="pl-9 pr-4 py-1.5 text-xs font-medium bg-slate-100 border border-slate-200 rounded-xl outline-none focus:border-indigo-400 focus:bg-white transition-all w-48 sm:w-60"
+                    className="pl-8 pr-7 py-1.5 text-xs font-medium bg-slate-100 border border-slate-200 rounded-xl outline-none focus:border-indigo-400 focus:bg-white transition-all w-48 sm:w-56"
                   />
                   {searchTerm && (
                     <button 
@@ -899,13 +895,13 @@ const StudentManager: React.FC<StudentManagerProps> = ({
                   title="Tải bảng tính Excel báo cáo tiến độ"
                 >
                   <FileSpreadsheet size={15} />
-                  <span className="hidden sm:inline">Xuất Excel</span>
+                  <span>Xuất Excel</span>
                 </button>
               </div>
             </div>
 
             {/* TABLE OF STUDENTS PROGRESS */}
-            <div className="flex-1 overflow-y-auto custom-scrollbar p-6">
+            <div className="flex-1 min-h-0 px-5 py-3 flex flex-col">
               {loading ? (
                 <div className="h-full flex flex-col items-center justify-center space-y-4">
                   <Loader2 className="animate-spin text-indigo-600" size={36} />
@@ -924,19 +920,18 @@ const StudentManager: React.FC<StudentManagerProps> = ({
                   </p>
                 </div>
               ) : (
-                <div className="bg-white rounded-3xl border border-slate-200/80 shadow-xs overflow-hidden">
-                  <div className="overflow-x-auto">
+                <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs flex-1 min-h-0 overflow-auto custom-scrollbar">
                     <table className="w-full text-left border-collapse">
-                      <thead>
-                        <tr className="bg-slate-50/80 border-b border-slate-100 text-[10px] font-black uppercase tracking-wider text-slate-500">
-                          <th className="py-3.5 px-4 text-center w-12">STT</th>
-                          <th className="py-3.5 px-4">Học sinh & Lớp</th>
-                          <th className="py-3.5 px-4 text-center">Nhiệm vụ được giao</th>
-                          <th className="py-3.5 px-4 text-center">Đã hoàn thành</th>
-                          <th className="py-3.5 px-4 text-center">Chưa hoàn thành</th>
-                          <th className="py-3.5 px-4 text-center">Bài tập về nhà</th>
-                          <th className="py-3.5 px-4 text-center">Thời gian học</th>
-                          <th className="py-3.5 px-4 text-center">Thao tác</th>
+                      <thead className="sticky top-0 z-10 bg-slate-50 shadow-[0_1px_0_0_rgba(226,232,240,1)]">
+                        <tr className="border-b border-slate-100 text-[10px] font-black uppercase tracking-wider text-slate-500">
+                          <th className="py-2.5 px-3.5 text-center w-12">STT</th>
+                          <th className="py-2.5 px-3.5">Học sinh & Lớp</th>
+                          <th className="py-2.5 px-3.5 text-center">Nhiệm vụ được giao</th>
+                          <th className="py-2.5 px-3.5 text-center">Đã hoàn thành</th>
+                          <th className="py-2.5 px-3.5 text-center">Chưa hoàn thành</th>
+                          <th className="py-2.5 px-3.5 text-center">Bài tập về nhà</th>
+                          <th className="py-2.5 px-3.5 text-center">Thời gian học</th>
+                          <th className="py-2.5 px-3.5 text-center">Thao tác</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-100 text-xs">
@@ -947,11 +942,11 @@ const StudentManager: React.FC<StudentManagerProps> = ({
                               key={item.student.id} 
                               className="hover:bg-indigo-50/30 transition-colors group"
                             >
-                              <td className="py-3.5 px-4 text-center font-bold text-slate-400">
+                              <td className="py-2.5 px-3.5 text-center font-bold text-slate-400">
                                 {idx + 1}
                               </td>
 
-                              <td className="py-3.5 px-4">
+                              <td className="py-2.5 px-3.5">
                                 <div className="flex items-center gap-3">
                                   <div className={`w-9 h-9 rounded-xl flex items-center justify-center font-black text-xs shadow-xs ${
                                     isFullyDone ? 'bg-emerald-100 text-emerald-700' : 'bg-indigo-100 text-indigo-700'
@@ -974,14 +969,14 @@ const StudentManager: React.FC<StudentManagerProps> = ({
                                 </div>
                               </td>
 
-                              <td className="py-3.5 px-4 text-center">
+                              <td className="py-2.5 px-3.5 text-center">
                                 <span className="inline-block px-3 py-1 rounded-xl bg-slate-100 font-black text-slate-700 text-xs">
                                   {item.totalAssigned} bài
                                 </span>
                               </td>
 
                               {/* CLICKABLE "ĐÃ HOÀN THÀNH" BADGE */}
-                              <td className="py-3.5 px-4 text-center">
+                              <td className="py-2.5 px-3.5 text-center">
                                 <button
                                   type="button"
                                   onClick={() => {
@@ -1002,7 +997,7 @@ const StudentManager: React.FC<StudentManagerProps> = ({
                               </td>
 
                               {/* CLICKABLE "CHƯA HOÀN THÀNH" BADGE */}
-                              <td className="py-3.5 px-4 text-center">
+                              <td className="py-2.5 px-3.5 text-center">
                                 <button
                                   type="button"
                                   onClick={() => {
@@ -1028,7 +1023,7 @@ const StudentManager: React.FC<StudentManagerProps> = ({
                               </td>
 
                               {/* BTVN STATUS */}
-                              <td className="py-3.5 px-4 text-center">
+                              <td className="py-2.5 px-3.5 text-center">
                                 <div className="inline-flex items-center gap-1 text-[11px]">
                                   {item.hwPendingCount > 0 && (
                                     <span className="px-2 py-0.5 rounded-md font-bold bg-amber-100 text-amber-800" title="BTVN đang chờ giáo viên chấm">
@@ -1046,7 +1041,7 @@ const StudentManager: React.FC<StudentManagerProps> = ({
                               </td>
 
                               {/* ACTIONS */}
-                              <td className="py-3.5 px-4 text-center">
+                              <td className="py-2.5 px-3.5 text-center">
                                 <button
                                   type="button"
                                   onClick={() => {
@@ -1064,7 +1059,6 @@ const StudentManager: React.FC<StudentManagerProps> = ({
                         })}
                       </tbody>
                     </table>
-                  </div>
                 </div>
               )}
             </div>
@@ -1157,15 +1151,15 @@ const StudentManager: React.FC<StudentManagerProps> = ({
           </div>
         )}
 
-        {/* BOTTOM FOOTER */}
-        <footer className="px-6 py-4 border-t border-slate-100 bg-white flex items-center justify-between shrink-0">
-          <p className="text-xs text-slate-400">
-            Hệ thống hỗ trợ tự động nhận diện lớp từ mã học sinh (VD: <strong className="text-slate-600">HS08C07</strong> → Lớp <strong className="text-indigo-600">C07</strong>).
+        {/* BOTTOM FOOTER (COMPACT) */}
+        <footer className="px-5 py-2.5 border-t border-slate-100 bg-white flex items-center justify-between shrink-0">
+          <p className="text-[11px] text-slate-400">
+            Hệ thống tự động nhận diện lớp từ mã học sinh (VD: <strong className="text-slate-600">HS08C07</strong> → Lớp <strong className="text-indigo-600">C07</strong>).
           </p>
           <button 
             type="button" 
             onClick={onClose} 
-            className="px-6 py-2.5 bg-slate-900 text-white rounded-xl font-bold uppercase text-xs tracking-wider hover:bg-slate-800 transition-all shadow-md shadow-slate-200"
+            className="px-5 py-1.5 bg-slate-900 text-white rounded-xl font-bold uppercase text-xs tracking-wider hover:bg-slate-800 transition-all shadow-sm"
           >
             Đóng
           </button>
