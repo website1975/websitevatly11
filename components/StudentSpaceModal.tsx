@@ -36,7 +36,13 @@ import rehypeKatex from 'rehype-katex';
 import rehypeRaw from 'rehype-raw';
 import { supabase } from '../supabaseClient';
 import { Student, BookNode, AppData, ForumComment } from '../types';
-import { isTaskAssignedToStudent } from '../utils';
+import {
+  isTaskAssignedToStudent,
+  parseTaskMeta,
+  parseHomeworkMeta,
+  isHomeworkQuestionAssignedToStudent,
+  evaluateStudentHomeworkStatus,
+} from '../utils';
 
 const customUrlTransform = (url: string) => {
   if (!url) return '';
@@ -104,6 +110,7 @@ interface LessonCompletionStatus {
   flashcardSatisfied: boolean;
   requireHomework: boolean;
   homeworkStatus: 'approved' | 'pending' | 'not_submitted' | 'none';
+  homeworkStatusLabel?: string;
   homeworkSatisfied: boolean;
   startDate?: string;
   endDate?: string;
@@ -244,10 +251,31 @@ export const StudentSpaceModal: React.FC<StudentSpaceModalProps> = ({
     let text = String(rawText)
       .replace(/<!--status:(approved|pending)-->/g, '')
       .replace(/<!--public:(true|false)-->/g, '')
+      .replace(/<!--hw_meta:[\s\S]*?-->/g, '')
       .trim();
     text = text.replace(/!\[([^\]]*)\]\((https:\/\/(?:drive|docs)\.google\.com\/(?:file\/d\/|open\?id=|uc\?[^)]*id=)([a-zA-Z0-9_-]+)[^)]*)\)/g, (_m, alt, _u, id) => {
       return `![${alt}](https://lh3.googleusercontent.com/d/${id})`;
     });
+    text = text.replace(
+      /(^|\r?\n)[ \t]*(https?:\/\/[^\s]+?\.(?:png|jpe?g|gif|webp|svg|bmp)(?:\?[^\s]*)?)[ \t]*(?=\r?\n|$)/gi,
+      '$1\n![Hình ảnh]($2)\n'
+    );
+    text = text.replace(
+      /(^|\r?\n)[ \t]*(https?:\/\/[^\s]+?\.pdf(?:\?[^\s]*)?)[ \t]*(?=\r?\n|$)/gi,
+      '$1\n<iframe src="$2" width="100%" height="500px" style="border:none; border-radius:12px;"></iframe>\n\n[📄 Xem/Tải tài liệu PDF]($2)\n'
+    );
+    text = text.replace(
+      /(^|\r?\n)[ \t]*(https:\/\/drive\.google\.com\/(?:file\/d\/|open\?id=|uc\?[^\s]*id=)([a-zA-Z0-9_-]+)[^\s]*)[ \t]*(?=\r?\n|$)/gi,
+      '$1\n<iframe src="https://drive.google.com/file/d/$3/preview" width="100%" height="500px" style="border:none; border-radius:12px;" allow="autoplay"></iframe>\n\n[📄 Xem/Mở tệp Google Drive]($2)\n'
+    );
+    text = text.replace(
+      /(^|\r?\n)[ \t]*(https:\/\/docs\.google\.com\/(document|spreadsheets|presentation)\/d\/([a-zA-Z0-9_-]+)[^\s]*)[ \t]*(?=\r?\n|$)/gi,
+      '$1\n<iframe src="https://docs.google.com/$3/d/$4/preview" width="100%" height="500px" style="border:1px solid #e2e8f0; border-radius:12px;"></iframe>\n\n[📄 Mở tài liệu Google]($2)\n'
+    );
+    text = text.replace(
+      /(^|\r?\n)[ \t]*(data:image\/[a-zA-Z0-9.+-]+;base64,[A-Za-z0-9+/=]+)[ \t]*(?=\r?\n|$)/gi,
+      '$1\n![Ảnh]($2)\n'
+    );
     text = text.replace(/([a-zA-Z0-9\u00C0-\u1EF9])(https?:\/\/)/g, '$1 $2');
     return text;
   };
@@ -287,27 +315,28 @@ export const StudentSpaceModal: React.FC<StudentSpaceModalProps> = ({
         }
       }
 
-      // Kiểm tra xem bài học này có nhiệm vụ giao riêng không (nếu là nháp hoặc không giao cho học sinh này thì không hiển thị)
-      const taskRecord = (lessonTasks || []).find(t => (t.node_id || t.nodeId) === lessonId);
-      if (taskRecord) {
-        let isDraft = false;
-        let targetTypeVal = 'all';
-        let targetClassesVal: string[] = [];
-        let targetStudentIdsVal: string[] = [];
-        if (taskRecord.description) {
-          try {
-            const meta = JSON.parse(taskRecord.description);
-            if (meta.isDraft !== undefined) isDraft = meta.isDraft;
-            if (meta.targetType !== undefined) targetTypeVal = meta.targetType;
-            if (meta.targetClasses !== undefined) targetClassesVal = meta.targetClasses;
-            if (meta.targetStudentIds !== undefined) targetStudentIdsVal = meta.targetStudentIds;
-          } catch (e) {
-            console.error(e);
-          }
-        }
-        if (isDraft) return false;
-        if (!isTaskAssignedToStudent({ isDraft, targetType: targetTypeVal, targetClasses: targetClassesVal, targetStudentIds: targetStudentIdsVal }, student)) {
-          return false;
+      // Kiểm tra đối tượng giao riêng trên chính câu hỏi BTVN này (<!--hw_meta:...-->)
+      if (!isHomeworkQuestionAssignedToStudent(c, student)) {
+        return false;
+      }
+
+      // Nếu câu hỏi BTVN ở chế độ Toàn khối, kiểm tra thêm xem lesson_tasks có đang giới hạn riêng đối tượng không
+      const hwMeta = parseHomeworkMeta(c.content || '');
+      if (hwMeta.targetType === 'all') {
+        const matchingLessonTasks = (lessonTasks || []).filter(t => (t.node_id || t.nodeId) === lessonId);
+        if (matchingLessonTasks.length > 0) {
+          const hasAssignedTask = matchingLessonTasks.some(t => {
+            const parsed = parseTaskMeta(t.description || '');
+            const isDraft = t.is_draft === true || parsed.isDraft === true;
+            if (isDraft) return false;
+            return isTaskAssignedToStudent({
+              isDraft,
+              targetType: parsed.targetType,
+              targetClasses: parsed.targetClasses,
+              targetStudentIds: parsed.targetStudentIds,
+            }, student);
+          });
+          if (!hasAssignedTask) return false;
         }
       }
 
@@ -389,12 +418,6 @@ export const StudentSpaceModal: React.FC<StudentSpaceModalProps> = ({
 
   // Build Lesson Completion Status List for ALL lessons in current grade
   const lessonCompletionList: LessonCompletionStatus[] = useMemo(() => {
-    const studentTag = student?.name ? `[${student.name}]` : '';
-    const myAnswers = (rawComments || []).filter(c => {
-      const author = c.author || '';
-      return studentTag ? author.includes(studentTag) : false;
-    });
-
     // Return ALL lesson nodes matching selectedGrade so the menu tree list is complete
     const targetLessons = (data?.nodes || []).filter(n => {
       if (!n || n.type !== 'lesson') return false;
@@ -412,65 +435,61 @@ export const StudentSpaceModal: React.FC<StudentSpaceModalProps> = ({
     return targetLessons.map(lesson => {
       const parentFolder = lesson.parentId ? nodeMap.get(lesson.parentId) : null;
       
-      // Find task configuration record if exists
-      const taskRecord = (lessonTasks || []).find(t => (t.node_id || t.nodeId) === lesson.id);
-      let minMat = taskRecord?.min_material_time ?? taskRecord?.min_material_minutes ?? 0;
-      let minFlash = taskRecord?.min_flashcard_time ?? taskRecord?.min_flashcard_minutes ?? 0;
-      let reqHw = taskRecord?.require_homework === true || taskRecord?.requireHomework === true;
-      let startD = taskRecord?.start_date || '';
-      let endD = taskRecord?.end_date || '';
-      let isDraft = taskRecord?.is_draft === true;
-      let targetTypeVal: 'all' | 'class' | 'students' = 'all';
-      let targetClassesVal: string[] = [];
-      let targetStudentIdsVal: string[] = [];
-      let desc = (taskRecord?.description || '').replace(/<!--task_meta:.*?-->/g, '').trim();
-
-      if (taskRecord?.description && taskRecord.description.includes('<!--task_meta:')) {
-        try {
-          const match = taskRecord.description.match(/<!--task_meta:(.*?)-->/);
-          if (match && match[1]) {
-            const meta = JSON.parse(match[1]);
-            if (meta.minMaterialTime !== undefined) minMat = meta.minMaterialTime;
-            if (meta.minFlashcardTime !== undefined) minFlash = meta.minFlashcardTime;
-            if (meta.requireHomework !== undefined) reqHw = meta.requireHomework;
-            if (meta.startDate !== undefined) startD = meta.startDate;
-            if (meta.endDate !== undefined) endD = meta.endDate;
-            if (meta.isDraft !== undefined) isDraft = meta.isDraft;
-            if (meta.targetType !== undefined) targetTypeVal = meta.targetType;
-            if (meta.targetClasses !== undefined) targetClassesVal = meta.targetClasses;
-            if (meta.targetStudentIds !== undefined) targetStudentIdsVal = meta.targetStudentIds;
-          }
-        } catch (e) {
-          console.error(e);
-        }
-      }
-
-      // Homework questions in forum_comments check - MUST match this lesson only
-      const homeworkNodeId = `homework_${lesson.id}`;
-      const teacherQuestions = (rawComments || []).filter(c => {
-        const nid = c.node_id || c.nodeId || '';
-        return nid === homeworkNodeId && (c.is_admin === true || c.isAdmin === true || !(c.author || '').includes('['));
+      // Find ALL task configuration records for this lesson, parse & select matching task for this student
+      const matchingRawTasks = (lessonTasks || []).filter(t => (t.node_id || t.nodeId) === lesson.id);
+      const parsedLessonTaskConfigs = matchingRawTasks.map(taskRecord => {
+        const meta = parseTaskMeta(taskRecord?.description || '');
+        const minMat = meta.minMaterialTime ?? taskRecord?.min_material_time ?? taskRecord?.min_material_minutes ?? 0;
+        const minFlash = meta.minFlashcardTime ?? taskRecord?.min_flashcard_time ?? taskRecord?.min_flashcard_minutes ?? 0;
+        const reqHw = meta.requireHomework ?? (taskRecord?.require_homework === true || taskRecord?.requireHomework === true);
+        const startD = meta.startDate ?? taskRecord?.start_date ?? '';
+        const endD = meta.endDate ?? taskRecord?.end_date ?? '';
+        const isDraft = meta.isDraft ?? (taskRecord?.is_draft === true);
+        return {
+          minMat,
+          minFlash,
+          reqHw,
+          startD,
+          endD,
+          isDraft,
+          targetType: meta.targetType,
+          targetClasses: meta.targetClasses,
+          targetStudentIds: meta.targetStudentIds,
+          desc: meta.cleanDescription,
+        };
       });
 
-      const taskObj = {
-        isDraft,
-        targetType: targetTypeVal,
-        targetClasses: targetClassesVal,
-        targetStudentIds: targetStudentIdsVal
-      };
-
-      const isAssigned = isTaskAssignedToStudent(taskObj, student);
-
-      // Does this lesson have a task set by teacher for this student? (Draft tasks and unassigned tasks are hidden)
-      const hasTaskAssigned = !isDraft && isAssigned && Boolean(
-        minMat > 0 || 
-        minFlash > 0 || 
-        reqHw || 
-        Boolean(startD) || 
-        Boolean(endD) || 
-        Boolean(desc) || 
-        teacherQuestions.length > 0
+      const assignedConfigs = parsedLessonTaskConfigs.filter(cfg =>
+        !cfg.isDraft &&
+        isTaskAssignedToStudent({
+          isDraft: cfg.isDraft,
+          targetType: cfg.targetType,
+          targetClasses: cfg.targetClasses,
+          targetStudentIds: cfg.targetStudentIds,
+        }, student)
       );
+      const priority = (tType?: string) => (tType === 'students' ? 0 : tType === 'class' ? 1 : 2);
+      assignedConfigs.sort((a, b) => priority(a.targetType) - priority(b.targetType));
+
+      const activeCfg = assignedConfigs[0] || null;
+      const hasTaskConfigInLesson = parsedLessonTaskConfigs.length > 0;
+      const isAssigned = hasTaskConfigInLesson ? assignedConfigs.length > 0 : true;
+
+      const minMat = activeCfg?.minMat ?? 0;
+      const minFlash = activeCfg?.minFlash ?? 0;
+      const reqHw = activeCfg?.reqHw ?? false;
+      const startD = activeCfg?.startD ?? '';
+      const endD = activeCfg?.endD ?? '';
+      const isDraft = activeCfg?.isDraft ?? false;
+      const desc = activeCfg?.desc ?? '';
+
+      // Evaluate BTVN strictly against homework tasks assigned to THIS student
+      const hwEval = evaluateStudentHomeworkStatus(lesson.id, student, rawComments, reqHw);
+
+      // Does this lesson have a task set by teacher for this student?
+      const hasTaskAssigned = hasTaskConfigInLesson
+        ? Boolean(!isDraft && isAssigned && (minMat > 0 || minFlash > 0 || hwEval.hwRequired || Boolean(startD) || Boolean(endD) || Boolean(desc)))
+        : hwEval.totalAssignedHw > 0;
 
       // Calculate material study time from logs
       const matLogs = (studyLogs || []).filter(l => (l.node_id || l.lesson_id) === lesson.id && (l.type === 'material' || !l.type));
@@ -484,35 +503,8 @@ export const StudentSpaceModal: React.FC<StudentSpaceModalProps> = ({
       const actualFlashMin = Math.floor(actualFlashSec / 60);
       const flashcardSatisfied = minFlash === 0 ? true : actualFlashMin >= minFlash;
 
-      // Homework requirements and student approval check
-      const isHwRequired = reqHw || teacherQuestions.length > 0;
-      let homeworkStatus: 'approved' | 'pending' | 'not_submitted' | 'none' = 'none';
-      let homeworkSatisfied = true;
-
-      if (isHwRequired) {
-        const studentAns = myAnswers.find(a => {
-          const nid = a.node_id || a.nodeId || '';
-          return nid === homeworkNodeId || nid.startsWith(`${homeworkNodeId}_ans_`);
-        });
-
-        if (studentAns) {
-          const rawContent = studentAns.content || '';
-          const isApproved = studentAns.is_approved === true || studentAns.isApproved === true || rawContent.includes('<!--status:approved-->');
-          if (isApproved) {
-            homeworkStatus = 'approved';
-            homeworkSatisfied = true;
-          } else {
-            homeworkStatus = 'pending';
-            homeworkSatisfied = false;
-          }
-        } else {
-          homeworkStatus = 'not_submitted';
-          homeworkSatisfied = false;
-        }
-      }
-
       const isExpired = checkIsExpired(endD);
-      const isCompleted = hasTaskAssigned ? (materialSatisfied && flashcardSatisfied && homeworkSatisfied) : false;
+      const isCompleted = hasTaskAssigned ? (materialSatisfied && flashcardSatisfied && hwEval.hwCompleted) : false;
 
       return {
         lessonId: lesson.id,
@@ -525,16 +517,17 @@ export const StudentSpaceModal: React.FC<StudentSpaceModalProps> = ({
         minFlashcardMinutes: minFlash,
         actualFlashcardMinutes: actualFlashMin,
         flashcardSatisfied,
-        requireHomework: isHwRequired,
-        homeworkStatus,
-        homeworkSatisfied,
+        requireHomework: hwEval.hwRequired,
+        homeworkStatus: hwEval.status,
+        homeworkStatusLabel: hwEval.statusLabel,
+        homeworkSatisfied: hwEval.hwCompleted,
         startDate: startD,
         endDate: endD,
         isExpired,
         isCompleted
       };
     });
-  }, [data?.nodes, nodeMap, selectedGrade, lessonTasks, studyLogs, rawComments, student?.name]);
+  }, [data?.nodes, nodeMap, selectedGrade, lessonTasks, studyLogs, rawComments, student]);
 
   // Filtered assignments
   const filteredAssignments = useMemo(() => {
@@ -976,9 +969,11 @@ export const StudentSpaceModal: React.FC<StudentSpaceModalProps> = ({
                                   <FileText size={13} />
                                   <span>
                                     BTVN: <strong>
-                                      {item.homeworkStatus === 'approved' ? 'GV đã duyệt' :
-                                       item.homeworkStatus === 'pending' ? 'Chờ GV duyệt' :
-                                       item.homeworkStatus === 'not_submitted' ? 'Chưa nộp' : 'Không yêu cầu'}
+                                      {item.homeworkStatusLabel || (
+                                        item.homeworkStatus === 'approved' ? 'GV đã duyệt' :
+                                        item.homeworkStatus === 'pending' ? 'Chờ GV duyệt' :
+                                        item.homeworkStatus === 'not_submitted' ? 'Chưa nộp' : 'Không yêu cầu'
+                                      )}
                                     </strong>
                                   </span>
                                   {item.homeworkSatisfied ? (
