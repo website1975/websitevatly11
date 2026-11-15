@@ -233,14 +233,14 @@ export const extractClassCode = (studentCode: string): string => {
   return 'Chung';
 };
 
-// Kiểm tra một nhiệm vụ có áp dụng cho học sinh cụ thể hay không
-export const isTaskAssignedToStudent = (task: any, student: any): boolean => {
-  if (!task || !student) return false;
-  // Nếu là bản nháp, học sinh không được thấy
-  if (task.isDraft === true || task.is_draft === true) return false;
-
-  const targetType = task.targetType || 'all';
+// Kiểm tra đối tượng targetType / targetClasses / targetStudentIds có khớp với học sinh không
+export const matchesTargetAssignment = (
+  meta: { targetType?: string; targetClasses?: string[]; targetStudentIds?: string[] },
+  student: any
+): boolean => {
+  const targetType = meta?.targetType || 'all';
   if (targetType === 'all') return true;
+  if (!student || student.is_guest) return false;
 
   const sName = (student.name || '').trim().toUpperCase();
   const sFullName = (student.full_name || '').trim().toUpperCase();
@@ -248,31 +248,321 @@ export const isTaskAssignedToStudent = (task: any, student: any): boolean => {
   const sClass = extractClassCode(sName);
 
   if (targetType === 'class') {
-    const targetClasses: string[] = Array.isArray(task.targetClasses) 
-      ? task.targetClasses.map((c: string) => String(c).trim().toUpperCase()) 
+    const targetClasses: string[] = Array.isArray(meta.targetClasses)
+      ? meta.targetClasses.map((c: string) => String(c).trim().toUpperCase()).filter(Boolean)
       : [];
     if (targetClasses.length === 0) return true;
 
-    return targetClasses.some(tc => 
-      sClass === tc || 
-      sName.includes(tc) || 
-      (sFullName && sFullName.includes(tc))
+    return targetClasses.some(
+      tc => sClass === tc || sName.includes(tc) || (sFullName && sFullName.includes(tc))
     );
   }
 
   if (targetType === 'students') {
-    const targetStudents: string[] = Array.isArray(task.targetStudentIds) 
-      ? task.targetStudentIds.map((id: string) => String(id).trim().toUpperCase()) 
+    const targetStudents: string[] = Array.isArray(meta.targetStudentIds)
+      ? meta.targetStudentIds.map((id: string) => String(id).trim().toUpperCase()).filter(Boolean)
       : [];
-    if (targetStudents.length === 0) return true;
+    if (targetStudents.length === 0) return false;
 
-    return targetStudents.some(target => 
-      target === sId.toUpperCase() || 
-      target === sName || 
-      (sFullName && target === sFullName)
+    return targetStudents.some(
+      target =>
+        target === sId.toUpperCase() ||
+        target === sName ||
+        (sFullName && target === sFullName)
     );
   }
 
   return true;
 };
+
+// Kiểm tra một nhiệm vụ có áp dụng cho học sinh cụ thể hay không
+export const isTaskAssignedToStudent = (task: any, student: any): boolean => {
+  if (!task || !student) return false;
+  // Nếu là bản nháp, học sinh không được thấy
+  if (task.isDraft === true || task.is_draft === true) return false;
+  return matchesTargetAssignment(task, student);
+};
+
+// Giải mã metadata phân giao đối tượng trong mô tả lesson_tasks
+export const parseTaskMeta = (rawDescription: string) => {
+  const raw = rawDescription || '';
+  let requireHomework: boolean | undefined;
+  let minMaterialTime: number | undefined;
+  let minFlashcardTime: number | undefined;
+  let startDate: string | undefined;
+  let endDate: string | undefined;
+  let isDraft: boolean | undefined;
+  let targetType: 'all' | 'class' | 'students' = 'all';
+  let targetClasses: string[] = [];
+  let targetStudentIds: string[] = [];
+
+  const metaMatch = raw.match(/<!--task_meta:([\s\S]*?)-->/);
+  if (metaMatch && metaMatch[1]) {
+    try {
+      const parsed = JSON.parse(metaMatch[1]);
+      if (parsed.requireHomework !== undefined) requireHomework = parsed.requireHomework;
+      if (parsed.minMaterialTime !== undefined) minMaterialTime = parsed.minMaterialTime;
+      if (parsed.minFlashcardTime !== undefined) minFlashcardTime = parsed.minFlashcardTime;
+      if (parsed.startDate !== undefined) startDate = parsed.startDate;
+      if (parsed.endDate !== undefined) endDate = parsed.endDate;
+      if (parsed.isDraft !== undefined) isDraft = parsed.isDraft;
+      if (parsed.targetType !== undefined) targetType = parsed.targetType;
+      if (Array.isArray(parsed.targetClasses)) targetClasses = parsed.targetClasses;
+      if (Array.isArray(parsed.targetStudentIds)) targetStudentIds = parsed.targetStudentIds;
+    } catch {}
+  }
+
+  const cleanDescription = raw.replace(/<!--task_meta:[\s\S]*?-->/g, '').trim();
+  return {
+    cleanDescription,
+    requireHomework,
+    minMaterialTime,
+    minFlashcardTime,
+    startDate,
+    endDate,
+    isDraft,
+    targetType,
+    targetClasses,
+    targetStudentIds,
+  };
+};
+
+// Giải mã metadata phân giao đối tượng trong câu hỏi Bài tập về nhà (<!--hw_meta:{...}-->)
+export const parseHomeworkMeta = (rawContent: string) => {
+  const raw = rawContent || '';
+  let targetType: 'all' | 'class' | 'students' = 'all';
+  let targetClasses: string[] = [];
+  let targetStudentIds: string[] = [];
+
+  const metaMatch = raw.match(/<!--hw_meta:([\s\S]*?)-->/);
+  if (metaMatch && metaMatch[1]) {
+    try {
+      const parsed = JSON.parse(metaMatch[1]);
+      if (parsed.targetType === 'all' || parsed.targetType === 'class' || parsed.targetType === 'students') {
+        targetType = parsed.targetType;
+      }
+      if (Array.isArray(parsed.targetClasses)) targetClasses = parsed.targetClasses;
+      if (Array.isArray(parsed.targetStudentIds)) targetStudentIds = parsed.targetStudentIds;
+    } catch {}
+  }
+
+  const cleanContent = raw.replace(/<!--hw_meta:[\s\S]*?-->/g, '').trim();
+  return {
+    cleanContent,
+    targetType,
+    targetClasses,
+    targetStudentIds,
+  };
+};
+
+export const buildHomeworkMetaSnippet = (
+  targetType: 'all' | 'class' | 'students',
+  targetClasses: string[],
+  targetStudentIds: string[]
+): string => {
+  if (!targetType || targetType === 'all') return '';
+  return `\n\n<!--hw_meta:${JSON.stringify({
+    targetType,
+    targetClasses: targetType === 'class' ? targetClasses : [],
+    targetStudentIds: targetType === 'students' ? targetStudentIds : [],
+  })}-->`;
+};
+
+// Kiểm tra một nhiệm vụ trong mục Bài tập về nhà có giao cho học sinh này không
+export const isHomeworkQuestionAssignedToStudent = (question: any, student: any): boolean => {
+  if (!question) return false;
+  const parsed = question.targetType
+    ? {
+        targetType: question.targetType,
+        targetClasses: question.targetClasses || [],
+        targetStudentIds: question.targetStudentIds || [],
+      }
+    : parseHomeworkMeta(question.content || '');
+
+  if (parsed.targetType === 'all') return true;
+  return matchesTargetAssignment(parsed, student);
+};
+
+export const isCommentByStudent = (comment: any, student: any): boolean => {
+  if (!comment || !student) return false;
+  const isTeacher =
+    comment.isAdmin === true ||
+    comment.isAdmin === 'true' ||
+    comment.is_admin === true ||
+    comment.is_admin === 'true' ||
+    comment.author === 'Giáo viên';
+  if (isTeacher) return false;
+
+  const auth = (comment.author || '').trim().toLowerCase();
+  if (!auth) return false;
+  const sName = (student.name || '').trim().toLowerCase();
+  const sFullName = (student.full_name || '').trim().toLowerCase();
+
+  const bracketMatch = auth.match(/^\[(.*?)\]/);
+  if (bracketMatch && bracketMatch[1] && sName) {
+    return bracketMatch[1].trim() === sName;
+  }
+
+  if (sName && auth === sName) return true;
+  if (sFullName && auth === sFullName) return true;
+  return (
+    (Boolean(sName) && auth.includes(`[${sName}]`)) ||
+    (Boolean(sFullName) && sFullName.length > 2 && auth.includes(sFullName))
+  );
+};
+
+const isCommentApproved = (c: any): boolean => {
+  const raw = c?.content || '';
+  return (
+    c?.isApproved === true ||
+    c?.isApproved === 'true' ||
+    c?.is_approved === true ||
+    c?.is_approved === 'true' ||
+    c?.approved === true ||
+    c?.approved === 'true' ||
+    raw.includes('<!--status:approved-->')
+  );
+};
+
+// Đánh giá chính xác trạng thái hoàn thành BTVN của 1 học sinh theo đúng các nhiệm vụ được giao cho học sinh đó
+export const evaluateStudentHomeworkStatus = (
+  lessonId: string,
+  student: any,
+  allComments: any[],
+  requireHomeworkFlag: boolean
+) => {
+  const homeworkNodeId = `homework_${lessonId}`;
+  const lessonComments = (allComments || []).filter((c: any) => {
+    const nid = c.nodeId || c.node_id || '';
+    return nid === homeworkNodeId || nid.startsWith(`${homeworkNodeId}_ans_`);
+  });
+
+  const teacherQuestions = lessonComments.filter((c: any) => {
+    const nid = c.nodeId || c.node_id || '';
+    if (nid !== homeworkNodeId) return false;
+    const isTeacher =
+      c.isAdmin === true ||
+      c.isAdmin === 'true' ||
+      c.is_admin === true ||
+      c.is_admin === 'true' ||
+      !(c.author || '').includes('[');
+    return isTeacher;
+  });
+
+  const assignedQuestions = student
+    ? teacherQuestions.filter((q: any) => isHomeworkQuestionAssignedToStudent(q, student))
+    : [];
+
+  const studentAnswers = student
+    ? lessonComments.filter((c: any) => isCommentByStudent(c, student))
+    : [];
+
+  // Trường hợp 1: Trong bài có các câu hỏi BTVN giao cụ thể cho học sinh này
+  if (assignedQuestions.length > 0) {
+    let submittedCount = 0;
+    let approvedCount = 0;
+
+    assignedQuestions.forEach((q: any) => {
+      const targetAnsNodeId = `${homeworkNodeId}_ans_${q.id}`;
+      const matchedAnswers = studentAnswers.filter((a: any) => {
+        const nid = a.nodeId || a.node_id || '';
+        return nid === targetAnsNodeId || (assignedQuestions.length === 1 && nid === homeworkNodeId);
+      });
+
+      if (matchedAnswers.length > 0) {
+        submittedCount++;
+        if (matchedAnswers.some(isCommentApproved)) {
+          approvedCount++;
+        }
+      }
+    });
+
+    const total = assignedQuestions.length;
+    const hwApproved = approvedCount === total;
+    const hwSubmitted = submittedCount > 0;
+    const status: 'approved' | 'pending' | 'not_submitted' = hwApproved
+      ? 'approved'
+      : hwSubmitted
+      ? 'pending'
+      : 'not_submitted';
+
+    const suffix = total > 1 ? ` (${approvedCount}/${total})` : '';
+    const statusLabel = hwApproved
+      ? `Đã duyệt${suffix}`
+      : hwSubmitted
+      ? total > 1
+        ? `Chờ duyệt (${submittedCount}/${total})`
+        : 'Chờ duyệt'
+      : total > 1
+      ? `Chưa nộp (0/${total})`
+      : 'Chưa nộp';
+
+    return {
+      hwRequired: true,
+      totalTeacherQuestions: teacherQuestions.length,
+      totalAssignedHw: total,
+      submittedHwCount: submittedCount,
+      approvedHwCount: approvedCount,
+      hwSubmitted,
+      hwApproved,
+      hwCompleted: hwApproved,
+      status,
+      statusLabel,
+    };
+  }
+
+  // Trường hợp 2: Bài có câu hỏi BTVN nhưng đều giao cho đối tượng/nhóm khác, KHÔNG giao cho học sinh này
+  if (teacherQuestions.length > 0 && assignedQuestions.length === 0) {
+    return {
+      hwRequired: false,
+      totalTeacherQuestions: teacherQuestions.length,
+      totalAssignedHw: 0,
+      submittedHwCount: 0,
+      approvedHwCount: 0,
+      hwSubmitted: false,
+      hwApproved: false,
+      hwCompleted: true,
+      status: 'none' as const,
+      statusLabel: 'Không giao cho HS này',
+    };
+  }
+
+  // Trường hợp 3: Chưa có câu hỏi cụ thể trong BTVN nhưng bài học bật yêu cầu BTVN chung
+  if (requireHomeworkFlag) {
+    const hwSubmitted = studentAnswers.length > 0;
+    const hwApproved = studentAnswers.some(isCommentApproved);
+    const status: 'approved' | 'pending' | 'not_submitted' = hwApproved
+      ? 'approved'
+      : hwSubmitted
+      ? 'pending'
+      : 'not_submitted';
+
+    return {
+      hwRequired: true,
+      totalTeacherQuestions: 0,
+      totalAssignedHw: 0,
+      submittedHwCount: hwSubmitted ? 1 : 0,
+      approvedHwCount: hwApproved ? 1 : 0,
+      hwSubmitted,
+      hwApproved,
+      hwCompleted: hwApproved,
+      status,
+      statusLabel: hwApproved ? 'Đã duyệt' : hwSubmitted ? 'Chờ duyệt' : 'Chưa nộp',
+    };
+  }
+
+  return {
+    hwRequired: false,
+    totalTeacherQuestions: 0,
+    totalAssignedHw: 0,
+    submittedHwCount: 0,
+    approvedHwCount: 0,
+    hwSubmitted: false,
+    hwApproved: false,
+    hwCompleted: true,
+    status: 'none' as const,
+    statusLabel: 'Không yêu cầu',
+  };
+};
+
 
