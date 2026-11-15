@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { Send, Trash2, Image as ImageIcon, Wifi, WifiOff, RefreshCw, ChevronDown, ChevronUp, Eye, EyeOff, AlertCircle, Home, BookOpen, Clock, CheckCircle2, Bold, Italic, List, Table as TableIcon, Link, Link2, Settings, Type, Palette, AlignLeft, AlignCenter, AlignRight, AlignJustify, Heading3, Calculator, X, Search, Edit2, Users, Cloud, Lock, Check, Filter, ShieldCheck, MessageSquare, Star, Sparkles, Copy, ClipboardList } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -13,6 +13,7 @@ import { uploadToImgBB, uploadImageFlexible, getImageServerMode } from '../imgbb
 import { ImageUploadModal } from './ImageUploadModal';
 import { ForumComment, Student } from '../types';
 import { ConfirmModal, ToastNotification, ConfirmState, ToastState } from './CustomDialog';
+import { extractClassCode, parseHomeworkMeta, buildHomeworkMetaSnippet, isHomeworkQuestionAssignedToStudent } from '../utils';
 
 // Import Katex CSS
 const KATEX_CSS = "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css";
@@ -119,8 +120,14 @@ const HomeworkPanel: React.FC<HomeworkPanelProps> = ({ nodeId, student, isAdmin,
   const [showLinkModal, setShowLinkModal] = useState(false);
   const [linkTitle, setLinkTitle] = useState('');
   const [linkUrl, setLinkUrl] = useState('');
+  const [linkEmbed, setLinkEmbed] = useState(false);
   const [linkError, setLinkError] = useState('');
   const [linkSelection, setLinkSelection] = useState<{ start: number; end: number } | null>(null);
+  const [hwTargetType, setHwTargetType] = useState<'all' | 'class' | 'students'>('all');
+  const [hwTargetClasses, setHwTargetClasses] = useState<string[]>([]);
+  const [hwTargetStudentIds, setHwTargetStudentIds] = useState<string[]>([]);
+  const [hwTargetClassFilter, setHwTargetClassFilter] = useState<string>('all');
+  const [hwTargetSearch, setHwTargetSearch] = useState<string>('');
 
   const fetchClassStudents = useCallback(async () => {
     try {
@@ -141,8 +148,73 @@ const HomeworkPanel: React.FC<HomeworkPanelProps> = ({ nodeId, student, isAdmin,
     fetchClassStudents();
   }, [fetchClassStudents]);
 
+  const availableClasses = useMemo(() => {
+    const set = new Set<string>();
+    classStudents.forEach(s => {
+      const cls = extractClassCode(s.name);
+      if (cls && cls !== 'Chung' && cls !== 'Khác') set.add(cls);
+    });
+    return Array.from(set).sort();
+  }, [classStudents]);
+
+  const filteredTargetStudents = useMemo(() => {
+    return classStudents.filter(s => {
+      const sClass = extractClassCode(s.name);
+      if (hwTargetClassFilter !== 'all' && sClass !== hwTargetClassFilter && !s.name.toUpperCase().includes(hwTargetClassFilter.toUpperCase())) {
+        return false;
+      }
+      if (hwTargetSearch.trim()) {
+        const q = hwTargetSearch.trim().toLowerCase();
+        const matchName = (s.name || '').toLowerCase().includes(q);
+        const matchFullName = (s.full_name || '').toLowerCase().includes(q);
+        return matchName || matchFullName;
+      }
+      return true;
+    });
+  }, [classStudents, hwTargetClassFilter, hwTargetSearch]);
+
+  const handleSelectAllFilteredHwStudents = () => {
+    const idsToAdd = filteredTargetStudents.map(s => s.id);
+    const set = new Set([...hwTargetStudentIds, ...idsToAdd]);
+    setHwTargetStudentIds(Array.from(set));
+  };
+
+  const getHwTargetSummary = (q: ForumComment) => {
+    const tType = q.targetType || 'all';
+    if (tType === 'class') {
+      const classes = q.targetClasses || [];
+      return {
+        short: classes.length > 0 ? `Lớp ${classes.join(', ')}` : 'Theo lớp',
+        full: classes.length > 0 ? `Giao cho lớp: ${classes.join(', ')}` : 'Theo lớp',
+        type: 'class' as const,
+      };
+    }
+    if (tType === 'students') {
+      const ids = q.targetStudentIds || [];
+      const matchedNames = ids.map(id => {
+        const st = classStudents.find(s => String(s.id) === String(id) || s.name.toUpperCase() === String(id).toUpperCase());
+        return st ? (st.full_name ? `${st.full_name} (${st.name})` : st.name) : id;
+      });
+      const preview = matchedNames.slice(0, 2).join(', ') + (matchedNames.length > 2 ? ` +${matchedNames.length - 2}` : '');
+      return {
+        short: matchedNames.length > 0 ? `${ids.length} HS: ${preview}` : `${ids.length} học sinh`,
+        full: matchedNames.length > 0 ? `Giao riêng (${ids.length} HS): ${matchedNames.join(', ')}` : `Giao cho ${ids.length} học sinh`,
+        type: 'students' as const,
+      };
+    }
+    return {
+      short: `Toàn khối${gradeId ? ` ${gradeId}` : ''}`,
+      full: `Giao cho toàn bộ học sinh trong khối`,
+      type: 'all' as const,
+    };
+  };
+
   const getSubmissionStatusLists = (targetQId?: string | null) => {
     const scopeAnswers = targetQId ? getAnswersForQuestion(targetQId) : answers;
+    const targetQ = targetQId ? questions.find(q => q.id === targetQId) : null;
+    const scopedStudents = targetQ
+      ? classStudents.filter(s => isHomeworkQuestionAssignedToStudent(targetQ, s))
+      : classStudents;
     
     const approvedMap = new Map<string, string>();
     const pendingMap = new Map<string, string>();
@@ -167,8 +239,8 @@ const HomeworkPanel: React.FC<HomeworkPanelProps> = ({ nodeId, student, isAdmin,
     const pendingList = Array.from(pendingMap.values());
 
     let uncompletedList: string[] = [];
-    if (classStudents && classStudents.length > 0) {
-      uncompletedList = classStudents
+    if (scopedStudents && scopedStudents.length > 0) {
+      uncompletedList = scopedStudents
         .filter(s => {
           const nameCode = (s.name || '').trim().toLowerCase();
           const fullName = (s.full_name || '').trim().toLowerCase();
@@ -189,7 +261,7 @@ const HomeworkPanel: React.FC<HomeworkPanelProps> = ({ nodeId, student, isAdmin,
       pendingList,
       uncompletedList,
       totalSubmitted: scopeAnswers.length,
-      totalStudents: classStudents.length
+      totalStudents: scopedStudents.length
     };
   };
 
@@ -296,6 +368,10 @@ const HomeworkPanel: React.FC<HomeworkPanelProps> = ({ nodeId, student, isAdmin,
   const handleStartEditQuestion = (q: ForumComment) => {
     setEditingId(q.id);
     setContent(displayMarkdown(q.content));
+    const parsedMeta = parseHomeworkMeta(q.content || '');
+    setHwTargetType(q.targetType || parsedMeta.targetType || 'all');
+    setHwTargetClasses(q.targetClasses || parsedMeta.targetClasses || []);
+    setHwTargetStudentIds(q.targetStudentIds || parsedMeta.targetStudentIds || []);
     setIsImageRemoved(false);
     if (q.imageUrl) {
       setPreviewUrl(q.imageUrl);
@@ -319,6 +395,11 @@ const HomeworkPanel: React.FC<HomeworkPanelProps> = ({ nodeId, student, isAdmin,
     setPreviewUrl(null);
     setIsImageRemoved(false);
     setReplyingToId(null);
+    setHwTargetType('all');
+    setHwTargetClasses([]);
+    setHwTargetStudentIds([]);
+    setHwTargetClassFilter('all');
+    setHwTargetSearch('');
   };
 
   const displayMarkdown = (rawText: string) => {
@@ -326,17 +407,37 @@ const HomeworkPanel: React.FC<HomeworkPanelProps> = ({ nodeId, student, isAdmin,
     let text = rawText
       .replace(/<!--status:(approved|pending)-->/g, '')
       .replace(/<!--public:(true|false)-->/g, '')
+      .replace(/<!--hw_meta:[\s\S]*?-->/g, '')
       .trim();
     // Auto-convert any Google Drive image URLs in markdown ![alt](drive_url) to direct image view URLs
     text = text.replace(/!\[([^\]]*)\]\((https:\/\/(?:drive|docs)\.google\.com\/(?:file\/d\/|open\?id=|uc\?[^)]*id=)([a-zA-Z0-9_-]+)[^)]*)\)/g, (_match, alt, _fullUrl, fileId) => {
       return `![${alt}](https://lh3.googleusercontent.com/d/${fileId})`;
     });
     // Convert standalone image URLs on their own line to markdown images
-    text = text.replace(/(?:^|\n)(https?:\/\/[^\s]+?\.(?:png|jpe?g|gif|webp|svg|bmp)(?:\?[^\s]*)?)(?=\n|$)/gi, '\n![Hình ảnh]($1)\n');
-    // Convert standalone Google Drive links on their own line
-    text = text.replace(/(?:^|\n)https:\/\/(?:drive|docs)\.google\.com\/(?:file\/d\/|open\?id=|uc\?[^)]*id=)([a-zA-Z0-9_-]+)[^\s]*(?=\n|$)/gi, '\n![Hình ảnh Drive](https://lh3.googleusercontent.com/d/$1)\n');
+    text = text.replace(
+      /(^|\r?\n)[ \t]*(https?:\/\/[^\s]+?\.(?:png|jpe?g|gif|webp|svg|bmp)(?:\?[^\s]*)?)[ \t]*(?=\r?\n|$)/gi,
+      '$1\n![Hình ảnh]($2)\n'
+    );
+    // Convert standalone PDF URLs on their own line to inline PDF viewer + fallback link
+    text = text.replace(
+      /(^|\r?\n)[ \t]*(https?:\/\/[^\s]+?\.pdf(?:\?[^\s]*)?)[ \t]*(?=\r?\n|$)/gi,
+      '$1\n<iframe src="$2" width="100%" height="500px" style="border:none; border-radius:12px;"></iframe>\n\n[📄 Xem/Tải tài liệu PDF]($2)\n'
+    );
+    // Convert standalone Google Drive file links on their own line to Drive preview iframe (works for PDF, image, video) + link
+    text = text.replace(
+      /(^|\r?\n)[ \t]*(https:\/\/drive\.google\.com\/(?:file\/d\/|open\?id=|uc\?[^\s]*id=)([a-zA-Z0-9_-]+)[^\s]*)[ \t]*(?=\r?\n|$)/gi,
+      '$1\n<iframe src="https://drive.google.com/file/d/$3/preview" width="100%" height="500px" style="border:none; border-radius:12px;" allow="autoplay"></iframe>\n\n[📄 Xem/Mở tệp Google Drive]($2)\n'
+    );
+    // Convert standalone Google Docs/Sheets/Slides links on their own line to preview iframe + link
+    text = text.replace(
+      /(^|\r?\n)[ \t]*(https:\/\/docs\.google\.com\/(document|spreadsheets|presentation)\/d\/([a-zA-Z0-9_-]+)[^\s]*)[ \t]*(?=\r?\n|$)/gi,
+      '$1\n<iframe src="https://docs.google.com/$3/d/$4/preview" width="100%" height="500px" style="border:1px solid #e2e8f0; border-radius:12px;"></iframe>\n\n[📄 Mở tài liệu Google]($2)\n'
+    );
     // Convert standalone data:image URLs on their own line
-    text = text.replace(/(?:^|\n)(data:image\/[a-zA-Z0-9.+-]+;base64,[A-Za-z0-9+/=]+)(?=\n|$)/gi, '\n![Ảnh]($1)\n');
+    text = text.replace(
+      /(^|\r?\n)[ \t]*(data:image\/[a-zA-Z0-9.+-]+;base64,[A-Za-z0-9+/=]+)[ \t]*(?=\r?\n|$)/gi,
+      '$1\n![Ảnh]($2)\n'
+    );
     // Separate URLs glued directly onto previous text (e.g. "xem tạihttps://...") so remark-gfm autolinks them
     text = text.replace(/([a-zA-Z0-9\u00C0-\u1EF9])(https?:\/\/)/g, '$1 $2');
     return text;
@@ -481,6 +582,48 @@ const HomeworkPanel: React.FC<HomeworkPanelProps> = ({ nodeId, student, isAdmin,
     setActiveDropdown(null);
   };
 
+  const buildEmbedSnippet = (normalizedUrl: string, displayTitle: string): string => {
+    const safeTitle = displayTitle.replace(/[\[\]]/g, '');
+    // 1. Direct image URLs or data:image or common image hosts
+    if (
+      /\.(png|jpe?g|gif|webp|svg|bmp)(\?.*|#.*)?$/i.test(normalizedUrl) ||
+      /^data:image\//i.test(normalizedUrl) ||
+      /^https?:\/\/lh3\.googleusercontent\.com\/d\//i.test(normalizedUrl)
+    ) {
+      return `\n\n![${safeTitle}](${normalizedUrl})\n\n`;
+    }
+
+    // 2. Google Drive file URLs -> iframe preview (works for PDF, image, video, docs)
+    const driveMatch = normalizedUrl.match(/https?:\/\/drive\.google\.com\/(?:file\/d\/|open\?id=|uc\?[^\s]*id=)([a-zA-Z0-9_-]+)/i);
+    if (driveMatch) {
+      const fileId = driveMatch[1];
+      return `\n\n<iframe src="https://drive.google.com/file/d/${fileId}/preview" width="100%" height="500px" style="border:none; border-radius:12px;" allow="autoplay"></iframe>\n\n[📄 ${safeTitle}](${normalizedUrl})\n\n`;
+    }
+
+    // 3. Google Docs / Sheets / Slides
+    const gdocsMatch = normalizedUrl.match(/https?:\/\/docs\.google\.com\/(document|spreadsheets|presentation)\/d\/([a-zA-Z0-9_-]+)/i);
+    if (gdocsMatch) {
+      const docType = gdocsMatch[1];
+      const docId = gdocsMatch[2];
+      return `\n\n<iframe src="https://docs.google.com/${docType}/d/${docId}/preview" width="100%" height="500px" style="border:1px solid #e2e8f0; border-radius:12px;"></iframe>\n\n[📄 ${safeTitle}](${normalizedUrl})\n\n`;
+    }
+
+    // 4. Direct PDF URLs
+    if (/\.pdf(\?.*|#.*)?$/i.test(normalizedUrl)) {
+      return `\n\n<iframe src="${normalizedUrl}" width="100%" height="500px" style="border:none; border-radius:12px;"></iframe>\n\n[📄 ${safeTitle}](${normalizedUrl})\n\n`;
+    }
+
+    // 5. YouTube video URLs
+    const ytMatch = normalizedUrl.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/shorts\/)([a-zA-Z0-9_-]{6,})/i);
+    if (ytMatch) {
+      const ytId = ytMatch[1];
+      return `\n\n<iframe src="https://www.youtube.com/embed/${ytId}" width="100%" height="420px" style="border:none; border-radius:12px;" allowfullscreen></iframe>\n\n[▶️ ${safeTitle}](${normalizedUrl})\n\n`;
+    }
+
+    // 6. General Web URLs
+    return `\n\n<iframe src="${normalizedUrl}" width="100%" height="480px" style="border:1px solid #e2e8f0; border-radius:12px;"></iframe>\n\n[🔗 ${safeTitle}](${normalizedUrl})\n\n`;
+  };
+
   const handleOpenLinkModal = () => {
     const textarea = textareaRef.current;
     const start = textarea ? (textarea.selectionStart ?? content.length) : content.length;
@@ -489,6 +632,7 @@ const HomeworkPanel: React.FC<HomeworkPanelProps> = ({ nodeId, student, isAdmin,
 
     setLinkSelection({ start, end });
     setLinkError('');
+    setLinkEmbed(false);
 
     if (selectedText && /^(https?:\/\/|www\.)/i.test(selectedText)) {
       setLinkUrl(selectedText);
@@ -513,7 +657,9 @@ const HomeworkPanel: React.FC<HomeworkPanelProps> = ({ nodeId, student, isAdmin,
       : `https://${rawUrl}`;
 
     const displayTitle = linkTitle.trim() || normalizedUrl;
-    const markdownLink = `[${displayTitle}](${normalizedUrl})`;
+    const insertedSnippet = linkEmbed
+      ? buildEmbedSnippet(normalizedUrl, displayTitle)
+      : `[${displayTitle}](${normalizedUrl})`;
 
     const textarea = textareaRef.current;
     const start = linkSelection?.start ?? (textarea?.selectionStart ?? content.length);
@@ -521,18 +667,19 @@ const HomeworkPanel: React.FC<HomeworkPanelProps> = ({ nodeId, student, isAdmin,
 
     const before = content.substring(0, start);
     const after = content.substring(end);
-    const updated = before + markdownLink + after;
+    const updated = before + insertedSnippet + after;
     setContent(updated);
     setShowLinkModal(false);
     setLinkTitle('');
     setLinkUrl('');
+    setLinkEmbed(false);
     setLinkError('');
     setLinkSelection(null);
 
     setTimeout(() => {
       if (textareaRef.current) {
         textareaRef.current.focus();
-        const cursorPos = start + markdownLink.length;
+        const cursorPos = start + insertedSnippet.length;
         textareaRef.current.setSelectionRange(cursorPos, cursorPos);
       }
     }, 50);
@@ -603,6 +750,8 @@ const HomeworkPanel: React.FC<HomeworkPanelProps> = ({ nodeId, student, isAdmin,
               rawContent.includes('<!--public:true-->')
             ) && !rawContent.includes('<!--public:false-->');
 
+            const hwMeta = parseHomeworkMeta(rawContent);
+
             return {
               id: item.id,
               nodeId: item.nodeId || item.node_id,
@@ -613,6 +762,9 @@ const HomeworkPanel: React.FC<HomeworkPanelProps> = ({ nodeId, student, isAdmin,
               isAdmin: isTeacher,
               isApproved: isApproved,
               isPublic: isPublic,
+              targetType: hwMeta.targetType,
+              targetClasses: hwMeta.targetClasses,
+              targetStudentIds: hwMeta.targetStudentIds,
             };
           })
           .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
@@ -756,6 +908,18 @@ const HomeworkPanel: React.FC<HomeworkPanelProps> = ({ nodeId, student, isAdmin,
       return;
     }
     if (!content.trim() && !selectedFile) return;
+
+    if (isAdmin && !replyingToId) {
+      if (hwTargetType === 'class' && hwTargetClasses.length === 0) {
+        showToast("Vui lòng chọn ít nhất 1 lớp học hoặc chuyển về Toàn khối.", "error", "Chưa chọn lớp");
+        return;
+      }
+      if (hwTargetType === 'students' && hwTargetStudentIds.length === 0) {
+        showToast("Vui lòng chọn ít nhất 1 học sinh hoặc chuyển về Toàn khối.", "error", "Chưa chọn học sinh");
+        return;
+      }
+    }
+
     setLoading(true);
 
     let imageUrl = undefined;
@@ -769,13 +933,17 @@ const HomeworkPanel: React.FC<HomeworkPanelProps> = ({ nodeId, student, isAdmin,
     const authorName = isAdmin ? "Giáo viên" : (student ? `[${student.name}] ${student.full_name || ''}` : "Học sinh");
     const targetNodeId = (isAdmin || !replyingToId) ? homeworkNodeId : `${homeworkNodeId}_ans_${replyingToId}`;
 
-    // Clean any prior status & public tags
+    // Clean any prior status, public & hw_meta tags
     const cleanUserContent = content
       .replace(/<!--status:(approved|pending)-->/g, '')
       .replace(/<!--public:(true|false)-->/g, '')
+      .replace(/<!--hw_meta:[\s\S]*?-->/g, '')
       .trim();
-    // Default: admin post is auto-approved, student answer starts with pending status & private
-    const finalContent = isAdmin ? cleanUserContent : `${cleanUserContent}\n\n<!--status:pending-->\n<!--public:false-->`;
+    // Default: admin post includes target metadata if restricted, student answer starts with pending status & private
+    const hwMetaSnippet = isAdmin ? buildHomeworkMetaSnippet(hwTargetType, hwTargetClasses, hwTargetStudentIds) : '';
+    const finalContent = isAdmin
+      ? `${cleanUserContent}${hwMetaSnippet}`
+      : `${cleanUserContent}\n\n<!--status:pending-->\n<!--public:false-->`;
 
     try {
       let result: any = { error: null };
@@ -836,6 +1004,11 @@ const HomeworkPanel: React.FC<HomeworkPanelProps> = ({ nodeId, student, isAdmin,
       setIsImageRemoved(false);
       setReplyingToId(null);
       setEditingId(null);
+      setHwTargetType('all');
+      setHwTargetClasses([]);
+      setHwTargetStudentIds([]);
+      setHwTargetClassFilter('all');
+      setHwTargetSearch('');
       // Immediately refresh list for better UX
       fetchComments(true);
 
@@ -1340,6 +1513,217 @@ const HomeworkPanel: React.FC<HomeworkPanelProps> = ({ nodeId, student, isAdmin,
     </div>
   );
 
+  const renderTargetSelector = () => (
+    <div className="bg-indigo-50/50 px-6 py-4 border-t border-indigo-100/80 space-y-3">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <span className="text-[11px] font-black text-indigo-950 uppercase tracking-wider flex items-center gap-2">
+          <Users size={15} className="text-indigo-600" />
+          Đối tượng giao nhiệm vụ BTVN này:
+        </span>
+        <span className="text-[10px] font-black text-indigo-700 bg-white px-3 py-1 rounded-full border border-indigo-200 shadow-2xs">
+          {hwTargetType === 'all'
+            ? `🌐 Toàn khối${gradeId ? ` ${gradeId}` : ''}`
+            : hwTargetType === 'class'
+              ? `🏫 Giao ${hwTargetClasses.length} lớp (${hwTargetClasses.join(', ') || 'chưa chọn'})`
+              : `👤 Giao ${hwTargetStudentIds.length} học sinh chỉ định`}
+        </span>
+      </div>
+
+      {/* 3 Mode Buttons */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+        <button
+          type="button"
+          onClick={() => setHwTargetType('all')}
+          className={`px-3.5 py-2.5 rounded-xl border text-left transition-all ${
+            hwTargetType === 'all'
+              ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
+              : 'bg-white text-slate-700 border-slate-200 hover:border-indigo-300'
+          }`}
+        >
+          <div className="flex items-center gap-1.5 text-xs font-black uppercase">
+            <span>🌐</span>
+            <span>Toàn khối</span>
+          </div>
+          <p className={`text-[10px] mt-0.5 ${hwTargetType === 'all' ? 'text-indigo-100' : 'text-slate-400'}`}>
+            Mọi học sinh trong khối đều thấy
+          </p>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setHwTargetType('class')}
+          className={`px-3.5 py-2.5 rounded-xl border text-left transition-all ${
+            hwTargetType === 'class'
+              ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
+              : 'bg-white text-slate-700 border-slate-200 hover:border-indigo-300'
+          }`}
+        >
+          <div className="flex items-center gap-1.5 text-xs font-black uppercase">
+            <span>🏫</span>
+            <span>Theo Lớp / Nhóm lớp</span>
+          </div>
+          <p className={`text-[10px] mt-0.5 ${hwTargetType === 'class' ? 'text-indigo-100' : 'text-slate-400'}`}>
+            Chọn 1 hoặc nhiều lớp cụ thể
+          </p>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setHwTargetType('students')}
+          className={`px-3.5 py-2.5 rounded-xl border text-left transition-all ${
+            hwTargetType === 'students'
+              ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
+              : 'bg-white text-slate-700 border-slate-200 hover:border-indigo-300'
+          }`}
+        >
+          <div className="flex items-center gap-1.5 text-xs font-black uppercase">
+            <span>👤</span>
+            <span>Nhóm HS / Cá nhân</span>
+          </div>
+          <p className={`text-[10px] mt-0.5 ${hwTargetType === 'students' ? 'text-indigo-100' : 'text-slate-400'}`}>
+            Lọc theo lớp & tick chọn từng HS
+          </p>
+        </button>
+      </div>
+
+      {/* Class Multi-Select */}
+      {hwTargetType === 'class' && (
+        <div className="pt-2 border-t border-indigo-100/80 space-y-2">
+          <span className="text-[10px] font-black uppercase tracking-wider text-slate-500 block">
+            Chọn các lớp nhận nhiệm vụ này:
+          </span>
+          {availableClasses.length === 0 ? (
+            <p className="text-xs text-slate-400 italic">
+              Chưa nhận diện được mã lớp từ danh sách học sinh (VD: HS08C07 &rarr; C07).
+            </p>
+          ) : (
+            <div className="flex flex-wrap gap-2">
+              {availableClasses.map(cls => {
+                const isChecked = hwTargetClasses.includes(cls);
+                return (
+                  <button
+                    type="button"
+                    key={cls}
+                    onClick={() => {
+                      const updated = isChecked
+                        ? hwTargetClasses.filter(c => c !== cls)
+                        : [...hwTargetClasses, cls];
+                      setHwTargetClasses(updated);
+                    }}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-black uppercase transition-all flex items-center gap-1.5 ${
+                      isChecked
+                        ? 'bg-indigo-600 text-white shadow-sm'
+                        : 'bg-white text-slate-600 border border-slate-200 hover:border-indigo-300'
+                    }`}
+                  >
+                    <span>{isChecked ? '✓' : '+'}</span>
+                    <span>Lớp {cls}</span>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Student Picker with Filter */}
+      {hwTargetType === 'students' && (
+        <div className="pt-2 border-t border-indigo-100/80 space-y-2.5">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="flex items-center gap-1.5 bg-white border border-slate-200 rounded-xl px-2.5 py-1">
+                <Filter size={13} className="text-indigo-500" />
+                <select
+                  value={hwTargetClassFilter}
+                  onChange={e => setHwTargetClassFilter(e.target.value)}
+                  className="text-xs font-bold text-slate-700 outline-none bg-transparent cursor-pointer"
+                >
+                  <option value="all">Tất cả các lớp ({classStudents.length})</option>
+                  {availableClasses.map(cls => (
+                    <option key={cls} value={cls}>Lớp {cls}</option>
+                  ))}
+                </select>
+              </div>
+
+              <button
+                type="button"
+                onClick={handleSelectAllFilteredHwStudents}
+                className="px-2.5 py-1 bg-indigo-100 hover:bg-indigo-200 text-indigo-800 rounded-lg text-[10px] font-black uppercase transition-colors"
+              >
+                Chọn tất cả đang lọc ({filteredTargetStudents.length})
+              </button>
+              {hwTargetStudentIds.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setHwTargetStudentIds([])}
+                  className="px-2.5 py-1 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg text-[10px] font-black uppercase transition-colors"
+                >
+                  Bỏ chọn ({hwTargetStudentIds.length})
+                </button>
+              )}
+            </div>
+
+            <div className="relative">
+              <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
+              <input
+                type="text"
+                value={hwTargetSearch}
+                onChange={e => setHwTargetSearch(e.target.value)}
+                placeholder="Tìm tên hoặc mã HS..."
+                className="pl-8 pr-3 py-1.5 bg-white border border-slate-200 rounded-xl text-xs font-medium outline-none focus:border-indigo-400 w-48"
+              />
+            </div>
+          </div>
+
+          <div className="max-h-52 overflow-y-auto p-2 bg-white rounded-2xl border border-slate-200 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-1.5 custom-scrollbar">
+            {filteredTargetStudents.length === 0 ? (
+              <div className="col-span-full py-6 text-center text-xs text-slate-400 italic">
+                Không tìm thấy học sinh phù hợp bộ lọc.
+              </div>
+            ) : (
+              filteredTargetStudents.map(s => {
+                const sClass = extractClassCode(s.name);
+                const isSelected = hwTargetStudentIds.includes(s.id) || hwTargetStudentIds.includes(s.name);
+                return (
+                  <label
+                    key={s.id}
+                    className={`flex items-center gap-2 p-2 rounded-xl cursor-pointer transition-colors ${
+                      isSelected ? 'bg-indigo-50 border border-indigo-300' : 'hover:bg-slate-50 border border-transparent'
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={isSelected}
+                      onChange={e => {
+                        let updated = [...hwTargetStudentIds];
+                        if (e.target.checked) {
+                          if (!updated.includes(s.id)) updated.push(s.id);
+                        } else {
+                          updated = updated.filter(id => id !== s.id && id !== s.name);
+                        }
+                        setHwTargetStudentIds(updated);
+                      }}
+                      className="w-4 h-4 text-indigo-600 rounded border-slate-300 focus:ring-indigo-500 shrink-0"
+                    />
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-xs font-bold text-slate-800 truncate">{s.full_name || s.name}</span>
+                        <span className="text-[9px] font-black uppercase px-1.5 py-0.5 bg-slate-100 text-slate-600 rounded shrink-0">
+                          {sClass}
+                        </span>
+                      </div>
+                      <p className="text-[10px] font-mono text-slate-400 truncate">{s.name}</p>
+                    </div>
+                  </label>
+                );
+              })
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+
   const renderEditor = () => (
     <div className="bg-white overflow-hidden border border-slate-100">
        <div className="bg-white p-2 border-b border-slate-100">
@@ -1349,11 +1733,13 @@ const HomeworkPanel: React.FC<HomeworkPanelProps> = ({ nodeId, student, isAdmin,
           {renderInputArea()}
           {showPreview && renderPreviewArea()}
        </div>
+       {isAdmin && !replyingToId && renderTargetSelector()}
        {renderActionBar()}
     </div>
   );
 
   const questions = comments.filter(c => c.nodeId === homeworkNodeId && c.isAdmin);
+  const visibleQuestions = isAdmin ? questions : questions.filter(q => isHomeworkQuestionAssignedToStudent(q, student));
   const answers = comments.filter(c => c.nodeId.startsWith(`${homeworkNodeId}_ans_`));
   const feedbacks = comments.filter(c => c.nodeId.startsWith(`${homeworkNodeId}_feedback_`));
   
@@ -1540,33 +1926,44 @@ const HomeworkPanel: React.FC<HomeworkPanelProps> = ({ nodeId, student, isAdmin,
              </div>
            )}
 
-           {questions.length === 0 ? (
+           {visibleQuestions.length === 0 ? (
              <div className="bg-white p-16 rounded-[48px] border-2 border-dashed border-slate-200 text-center">
                 <div className="w-20 h-20 bg-slate-50 rounded-[32px] flex items-center justify-center mx-auto mb-6">
                    <BookOpen size={40} className="text-slate-200" />
                 </div>
                 <p className="text-slate-400 font-black uppercase text-xs tracking-widest leading-relaxed">
-                   Chào {student?.full_name || student?.name},<br/> hiện chưa có nhiệm vụ nào được giao cho bài học này.
+                   Chào {student?.full_name || student?.name},<br/>
+                   {questions.length > 0
+                     ? ' hiện chưa có nhiệm vụ BTVN nào được giao riêng cho em trong bài học này.'
+                     : ' hiện chưa có nhiệm vụ nào được giao cho bài học này.'}
                 </p>
              </div>
            ) : (
              <div className="space-y-12">
-                {questions.map((q, idx) => {
+                {visibleQuestions.map((q, idx) => {
                   const myAnswer = getMyAnswerForQuestion(q.id);
                   const isReplying = replyingToId === q.id;
+                  const targetSummary = getHwTargetSummary(q);
 
                   return (
                     <div key={q.id} className="space-y-6">
                        {/* QUESTION CARD */}
                        <div className={`bg-white rounded-[40px] border-2 transition-all overflow-hidden ${isReplying ? 'border-amber-400 shadow-2xl scale-[1.02]' : 'border-slate-100 shadow-xl'}`}>
                           <div className="p-8">
-                             <div className="flex items-start justify-between mb-6">
+                             <div className="flex items-start justify-between mb-6 gap-4 flex-wrap">
                                 <div className="flex items-center gap-4">
                                    <div className="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center text-sm font-black border border-amber-100 shadow-sm leading-none shrink-0">
                                       {idx + 1}
                                    </div>
                                    <div>
-                                      <p className="text-[10px] font-black text-amber-600 uppercase tracking-widest mb-1">Nhiệm vụ {idx + 1}</p>
+                                      <div className="flex items-center gap-2 flex-wrap mb-1">
+                                        <p className="text-[10px] font-black text-amber-600 uppercase tracking-widest">Nhiệm vụ {idx + 1}</p>
+                                        {q.targetType && q.targetType !== 'all' && (
+                                          <span className="px-2 py-0.5 rounded-full text-[9px] font-black bg-indigo-50 text-indigo-700 border border-indigo-200">
+                                            🎯 Giao riêng: {q.targetType === 'class' ? targetSummary.short : 'Nhóm / Cá nhân'}
+                                          </span>
+                                        )}
+                                      </div>
                                       <div className="flex items-center gap-2">
                                          <Clock size={12} className="text-slate-300" />
                                          <p className="text-[9px] font-bold text-slate-400 uppercase">{new Date(q.createdAt).toLocaleString('vi-VN')}</p>
@@ -1830,6 +2227,7 @@ const HomeworkPanel: React.FC<HomeworkPanelProps> = ({ nodeId, student, isAdmin,
                {renderInputArea()}
                {showPreview && renderPreviewArea()}
             </div>
+            {renderTargetSelector()}
             {renderActionBar()}
           </div>
         )
@@ -1892,16 +2290,36 @@ const HomeworkPanel: React.FC<HomeworkPanelProps> = ({ nodeId, student, isAdmin,
                   );
                 }
 
+                const targetSummary = getHwTargetSummary(q);
+                const assignedStudentCount = classStudents.filter(s => isHomeworkQuestionAssignedToStudent(q, s)).length;
+
                 return (
                   <div key={q.id} id={`homework-item-${q.id}`} className="bg-white p-6 rounded-[32px] border border-slate-100 shadow-sm relative group hover:border-amber-200 transition-all">
-                     <div className="flex items-center justify-between mb-4">
+                     <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
                         <div className="flex items-center gap-3">
-                           <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-[10px] font-black border border-amber-100 uppercase tracking-widest">
+                           <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-[10px] font-black border border-amber-100 uppercase tracking-widest shrink-0">
                              {idx + 1}
                            </div>
                            <div>
-                              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Nhiệm vụ soạn thảo lúc:</span>
-                              <p className="text-[10px] font-bold text-slate-800">{new Date(q.createdAt).toLocaleString()}</p>
+                              <div className="flex flex-wrap items-center gap-2">
+                                <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">
+                                  Nhiệm vụ {idx + 1}
+                                </span>
+                                <span
+                                  title={targetSummary.full}
+                                  className={`px-2.5 py-0.5 rounded-full text-[10px] font-black border flex items-center gap-1 ${
+                                    targetSummary.type === 'all'
+                                      ? 'bg-slate-100 text-slate-600 border-slate-200'
+                                      : targetSummary.type === 'class'
+                                        ? 'bg-indigo-50 text-indigo-700 border-indigo-200'
+                                        : 'bg-purple-50 text-purple-700 border-purple-200'
+                                  }`}
+                                >
+                                  {targetSummary.type === 'all' ? '🌐' : targetSummary.type === 'class' ? '🏫' : '👤'} {targetSummary.short}
+                                  {assignedStudentCount > 0 && ` (${assignedStudentCount} HS)`}
+                                </span>
+                              </div>
+                              <p className="text-[10px] font-bold text-slate-400 mt-0.5">{new Date(q.createdAt).toLocaleString('vi-VN')}</p>
                            </div>
                         </div>
                         <div className="flex items-center gap-2">
@@ -1909,14 +2327,14 @@ const HomeworkPanel: React.FC<HomeworkPanelProps> = ({ nodeId, student, isAdmin,
                              onClick={() => { setSelectedQuestionId(q.id); setFilterApprovalTab(pendingCount > 0 ? 'pending' : 'all'); setShowAnswersModal(true); }} 
                              className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 rounded-xl text-[9px] font-black uppercase hover:scale-105 transition-all border border-emerald-200 shadow-sm"
                            >
-                              <Eye size={14} /> Xem bài nộp ({qAnswers.length})
+                              <Eye size={14} /> Xem bài nộp ({qAnswers.length}{assignedStudentCount > 0 ? `/${assignedStudentCount}` : ''})
                               {pendingCount > 0 && (
                                 <span className="ml-1 px-1.5 py-0.5 bg-amber-500 text-white rounded-md text-[8px] font-bold">
                                    {pendingCount} chờ duyệt
                                 </span>
                               )}
                            </button>
-                           <button onClick={() => handleStartEditQuestion(q)} className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all" title="Sửa nội dung">
+                           <button onClick={() => handleStartEditQuestion(q)} className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all" title="Sửa nội dung & đối tượng giao">
                               <Edit2 size={16} />
                            </button>
                            <button onClick={() => handleDelete(q.id)} className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all" title="Xóa nhiệm vụ">
@@ -1962,7 +2380,12 @@ const HomeworkPanel: React.FC<HomeworkPanelProps> = ({ nodeId, student, isAdmin,
                         </h3>
                         <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
                            {selectedQuestionId 
-                             ? `${getAnswersForQuestion(selectedQuestionId).length} Bài nộp cho nhiệm vụ này` 
+                             ? (() => {
+                                 const tq = questions.find(q => q.id === selectedQuestionId);
+                                 const targetInfo = tq ? getHwTargetSummary(tq) : null;
+                                 const targetCount = tq ? classStudents.filter(s => isHomeworkQuestionAssignedToStudent(tq, s)).length : classStudents.length;
+                                 return `${getAnswersForQuestion(selectedQuestionId).length} / ${targetCount} HS được giao đã nộp${targetInfo ? ` • ${targetInfo.short}` : ''}`;
+                               })()
                              : `${answers.length} Tổng số bài nộp`
                            }
                         </p>
@@ -2286,8 +2709,33 @@ const HomeworkPanel: React.FC<HomeworkPanelProps> = ({ nodeId, student, isAdmin,
                 )}
               </div>
 
+              <label
+                htmlFor="link-embed-checkbox"
+                className={`flex items-start gap-3 p-3.5 rounded-2xl border transition-all cursor-pointer select-none ${
+                  linkEmbed
+                    ? 'bg-indigo-50/90 border-indigo-300 shadow-sm'
+                    : 'bg-slate-50 border-slate-200 hover:border-slate-300'
+                }`}
+              >
+                <input
+                  id="link-embed-checkbox"
+                  type="checkbox"
+                  checked={linkEmbed}
+                  onChange={e => setLinkEmbed(e.target.checked)}
+                  className="mt-0.5 w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer accent-indigo-600"
+                />
+                <div className="flex-1 min-w-0">
+                  <span className="text-xs font-black text-slate-800 block">
+                    Hiển thị nội dung trực tiếp ra màn hình
+                  </span>
+                  <span className="text-[11px] text-slate-500 leading-snug block mt-0.5">
+                    Tích chọn để nhúng xem trực tiếp (PDF, Hình ảnh, Google Drive, Trang web...). Bỏ chọn nếu chỉ muốn chèn link chữ xanh.
+                  </span>
+                </div>
+              </label>
+
               <div className="p-3 bg-blue-50/70 border border-blue-100 rounded-xl text-[11px] text-blue-800 leading-relaxed">
-                <strong>Mẹo nhỏ:</strong> Bạn cũng có thể dán trực tiếp link (ví dụ <code className="bg-white px-1 py-0.5 rounded border border-blue-200 text-blue-700">https://...</code>) vào khung soạn thảo, hệ thống sẽ tự động hiển thị thành chữ xanh gạch chân có thể bấm mở được.
+                <strong>Mẹo nhỏ:</strong> Khi dán trực tiếp link lên một dòng riêng, file <strong>PDF / Ảnh / Google Drive</strong> sẽ tự hiển thị trực tiếp, còn <strong>link web thông thường</strong> sẽ hiển thị thành chữ xanh gạch chân.
               </div>
             </div>
 
@@ -2303,7 +2751,7 @@ const HomeworkPanel: React.FC<HomeworkPanelProps> = ({ nodeId, student, isAdmin,
                 type="submit"
                 className="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-black uppercase tracking-wider rounded-xl shadow-md shadow-indigo-200 transition-all flex items-center gap-1.5"
               >
-                <Check size={15} /> Chèn liên kết
+                <Check size={15} /> {linkEmbed ? 'Chèn & Hiển thị trực tiếp' : 'Chèn liên kết'}
               </button>
             </div>
           </form>
