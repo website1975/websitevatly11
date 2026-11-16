@@ -24,12 +24,19 @@ import {
   BookOpen,
   Calendar,
   Layers,
-  FileSpreadsheet
+  FileSpreadsheet,
+  BrainCircuit
 } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 import { Student, BookNode, LessonTask } from '../types';
 import { ConfirmModal, ToastNotification, ConfirmState, ToastState } from './CustomDialog';
-import { extractClassCode, isTaskAssignedToStudent } from '../utils';
+import {
+  extractClassCode,
+  isTaskAssignedToStudent,
+  evaluateStudentHomeworkStatus,
+  parseQuizPracticeRecords,
+  getStudentQuizPracticeStats,
+} from '../utils';
 
 interface StudentManagerProps {
   gradeId: number;
@@ -53,6 +60,11 @@ interface StudentProgressSummary {
   hwPendingCount: number;
   hwMissingCount: number;
   totalStudyMinutes: number;
+  quizCorrect: number;
+  quizTotal: number;
+  quizAttempts: number;
+  quizRate: number;
+  quizByLesson: Record<string, { correct: number; total: number; attempts: number }>;
   detailTasks: Array<{
     task: any;
     lesson: BookNode | undefined;
@@ -213,9 +225,51 @@ const StudentManager: React.FC<StudentManagerProps> = ({
         targetClasses: targetClassesVal,
         targetStudentIds: targetStudentIdsVal,
         createdAt: t.created_at,
-        lessonNode
+        lessonNode,
+        isBtvnOnly: false
       };
     }).filter(t => !t.isDraft && t.lessonNode && t.lessonNode.type === 'lesson');
+
+    // Bổ sung các bài học tuy chưa tạo cấu hình lesson_tasks nhưng đã giao BTVN trong tab Bài tập về nhà
+    const coveredNodeIds = new Set(list.map(t => t.nodeId));
+    const btvnLessonIds = new Set<string>();
+    (rawComments || []).forEach((c: any) => {
+      const nid = c.nodeId || c.node_id || '';
+      if (!nid.startsWith('homework_') || nid.includes('_ans_') || nid.includes('_feedback_')) return;
+      const isTeacher = c.isAdmin === true || c.isAdmin === 'true' || c.is_admin === true || c.is_admin === 'true' || !(c.author || '').includes('[');
+      if (!isTeacher) return;
+      const lessonId = nid.replace('homework_', '');
+      if (!coveredNodeIds.has(lessonId)) {
+        btvnLessonIds.add(lessonId);
+      }
+    });
+
+    btvnLessonIds.forEach(lessonId => {
+      const lessonNode = nodeMap.get(lessonId);
+      if (!lessonNode || lessonNode.type !== 'lesson') return;
+      const pFolder = lessonNode.parentId ? nodeMap.get(lessonNode.parentId) : null;
+      const itemGrade = (lessonNode as any).gradeId || (pFolder as any)?.gradeId;
+      if (gradeId && itemGrade && String(itemGrade) !== String(gradeId)) return;
+
+      list.push({
+        id: `btvn_${lessonId}`,
+        nodeId: lessonId,
+        description: 'Nhiệm vụ Bài tập về nhà',
+        minMaterialTime: 0,
+        minFlashcardTime: 0,
+        minQuizTime: 0,
+        requireHomework: true,
+        startDate: '',
+        endDate: '',
+        isDraft: false,
+        targetType: 'all',
+        targetClasses: [],
+        targetStudentIds: [],
+        createdAt: '',
+        lessonNode,
+        isBtvnOnly: true
+      });
+    });
 
     // Sắp xếp thứ tự danh sách bài học/nhiệm vụ theo đúng thứ tự Cây Sách (Chương 1 -> Chương 2 -> Chương 3...)
     list.sort((a, b) => {
@@ -225,7 +279,11 @@ const StudentManager: React.FC<StudentManagerProps> = ({
     });
 
     return list;
-  }, [lessonTasks, nodeMap, nodeIndexMap]);
+  }, [lessonTasks, rawComments, nodeMap, nodeIndexMap, gradeId]);
+
+  const quizPracticeRecords = useMemo(() => {
+    return parseQuizPracticeRecords(rawComments, gradeId);
+  }, [rawComments, gradeId]);
 
   // Compute comprehensive progress for each student
   const studentsProgressList: StudentProgressSummary[] = useMemo(() => {
@@ -233,8 +291,6 @@ const StudentManager: React.FC<StudentManagerProps> = ({
 
     return students.map(student => {
       const classCode = extractClassCode(student.name);
-      const studentNameCode = (student.name || '').toLowerCase();
-      const studentFullName = (student.full_name || student.name || '').toLowerCase();
 
       // Study logs for this student
       const studentLogs = (studyLogs || []).filter(l => l.student_id === student.id);
@@ -254,7 +310,17 @@ const StudentManager: React.FC<StudentManagerProps> = ({
           return false;
         }
 
-        return isTaskAssignedToStudent(task, student);
+        if (!isTaskAssignedToStudent(task, student)) return false;
+
+        const hwEval = evaluateStudentHomeworkStatus(task.nodeId, student, rawComments, Boolean(task.requireHomework));
+        if (task.isBtvnOnly && hwEval.totalAssignedHw === 0) {
+          return false;
+        }
+        if (!task.isBtvnOnly && task.minMaterialTime <= 0 && task.minFlashcardTime <= 0 && hwEval.totalTeacherQuestions > 0 && hwEval.totalAssignedHw === 0) {
+          return false;
+        }
+
+        return true;
       });
 
       let hwApprovedCount = 0;
@@ -277,46 +343,20 @@ const StudentManager: React.FC<StudentManagerProps> = ({
         const flashRequiredMin = task.minFlashcardTime;
         const flashCompleted = flashRequiredMin <= 0 || (flashTimeSec / 60) >= flashRequiredMin;
 
-        // Homework check
-        const hwNodeId = `homework_${task.nodeId}`;
-        const relevantComments = (rawComments || []).filter((c: any) => {
-          const nid = c.nodeId || c.node_id || '';
-          return nid === hwNodeId || nid.startsWith(`${hwNodeId}_ans_`);
-        });
+        // Homework check strictly against homework tasks assigned to THIS student
+        const hwEval = evaluateStudentHomeworkStatus(task.nodeId, student, rawComments, Boolean(task.requireHomework));
 
-        const studentComments = relevantComments.filter((c: any) => {
-          const auth = (c.author || '').toLowerCase();
-          return (studentNameCode && auth.includes(studentNameCode)) || (studentFullName && auth.includes(studentFullName));
-        });
-
-        const hwSubmitted = studentComments.length > 0;
-        const hwApproved = studentComments.some((c: any) => {
-          const raw = c.content || '';
-          return (
-            c.isApproved === true || 
-            c.isApproved === 'true' || 
-            c.is_approved === true || 
-            c.is_approved === 'true' || 
-            raw.includes('<!--status:approved-->')
-          );
-        });
-
-        let hwStatusStr = 'Không yêu cầu';
-        if (task.requireHomework) {
-          if (hwApproved) {
-            hwStatusStr = 'Đã duyệt';
+        if (hwEval.hwRequired) {
+          if (hwEval.hwApproved) {
             hwApprovedCount++;
-          } else if (hwSubmitted) {
-            hwStatusStr = 'Chờ duyệt';
+          } else if (hwEval.hwSubmitted) {
             hwPendingCount++;
           } else {
-            hwStatusStr = 'Chưa nộp';
             hwMissingCount++;
           }
         }
 
-        const hwCompleted = !task.requireHomework || hwApproved;
-        const isFullyCompleted = matCompleted && flashCompleted && hwCompleted;
+        const isFullyCompleted = matCompleted && flashCompleted && hwEval.hwCompleted;
 
         // Expired check
         let isExpired = false;
@@ -338,10 +378,10 @@ const StudentManager: React.FC<StudentManagerProps> = ({
           flashTimeSec,
           flashRequiredMin,
           flashCompleted,
-          hwRequired: Boolean(task.requireHomework),
-          hwSubmitted,
-          hwApproved,
-          hwStatusStr,
+          hwRequired: hwEval.hwRequired,
+          hwSubmitted: hwEval.hwSubmitted,
+          hwApproved: hwEval.hwApproved,
+          hwStatusStr: hwEval.statusLabel,
           isFullyCompleted,
           isExpired
         };
@@ -353,6 +393,7 @@ const StudentManager: React.FC<StudentManagerProps> = ({
       const completedCount = completedTasks.length;
       const incompleteCount = incompleteTasks.length;
       const completionRate = totalAssigned > 0 ? Math.round((completedCount / totalAssigned) * 100) : 0;
+      const quizStats = getStudentQuizPracticeStats(quizPracticeRecords, student);
 
       return {
         student,
@@ -368,10 +409,15 @@ const StudentManager: React.FC<StudentManagerProps> = ({
         hwPendingCount,
         hwMissingCount,
         totalStudyMinutes,
+        quizCorrect: quizStats.totalCorrect,
+        quizTotal: quizStats.totalAttempted,
+        quizAttempts: quizStats.attemptCount,
+        quizRate: quizStats.accuracyRate,
+        quizByLesson: quizStats.byLesson,
         detailTasks
       };
     });
-  }, [students, parsedLessonTasks, studyLogs, rawComments, gradeId, nodeMap]);
+  }, [students, parsedLessonTasks, studyLogs, rawComments, quizPracticeRecords, gradeId, nodeMap]);
 
   // Filtered students for display
   const filteredStudentsProgress = useMemo(() => {
@@ -411,16 +457,30 @@ const StudentManager: React.FC<StudentManagerProps> = ({
   const overallMetrics = useMemo(() => {
     const totalCount = filteredStudentsProgress.length;
     if (totalCount === 0) {
-      return { totalCount: 0, avgRate: 0, totalPendingHw: 0, totalAssignedTasks: parsedLessonTasks.length };
+      return {
+        totalCount: 0,
+        avgRate: 0,
+        totalPendingHw: 0,
+        totalAssignedTasks: parsedLessonTasks.length,
+        totalQuizCorrect: 0,
+        totalQuizAttempted: 0,
+        quizRate: 0,
+      };
     }
     const sumRate = filteredStudentsProgress.reduce((acc, curr) => acc + curr.completionRate, 0);
     const avgRate = Math.round(sumRate / totalCount);
     const totalPendingHw = filteredStudentsProgress.reduce((acc, curr) => acc + curr.hwPendingCount, 0);
+    const totalQuizCorrect = filteredStudentsProgress.reduce((acc, curr) => acc + curr.quizCorrect, 0);
+    const totalQuizAttempted = filteredStudentsProgress.reduce((acc, curr) => acc + curr.quizTotal, 0);
+    const quizRate = totalQuizAttempted > 0 ? Math.round((totalQuizCorrect / totalQuizAttempted) * 100) : 0;
     return {
       totalCount,
       avgRate,
       totalPendingHw,
-      totalAssignedTasks: parsedLessonTasks.length
+      totalAssignedTasks: parsedLessonTasks.length,
+      totalQuizCorrect,
+      totalQuizAttempted,
+      quizRate,
     };
   }, [filteredStudentsProgress, parsedLessonTasks.length]);
 
@@ -483,6 +543,9 @@ const StudentManager: React.FC<StudentManagerProps> = ({
               <th>Tỉ lệ hoàn thành</th>
               <th>BTVN đã duyệt</th>
               <th>BTVN chờ duyệt</th>
+              <th>Rèn luyện (Câu đúng)</th>
+              <th>Tổng câu đã luyện</th>
+              <th>Tỷ lệ đúng (%)</th>
               <th>Tổng thời gian học (phút)</th>
             </tr>
           </thead>
@@ -502,6 +565,9 @@ const StudentManager: React.FC<StudentManagerProps> = ({
           <td class="center"><b>${item.completionRate}%</b></td>
           <td class="center completed">${item.hwApprovedCount}</td>
           <td class="center pending">${item.hwPendingCount}</td>
+          <td class="center completed"><b>${item.quizCorrect}</b></td>
+          <td class="center">${item.quizTotal}</td>
+          <td class="center">${item.quizRate}%</td>
           <td class="center">${item.totalStudyMinutes}</td>
         </tr>
       `;
@@ -732,9 +798,9 @@ const StudentManager: React.FC<StudentManagerProps> = ({
         {activeMainTab === 'stats' && (
           <div className="flex-1 min-h-0 flex flex-col overflow-hidden bg-slate-50">
             
-            {/* 4 SUMMARY STATS CARDS (COMPACT HORIZONTAL STRIP) */}
+            {/* 5 SUMMARY STATS CARDS (COMPACT HORIZONTAL STRIP) */}
             <div className="px-5 py-2.5 bg-white border-b border-slate-100 shrink-0">
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5">
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2.5">
                 <div className="px-3.5 py-2 rounded-xl bg-indigo-50/70 border border-indigo-100/80 flex items-center justify-between gap-2">
                   <div>
                     <span className="text-[10px] font-black uppercase tracking-wider text-indigo-600 flex items-center gap-1">
@@ -758,6 +824,20 @@ const StudentManager: React.FC<StudentManagerProps> = ({
                   </div>
                   <p className="text-lg font-black text-emerald-700">
                     {overallMetrics.avgRate}%
+                  </p>
+                </div>
+
+                <div className="px-3.5 py-2 rounded-xl bg-violet-50/70 border border-violet-100/80 flex items-center justify-between gap-2">
+                  <div>
+                    <span className="text-[10px] font-black uppercase tracking-wider text-violet-700 flex items-center gap-1">
+                      <BrainCircuit size={12} /> Rèn luyện Quiz
+                    </span>
+                    <p className="text-[10px] text-violet-600 font-medium">
+                      Đúng {overallMetrics.quizRate}% cộng dồn
+                    </p>
+                  </div>
+                  <p className="text-lg font-black text-violet-700">
+                    {overallMetrics.totalQuizCorrect}/{overallMetrics.totalQuizAttempted}
                   </p>
                 </div>
 
@@ -930,6 +1010,7 @@ const StudentManager: React.FC<StudentManagerProps> = ({
                           <th className="py-2.5 px-3.5 text-center">Đã hoàn thành</th>
                           <th className="py-2.5 px-3.5 text-center">Chưa hoàn thành</th>
                           <th className="py-2.5 px-3.5 text-center">Bài tập về nhà</th>
+                          <th className="py-2.5 px-3.5 text-center">Rèn luyện (Đúng/Tổng)</th>
                           <th className="py-2.5 px-3.5 text-center">Thời gian học</th>
                           <th className="py-2.5 px-3.5 text-center">Thao tác</th>
                         </tr>
@@ -1034,6 +1115,22 @@ const StudentManager: React.FC<StudentManagerProps> = ({
                                     ✓ {item.hwApprovedCount} đạt
                                   </span>
                                 </div>
+                              </td>
+
+                              {/* QUIZ PRACTICE CUMULATIVE SCORE */}
+                              <td className="py-2.5 px-3.5 text-center">
+                                {item.quizTotal > 0 ? (
+                                  <div className="inline-flex flex-col items-center px-3 py-1 rounded-xl bg-violet-50 border border-violet-200/80">
+                                    <span className="text-xs font-black text-violet-700">
+                                      {item.quizCorrect}/{item.quizTotal} câu
+                                    </span>
+                                    <span className="text-[9px] font-bold text-violet-500">
+                                      {item.quizRate}% ({item.quizAttempts} lượt)
+                                    </span>
+                                  </div>
+                                ) : (
+                                  <span className="text-[11px] font-medium text-slate-300">0/0</span>
+                                )}
                               </td>
 
                               <td className="py-3.5 px-4 text-center font-bold text-slate-600">
@@ -1187,7 +1284,8 @@ const StudentManager: React.FC<StudentManagerProps> = ({
                   </div>
                   <p className="text-xs text-indigo-200/80 mt-0.5">
                     Mã học sinh: <span className="font-mono font-bold text-white">{selectedStudentDetail.student.name}</span> &bull; 
-                    Đã hoàn thành <strong className="text-emerald-300">{selectedStudentDetail.completedCount}</strong> / <strong>{selectedStudentDetail.totalAssigned}</strong> nhiệm vụ ({selectedStudentDetail.completionRate}%)
+                    Đã hoàn thành <strong className="text-emerald-300">{selectedStudentDetail.completedCount}</strong> / <strong>{selectedStudentDetail.totalAssigned}</strong> nhiệm vụ ({selectedStudentDetail.completionRate}%) &bull; 
+                    Rèn luyện: <strong className="text-violet-200">{selectedStudentDetail.quizCorrect}/{selectedStudentDetail.quizTotal}</strong> câu đúng ({selectedStudentDetail.quizRate}%)
                   </p>
                 </div>
               </div>
@@ -1202,7 +1300,7 @@ const StudentManager: React.FC<StudentManagerProps> = ({
             </header>
 
             {/* Filter Tabs within Student Detail */}
-            <div className="px-6 py-3 bg-slate-100/80 border-b border-slate-200 shrink-0 flex items-center justify-between">
+            <div className="px-6 py-3 bg-slate-100/80 border-b border-slate-200 shrink-0 flex flex-wrap items-center justify-between gap-2">
               <div className="flex bg-white p-1 rounded-xl shadow-xs border border-slate-200">
                 <button
                   type="button"
@@ -1233,9 +1331,14 @@ const StudentManager: React.FC<StudentManagerProps> = ({
                 </button>
               </div>
 
-              <span className="text-xs font-semibold text-slate-500">
-                Tổng thời lượng học: <strong className="text-slate-800">{selectedStudentDetail.totalStudyMinutes} phút</strong>
-              </span>
+              <div className="flex items-center gap-4 text-xs font-semibold text-slate-500">
+                <span>
+                  Rèn luyện Quiz: <strong className="text-violet-700">{selectedStudentDetail.quizCorrect}/{selectedStudentDetail.quizTotal} câu đúng</strong>
+                </span>
+                <span>
+                  Tổng thời lượng học: <strong className="text-slate-800">{selectedStudentDetail.totalStudyMinutes} phút</strong>
+                </span>
+              </div>
             </div>
 
             {/* Detailed Tasks List */}
@@ -1360,14 +1463,21 @@ const StudentManager: React.FC<StudentManagerProps> = ({
                         </div>
                       </div>
 
-                      {/* Deadline & Target info */}
-                      <div className="flex flex-wrap items-center justify-between text-[11px] text-slate-400 pt-1">
+                      {/* Deadline & Target info + Quiz practice count */}
+                      <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] text-slate-400 pt-1">
                         <span>
                           Thời hạn: {item.task.startDate ? item.task.startDate : 'Từ trước'} → {item.task.endDate ? item.task.endDate : 'Không giới hạn'}
                         </span>
-                        <span className="font-medium text-slate-500">
-                          Đối tượng: {item.task.targetType === 'class' ? `Lớp ${(item.task.targetClasses || []).join(', ')}` : item.task.targetType === 'students' ? 'Nhóm HS chỉ định' : 'Toàn khối'}
-                        </span>
+                        <div className="flex items-center gap-3">
+                          {selectedStudentDetail.quizByLesson[item.task.nodeId] && (
+                            <span className="px-2 py-0.5 rounded-md bg-violet-50 text-violet-700 border border-violet-200 font-bold">
+                              Rèn luyện Quiz: {selectedStudentDetail.quizByLesson[item.task.nodeId].correct}/{selectedStudentDetail.quizByLesson[item.task.nodeId].total} câu
+                            </span>
+                          )}
+                          <span className="font-medium text-slate-500">
+                            Đối tượng: {item.task.targetType === 'class' ? `Lớp ${(item.task.targetClasses || []).join(', ')}` : item.task.targetType === 'students' ? 'Nhóm HS chỉ định' : 'Toàn khối'}
+                          </span>
+                        </div>
                       </div>
                     </div>
                   ))}
