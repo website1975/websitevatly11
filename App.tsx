@@ -283,10 +283,22 @@ const LandingPage: React.FC<{ visitorCount: number, onSelectGrade: (g: number) =
         </button>
       )}
       <div className="relative z-10 flex flex-col items-center w-full max-w-4xl">
-        <div className="mb-8 p-5 bg-white border border-slate-200 shadow-sm rounded-3xl">
-            <Book size={48} className={selectedGrade ? (selectedGrade === 10 ? 'text-emerald-600' : selectedGrade === 12 ? 'text-rose-600' : 'text-indigo-600') : 'text-slate-400'}/>
+        <div className="mb-6">
+          <img
+            src="/assets/aistudio/hthongvatly_4d756919.png"
+            alt="Nền tảng Vật Lý - Nắm chắc tương lai"
+            className={`w-24 h-24 md:w-28 md:h-28 rounded-full object-contain bg-white shadow-lg ring-4 transition-all duration-300 ${
+              selectedGrade === 10
+                ? 'ring-emerald-200 shadow-emerald-200/60'
+                : selectedGrade === 12
+                ? 'ring-rose-200 shadow-rose-200/60'
+                : selectedGrade === 11
+                ? 'ring-indigo-200 shadow-indigo-200/60'
+                : 'ring-white shadow-slate-200/80'
+            }`}
+          />
         </div>
-        <h1 className="text-4xl md:text-6xl font-black text-slate-900 uppercase mb-12 tracking-tighter">
+        <h1 className="text-4xl md:text-6xl font-black text-slate-900 uppercase mb-10 tracking-tighter">
           {selectedGrade ? `VẬT LÝ ${selectedGrade}` : 'HỆ THỐNG HỌC TẬP'}
         </h1>
         
