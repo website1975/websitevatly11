@@ -1,11 +1,18 @@
 
-import React, { useState, useEffect, useCallback } from 'react';
-import { X, BrainCircuit, Trophy, CheckCircle2, XCircle, AlertCircle, Send, Save, RefreshCw, Trash2, Shuffle, Pencil, PlusCircle, Eye } from 'lucide-react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { X, BrainCircuit, Trophy, CheckCircle2, XCircle, AlertCircle, Send, Save, RefreshCw, Trash2, Shuffle, Pencil, PlusCircle, Filter, ArrowRight, Award, BookOpen, ChevronLeft, ChevronRight } from 'lucide-react';
 import { GoogleGenAI, Type } from "@google/genai";
 import { supabase } from '../supabaseClient';
 import confetti from 'canvas-confetti';
 import { QuizQuestion, Student } from '../types';
-import { renderLatex, getSafeEnv } from '../utils';
+import {
+  renderLatex,
+  getSafeEnv,
+  QuizPracticeRecord,
+  buildQuizPracticeCommentContent,
+  parseQuizPracticeRecords,
+  getStudentQuizPracticeStats,
+} from '../utils';
 import { ConfirmModal, ToastNotification, ConfirmState, ToastState } from './CustomDialog';
 
 interface QuizModalProps {
@@ -19,16 +26,25 @@ interface QuizModalProps {
   onClose: () => void;
 }
 
+const BATCH_SIZE = 10;
+
 const QuizModal: React.FC<QuizModalProps> = ({ nodeId, lessonTitle, lessonUrl, isAdmin, selectedGrade, themeColor, student, onClose }) => {
   const [questions, setQuestions] = useState<QuizQuestion[]>([]);
+  const [activeBankIndices, setActiveBankIndices] = useState<number[]>([]);
   const [fullBank, setFullBank] = useState<QuizQuestion[]>([]);
+  const [filterMode, setFilterMode] = useState<'batch' | 'random' | 'all'>(isAdmin ? 'all' : 'batch');
+  const [activeBatchIdx, setActiveBatchIdx] = useState<number>(0);
+  const [currentQuestionIdx, setCurrentQuestionIdx] = useState<number>(0);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [savingAttempt, setSavingAttempt] = useState(false);
   const [errorInfo, setErrorInfo] = useState<{title: string, msg: string} | null>(null);
   const [userAnswers, setUserAnswers] = useState<(number | null)[]>([]);
   const [showResults, setShowResults] = useState(false);
   const [isAiMode, setIsAiMode] = useState(false);
-  
+  const [practiceRecords, setPracticeRecords] = useState<QuizPracticeRecord[]>([]);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+
   const [confirmState, setConfirmState] = useState<ConfirmState>({ isOpen: false, title: '', message: '', onConfirm: () => {} });
   const [toastState, setToastState] = useState<ToastState>({ isOpen: false, message: '' });
 
@@ -49,14 +65,87 @@ const QuizModal: React.FC<QuizModalProps> = ({ nodeId, lessonTitle, lessonUrl, i
     // Nếu là Khối 11 (id: 11), giữ nguyên ID cũ để không mất dữ liệu
     if (selectedGrade === 11 || selectedGrade === 1 || !selectedGrade) return baseId;
     // Với các khối khác, tạo ID duy nhất bằng cách thêm tiền tố grade
-    // Ví dụ: Khối 10 -> 100000000000000 + timestamp
     return (selectedGrade * 100000000000000) + baseId;
   };
 
-  const pickRandomQuestions = (bank: QuizQuestion[], count: number = 5) => {
-    if (bank.length <= count) return [...bank];
-    const shuffled = [...bank].sort(() => 0.5 - Math.random());
-    return shuffled.slice(0, count);
+  // Chia ngân hàng câu hỏi thành từng bộ 10 câu
+  const batches = useMemo(() => {
+    const list: Array<{
+      index: number;
+      start: number;
+      end: number;
+      label: string;
+      questions: QuizQuestion[];
+      bankIndices: number[];
+    }> = [];
+    for (let i = 0; i < fullBank.length; i += BATCH_SIZE) {
+      const slice = fullBank.slice(i, i + BATCH_SIZE);
+      const bankIndices = slice.map((_, offset) => i + offset);
+      list.push({
+        index: list.length,
+        start: i,
+        end: i + slice.length,
+        label: `Câu ${i + 1}–${i + slice.length}`,
+        questions: slice,
+        bankIndices,
+      });
+    }
+    return list;
+  }, [fullBank]);
+
+  const practiceStats = useMemo(() => {
+    return getStudentQuizPracticeStats(practiceRecords, student, nodeId);
+  }, [practiceRecords, student, nodeId]);
+
+  const practicedBatchSet = useMemo(() => {
+    return new Set(practiceStats.practicedBatchLabels);
+  }, [practiceStats.practicedBatchLabels]);
+
+  const pickRandomWithIndices = (bank: QuizQuestion[], count: number = BATCH_SIZE) => {
+    const indexed = bank.map((q, idx) => ({ q, idx }));
+    const shuffled = [...indexed].sort(() => 0.5 - Math.random());
+    const picked = shuffled.slice(0, Math.min(count, bank.length));
+    return {
+      questions: picked.map(p => p.q),
+      bankIndices: picked.map(p => p.idx),
+    };
+  };
+
+  const fetchPracticeRecords = async () => {
+    if (isAdmin || !student || student.is_guest) return;
+    try {
+      const { data, error } = await supabase.from('forum_comments').select('*');
+      if (!error && data) {
+        const parsed = parseQuizPracticeRecords(data, selectedGrade || student.grade_id || null);
+        setPracticeRecords(parsed);
+      }
+    } catch (e) {
+      console.warn('Failed to fetch practice stats:', e);
+    }
+  };
+
+  const applyBatchSelection = (bank: QuizQuestion[], batchIdx: number) => {
+    const start = batchIdx * BATCH_SIZE;
+    const slice = bank.slice(start, start + BATCH_SIZE);
+    const indices = slice.map((_, offset) => start + offset);
+    setFilterMode('batch');
+    setActiveBatchIdx(batchIdx);
+    setCurrentQuestionIdx(0);
+    setQuestions(slice);
+    setActiveBankIndices(indices);
+    setUserAnswers(new Array(slice.length).fill(null));
+    setShowResults(false);
+    scrollContainerRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const applyAllSelection = (bank: QuizQuestion[]) => {
+    setFilterMode('all');
+    setCurrentQuestionIdx(0);
+    setQuestions(bank);
+    setActiveBankIndices(bank.map((_, i) => i));
+    setUserAnswers(new Array(bank.length).fill(null));
+    setShowResults(false);
+    scrollContainerRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const fetchFromDB = async () => {
@@ -67,12 +156,15 @@ const QuizModal: React.FC<QuizModalProps> = ({ nodeId, lessonTitle, lessonUrl, i
       if (data?.data && Array.isArray(data.data)) {
         const bank = data.data;
         setFullBank(bank);
-        const displaySet = isAdmin ? bank : pickRandomQuestions(bank, 5);
-        setQuestions(displaySet);
-        setUserAnswers(new Array(displaySet.length).fill(null));
         setIsAiMode(false);
+        if (isAdmin) {
+          applyAllSelection(bank);
+        } else {
+          applyBatchSelection(bank, 0);
+        }
       } else {
         setQuestions([]);
+        setActiveBankIndices([]);
         setFullBank([]);
         if (!isAdmin) {
           setErrorInfo({ title: "Chưa có bài tập", msg: "Giáo viên chưa soạn bài tập cho mục này." });
@@ -82,14 +174,21 @@ const QuizModal: React.FC<QuizModalProps> = ({ nodeId, lessonTitle, lessonUrl, i
     finally { setLoading(false); }
   };
 
-  useEffect(() => { fetchFromDB(); }, [nodeId]);
+  useEffect(() => {
+    fetchFromDB();
+    fetchPracticeRecords();
+  }, [nodeId, student?.id, selectedGrade]);
   
   const handleShuffleNewSet = () => {
     if (fullBank.length === 0) return;
-    const newSet = pickRandomQuestions(fullBank, 5);
+    const { questions: newSet, bankIndices } = pickRandomWithIndices(fullBank, BATCH_SIZE);
+    setFilterMode('random');
+    setCurrentQuestionIdx(0);
     setQuestions(newSet);
+    setActiveBankIndices(bankIndices);
     setUserAnswers(new Array(newSet.length).fill(null));
     setShowResults(false);
+    scrollContainerRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const generateQuiz = async () => {
@@ -143,6 +242,8 @@ const QuizModal: React.FC<QuizModalProps> = ({ nodeId, lessonTitle, lessonUrl, i
       });
       const qData = JSON.parse(response.text || "[]");
       setQuestions(qData);
+      setActiveBankIndices(qData.map((_: any, i: number) => i));
+      setCurrentQuestionIdx(0);
       setUserAnswers(new Array(qData.length).fill(null));
       setIsAiMode(true);
       setShowResults(false);
@@ -159,6 +260,8 @@ const QuizModal: React.FC<QuizModalProps> = ({ nodeId, lessonTitle, lessonUrl, i
           });
           const qData = JSON.parse(response.text || "[]");
           setQuestions(qData);
+          setActiveBankIndices(qData.map((_: any, i: number) => i));
+          setCurrentQuestionIdx(0);
           setUserAnswers(new Array(qData.length).fill(null));
           setIsAiMode(true);
           setShowResults(false);
@@ -191,9 +294,13 @@ const QuizModal: React.FC<QuizModalProps> = ({ nodeId, lessonTitle, lessonUrl, i
       if (error) throw error;
 
       setFullBank(updatedBank);
-      setQuestions(updatedBank);
-      setUserAnswers(new Array(updatedBank.length).fill(null));
       setIsAiMode(false);
+      if (isAdmin && filterMode === 'batch') {
+        const maxBatchIdx = Math.max(0, Math.ceil(updatedBank.length / BATCH_SIZE) - 1);
+        applyBatchSelection(updatedBank, Math.min(activeBatchIdx, maxBatchIdx));
+      } else {
+        applyAllSelection(updatedBank);
+      }
       if (!customData) showToast("Đã lưu kho câu hỏi thành công!", "success");
     } catch (e) { showToast("Lỗi khi lưu CSDL.", "error"); }
     finally { setSaving(false); }
@@ -309,30 +416,114 @@ const QuizModal: React.FC<QuizModalProps> = ({ nodeId, lessonTitle, lessonUrl, i
   const currentThemeLightBgClass = themeLightBgClasses[themeColor as keyof typeof themeLightBgClasses] || themeLightBgClasses['indigo-600'];
   const currentThemeLightBorderClass = themeLightBorderClasses[themeColor as keyof typeof themeLightBorderClasses] || themeLightBorderClasses['indigo-600'];
 
-  const handleSubmit = () => {
-    if (userAnswers.some(a => a === null)) { 
-      showToast("Hãy hoàn thành tất cả câu hỏi trước khi nộp bài!", "warning", "Chưa hoàn thành"); 
+  const currentBatchLabel = useMemo(() => {
+    if (filterMode === 'random') return `Ngẫu nhiên ${questions.length} câu`;
+    if (filterMode === 'all') return `Tất cả (${questions.length} câu)`;
+    return batches[activeBatchIdx]?.label || `${questions.length} câu`;
+  }, [filterMode, questions.length, batches, activeBatchIdx]);
+
+  const savePracticeAttempt = async (correctCount: number, totalCount: number) => {
+    if (isAdmin || !student || student.is_guest || totalCount <= 0) return;
+
+    const nowIso = new Date().toISOString();
+    const record: QuizPracticeRecord = {
+      studentId: String(student.id),
+      studentCode: student.name,
+      lessonId: nodeId,
+      lessonTitle,
+      gradeId: selectedGrade || student.grade_id || null,
+      correct: correctCount,
+      total: totalCount,
+      batchLabel: currentBatchLabel,
+      createdAt: nowIso,
+    };
+
+    // Optimistic update so cumulative score reflects immediately
+    setPracticeRecords(prev => [...prev, record]);
+    setSavingAttempt(true);
+
+    try {
+      const targetNodeId = `quiz_practice_${nodeId}`;
+      const authorName = student.full_name ? `[${student.name}] ${student.full_name}` : `[${student.name}]`;
+      const content = buildQuizPracticeCommentContent(record);
+      const gradeVal = selectedGrade || student.grade_id || null;
+
+      let res = await supabase.from('forum_comments').insert([{
+        nodeId: targetNodeId,
+        author: authorName,
+        content,
+        isAdmin: false,
+        createdAt: nowIso,
+        grade_id: gradeVal,
+      }]);
+
+      if (res.error) {
+        res = await supabase.from('forum_comments').insert([{
+          node_id: targetNodeId,
+          author: authorName,
+          content,
+          is_admin: false,
+          created_at: nowIso,
+          grade_id: gradeVal,
+        }]);
+      }
+
+      if (res.error) {
+        res = await supabase.from('forum_comments').insert([{
+          nodeId: targetNodeId,
+          author: authorName,
+          content,
+          grade_id: gradeVal,
+        }]);
+      }
+
+      if (res.error) {
+        await supabase.from('forum_comments').insert([{
+          node_id: targetNodeId,
+          author: authorName,
+          content,
+          grade_id: gradeVal,
+        }]);
+      }
+    } catch (err) {
+      console.error('Lỗi khi lưu kết quả luyện tập:', err);
+    } finally {
+      setSavingAttempt(false);
+    }
+  };
+
+  const handleSubmit = async () => {
+    const firstUnanswered = userAnswers.findIndex(a => a === null);
+    if (firstUnanswered !== -1) { 
+      setCurrentQuestionIdx(firstUnanswered);
+      showToast(`Còn câu ${firstUnanswered + 1} chưa chọn đáp án. Hãy hoàn thành tất cả câu hỏi trước khi nộp bài!`, "warning", "Chưa hoàn thành"); 
       return; 
     }
-    
-    // saveCurrentDuration(); // Gỡ bỏ theo yêu cầu
-    
+
     const score = calculateScore();
     if (score >= (questions.length * 0.8)) { 
       confetti({ particleCount: 150, spread: 70, origin: { y: 0.7 } }); 
     }
     setShowResults(true);
+    setCurrentQuestionIdx(0);
+    scrollContainerRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+    await savePracticeAttempt(score, questions.length);
   };
 
   const getOptionLabel = (index: number) => String.fromCharCode(65 + index);
+  const safeCurrentIdx = Math.min(currentQuestionIdx, Math.max(0, questions.length - 1));
+  const currentQ = questions[safeCurrentIdx];
+  const currentRealIdx = activeBankIndices[safeCurrentIdx] ?? safeCurrentIdx;
+  const answeredCount = userAnswers.filter(a => a !== null).length;
+  const gradeLabel = selectedGrade === 1 ? '11' : (selectedGrade || '11');
 
   return (
-    <div className="fixed inset-0 z-[500] bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-300">
-      <div className="bg-white w-full max-w-2xl h-[85vh] flex flex-col rounded-[40px] shadow-2xl overflow-hidden border border-white relative">
+    <div className="fixed inset-0 z-[500] bg-slate-950/75 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4 animate-in fade-in duration-300">
+      <div className="bg-[#091020] text-slate-100 w-full max-w-6xl h-[92vh] flex flex-col rounded-[24px] sm:rounded-[32px] shadow-2xl overflow-hidden border border-slate-700/70 relative">
         
         {/* MODAL SỬA/THÊM CÂU HỎI (OVERLAY) */}
         {editingIndex !== null && editForm && (
-          <div className="absolute inset-0 z-[600] bg-white flex flex-col animate-in slide-in-from-bottom-full duration-300">
+          <div className="absolute inset-0 z-[600] bg-white text-slate-800 flex flex-col animate-in slide-in-from-bottom-full duration-300">
             <header className="px-8 py-5 border-b flex justify-between items-center shrink-0">
                <h3 className={`text-xs font-black uppercase tracking-widest ${currentThemeTextClass}`}>{editingIndex === -1 ? 'Thêm câu hỏi mới' : `Chỉnh sửa câu ${editingIndex + 1}`}</h3>
                <button onClick={() => setEditingIndex(null)} className="p-2 text-slate-300 hover:text-red-500"><X size={20}/></button>
@@ -374,176 +565,562 @@ const QuizModal: React.FC<QuizModalProps> = ({ nodeId, lessonTitle, lessonUrl, i
           </div>
         )}
 
-        <header className="px-8 py-5 border-b flex justify-between items-center bg-white shrink-0">
-          <div className="flex items-center gap-3">
-            <div className={`p-2 ${currentThemeBgClass} text-white rounded-2xl`}>
-              <BrainCircuit size={18} />
+        {/* TOP HEADER (DARK NAVY NHƯ MẪU ÔN CỦNG CỐ) */}
+        <header className="px-5 sm:px-7 py-3.5 bg-[#0f172a] border-b border-slate-800/90 flex flex-wrap justify-between items-center gap-3 shrink-0">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-10 h-10 rounded-xl bg-amber-500/15 border border-amber-500/40 text-amber-400 flex items-center justify-center shrink-0">
+              <BookOpen size={19} />
             </div>
             <div className="min-w-0">
-              <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-800 leading-none mb-1">
-                {isAdmin ? (isAiMode ? 'BẢN NHÁP AI (10 CÂU)' : `NGÂN HÀNG (${fullBank.length} CÂU)`) : `LUYỆN TẬP (5/${fullBank.length} CÂU)`}
+              <h3 className="text-sm sm:text-base font-black uppercase tracking-wide text-white leading-tight">
+                {isAdmin
+                  ? (isAiMode ? 'BẢN NHÁP AI (10 CÂU)' : `ÔN LUYỆN CỦNG CỐ • KHO ${fullBank.length} CÂU`)
+                  : 'ÔN LUYỆN CỦNG CỐ KIẾN THỨC'}
               </h3>
-              <p className="text-[9px] text-slate-400 font-bold uppercase truncate max-w-[200px] leading-none">{lessonTitle}</p>
+              <p className="text-[11px] text-slate-400 font-semibold truncate max-w-[260px] sm:max-w-[460px] leading-snug">
+                {lessonTitle} <span className="text-slate-500">(Vật lí {gradeLabel} • {questions.length}/{fullBank.length} câu)</span>
+              </p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+
+          <div className="flex items-center gap-2 sm:gap-2.5 flex-wrap">
+            {!isAdmin && student && !student.is_guest && (
+              <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-violet-500/15 border border-violet-400/40 text-violet-200">
+                <Award size={14} className="text-amber-400 shrink-0" />
+                <span className="text-[11px] font-bold">
+                  Tích lũy:{' '}
+                  <strong className="font-black text-white">
+                    {practiceStats.totalCorrect}/{practiceStats.totalAttempted} câu đúng
+                  </strong>
+                  {practiceStats.totalAttempted > 0 && (
+                    <span className="ml-1 text-amber-300">({practiceStats.accuracyRate}%)</span>
+                  )}
+                </span>
+              </div>
+            )}
+
+            <div className="hidden sm:flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-slate-900 border border-slate-700/80 text-[11px] font-bold text-slate-200">
+              <span className={`w-2 h-2 rounded-full ${isAdmin ? 'bg-emerald-400' : 'bg-amber-400'}`}></span>
+              <span>{isAdmin ? (isAiMode ? 'Soạn thảo AI' : 'Quản lý kho câu hỏi') : 'Chế độ LUYỆN TẬP'}</span>
+            </div>
+
             {isAdmin && (
               <>
                 {isAiMode && (
-                  <button onClick={() => saveToDB()} disabled={saving} className="flex items-center gap-2 px-4 py-2 bg-emerald-50 text-emerald-600 rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-emerald-100 disabled:opacity-50">
-                    {saving ? <RefreshCw size={12} className="animate-spin"/> : <Save size={12}/>} Lưu & Cộng dồn
+                  <button onClick={() => saveToDB()} disabled={saving} className="flex items-center gap-1.5 px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-[11px] font-black uppercase tracking-wider disabled:opacity-50 transition-all">
+                    {saving ? <RefreshCw size={13} className="animate-spin"/> : <Save size={13}/>} Lưu & Cộng dồn
                   </button>
                 )}
                 {!isAiMode && fullBank.length > 0 && (
-                  <button onClick={clearBank} className="flex items-center gap-2 px-4 py-2 bg-red-50 text-red-500 rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-red-100">
-                    <Trash2 size={12}/> Xóa sạch
+                  <button onClick={clearBank} className="flex items-center gap-1.5 px-3 py-1.5 bg-rose-500/15 border border-rose-500/30 text-rose-300 hover:bg-rose-500/25 rounded-xl text-[11px] font-bold transition-all">
+                    <Trash2 size={13}/> Xóa sạch
                   </button>
                 )}
               </>
             )}
-            <button onClick={onClose} className="p-2 text-slate-300 hover:text-red-500 transition-colors"><X size={20}/></button>
+
+            <button
+              onClick={onClose}
+              className="p-2 rounded-xl bg-slate-800/80 hover:bg-rose-500/20 text-slate-400 hover:text-rose-300 border border-slate-700/60 transition-colors"
+              title="Đóng"
+            >
+              <X size={18}/>
+            </button>
           </div>
         </header>
 
+        {/* BỘ LỌC 10 CÂU / LẦN */}
+        {!loading && !errorInfo && fullBank.length > 0 && !isAiMode && (
+          <div className="px-5 sm:px-7 py-2.5 bg-[#0c1426] border-b border-slate-800/80 flex items-center justify-between gap-2 flex-wrap shrink-0">
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 flex items-center gap-1 mr-1">
+                <Filter size={12} className="text-amber-400" /> Bộ lọc 10 câu:
+              </span>
+              {isAdmin && (
+                <button
+                  type="button"
+                  onClick={() => applyAllSelection(fullBank)}
+                  className={`px-3 py-1 rounded-lg text-[11px] font-bold transition-all ${
+                    filterMode === 'all'
+                      ? 'bg-blue-600 text-white shadow-sm shadow-blue-500/30'
+                      : 'bg-slate-800/80 text-slate-300 border border-slate-700 hover:border-slate-500'
+                  }`}
+                >
+                  Tất cả ({fullBank.length})
+                </button>
+              )}
+              {batches.map((b) => {
+                const isActive = filterMode === 'batch' && activeBatchIdx === b.index;
+                const isPracticed = practicedBatchSet.has(b.label);
+                return (
+                  <button
+                    key={b.index}
+                    type="button"
+                    onClick={() => applyBatchSelection(fullBank, b.index)}
+                    className={`px-3 py-1 rounded-lg text-[11px] font-bold transition-all flex items-center gap-1.5 ${
+                      isActive
+                        ? 'bg-blue-600 text-white shadow-sm shadow-blue-500/30 font-black'
+                        : isPracticed
+                          ? 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/40 hover:bg-emerald-500/25'
+                          : 'bg-slate-800/80 text-slate-300 border border-slate-700 hover:border-slate-500'
+                    }`}
+                  >
+                    <span>{b.label}</span>
+                    {isPracticed && !isActive && <CheckCircle2 size={12} className="text-emerald-400" />}
+                  </button>
+                );
+              })}
+              {!isAdmin && fullBank.length > 1 && (
+                <button
+                  type="button"
+                  onClick={handleShuffleNewSet}
+                  className={`px-3 py-1 rounded-lg text-[11px] font-bold transition-all flex items-center gap-1.5 ${
+                    filterMode === 'random'
+                      ? 'bg-blue-600 text-white shadow-sm shadow-blue-500/30 font-black'
+                      : 'bg-slate-800/80 text-slate-300 border border-slate-700 hover:border-slate-500'
+                  }`}
+                >
+                  <Shuffle size={12} />
+                  <span>{Math.min(BATCH_SIZE, fullBank.length)} câu ngẫu nhiên</span>
+                </button>
+              )}
+            </div>
+
+            {!isAdmin && practiceStats.lessonTotal > 0 && (
+              <span className="text-[11px] font-semibold text-slate-400">
+                Riêng bài này: <strong className="text-emerald-400">{practiceStats.lessonCorrect}/{practiceStats.lessonTotal} câu đúng</strong>
+              </span>
+            )}
+          </div>
+        )}
+
         {!student && !isAdmin && questions.length > 0 && (
-           <div className="px-8 py-2 bg-amber-50 text-amber-600 text-[10px] font-black uppercase tracking-widest text-center border-b border-amber-100 animate-pulse">
-             ⚠️ Bạn chưa đăng nhập. Thời gian luyện tập sẽ không được ghi nhận.
-             <button onClick={() => window.location.href = '/student'} className="ml-2 underline text-amber-700">Đăng nhập ngay</button>
+           <div className="px-6 py-1.5 bg-amber-500/15 text-amber-300 text-[10px] font-black uppercase tracking-widest text-center border-b border-amber-500/30">
+             ⚠️ Bạn chưa đăng nhập. Kết quả luyện tập sẽ không được ghi nhận.
+             <button onClick={() => window.location.href = '/student'} className="ml-2 underline text-amber-200">Đăng nhập ngay</button>
            </div>
         )}
         {student?.is_guest && !isAdmin && questions.length > 0 && (
-           <div className="px-8 py-2 bg-sky-50 text-sky-600 text-[10px] font-black uppercase tracking-widest text-center border-b border-sky-100">
-             ℹ️ Đang ở chế độ Khách. Kết quả sẽ không được lưu vào danh sách lớp.
-             <button onClick={() => window.location.href = '/student'} className="ml-2 underline text-sky-700 font-black">ĐĂNG NHẬP CHÍNH THỨC</button>
+           <div className="px-6 py-1.5 bg-sky-500/15 text-sky-300 text-[10px] font-black uppercase tracking-widest text-center border-b border-sky-500/30">
+             ℹ️ Đang ở chế độ Khách. Kết quả sẽ không được lưu vào thống kê rèn luyện.
+             <button onClick={() => window.location.href = '/student'} className="ml-2 underline text-white font-black">ĐĂNG NHẬP CHÍNH THỨC</button>
            </div>
         )}
 
-        <div className="flex-1 overflow-y-auto p-8 custom-scrollbar space-y-12 bg-slate-50/30">
+        {/* BODY WORKSPACE */}
+        <div ref={scrollContainerRef} className="flex-1 min-h-0 overflow-y-auto p-4 sm:p-6 custom-scrollbar bg-[#090f1d]">
           {loading ? (
             <div className="h-full flex flex-col items-center justify-center space-y-4">
-              <div className={`w-10 h-10 border-4 border-slate-100 border-t-${themeColor.split('-')[0]}-600 rounded-full animate-spin`}></div>
-              <p className="text-[9px] font-black text-slate-300 uppercase tracking-widest">Đang tải...</p>
+              <div className="w-10 h-10 border-4 border-slate-800 border-t-amber-400 rounded-full animate-spin"></div>
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Đang tải câu hỏi...</p>
             </div>
           ) : errorInfo ? (
             <div className="h-full flex flex-col items-center justify-center text-center space-y-4">
               <AlertCircle size={40} className="text-amber-400" />
-              <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">{errorInfo.msg}</p>
-              {isAdmin && <button onClick={generateQuiz} className="px-8 py-3 bg-indigo-600 text-white text-[10px] font-black uppercase rounded-full">Soạn bài với AI</button>}
+              <p className="text-xs font-bold text-slate-300 uppercase tracking-widest">{errorInfo.msg}</p>
+              {isAdmin && <button onClick={generateQuiz} className="px-8 py-3 bg-blue-600 text-white text-[11px] font-black uppercase rounded-xl">Soạn bài với AI</button>}
             </div>
           ) : questions.length === 0 ? (
              <div className="h-full flex flex-col items-center justify-center text-center space-y-6">
-                <div className={`w-20 h-20 bg-${themeColor.split('-')[0]}-50 rounded-full flex items-center justify-center`}><BrainCircuit size={40} className={currentThemeTextClass}/></div>
+                <div className="w-20 h-20 bg-slate-800/80 border border-slate-700 rounded-full flex items-center justify-center"><BrainCircuit size={40} className="text-amber-400"/></div>
                 <div className="space-y-2">
-                  <h4 className="text-sm font-black text-slate-800 uppercase tracking-tight">Chưa có câu hỏi nào</h4>
-                  <p className="text-[11px] text-slate-400 font-medium max-w-[200px] mx-auto">Hãy sử dụng AI hoặc tự soạn câu hỏi để xây dựng ngân hàng tài liệu.</p>
+                  <h4 className="text-sm font-black text-white uppercase tracking-tight">Chưa có câu hỏi nào</h4>
+                  <p className="text-[11px] text-slate-400 font-medium max-w-[260px] mx-auto">Hãy sử dụng AI hoặc tự soạn câu hỏi để xây dựng ngân hàng tài liệu.</p>
                 </div>
                 {isAdmin && (
                   <div className="flex flex-col gap-3 items-center">
-                    <button onClick={generateQuiz} className={`px-10 py-4 ${currentThemeBgClass} text-white text-[11px] font-black uppercase rounded-2xl shadow-xl ${currentThemeShadowClass} ${currentThemeHoverBgClass} transition-all`}>Tạo 10 câu với AI</button>
-                    <button onClick={() => openEditForm(-1)} className={`text-[10px] font-black uppercase text-slate-400 hover:${currentThemeTextClass} tracking-widest`}>Hoặc soạn thủ công</button>
+                    <button onClick={generateQuiz} className="px-10 py-3.5 bg-blue-600 hover:bg-blue-500 text-white text-[11px] font-black uppercase rounded-2xl shadow-xl transition-all">Tạo 10 câu với AI</button>
+                    <button onClick={() => openEditForm(-1)} className="text-[11px] font-black uppercase text-slate-400 hover:text-white tracking-widest">Hoặc soạn thủ công</button>
                   </div>
                 )}
              </div>
-          ) : !showResults ? (
-            <>
-              {questions.map((q, qIdx) => (
-                <div key={qIdx} className="group space-y-6 bg-white p-6 rounded-[32px] border border-slate-100 shadow-sm relative">
-                  {isAdmin && !isAiMode && (
-                    <div className="absolute top-6 right-6 flex gap-2 opacity-0 group-hover:opacity-100 transition-all scale-90 origin-right">
-                       <button onClick={() => openEditForm(qIdx)} className="p-2 bg-amber-50 text-amber-600 rounded-xl border border-amber-100 hover:bg-amber-100"><Pencil size={12}/></button>
-                       <button onClick={() => deleteQuestion(qIdx)} className="p-2 bg-red-50 text-red-500 rounded-xl border border-red-100 hover:bg-red-100"><Trash2 size={12}/></button>
-                    </div>
-                  )}
-                  <div className="flex gap-4 items-start pr-12">
-                    <span className={`${currentThemeTextClass} font-black text-lg leading-none`}>{qIdx + 1}.</span>
-                    <div className="text-sm md:text-base font-bold text-slate-700 leading-relaxed">
-                      {renderLatex(q.question)}
-                    </div>
+          ) : currentQ && (
+            <div className="grid grid-cols-1 lg:grid-cols-[290px_1fr] gap-5 h-full min-h-0">
+              
+              {/* CỘT TRÁI: DANH SÁCH CÂU HỎI + CHÚ THÍCH + NÚT NỘP BÀI */}
+              <aside className="bg-[#11192c] border border-slate-800 rounded-2xl p-5 flex flex-col justify-between gap-5">
+                <div>
+                  <div className="flex items-center justify-between gap-2 mb-4">
+                    <h4 className="text-xs font-black uppercase tracking-wider text-slate-200">
+                      Danh sách câu hỏi
+                    </h4>
+                    <span className="px-2.5 py-1 rounded-lg bg-amber-500/15 border border-amber-500/40 text-amber-300 text-[11px] font-black">
+                      {isAdmin
+                        ? `${questions.length} câu`
+                        : showResults
+                          ? `${calculateScore()}/${questions.length} đúng`
+                          : `${answeredCount}/${questions.length} đã làm`}
+                    </span>
                   </div>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pl-8">
-                    {q.options.map((opt, oIdx) => (
-                      <button key={oIdx} onClick={() => { const n = [...userAnswers]; n[qIdx] = oIdx; setUserAnswers(n); }} className={`p-4 rounded-2xl text-left border-2 transition-all flex items-center gap-3 ${userAnswers[qIdx] === oIdx ? `bg-${themeColor.split('-')[0]}-50 ${currentThemeBorderClass}` : 'bg-slate-50 border-transparent hover:bg-slate-100'}`}>
-                        <span className={`text-xs font-black ${userAnswers[qIdx] === oIdx ? currentThemeTextClass : 'text-slate-300'}`}>{getOptionLabel(oIdx)}.</span>
-                        <div className={`text-[13px] font-medium leading-tight ${userAnswers[qIdx] === oIdx ? `text-${themeColor.split('-')[0]}-900` : 'text-slate-600'}`}>{renderLatex(opt)}</div>
-                      </button>
-                    ))}
+
+                  {/* Lưới số câu */}
+                  <div className="grid grid-cols-5 gap-2">
+                    {questions.map((qItem, idx) => {
+                      const realIdx = activeBankIndices[idx] ?? idx;
+                      const btnLabel = filterMode === 'random' ? idx + 1 : realIdx + 1;
+                      const isCurrent = idx === safeCurrentIdx;
+                      const isAnswered = userAnswers[idx] !== null;
+                      const isCorrect = showResults && userAnswers[idx] === qItem.correctIndex;
+                      const isWrong = showResults && userAnswers[idx] !== qItem.correctIndex;
+
+                      let btnStyle = 'bg-slate-800/75 border-slate-700/80 text-slate-300 hover:border-slate-500 hover:text-white';
+                      if (showResults) {
+                        if (isCorrect) {
+                          btnStyle = isCurrent
+                            ? 'bg-emerald-600 border-emerald-400 text-white ring-2 ring-blue-400 shadow-md'
+                            : 'bg-emerald-500/20 border-emerald-500/60 text-emerald-300 hover:bg-emerald-500/30';
+                        } else if (isWrong) {
+                          btnStyle = isCurrent
+                            ? 'bg-rose-600 border-rose-400 text-white ring-2 ring-blue-400 shadow-md'
+                            : 'bg-rose-500/20 border-rose-500/60 text-rose-300 hover:bg-rose-500/30';
+                        }
+                      } else if (isCurrent) {
+                        btnStyle = 'bg-blue-600 border-blue-400 text-white shadow-lg shadow-blue-600/30 ring-2 ring-blue-400/40';
+                      } else if (isAnswered) {
+                        btnStyle = 'bg-amber-500/15 border-amber-400/80 text-amber-300 hover:bg-amber-500/25';
+                      }
+
+                      return (
+                        <button
+                          key={`${realIdx}_${idx}`}
+                          type="button"
+                          onClick={() => setCurrentQuestionIdx(idx)}
+                          className={`h-10 rounded-xl border text-xs font-black transition-all flex items-center justify-center ${btnStyle}`}
+                        >
+                          {btnLabel}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {/* Chú thích màu sắc */}
+                  <div className="mt-5 pt-4 border-t border-slate-800/80 space-y-2 text-[11px] text-slate-400 font-medium">
+                    {showResults ? (
+                      <>
+                        <div className="flex items-center gap-2">
+                          <span className="w-3 h-3 rounded bg-emerald-500/30 border border-emerald-500 inline-block"></span>
+                          <span>Trả lời đúng</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="w-3 h-3 rounded bg-rose-500/30 border border-rose-500 inline-block"></span>
+                          <span>Trả lời sai</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="w-3 h-3 rounded bg-blue-600 border border-blue-400 inline-block"></span>
+                          <span>Đang xem chi tiết</span>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <div className="flex items-center gap-2">
+                          <span className="w-3 h-3 rounded bg-slate-800 border border-slate-600 inline-block"></span>
+                          <span>Chưa trả lời</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="w-3 h-3 rounded bg-amber-500/20 border border-amber-400 inline-block"></span>
+                          <span>Đã chọn đáp án</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="w-3 h-3 rounded bg-blue-600 inline-block"></span>
+                          <span>Đang làm (Hiện tại)</span>
+                        </div>
+                      </>
+                    )}
                   </div>
                 </div>
-              ))}
-              <div className="h-4"></div>
-            </>
-          ) : (
-            <div className="space-y-8 pb-10">
-              <div className={`text-center p-8 bg-${themeColor.split('-')[0]}-50 rounded-[32px] border border-${themeColor.split('-')[0]}-100`}>
-                  <Trophy size={48} className="text-amber-500 mx-auto mb-3" />
-                  <h2 className="text-3xl font-black text-slate-900 uppercase">Kết quả: {calculateScore()}/{questions.length}</h2>
-              </div>
-              <div className="space-y-4">
-                {questions.map((q, i) => (
-                  <div key={i} className={`p-5 rounded-[24px] border-2 ${userAnswers[i] === q.correctIndex ? 'border-green-100 bg-green-50/20' : 'border-red-100 bg-red-50/20'}`}>
-                    <div className="flex gap-3 mb-2 items-start">
-                       {userAnswers[i] === q.correctIndex ? <CheckCircle2 size={18} className="text-green-600 mt-0.5 shrink-0"/> : <XCircle size={18} className="text-red-500 mt-0.5 shrink-0"/>}
-                       <p className="text-sm font-bold text-slate-700 leading-tight">{i+1}. {renderLatex(q.question)}</p>
+
+                {/* CÁC NÚT HÀNH ĐỘNG Ở CỘT TRÁI */}
+                <div className="space-y-2.5 pt-2">
+                  {isAdmin ? (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => openEditForm(-1)}
+                        className="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs uppercase tracking-wider rounded-xl flex items-center justify-center gap-2 shadow-lg transition-all"
+                      >
+                        <PlusCircle size={15} /> Thêm câu thủ công
+                      </button>
+                      <button
+                        type="button"
+                        onClick={generateQuiz}
+                        className="w-full py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-bold text-xs rounded-xl flex items-center justify-center gap-2 transition-all"
+                      >
+                        <RefreshCw size={14} /> {isAiMode ? 'Đổi bộ AI khác' : 'Thêm 10 câu (AI)'}
+                      </button>
+                    </>
+                  ) : showResults ? (
+                    <>
+                      {filterMode === 'batch' && activeBatchIdx + 1 < batches.length && (
+                        <button
+                          type="button"
+                          onClick={() => applyBatchSelection(fullBank, activeBatchIdx + 1)}
+                          className="w-full py-3.5 bg-blue-600 hover:bg-blue-500 text-white font-black text-xs uppercase tracking-wider rounded-xl flex items-center justify-center gap-2 shadow-lg transition-all"
+                        >
+                          Làm tiếp {batches[activeBatchIdx + 1].label} <ArrowRight size={15} />
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        onClick={handleShuffleNewSet}
+                        className="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs uppercase tracking-wider rounded-xl flex items-center justify-center gap-2 transition-all"
+                      >
+                        <Shuffle size={14} /> Làm 10 câu ngẫu nhiên
+                      </button>
+                      <button
+                        type="button"
+                        onClick={onClose}
+                        className="w-full py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 font-bold text-xs rounded-xl transition-all"
+                      >
+                        Đóng
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <button
+                        type="button"
+                        onClick={handleSubmit}
+                        className="w-full py-3.5 bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs uppercase tracking-wider rounded-xl shadow-lg shadow-emerald-950/50 flex items-center justify-center gap-2 active:scale-[0.99] transition-all"
+                      >
+                        <Send size={15} /> Nộp Bài & Kết Thúc
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleShuffleNewSet}
+                        className="w-full py-2.5 bg-slate-800/80 hover:bg-slate-700 text-slate-300 border border-slate-700/80 font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 transition-all"
+                      >
+                        <Shuffle size={13} /> Trộn 10 câu ngẫu nhiên
+                      </button>
+                    </>
+                  )}
+                </div>
+              </aside>
+
+              {/* CỘT PHẢI: KHUNG CÂU HỎI HIỆN TẠI + KẾT QUẢ */}
+              <section className="bg-[#11192c] border border-slate-800 rounded-2xl p-5 sm:p-7 flex flex-col justify-between min-h-0 overflow-y-auto custom-scrollbar">
+                <div>
+                  {/* Tổng kết nhanh khi đã nộp bài */}
+                  {showResults && (
+                    <div className="mb-5 p-4 sm:p-5 rounded-2xl bg-[#0b1324] border border-slate-700/80 grid grid-cols-1 sm:grid-cols-2 gap-4 items-center">
+                      <div className="flex items-center gap-3.5">
+                        <div className="w-12 h-12 rounded-2xl bg-amber-500/15 border border-amber-500/40 text-amber-400 flex items-center justify-center shrink-0">
+                          <Trophy size={24} />
+                        </div>
+                        <div>
+                          <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">
+                            Kết quả lượt này ({currentBatchLabel})
+                          </p>
+                          <p className="text-xl font-black text-white">
+                            {calculateScore()}/{questions.length} câu đúng{' '}
+                            <span className="text-xs font-bold text-amber-400">
+                              ({questions.length > 0 ? Math.round((calculateScore() / questions.length) * 100) : 0}%)
+                            </span>
+                          </p>
+                        </div>
+                      </div>
+
+                      {!isAdmin && student && !student.is_guest && (
+                        <div className="flex items-center gap-3.5 sm:border-l sm:border-slate-800 sm:pl-4">
+                          <div className="w-12 h-12 rounded-2xl bg-violet-500/15 border border-violet-500/40 text-violet-300 flex items-center justify-center shrink-0">
+                            <Award size={24} />
+                          </div>
+                          <div>
+                            <p className="text-[10px] font-black uppercase tracking-wider text-violet-300">
+                              Tích lũy rèn luyện (Cộng dồn các bài)
+                            </p>
+                            <p className="text-xl font-black text-white">
+                              {practiceStats.totalCorrect}/{practiceStats.totalAttempted} câu đúng{' '}
+                              <span className="text-xs font-bold text-emerald-400">({practiceStats.accuracyRate}%)</span>
+                            </p>
+                            {savingAttempt && (
+                              <span className="text-[10px] text-slate-400">Đang đồng bộ lên hệ thống...</span>
+                            )}
+                          </div>
+                        </div>
+                      )}
                     </div>
-                    <div className="ml-7 space-y-1">
-                       <p className={`text-xs font-bold ${currentThemeTextClass}`}>Đáp án: {getOptionLabel(q.correctIndex)}. {renderLatex(q.options[q.correctIndex])}</p>
-                       <p className="text-[11px] italic text-slate-400 leading-relaxed">{renderLatex(q.explanation)}</p>
+                  )}
+
+                  {/* Tiêu đề câu đang hiển thị */}
+                  <div className="flex flex-wrap items-center justify-between gap-2 pb-4 border-b border-slate-800">
+                    <div className="flex items-center gap-2.5 flex-wrap">
+                      <h2 className="text-base sm:text-lg font-black text-white">
+                        Câu {safeCurrentIdx + 1} / {questions.length}
+                      </h2>
+                      {filterMode !== 'random' && (
+                        <span className="px-2.5 py-0.5 rounded-lg bg-slate-800 border border-slate-700 text-[11px] font-bold text-slate-300">
+                          Câu số {currentRealIdx + 1} trong kho
+                        </span>
+                      )}
+                      {showResults && (
+                        userAnswers[safeCurrentIdx] === currentQ.correctIndex ? (
+                          <span className="px-2.5 py-0.5 rounded-lg bg-emerald-500/20 border border-emerald-500/50 text-emerald-300 text-[11px] font-black flex items-center gap-1">
+                            <CheckCircle2 size={12} /> Chính xác
+                          </span>
+                        ) : (
+                          <span className="px-2.5 py-0.5 rounded-lg bg-rose-500/20 border border-rose-500/50 text-rose-300 text-[11px] font-black flex items-center gap-1">
+                            <XCircle size={12} /> Chưa đúng
+                          </span>
+                        )
+                      )}
                     </div>
+
+                    {isAdmin && !isAiMode && (
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => openEditForm(currentRealIdx)}
+                          className="px-3 py-1.5 bg-amber-500/15 text-amber-300 hover:bg-amber-500/25 rounded-xl border border-amber-500/40 text-xs font-bold flex items-center gap-1.5 transition-all"
+                        >
+                          <Pencil size={12} /> Sửa câu này
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => deleteQuestion(currentRealIdx)}
+                          className="px-3 py-1.5 bg-rose-500/15 text-rose-300 hover:bg-rose-500/25 rounded-xl border border-rose-500/40 text-xs font-bold flex items-center gap-1.5 transition-all"
+                        >
+                          <Trash2 size={12} /> Xóa
+                        </button>
+                      </div>
+                    )}
                   </div>
-                ))}
-              </div>
+
+                  {/* Nội dung câu hỏi (giữ nguyên kích thước chữ text-sm md:text-base) */}
+                  <div className="py-5 text-sm md:text-base font-bold text-slate-100 leading-relaxed">
+                    {renderLatex(currentQ.question)}
+                  </div>
+
+                  {/* 4 phương án A B C D xếp dọc như mẫu */}
+                  <div className="space-y-3">
+                    {currentQ.options.map((opt, oIdx) => {
+                      const isSelected = userAnswers[safeCurrentIdx] === oIdx;
+                      const isCorrectOpt = oIdx === currentQ.correctIndex;
+
+                      let cardClass = 'bg-slate-900/60 border-slate-700/80 text-slate-200 hover:border-slate-500 hover:bg-slate-800/70';
+                      let badgeClass = 'bg-slate-800 text-slate-300 border border-slate-600';
+
+                      if (showResults || isAdmin) {
+                        if (isCorrectOpt) {
+                          cardClass = 'bg-emerald-500/15 border-emerald-500 text-emerald-50 ring-1 ring-emerald-500/40';
+                          badgeClass = 'bg-emerald-500 text-white border-emerald-400';
+                        } else if (isSelected && !isCorrectOpt) {
+                          cardClass = 'bg-rose-500/15 border-rose-500 text-rose-100';
+                          badgeClass = 'bg-rose-500 text-white border-rose-400';
+                        }
+                      } else if (isSelected) {
+                        cardClass = 'bg-blue-600/20 border-blue-500 text-white ring-1 ring-blue-400/50';
+                        badgeClass = 'bg-blue-600 text-white border-blue-400';
+                      }
+
+                      return (
+                        <button
+                          key={oIdx}
+                          type="button"
+                          disabled={showResults}
+                          onClick={() => {
+                            if (showResults || isAdmin) return;
+                            const next = [...userAnswers];
+                            next[safeCurrentIdx] = oIdx;
+                            setUserAnswers(next);
+                          }}
+                          className={`w-full p-4 rounded-xl text-left border transition-all flex items-center gap-3.5 ${cardClass} ${showResults ? 'cursor-default' : 'cursor-pointer'}`}
+                        >
+                          <span className={`w-7 h-7 rounded-full text-xs font-black flex items-center justify-center shrink-0 transition-all ${badgeClass}`}>
+                            {getOptionLabel(oIdx)}
+                          </span>
+                          <div className="text-[13px] font-medium leading-snug flex-1">
+                            {renderLatex(opt)}
+                          </div>
+                          {(showResults || isAdmin) && isCorrectOpt && (
+                            <CheckCircle2 size={18} className="text-emerald-400 shrink-0" />
+                          )}
+                          {showResults && isSelected && !isCorrectOpt && (
+                            <XCircle size={18} className="text-rose-400 shrink-0" />
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {/* Lời giải chi tiết (hiển thị sau khi nộp bài hoặc cho Giáo viên xem) */}
+                  {(showResults || isAdmin) && currentQ.explanation && (
+                    <div className="mt-5 p-4 rounded-xl bg-slate-900/90 border border-slate-700/80 space-y-1">
+                      <span className="text-[10px] font-black uppercase tracking-wider text-amber-400 block">
+                        Lời giải chi tiết
+                      </span>
+                      <div className="text-xs text-slate-300 leading-relaxed">
+                        {renderLatex(currentQ.explanation)}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* THANH ĐIỀU HƯỚNG DƯỚI CÙNG: < CÂU TRƯỚC | XÓA LỰA CHỌN | CÂU TIẾP > */}
+                <div className="pt-5 mt-6 border-t border-slate-800 flex items-center justify-between gap-3 flex-wrap">
+                  <button
+                    type="button"
+                    disabled={safeCurrentIdx === 0}
+                    onClick={() => setCurrentQuestionIdx(prev => Math.max(0, prev - 1))}
+                    className="px-4 py-2.5 rounded-xl bg-slate-800/80 hover:bg-slate-700 border border-slate-700 text-slate-200 text-xs font-bold flex items-center gap-1.5 disabled:opacity-35 disabled:cursor-not-allowed transition-all"
+                  >
+                    <ChevronLeft size={15} /> Câu Trước
+                  </button>
+
+                  {!showResults && !isAdmin && userAnswers[safeCurrentIdx] !== null ? (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const next = [...userAnswers];
+                        next[safeCurrentIdx] = null;
+                        setUserAnswers(next);
+                      }}
+                      className="text-xs font-semibold text-slate-400 hover:text-amber-300 underline underline-offset-4 transition-colors"
+                    >
+                      Xóa lựa chọn câu này
+                    </button>
+                  ) : (
+                    <span className="text-[11px] font-bold text-slate-500">
+                      {currentBatchLabel}
+                    </span>
+                  )}
+
+                  {safeCurrentIdx < questions.length - 1 ? (
+                    <button
+                      type="button"
+                      onClick={() => setCurrentQuestionIdx(prev => Math.min(questions.length - 1, prev + 1))}
+                      className="px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs flex items-center gap-1.5 shadow-md shadow-amber-500/20 transition-all"
+                    >
+                      Câu Tiếp <ChevronRight size={15} />
+                    </button>
+                  ) : !showResults && !isAdmin ? (
+                    <button
+                      type="button"
+                      onClick={handleSubmit}
+                      className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs flex items-center gap-1.5 shadow-md shadow-emerald-600/25 transition-all"
+                    >
+                      Nộp Bài & Kết Thúc <Send size={14} />
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      disabled
+                      className="px-5 py-2.5 rounded-xl bg-slate-800/60 border border-slate-700 text-slate-500 font-bold text-xs flex items-center gap-1.5 opacity-50 cursor-not-allowed"
+                    >
+                      Câu Tiếp <ChevronRight size={15} />
+                    </button>
+                  )}
+                </div>
+              </section>
             </div>
           )}
         </div>
-
-        {!loading && !errorInfo && questions.length > 0 && (
-          <footer className="px-8 py-5 border-t bg-white flex justify-between items-center shrink-0">
-             <div className="text-[9px] font-black text-slate-300 uppercase tracking-widest">
-               {showResults ? "ĐÃ HOÀN THÀNH" : (isAdmin ? (isAiMode ? "ĐANG SOẠN THẢO" : "XEM TOÀN BỘ KHO") : "BỘ 5 CÂU NGẪU NHIÊN")}
-             </div>
-             <div className="flex gap-2">
-                {showResults ? (
-                  <>
-                    {!isAdmin && (
-                      <button onClick={handleShuffleNewSet} className="px-8 py-3 bg-emerald-600 text-white text-[10px] font-black uppercase rounded-2xl hover:bg-emerald-700 flex items-center gap-2">
-                        <Shuffle size={14}/> Làm bộ khác
-                      </button>
-                    )}
-                    <button onClick={onClose} className="px-8 py-3 bg-slate-900 text-white text-[10px] font-black uppercase rounded-2xl hover:bg-black transition-all">Đóng</button>
-                  </>
-                ) : (
-                  <>
-                    {isAdmin ? (
-                        <div className="flex gap-2">
-                           <button onClick={() => openEditForm(-1)} className="px-4 py-3 bg-slate-100 text-slate-600 text-[10px] font-black uppercase rounded-2xl hover:bg-slate-200 flex items-center gap-2">
-                             <PlusCircle size={14}/> Thủ công
-                           </button>
-                           <button onClick={generateQuiz} className="px-6 py-3 bg-slate-100 text-slate-600 text-[10px] font-black uppercase rounded-2xl hover:bg-slate-200 flex items-center gap-2">
-                             <RefreshCw size={14}/> {isAiMode ? "Đổi bộ AI" : "Thêm 10 câu (AI)"}
-                           </button>
-                        </div>
-                    ) : (
-                        <button onClick={handleShuffleNewSet} className="px-6 py-3 bg-slate-100 text-slate-600 text-[10px] font-black uppercase rounded-2xl hover:bg-slate-200 flex items-center gap-2">
-                          <Shuffle size={14}/> Trộn câu khác
-                        </button>
-                    )}
-                    <button onClick={handleSubmit} className={`px-10 py-3 ${currentThemeBgClass} text-white text-[10px] font-black uppercase rounded-2xl shadow-xl ${currentThemeShadowClass} flex items-center gap-2 ${currentThemeHoverBgClass} active:scale-95 transition-all`}>
-                      Nộp bài <Send size={14}/>
-                    </button>
-                  </>
-                )}
-             </div>
-          </footer>
-        )}
       </div>
 
       <ConfirmModal state={confirmState} onClose={() => setConfirmState(prev => ({ ...prev, isOpen: false }))} />
       <ToastNotification state={toastState} onClose={() => setToastState(prev => ({ ...prev, isOpen: false }))} />
 
       <style>{`
-        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar { width: 5px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
         .katex { font-size: 1.1em; color: inherit; white-space: normal; }
       `}</style>
     </div>
