@@ -565,4 +565,143 @@ export const evaluateStudentHomeworkStatus = (
   };
 };
 
+export interface QuizPracticeRecord {
+  id?: string;
+  studentId: string;
+  studentCode: string;
+  lessonId: string;
+  lessonTitle?: string;
+  gradeId?: number | null;
+  correct: number;
+  total: number;
+  batchLabel?: string;
+  createdAt: string;
+}
+
+export const buildQuizPracticeCommentContent = (record: QuizPracticeRecord): string => {
+  const payload = {
+    studentId: record.studentId,
+    studentCode: record.studentCode,
+    lessonId: record.lessonId,
+    lessonTitle: record.lessonTitle || '',
+    gradeId: record.gradeId ?? null,
+    correct: record.correct,
+    total: record.total,
+    batchLabel: record.batchLabel || '',
+    createdAt: record.createdAt,
+  };
+  return `<!--quiz_stat:${JSON.stringify(payload)}-->\nLuyện tập (${record.batchLabel || `${record.total} câu`}): ${record.correct}/${record.total} câu đúng`;
+};
+
+const normalizeGradeCompare = (g: any): number | null => {
+  if (g === null || g === undefined || g === '') return null;
+  const num = Number(g);
+  if (isNaN(num)) return null;
+  return num === 1 ? 11 : num;
+};
+
+export const parseQuizPracticeRecords = (
+  rawComments: any[],
+  gradeId?: number | null
+): QuizPracticeRecord[] => {
+  const targetGrade = normalizeGradeCompare(gradeId);
+  const results: QuizPracticeRecord[] = [];
+
+  (rawComments || []).forEach((c: any) => {
+    const nid = c.nodeId || c.node_id || '';
+    if (!nid.startsWith('quiz_practice_')) return;
+
+    const rawContent = c.content || '';
+    const match = rawContent.match(/<!--quiz_stat:([\s\S]*?)-->/);
+    if (!match || !match[1]) return;
+
+    try {
+      const parsed = JSON.parse(match[1]);
+      const recGrade = normalizeGradeCompare(parsed.gradeId ?? c.gradeId ?? c.grade_id);
+      if (targetGrade !== null && recGrade !== null && recGrade !== targetGrade) {
+        return;
+      }
+      const correct = Number(parsed.correct) || 0;
+      const total = Number(parsed.total) || 0;
+      if (total <= 0) return;
+
+      results.push({
+        id: c.id,
+        studentId: String(parsed.studentId || ''),
+        studentCode: String(parsed.studentCode || ''),
+        lessonId: String(parsed.lessonId || nid.replace('quiz_practice_', '')),
+        lessonTitle: parsed.lessonTitle || '',
+        gradeId: recGrade,
+        correct,
+        total,
+        batchLabel: parsed.batchLabel || '',
+        createdAt: parsed.createdAt || c.createdAt || c.created_at || '',
+      });
+    } catch {}
+  });
+
+  return results;
+};
+
+export const getStudentQuizPracticeStats = (
+  records: QuizPracticeRecord[],
+  student: any,
+  currentLessonId?: string
+) => {
+  const sId = student?.id ? String(student.id) : '';
+  const sCode = (student?.name || '').trim().toLowerCase();
+
+  const mine = (records || []).filter(r => {
+    if (sId && r.studentId && r.studentId === sId) return true;
+    if (sCode && r.studentCode && r.studentCode.trim().toLowerCase() === sCode) return true;
+    return false;
+  });
+
+  let totalCorrect = 0;
+  let totalAttempted = 0;
+  let lessonCorrect = 0;
+  let lessonTotal = 0;
+  let lessonAttempts = 0;
+  const practicedBatchLabels: string[] = [];
+  const byLesson: Record<string, { correct: number; total: number; attempts: number }> = {};
+
+  mine.forEach(r => {
+    totalCorrect += r.correct;
+    totalAttempted += r.total;
+
+    if (!byLesson[r.lessonId]) {
+      byLesson[r.lessonId] = { correct: 0, total: 0, attempts: 0 };
+    }
+    byLesson[r.lessonId].correct += r.correct;
+    byLesson[r.lessonId].total += r.total;
+    byLesson[r.lessonId].attempts += 1;
+
+    if (currentLessonId && r.lessonId === currentLessonId) {
+      lessonCorrect += r.correct;
+      lessonTotal += r.total;
+      lessonAttempts += 1;
+      if (r.batchLabel && !practicedBatchLabels.includes(r.batchLabel)) {
+        practicedBatchLabels.push(r.batchLabel);
+      }
+    }
+  });
+
+  const accuracyRate = totalAttempted > 0 ? Math.round((totalCorrect / totalAttempted) * 100) : 0;
+  const lessonRate = lessonTotal > 0 ? Math.round((lessonCorrect / lessonTotal) * 100) : 0;
+
+  return {
+    totalCorrect,
+    totalAttempted,
+    attemptCount: mine.length,
+    accuracyRate,
+    lessonCorrect,
+    lessonTotal,
+    lessonAttempts,
+    lessonRate,
+    practicedBatchLabels,
+    byLesson,
+  };
+};
+
+
 
