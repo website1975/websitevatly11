@@ -26,7 +26,8 @@ import {
   Star,
   ClipboardCheck,
   Filter,
-  MessageSquare
+  MessageSquare,
+  BrainCircuit
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -42,6 +43,8 @@ import {
   parseHomeworkMeta,
   isHomeworkQuestionAssignedToStudent,
   evaluateStudentHomeworkStatus,
+  parseQuizPracticeRecords,
+  getStudentQuizPracticeStats,
 } from '../utils';
 
 const customUrlTransform = (url: string) => {
@@ -586,6 +589,12 @@ export const StudentSpaceModal: React.FC<StudentSpaceModalProps> = ({
     return Math.round(sec / 60);
   }, [studyLogs]);
 
+  // Cumulative Quiz Practice Stats across all lessons
+  const quizStats = useMemo(() => {
+    const records = parseQuizPracticeRecords(rawComments, selectedGrade || student?.grade_id || null);
+    return getStudentQuizPracticeStats(records, student);
+  }, [rawComments, selectedGrade, student]);
+
   // Handle password change
   const handleChangePassword = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -780,12 +789,27 @@ export const StudentSpaceModal: React.FC<StudentSpaceModalProps> = ({
                   </div>
                 </div>
 
-                {/* 3 STATS CARDS */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
+                {/* 4 STATS CARDS */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-2">
                   <div className="p-5 rounded-2xl bg-indigo-50/50 border border-indigo-100">
                     <p className="text-[10px] font-black uppercase text-indigo-600 tracking-widest">Thời lượng học tập ghi nhận</p>
                     <p className="text-2xl font-black text-slate-800 mt-1">{totalStudyMinutes} <span className="text-xs font-bold text-slate-500">phút</span></p>
                     <p className="text-[11px] text-slate-400 mt-1">Bao gồm đọc học liệu & lướt thẻ flashcards</p>
+                  </div>
+
+                  <div className="p-5 rounded-2xl bg-violet-50/60 border border-violet-100">
+                    <p className="text-[10px] font-black uppercase text-violet-600 tracking-widest flex items-center gap-1">
+                      <BrainCircuit size={12} /> Kết quả rèn luyện (Quiz)
+                    </p>
+                    <p className="text-2xl font-black text-violet-700 mt-1">
+                      {quizStats.totalCorrect}/{quizStats.totalAttempted}{' '}
+                      <span className="text-xs font-bold text-violet-500">câu đúng</span>
+                    </p>
+                    <p className="text-[11px] text-slate-400 mt-1">
+                      {quizStats.totalAttempted > 0
+                        ? `Tỷ lệ đúng ${quizStats.accuracyRate}% (${quizStats.attemptCount} lượt cộng dồn các bài)`
+                        : 'Chưa có lượt luyện tập trắc nghiệm'}
+                    </p>
                   </div>
 
                   <div className="p-5 rounded-2xl bg-emerald-50/50 border border-emerald-100">
@@ -982,12 +1006,27 @@ export const StudentSpaceModal: React.FC<StudentSpaceModalProps> = ({
                                     <Clock size={12} className="text-amber-600 shrink-0" />
                                   )}
                                 </div>
+
+                                {quizStats.byLesson[item.lessonId] && (
+                                  <div className="px-2.5 py-1 rounded-xl border bg-violet-50 text-violet-700 border-violet-200 font-bold flex items-center gap-1.5">
+                                    <BrainCircuit size={13} />
+                                    <span>
+                                      Rèn luyện: <strong>{quizStats.byLesson[item.lessonId].correct}/{quizStats.byLesson[item.lessonId].total} câu</strong>
+                                    </span>
+                                  </div>
+                                )}
                               </div>
                             ) : (
-                              <div className="mt-2.5 flex items-center gap-2">
+                              <div className="mt-2.5 flex items-center gap-2 flex-wrap">
                                 <span className="px-2.5 py-1 rounded-xl bg-slate-100 text-slate-500 text-[10px] font-bold border border-slate-200">
                                   Chưa có nhiệm vụ
                                 </span>
+                                {quizStats.byLesson[item.lessonId] && (
+                                  <span className="px-2.5 py-1 rounded-xl border bg-violet-50 text-violet-700 border-violet-200 text-[11px] font-bold flex items-center gap-1.5">
+                                    <BrainCircuit size={13} />
+                                    Rèn luyện: <strong>{quizStats.byLesson[item.lessonId].correct}/{quizStats.byLesson[item.lessonId].total} câu</strong>
+                                  </span>
+                                )}
                               </div>
                             )}
                           </div>
