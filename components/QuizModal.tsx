@@ -203,9 +203,18 @@ const QuizModal: React.FC<QuizModalProps> = ({ nodeId, lessonTitle, lessonUrl, i
         }),
       });
 
-      const payload = await resp.json().catch(() => ({}));
+      const rawText = await resp.text();
+      let payload: any = {};
+      try {
+        payload = rawText ? JSON.parse(rawText) : {};
+      } catch {
+        payload = {};
+      }
+
       if (!resp.ok) {
-        throw new Error(payload?.error || 'Không thể kết nối máy chủ AI để soạn câu hỏi.');
+        throw new Error(
+          payload?.error || `Không thể kết nối máy chủ AI (Mã ${resp.status}). Vui lòng thử lại.`
+        );
       }
 
       const rawList = Array.isArray(payload?.questions) ? payload.questions : [];
