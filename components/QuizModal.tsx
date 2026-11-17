@@ -518,8 +518,8 @@ const QuizModal: React.FC<QuizModalProps> = ({ nodeId, lessonTitle, lessonUrl, i
   const gradeLabel = selectedGrade === 1 ? '11' : (selectedGrade || '11');
 
   return (
-    <div className="fixed inset-0 z-[500] bg-slate-950/75 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4 animate-in fade-in duration-300">
-      <div className="bg-[#091020] text-slate-100 w-full max-w-6xl h-[92vh] flex flex-col rounded-[24px] sm:rounded-[32px] shadow-2xl overflow-hidden border border-slate-700/70 relative">
+    <div className="fixed inset-0 z-[500] bg-slate-950/75 backdrop-blur-sm flex items-center justify-center p-2 sm:p-3 animate-in fade-in duration-300">
+      <div className="bg-[#091020] text-slate-100 w-full max-w-6xl h-[94vh] max-h-[780px] flex flex-col rounded-[22px] sm:rounded-[28px] shadow-2xl overflow-hidden border border-slate-700/70 relative">
         
         {/* MODAL SỬA/THÊM CÂU HỎI (OVERLAY) */}
         {editingIndex !== null && editForm && (
@@ -565,28 +565,28 @@ const QuizModal: React.FC<QuizModalProps> = ({ nodeId, lessonTitle, lessonUrl, i
           </div>
         )}
 
-        {/* TOP HEADER (DARK NAVY NHƯ MẪU ÔN CỦNG CỐ) */}
-        <header className="px-5 sm:px-7 py-3.5 bg-[#0f172a] border-b border-slate-800/90 flex flex-wrap justify-between items-center gap-3 shrink-0">
-          <div className="flex items-center gap-3 min-w-0">
-            <div className="w-10 h-10 rounded-xl bg-amber-500/15 border border-amber-500/40 text-amber-400 flex items-center justify-center shrink-0">
-              <BookOpen size={19} />
+        {/* TOP HEADER (GỌN TRÊN 1 MÀN HÌNH) */}
+        <header className="px-4 sm:px-6 py-2.5 bg-[#0f172a] border-b border-slate-800/90 flex flex-wrap justify-between items-center gap-2.5 shrink-0">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="w-9 h-9 rounded-xl bg-amber-500/15 border border-amber-500/40 text-amber-400 flex items-center justify-center shrink-0">
+              <BookOpen size={17} />
             </div>
             <div className="min-w-0">
-              <h3 className="text-sm sm:text-base font-black uppercase tracking-wide text-white leading-tight">
+              <h3 className="text-sm sm:text-[15px] font-black uppercase tracking-wide text-white leading-tight">
                 {isAdmin
                   ? (isAiMode ? 'BẢN NHÁP AI (10 CÂU)' : `ÔN LUYỆN CỦNG CỐ • KHO ${fullBank.length} CÂU`)
                   : 'ÔN LUYỆN CỦNG CỐ KIẾN THỨC'}
               </h3>
-              <p className="text-[11px] text-slate-400 font-semibold truncate max-w-[260px] sm:max-w-[460px] leading-snug">
+              <p className="text-[11px] text-slate-400 font-semibold truncate max-w-[260px] sm:max-w-[480px] leading-snug">
                 {lessonTitle} <span className="text-slate-500">(Vật lí {gradeLabel} • {questions.length}/{fullBank.length} câu)</span>
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-2 sm:gap-2.5 flex-wrap">
+          <div className="flex items-center gap-2 flex-wrap">
             {!isAdmin && student && !student.is_guest && (
-              <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-violet-500/15 border border-violet-400/40 text-violet-200">
-                <Award size={14} className="text-amber-400 shrink-0" />
+              <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-violet-500/15 border border-violet-400/40 text-violet-200">
+                <Award size={13} className="text-amber-400 shrink-0" />
                 <span className="text-[11px] font-bold">
                   Tích lũy:{' '}
                   <strong className="font-black text-white">
@@ -599,7 +599,7 @@ const QuizModal: React.FC<QuizModalProps> = ({ nodeId, lessonTitle, lessonUrl, i
               </div>
             )}
 
-            <div className="hidden sm:flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-slate-900 border border-slate-700/80 text-[11px] font-bold text-slate-200">
+            <div className="hidden sm:flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-900 border border-slate-700/80 text-[11px] font-bold text-slate-200">
               <span className={`w-2 h-2 rounded-full ${isAdmin ? 'bg-emerald-400' : 'bg-amber-400'}`}></span>
               <span>{isAdmin ? (isAiMode ? 'Soạn thảo AI' : 'Quản lý kho câu hỏi') : 'Chế độ LUYỆN TẬP'}</span>
             </div>
@@ -607,12 +607,12 @@ const QuizModal: React.FC<QuizModalProps> = ({ nodeId, lessonTitle, lessonUrl, i
             {isAdmin && (
               <>
                 {isAiMode && (
-                  <button onClick={() => saveToDB()} disabled={saving} className="flex items-center gap-1.5 px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-[11px] font-black uppercase tracking-wider disabled:opacity-50 transition-all">
+                  <button onClick={() => saveToDB()} disabled={saving} className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-[11px] font-black uppercase tracking-wider disabled:opacity-50 transition-all">
                     {saving ? <RefreshCw size={13} className="animate-spin"/> : <Save size={13}/>} Lưu & Cộng dồn
                   </button>
                 )}
                 {!isAiMode && fullBank.length > 0 && (
-                  <button onClick={clearBank} className="flex items-center gap-1.5 px-3 py-1.5 bg-rose-500/15 border border-rose-500/30 text-rose-300 hover:bg-rose-500/25 rounded-xl text-[11px] font-bold transition-all">
+                  <button onClick={clearBank} className="flex items-center gap-1.5 px-3 py-1 bg-rose-500/15 border border-rose-500/30 text-rose-300 hover:bg-rose-500/25 rounded-xl text-[11px] font-bold transition-all">
                     <Trash2 size={13}/> Xóa sạch
                   </button>
                 )}
@@ -621,17 +621,17 @@ const QuizModal: React.FC<QuizModalProps> = ({ nodeId, lessonTitle, lessonUrl, i
 
             <button
               onClick={onClose}
-              className="p-2 rounded-xl bg-slate-800/80 hover:bg-rose-500/20 text-slate-400 hover:text-rose-300 border border-slate-700/60 transition-colors"
+              className="p-1.5 rounded-xl bg-slate-800/80 hover:bg-rose-500/20 text-slate-400 hover:text-rose-300 border border-slate-700/60 transition-colors"
               title="Đóng"
             >
-              <X size={18}/>
+              <X size={17}/>
             </button>
           </div>
         </header>
 
         {/* BỘ LỌC 10 CÂU / LẦN */}
         {!loading && !errorInfo && fullBank.length > 0 && !isAiMode && (
-          <div className="px-5 sm:px-7 py-2.5 bg-[#0c1426] border-b border-slate-800/80 flex items-center justify-between gap-2 flex-wrap shrink-0">
+          <div className="px-4 sm:px-6 py-2 bg-[#0c1426] border-b border-slate-800/80 flex items-center justify-between gap-2 flex-wrap shrink-0">
             <div className="flex items-center gap-1.5 flex-wrap">
               <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 flex items-center gap-1 mr-1">
                 <Filter size={12} className="text-amber-400" /> Bộ lọc 10 câu:
@@ -640,7 +640,7 @@ const QuizModal: React.FC<QuizModalProps> = ({ nodeId, lessonTitle, lessonUrl, i
                 <button
                   type="button"
                   onClick={() => applyAllSelection(fullBank)}
-                  className={`px-3 py-1 rounded-lg text-[11px] font-bold transition-all ${
+                  className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all ${
                     filterMode === 'all'
                       ? 'bg-blue-600 text-white shadow-sm shadow-blue-500/30'
                       : 'bg-slate-800/80 text-slate-300 border border-slate-700 hover:border-slate-500'
@@ -657,7 +657,7 @@ const QuizModal: React.FC<QuizModalProps> = ({ nodeId, lessonTitle, lessonUrl, i
                     key={b.index}
                     type="button"
                     onClick={() => applyBatchSelection(fullBank, b.index)}
-                    className={`px-3 py-1 rounded-lg text-[11px] font-bold transition-all flex items-center gap-1.5 ${
+                    className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all flex items-center gap-1.5 ${
                       isActive
                         ? 'bg-blue-600 text-white shadow-sm shadow-blue-500/30 font-black'
                         : isPracticed
@@ -666,7 +666,7 @@ const QuizModal: React.FC<QuizModalProps> = ({ nodeId, lessonTitle, lessonUrl, i
                     }`}
                   >
                     <span>{b.label}</span>
-                    {isPracticed && !isActive && <CheckCircle2 size={12} className="text-emerald-400" />}
+                    {isPracticed && !isActive && <CheckCircle2 size={11} className="text-emerald-400" />}
                   </button>
                 );
               })}
@@ -674,7 +674,7 @@ const QuizModal: React.FC<QuizModalProps> = ({ nodeId, lessonTitle, lessonUrl, i
                 <button
                   type="button"
                   onClick={handleShuffleNewSet}
-                  className={`px-3 py-1 rounded-lg text-[11px] font-bold transition-all flex items-center gap-1.5 ${
+                  className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all flex items-center gap-1.5 ${
                     filterMode === 'random'
                       ? 'bg-blue-600 text-white shadow-sm shadow-blue-500/30 font-black'
                       : 'bg-slate-800/80 text-slate-300 border border-slate-700 hover:border-slate-500'
@@ -695,20 +695,20 @@ const QuizModal: React.FC<QuizModalProps> = ({ nodeId, lessonTitle, lessonUrl, i
         )}
 
         {!student && !isAdmin && questions.length > 0 && (
-           <div className="px-6 py-1.5 bg-amber-500/15 text-amber-300 text-[10px] font-black uppercase tracking-widest text-center border-b border-amber-500/30">
+           <div className="px-6 py-1 bg-amber-500/15 text-amber-300 text-[10px] font-black uppercase tracking-widest text-center border-b border-amber-500/30 shrink-0">
              ⚠️ Bạn chưa đăng nhập. Kết quả luyện tập sẽ không được ghi nhận.
              <button onClick={() => window.location.href = '/student'} className="ml-2 underline text-amber-200">Đăng nhập ngay</button>
            </div>
         )}
         {student?.is_guest && !isAdmin && questions.length > 0 && (
-           <div className="px-6 py-1.5 bg-sky-500/15 text-sky-300 text-[10px] font-black uppercase tracking-widest text-center border-b border-sky-500/30">
+           <div className="px-6 py-1 bg-sky-500/15 text-sky-300 text-[10px] font-black uppercase tracking-widest text-center border-b border-sky-500/30 shrink-0">
              ℹ️ Đang ở chế độ Khách. Kết quả sẽ không được lưu vào thống kê rèn luyện.
              <button onClick={() => window.location.href = '/student'} className="ml-2 underline text-white font-black">ĐĂNG NHẬP CHÍNH THỨC</button>
            </div>
         )}
 
-        {/* BODY WORKSPACE */}
-        <div ref={scrollContainerRef} className="flex-1 min-h-0 overflow-y-auto p-4 sm:p-6 custom-scrollbar bg-[#090f1d]">
+        {/* BODY WORKSPACE (TỐI ƯU GỌN TRÊN 1 MÀN HÌNH) */}
+        <div ref={scrollContainerRef} className="flex-1 min-h-0 overflow-y-auto lg:overflow-hidden p-3 sm:p-4 bg-[#090f1d]">
           {loading ? (
             <div className="h-full flex flex-col items-center justify-center space-y-4">
               <div className="w-10 h-10 border-4 border-slate-800 border-t-amber-400 rounded-full animate-spin"></div>
@@ -735,16 +735,16 @@ const QuizModal: React.FC<QuizModalProps> = ({ nodeId, lessonTitle, lessonUrl, i
                 )}
              </div>
           ) : currentQ && (
-            <div className="grid grid-cols-1 lg:grid-cols-[290px_1fr] gap-5 h-full min-h-0">
+            <div className="grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-3.5 h-full min-h-0">
               
               {/* CỘT TRÁI: DANH SÁCH CÂU HỎI + CHÚ THÍCH + NÚT NỘP BÀI */}
-              <aside className="bg-[#11192c] border border-slate-800 rounded-2xl p-5 flex flex-col justify-between gap-5">
+              <aside className="bg-[#11192c] border border-slate-800 rounded-2xl p-4 flex flex-col justify-between gap-3 min-h-0 overflow-y-auto custom-scrollbar">
                 <div>
-                  <div className="flex items-center justify-between gap-2 mb-4">
-                    <h4 className="text-xs font-black uppercase tracking-wider text-slate-200">
+                  <div className="flex items-center justify-between gap-2 mb-3">
+                    <h4 className="text-[11px] font-black uppercase tracking-wider text-slate-200">
                       Danh sách câu hỏi
                     </h4>
-                    <span className="px-2.5 py-1 rounded-lg bg-amber-500/15 border border-amber-500/40 text-amber-300 text-[11px] font-black">
+                    <span className="px-2 py-0.5 rounded-lg bg-amber-500/15 border border-amber-500/40 text-amber-300 text-[11px] font-black">
                       {isAdmin
                         ? `${questions.length} câu`
                         : showResults
@@ -754,7 +754,7 @@ const QuizModal: React.FC<QuizModalProps> = ({ nodeId, lessonTitle, lessonUrl, i
                   </div>
 
                   {/* Lưới số câu */}
-                  <div className="grid grid-cols-5 gap-2">
+                  <div className="grid grid-cols-5 gap-1.5">
                     {questions.map((qItem, idx) => {
                       const realIdx = activeBankIndices[idx] ?? idx;
                       const btnLabel = filterMode === 'random' ? idx + 1 : realIdx + 1;
@@ -785,7 +785,7 @@ const QuizModal: React.FC<QuizModalProps> = ({ nodeId, lessonTitle, lessonUrl, i
                           key={`${realIdx}_${idx}`}
                           type="button"
                           onClick={() => setCurrentQuestionIdx(idx)}
-                          className={`h-10 rounded-xl border text-xs font-black transition-all flex items-center justify-center ${btnStyle}`}
+                          className={`h-9 rounded-lg border text-xs font-black transition-all flex items-center justify-center ${btnStyle}`}
                         >
                           {btnLabel}
                         </button>
@@ -793,36 +793,36 @@ const QuizModal: React.FC<QuizModalProps> = ({ nodeId, lessonTitle, lessonUrl, i
                     })}
                   </div>
 
-                  {/* Chú thích màu sắc */}
-                  <div className="mt-5 pt-4 border-t border-slate-800/80 space-y-2 text-[11px] text-slate-400 font-medium">
+                  {/* Chú thích màu sắc gọn */}
+                  <div className="mt-3 pt-2.5 border-t border-slate-800/80 flex flex-wrap gap-x-3 gap-y-1.5 text-[11px] text-slate-400 font-medium">
                     {showResults ? (
                       <>
-                        <div className="flex items-center gap-2">
-                          <span className="w-3 h-3 rounded bg-emerald-500/30 border border-emerald-500 inline-block"></span>
-                          <span>Trả lời đúng</span>
+                        <div className="flex items-center gap-1.5">
+                          <span className="w-2.5 h-2.5 rounded bg-emerald-500/30 border border-emerald-500 inline-block"></span>
+                          <span>Đúng</span>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <span className="w-3 h-3 rounded bg-rose-500/30 border border-rose-500 inline-block"></span>
-                          <span>Trả lời sai</span>
+                        <div className="flex items-center gap-1.5">
+                          <span className="w-2.5 h-2.5 rounded bg-rose-500/30 border border-rose-500 inline-block"></span>
+                          <span>Sai</span>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <span className="w-3 h-3 rounded bg-blue-600 border border-blue-400 inline-block"></span>
-                          <span>Đang xem chi tiết</span>
+                        <div className="flex items-center gap-1.5">
+                          <span className="w-2.5 h-2.5 rounded bg-blue-600 border border-blue-400 inline-block"></span>
+                          <span>Đang xem</span>
                         </div>
                       </>
                     ) : (
                       <>
-                        <div className="flex items-center gap-2">
-                          <span className="w-3 h-3 rounded bg-slate-800 border border-slate-600 inline-block"></span>
-                          <span>Chưa trả lời</span>
+                        <div className="flex items-center gap-1.5">
+                          <span className="w-2.5 h-2.5 rounded bg-slate-800 border border-slate-600 inline-block"></span>
+                          <span>Chưa làm</span>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <span className="w-3 h-3 rounded bg-amber-500/20 border border-amber-400 inline-block"></span>
-                          <span>Đã chọn đáp án</span>
+                        <div className="flex items-center gap-1.5">
+                          <span className="w-2.5 h-2.5 rounded bg-amber-500/20 border border-amber-400 inline-block"></span>
+                          <span>Đã chọn</span>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <span className="w-3 h-3 rounded bg-blue-600 inline-block"></span>
-                          <span>Đang làm (Hiện tại)</span>
+                        <div className="flex items-center gap-1.5">
+                          <span className="w-2.5 h-2.5 rounded bg-blue-600 inline-block"></span>
+                          <span>Hiện tại</span>
                         </div>
                       </>
                     )}
@@ -830,20 +830,20 @@ const QuizModal: React.FC<QuizModalProps> = ({ nodeId, lessonTitle, lessonUrl, i
                 </div>
 
                 {/* CÁC NÚT HÀNH ĐỘNG Ở CỘT TRÁI */}
-                <div className="space-y-2.5 pt-2">
+                <div className="space-y-2 pt-1">
                   {isAdmin ? (
                     <>
                       <button
                         type="button"
                         onClick={() => openEditForm(-1)}
-                        className="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs uppercase tracking-wider rounded-xl flex items-center justify-center gap-2 shadow-lg transition-all"
+                        className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs uppercase tracking-wider rounded-xl flex items-center justify-center gap-2 shadow-lg transition-all"
                       >
                         <PlusCircle size={15} /> Thêm câu thủ công
                       </button>
                       <button
                         type="button"
                         onClick={generateQuiz}
-                        className="w-full py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-bold text-xs rounded-xl flex items-center justify-center gap-2 transition-all"
+                        className="w-full py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-bold text-xs rounded-xl flex items-center justify-center gap-2 transition-all"
                       >
                         <RefreshCw size={14} /> {isAiMode ? 'Đổi bộ AI khác' : 'Thêm 10 câu (AI)'}
                       </button>
@@ -854,7 +854,7 @@ const QuizModal: React.FC<QuizModalProps> = ({ nodeId, lessonTitle, lessonUrl, i
                         <button
                           type="button"
                           onClick={() => applyBatchSelection(fullBank, activeBatchIdx + 1)}
-                          className="w-full py-3.5 bg-blue-600 hover:bg-blue-500 text-white font-black text-xs uppercase tracking-wider rounded-xl flex items-center justify-center gap-2 shadow-lg transition-all"
+                          className="w-full py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-black text-xs uppercase tracking-wider rounded-xl flex items-center justify-center gap-2 shadow-lg transition-all"
                         >
                           Làm tiếp {batches[activeBatchIdx + 1].label} <ArrowRight size={15} />
                         </button>
@@ -862,14 +862,14 @@ const QuizModal: React.FC<QuizModalProps> = ({ nodeId, lessonTitle, lessonUrl, i
                       <button
                         type="button"
                         onClick={handleShuffleNewSet}
-                        className="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs uppercase tracking-wider rounded-xl flex items-center justify-center gap-2 transition-all"
+                        className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs uppercase tracking-wider rounded-xl flex items-center justify-center gap-2 transition-all"
                       >
                         <Shuffle size={14} /> Làm 10 câu ngẫu nhiên
                       </button>
                       <button
                         type="button"
                         onClick={onClose}
-                        className="w-full py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 font-bold text-xs rounded-xl transition-all"
+                        className="w-full py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 font-bold text-xs rounded-xl transition-all"
                       >
                         Đóng
                       </button>
@@ -879,14 +879,14 @@ const QuizModal: React.FC<QuizModalProps> = ({ nodeId, lessonTitle, lessonUrl, i
                       <button
                         type="button"
                         onClick={handleSubmit}
-                        className="w-full py-3.5 bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs uppercase tracking-wider rounded-xl shadow-lg shadow-emerald-950/50 flex items-center justify-center gap-2 active:scale-[0.99] transition-all"
+                        className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs uppercase tracking-wider rounded-xl shadow-lg shadow-emerald-950/50 flex items-center justify-center gap-2 active:scale-[0.99] transition-all"
                       >
-                        <Send size={15} /> Nộp Bài & Kết Thúc
+                        <Send size={14} /> Nộp Bài & Kết Thúc
                       </button>
                       <button
                         type="button"
                         onClick={handleShuffleNewSet}
-                        className="w-full py-2.5 bg-slate-800/80 hover:bg-slate-700 text-slate-300 border border-slate-700/80 font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 transition-all"
+                        className="w-full py-2 bg-slate-800/80 hover:bg-slate-700 text-slate-300 border border-slate-700/80 font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 transition-all"
                       >
                         <Shuffle size={13} /> Trộn 10 câu ngẫu nhiên
                       </button>
@@ -895,21 +895,21 @@ const QuizModal: React.FC<QuizModalProps> = ({ nodeId, lessonTitle, lessonUrl, i
                 </div>
               </aside>
 
-              {/* CỘT PHẢI: KHUNG CÂU HỎI HIỆN TẠI + KẾT QUẢ */}
-              <section className="bg-[#11192c] border border-slate-800 rounded-2xl p-5 sm:p-7 flex flex-col justify-between min-h-0 overflow-y-auto custom-scrollbar">
+              {/* CỘT PHẢI: KHUNG CÂU HỎI HIỆN TẠI + 4 ĐÁP ÁN XẾP 2 CỘT GỌN TRÊN 1 MÀN HÌNH */}
+              <section className="bg-[#11192c] border border-slate-800 rounded-2xl p-4 sm:p-5 flex flex-col justify-between min-h-0 overflow-y-auto custom-scrollbar">
                 <div>
                   {/* Tổng kết nhanh khi đã nộp bài */}
                   {showResults && (
-                    <div className="mb-5 p-4 sm:p-5 rounded-2xl bg-[#0b1324] border border-slate-700/80 grid grid-cols-1 sm:grid-cols-2 gap-4 items-center">
-                      <div className="flex items-center gap-3.5">
-                        <div className="w-12 h-12 rounded-2xl bg-amber-500/15 border border-amber-500/40 text-amber-400 flex items-center justify-center shrink-0">
-                          <Trophy size={24} />
+                    <div className="mb-3.5 p-3.5 rounded-2xl bg-[#0b1324] border border-slate-700/80 grid grid-cols-1 sm:grid-cols-2 gap-3 items-center">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-amber-500/15 border border-amber-500/40 text-amber-400 flex items-center justify-center shrink-0">
+                          <Trophy size={20} />
                         </div>
                         <div>
                           <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">
                             Kết quả lượt này ({currentBatchLabel})
                           </p>
-                          <p className="text-xl font-black text-white">
+                          <p className="text-base sm:text-lg font-black text-white">
                             {calculateScore()}/{questions.length} câu đúng{' '}
                             <span className="text-xs font-bold text-amber-400">
                               ({questions.length > 0 ? Math.round((calculateScore() / questions.length) * 100) : 0}%)
@@ -919,15 +919,15 @@ const QuizModal: React.FC<QuizModalProps> = ({ nodeId, lessonTitle, lessonUrl, i
                       </div>
 
                       {!isAdmin && student && !student.is_guest && (
-                        <div className="flex items-center gap-3.5 sm:border-l sm:border-slate-800 sm:pl-4">
-                          <div className="w-12 h-12 rounded-2xl bg-violet-500/15 border border-violet-500/40 text-violet-300 flex items-center justify-center shrink-0">
-                            <Award size={24} />
+                        <div className="flex items-center gap-3 sm:border-l sm:border-slate-800 sm:pl-4">
+                          <div className="w-10 h-10 rounded-xl bg-violet-500/15 border border-violet-500/40 text-violet-300 flex items-center justify-center shrink-0">
+                            <Award size={20} />
                           </div>
                           <div>
                             <p className="text-[10px] font-black uppercase tracking-wider text-violet-300">
-                              Tích lũy rèn luyện (Cộng dồn các bài)
+                              Tích lũy rèn luyện (Cộng dồn)
                             </p>
-                            <p className="text-xl font-black text-white">
+                            <p className="text-base sm:text-lg font-black text-white">
                               {practiceStats.totalCorrect}/{practiceStats.totalAttempted} câu đúng{' '}
                               <span className="text-xs font-bold text-emerald-400">({practiceStats.accuracyRate}%)</span>
                             </p>
@@ -941,23 +941,23 @@ const QuizModal: React.FC<QuizModalProps> = ({ nodeId, lessonTitle, lessonUrl, i
                   )}
 
                   {/* Tiêu đề câu đang hiển thị */}
-                  <div className="flex flex-wrap items-center justify-between gap-2 pb-4 border-b border-slate-800">
-                    <div className="flex items-center gap-2.5 flex-wrap">
-                      <h2 className="text-base sm:text-lg font-black text-white">
+                  <div className="flex flex-wrap items-center justify-between gap-2 pb-2.5 border-b border-slate-800">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <h2 className="text-base font-black text-white">
                         Câu {safeCurrentIdx + 1} / {questions.length}
                       </h2>
                       {filterMode !== 'random' && (
-                        <span className="px-2.5 py-0.5 rounded-lg bg-slate-800 border border-slate-700 text-[11px] font-bold text-slate-300">
+                        <span className="px-2 py-0.5 rounded-lg bg-slate-800 border border-slate-700 text-[11px] font-bold text-slate-300">
                           Câu số {currentRealIdx + 1} trong kho
                         </span>
                       )}
                       {showResults && (
                         userAnswers[safeCurrentIdx] === currentQ.correctIndex ? (
-                          <span className="px-2.5 py-0.5 rounded-lg bg-emerald-500/20 border border-emerald-500/50 text-emerald-300 text-[11px] font-black flex items-center gap-1">
+                          <span className="px-2 py-0.5 rounded-lg bg-emerald-500/20 border border-emerald-500/50 text-emerald-300 text-[11px] font-black flex items-center gap-1">
                             <CheckCircle2 size={12} /> Chính xác
                           </span>
                         ) : (
-                          <span className="px-2.5 py-0.5 rounded-lg bg-rose-500/20 border border-rose-500/50 text-rose-300 text-[11px] font-black flex items-center gap-1">
+                          <span className="px-2 py-0.5 rounded-lg bg-rose-500/20 border border-rose-500/50 text-rose-300 text-[11px] font-black flex items-center gap-1">
                             <XCircle size={12} /> Chưa đúng
                           </span>
                         )
@@ -969,14 +969,14 @@ const QuizModal: React.FC<QuizModalProps> = ({ nodeId, lessonTitle, lessonUrl, i
                         <button
                           type="button"
                           onClick={() => openEditForm(currentRealIdx)}
-                          className="px-3 py-1.5 bg-amber-500/15 text-amber-300 hover:bg-amber-500/25 rounded-xl border border-amber-500/40 text-xs font-bold flex items-center gap-1.5 transition-all"
+                          className="px-2.5 py-1 bg-amber-500/15 text-amber-300 hover:bg-amber-500/25 rounded-lg border border-amber-500/40 text-xs font-bold flex items-center gap-1 transition-all"
                         >
                           <Pencil size={12} /> Sửa câu này
                         </button>
                         <button
                           type="button"
                           onClick={() => deleteQuestion(currentRealIdx)}
-                          className="px-3 py-1.5 bg-rose-500/15 text-rose-300 hover:bg-rose-500/25 rounded-xl border border-rose-500/40 text-xs font-bold flex items-center gap-1.5 transition-all"
+                          className="px-2.5 py-1 bg-rose-500/15 text-rose-300 hover:bg-rose-500/25 rounded-lg border border-rose-500/40 text-xs font-bold flex items-center gap-1 transition-all"
                         >
                           <Trash2 size={12} /> Xóa
                         </button>
@@ -985,12 +985,12 @@ const QuizModal: React.FC<QuizModalProps> = ({ nodeId, lessonTitle, lessonUrl, i
                   </div>
 
                   {/* Nội dung câu hỏi (giữ nguyên kích thước chữ text-sm md:text-base) */}
-                  <div className="py-5 text-sm md:text-base font-bold text-slate-100 leading-relaxed">
+                  <div className="py-3.5 text-sm md:text-base font-bold text-slate-100 leading-relaxed">
                     {renderLatex(currentQ.question)}
                   </div>
 
-                  {/* 4 phương án A B C D xếp dọc như mẫu */}
-                  <div className="space-y-3">
+                  {/* 4 phương án A B C D sắp 2 cột để hiển thị gọn trên 1 màn hình */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
                     {currentQ.options.map((opt, oIdx) => {
                       const isSelected = userAnswers[safeCurrentIdx] === oIdx;
                       const isCorrectOpt = oIdx === currentQ.correctIndex;
@@ -1022,7 +1022,7 @@ const QuizModal: React.FC<QuizModalProps> = ({ nodeId, lessonTitle, lessonUrl, i
                             next[safeCurrentIdx] = oIdx;
                             setUserAnswers(next);
                           }}
-                          className={`w-full p-4 rounded-xl text-left border transition-all flex items-center gap-3.5 ${cardClass} ${showResults ? 'cursor-default' : 'cursor-pointer'}`}
+                          className={`w-full px-3.5 py-3 rounded-xl text-left border transition-all flex items-center gap-3 ${cardClass} ${showResults ? 'cursor-default' : 'cursor-pointer'}`}
                         >
                           <span className={`w-7 h-7 rounded-full text-xs font-black flex items-center justify-center shrink-0 transition-all ${badgeClass}`}>
                             {getOptionLabel(oIdx)}
@@ -1031,10 +1031,10 @@ const QuizModal: React.FC<QuizModalProps> = ({ nodeId, lessonTitle, lessonUrl, i
                             {renderLatex(opt)}
                           </div>
                           {(showResults || isAdmin) && isCorrectOpt && (
-                            <CheckCircle2 size={18} className="text-emerald-400 shrink-0" />
+                            <CheckCircle2 size={16} className="text-emerald-400 shrink-0" />
                           )}
                           {showResults && isSelected && !isCorrectOpt && (
-                            <XCircle size={18} className="text-rose-400 shrink-0" />
+                            <XCircle size={16} className="text-rose-400 shrink-0" />
                           )}
                         </button>
                       );
@@ -1043,7 +1043,7 @@ const QuizModal: React.FC<QuizModalProps> = ({ nodeId, lessonTitle, lessonUrl, i
 
                   {/* Lời giải chi tiết (hiển thị sau khi nộp bài hoặc cho Giáo viên xem) */}
                   {(showResults || isAdmin) && currentQ.explanation && (
-                    <div className="mt-5 p-4 rounded-xl bg-slate-900/90 border border-slate-700/80 space-y-1">
+                    <div className="mt-3.5 p-3.5 rounded-xl bg-slate-900/90 border border-slate-700/80 space-y-1">
                       <span className="text-[10px] font-black uppercase tracking-wider text-amber-400 block">
                         Lời giải chi tiết
                       </span>
@@ -1055,12 +1055,12 @@ const QuizModal: React.FC<QuizModalProps> = ({ nodeId, lessonTitle, lessonUrl, i
                 </div>
 
                 {/* THANH ĐIỀU HƯỚNG DƯỚI CÙNG: < CÂU TRƯỚC | XÓA LỰA CHỌN | CÂU TIẾP > */}
-                <div className="pt-5 mt-6 border-t border-slate-800 flex items-center justify-between gap-3 flex-wrap">
+                <div className="pt-3 mt-4 border-t border-slate-800 flex items-center justify-between gap-3 flex-wrap shrink-0">
                   <button
                     type="button"
                     disabled={safeCurrentIdx === 0}
                     onClick={() => setCurrentQuestionIdx(prev => Math.max(0, prev - 1))}
-                    className="px-4 py-2.5 rounded-xl bg-slate-800/80 hover:bg-slate-700 border border-slate-700 text-slate-200 text-xs font-bold flex items-center gap-1.5 disabled:opacity-35 disabled:cursor-not-allowed transition-all"
+                    className="px-4 py-2 rounded-xl bg-slate-800/80 hover:bg-slate-700 border border-slate-700 text-slate-200 text-xs font-bold flex items-center gap-1.5 disabled:opacity-35 disabled:cursor-not-allowed transition-all"
                   >
                     <ChevronLeft size={15} /> Câu Trước
                   </button>
@@ -1087,7 +1087,7 @@ const QuizModal: React.FC<QuizModalProps> = ({ nodeId, lessonTitle, lessonUrl, i
                     <button
                       type="button"
                       onClick={() => setCurrentQuestionIdx(prev => Math.min(questions.length - 1, prev + 1))}
-                      className="px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs flex items-center gap-1.5 shadow-md shadow-amber-500/20 transition-all"
+                      className="px-5 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs flex items-center gap-1.5 shadow-md shadow-amber-500/20 transition-all"
                     >
                       Câu Tiếp <ChevronRight size={15} />
                     </button>
@@ -1095,7 +1095,7 @@ const QuizModal: React.FC<QuizModalProps> = ({ nodeId, lessonTitle, lessonUrl, i
                     <button
                       type="button"
                       onClick={handleSubmit}
-                      className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs flex items-center gap-1.5 shadow-md shadow-emerald-600/25 transition-all"
+                      className="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs flex items-center gap-1.5 shadow-md shadow-emerald-600/25 transition-all"
                     >
                       Nộp Bài & Kết Thúc <Send size={14} />
                     </button>
@@ -1103,7 +1103,7 @@ const QuizModal: React.FC<QuizModalProps> = ({ nodeId, lessonTitle, lessonUrl, i
                     <button
                       type="button"
                       disabled
-                      className="px-5 py-2.5 rounded-xl bg-slate-800/60 border border-slate-700 text-slate-500 font-bold text-xs flex items-center gap-1.5 opacity-50 cursor-not-allowed"
+                      className="px-5 py-2 rounded-xl bg-slate-800/60 border border-slate-700 text-slate-500 font-bold text-xs flex items-center gap-1.5 opacity-50 cursor-not-allowed"
                     >
                       Câu Tiếp <ChevronRight size={15} />
                     </button>
