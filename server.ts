@@ -1,5 +1,5 @@
 import express from 'express';
-import type { Request, Response } from 'express';
+import type { NextFunction, Request, Response } from 'express';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { generatePhysicsQuiz, parseGeminiErrorMessage } from './lib/quizGenerator.ts';
@@ -14,10 +14,15 @@ async function startServer() {
   app.use(express.json({ limit: '2mb' }));
 
   app.post('/api/quiz/generate', async (req: Request, res: Response) => {
-    const apiKey = process.env.GEMINI_API_KEY || process.env.API_KEY;
+    const apiKey =
+      process.env.GEMINI_API_KEY ||
+      process.env.API_KEY ||
+      process.env.VITE_GEMINI_API_KEY ||
+      process.env.VITE_API_KEY;
+
     if (!apiKey) {
       res.status(500).json({
-        error: 'Chưa cấu hình GEMINI_API_KEY trên máy chủ.',
+        error: 'Chưa cấu hình GEMINI_API_KEY (hoặc API_KEY) trên máy chủ.',
       });
       return;
     }
@@ -43,6 +48,12 @@ async function startServer() {
     }
   });
 
+  app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {
+    console.error('Unhandled API error:', err);
+    const { status, message } = parseGeminiErrorMessage(err);
+    res.status(status).json({ error: message });
+  });
+
   if (process.env.NODE_ENV !== 'production') {
     const { createServer: createViteServer } = await import('vite');
     const vite = await createViteServer({
@@ -53,7 +64,7 @@ async function startServer() {
   } else {
     const distDir = path.resolve(__dirname, 'dist');
     app.use(express.static(distDir));
-    app.get('*', (_req: Request, res: Response) => {
+    app.use((_req: Request, res: Response) => {
       res.sendFile(path.join(distDir, 'index.html'));
     });
   }
