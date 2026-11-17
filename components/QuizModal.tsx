@@ -1,13 +1,11 @@
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { X, BrainCircuit, Trophy, CheckCircle2, XCircle, AlertCircle, Send, Save, RefreshCw, Trash2, Shuffle, Pencil, PlusCircle, Filter, ArrowRight, Award, BookOpen, ChevronLeft, ChevronRight } from 'lucide-react';
-import { GoogleGenAI, Type } from "@google/genai";
 import { supabase } from '../supabaseClient';
 import confetti from 'canvas-confetti';
 import { QuizQuestion, Student } from '../types';
 import {
   renderLatex,
-  getSafeEnv,
   QuizPracticeRecord,
   buildQuizPracticeCommentContent,
   parseQuizPracticeRecords,
@@ -194,83 +192,49 @@ const QuizModal: React.FC<QuizModalProps> = ({ nodeId, lessonTitle, lessonUrl, i
   const generateQuiz = async () => {
     setLoading(true);
     setErrorInfo(null);
-    const apiKey = getSafeEnv('API_KEY');
-    if (!apiKey) {
-      setErrorInfo({ title: "Lỗi cấu hình", msg: "Vui lòng thiết lập API Key." });
-      setLoading(false);
-      return;
-    }
-
     try {
-      const ai = new GoogleGenAI({ apiKey });
-      const gradeLabel = selectedGrade === 1 ? '11' : (selectedGrade || '11');
-      
-      let prompt = `Tạo 10 câu trắc nghiệm Vật lý ${gradeLabel} bài: "${lessonTitle}". 
-      Phân bổ mức độ: 4 câu Nhận biết (Biết), 3 câu Thông hiểu (Hiểu), 3 câu Vận dụng. 
-      Sử dụng $...$ cho công thức. Xuất JSON array.`;
+      const resp = await fetch('/api/quiz/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          lessonTitle,
+          lessonUrl,
+          selectedGrade,
+        }),
+      });
 
-      const tools: any[] = [];
-      if (lessonUrl) {
-        tools.push({ googleSearch: {} });
-        prompt = `Hãy truy cập và đọc nội dung từ đường link bài học sau đây: ${lessonUrl}. 
-        Dựa trên nội dung bài học đó, hãy soạn 10 câu trắc nghiệm Vật lý ${gradeLabel}. 
-        Nếu không truy cập được link hoặc nội dung không phù hợp, hãy soạn dựa trên tên bài: "${lessonTitle}".
-        Phân bổ mức độ: 4 câu Nhận biết (Biết), 3 câu Thông hiểu (Hiểu), 3 câu Vận dụng (40% - 30% - 30%). 
-        Sử dụng $...$ cho công thức LaTeX. Xuất kết quả dưới dạng JSON array.`;
+      const payload = await resp.json().catch(() => ({}));
+      if (!resp.ok) {
+        throw new Error(payload?.error || 'Không thể kết nối máy chủ AI để soạn câu hỏi.');
       }
 
-      const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash',
-        contents: prompt,
-        config: {
-          tools: tools.length > 0 ? tools as any : undefined,
-          responseMimeType: "application/json",
-          responseSchema: {
-            type: Type.ARRAY,
-            items: {
-              type: Type.OBJECT,
-              properties: {
-                question: { type: Type.STRING },
-                options: { type: Type.ARRAY, items: { type: Type.STRING } },
-                correctIndex: { type: Type.INTEGER },
-                explanation: { type: Type.STRING }
-              },
-              required: ["question", "options", "correctIndex", "explanation"]
-            }
-          }
-        }
-      });
-      const qData = JSON.parse(response.text || "[]");
+      const rawList = Array.isArray(payload?.questions) ? payload.questions : [];
+      const qData: QuizQuestion[] = rawList.map((q: any) => ({
+        question: String(q?.question || ''),
+        options: Array.isArray(q?.options) ? q.options.slice(0, 4).map((o: any) => String(o ?? '')) : ['', '', '', ''],
+        correctIndex: typeof q?.correctIndex === 'number' ? q.correctIndex : Number(q?.correctIndex || 0),
+        explanation: String(q?.explanation || ''),
+      }));
+
+      if (qData.length === 0) {
+        throw new Error('AI chưa tạo được câu hỏi hợp lệ. Vui lòng thử lại.');
+      }
+
       setQuestions(qData);
-      setActiveBankIndices(qData.map((_: any, i: number) => i));
+      setActiveBankIndices(qData.map((_: QuizQuestion, i: number) => i));
       setCurrentQuestionIdx(0);
       setUserAnswers(new Array(qData.length).fill(null));
       setIsAiMode(true);
       setShowResults(false);
-    } catch (e: any) { 
-      console.error("AI Error:", e);
-      // Fallback: If tools/link failing, try one more time without tools
-      if (lessonUrl) {
-        try {
-          const ai = new GoogleGenAI({ apiKey });
-          const response = await ai.models.generateContent({
-            model: 'gemini-3-flash-preview',
-            contents: `Tạo 10 câu trắc nghiệm Vật lý bài: "${lessonTitle}". Phân bổ 4 Biết, 3 Hiểu, 3 Vận dụng. Xuất JSON array.`,
-            config: { responseMimeType: "application/json" }
-          });
-          const qData = JSON.parse(response.text || "[]");
-          setQuestions(qData);
-          setActiveBankIndices(qData.map((_: any, i: number) => i));
-          setCurrentQuestionIdx(0);
-          setUserAnswers(new Array(qData.length).fill(null));
-          setIsAiMode(true);
-          setShowResults(false);
-          return;
-        } catch (innerE) {}
-      }
-      setErrorInfo({ title: "Lỗi AI", msg: "AI gặp khó khăn khi truy cập tài liệu. Vui lòng thử lại sau hoặc kiểm tra link." }); 
+    } catch (e: any) {
+      console.error('AI Quiz Error:', e);
+      setErrorInfo({
+        title: 'Lỗi AI',
+        msg: e?.message || 'AI gặp khó khăn khi soạn câu hỏi. Vui lòng thử lại sau.',
+      });
+    } finally {
+      setLoading(false);
     }
-    finally { setLoading(false); }
   };
 
   const saveToDB = async (customData?: QuizQuestion[]) => {
