@@ -152,7 +152,16 @@ const QuizModal: React.FC<QuizModalProps> = ({ nodeId, lessonTitle, lessonUrl, i
     try {
       const { data } = await supabase.from('quiz_data').select('data').eq('id', getDbId()).single();
       if (data?.data && Array.isArray(data.data)) {
-        const bank = data.data;
+        const cleanEsc = (s: unknown) =>
+          String(s ?? '')
+            .replace(/\\{2,}([a-zA-Z]{2,})/g, '\\$1')
+            .replace(/\\{2,}([{}%,;:!])/g, '\\$1');
+        const bank: QuizQuestion[] = data.data.map((q: any) => ({
+          question: cleanEsc(q?.question),
+          options: Array.isArray(q?.options) ? q.options.map((o: any) => cleanEsc(o)) : ['', '', '', ''],
+          correctIndex: typeof q?.correctIndex === 'number' ? q.correctIndex : Number(q?.correctIndex || 0),
+          explanation: cleanEsc(q?.explanation),
+        }));
         setFullBank(bank);
         setIsAiMode(false);
         if (isAdmin) {
