@@ -125,6 +125,12 @@ const renderTextWithMedia = (plainText: string, keyPrefix: string | number) => {
   return elements.length > 0 ? elements : plainText;
 };
 
+const cleanDoubleEscapedLatex = (math: string): string => {
+  return math
+    .replace(/\\{2,}([a-zA-Z]{2,})/g, '\\$1')
+    .replace(/\\{2,}([{}%,;:!])/g, '\\$1');
+};
+
 export const renderLatex = (text: string) => {
   if (!text) return null;
   
@@ -150,7 +156,7 @@ export const renderLatex = (text: string) => {
 
     // Công thức dạng khối $$...$$
     if (part.startsWith('$$') && part.endsWith('$$') && part.length >= 4) {
-      const math = part.slice(2, -2).trim();
+      const math = cleanDoubleEscapedLatex(part.slice(2, -2).trim());
       try {
         const html = katex.renderToString(math, { 
           throwOnError: false,
@@ -170,7 +176,7 @@ export const renderLatex = (text: string) => {
 
     // Công thức dạng cùng dòng $...$
     if (part.startsWith('$') && part.endsWith('$') && part.length >= 2) {
-      const math = part.slice(1, -1).trim();
+      const math = cleanDoubleEscapedLatex(part.slice(1, -1).trim());
       try {
         const html = katex.renderToString(math, { 
           throwOnError: false,
