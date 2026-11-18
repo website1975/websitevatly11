@@ -55,10 +55,11 @@ export default async function handler(req: any, res: any) {
 
   try {
     const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const escapedUser = username.replace(/[%_\\]/g, '\\$&');
     let query = supabase
       .from('students')
       .select('id, name, full_name, grade_id')
-      .eq('name', username)
+      .ilike('name', escapedUser)
       .eq('password', password);
 
     if (grade && !Number.isNaN(grade)) {

@@ -82,20 +82,21 @@ export default async function handler(req: any, res: any) {
   const ssoToken = typeof body?.ssoToken === 'string' ? body.ssoToken.trim() : '';
   const grade = body?.grade ? Number(body.grade) : null;
 
-  if (!username || newPassword.length < 4) {
+  if (!username || newPassword.length < 3) {
     res.status(400).json({
       ok: false,
-      error: 'Vui lòng cung cấp mã học sinh và mật khẩu mới (tối thiểu 4 ký tự).',
+      error: 'Vui lòng cung cấp mã học sinh và mật khẩu mới (tối thiểu 3 ký tự).',
     });
     return;
   }
 
   try {
     const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const escapedUser = username.replace(/[%_\\]/g, '\\$&');
     let query = supabase
       .from('students')
       .select('id, name, password, grade_id')
-      .eq('name', username);
+      .ilike('name', escapedUser);
 
     if (grade && !Number.isNaN(grade)) {
       query = query.eq('grade_id', grade);

@@ -86,10 +86,11 @@ async function startServer() {
 
     try {
       const supabase = getServerSupabase();
+      const escapedUser = username.replace(/[%_\\]/g, '\\$&');
       let query = supabase
         .from('students')
         .select('id, name, full_name, grade_id')
-        .eq('name', username)
+        .ilike('name', escapedUser)
         .eq('password', password);
 
       if (grade && !Number.isNaN(grade)) {
@@ -126,20 +127,21 @@ async function startServer() {
     const ssoToken = typeof req.body?.ssoToken === 'string' ? req.body.ssoToken.trim() : '';
     const grade = req.body?.grade ? Number(req.body.grade) : null;
 
-    if (!username || newPassword.length < 4) {
+    if (!username || newPassword.length < 3) {
       res.status(400).json({
         ok: false,
-        error: 'Vui lòng cung cấp mã học sinh và mật khẩu mới (tối thiểu 4 ký tự).',
+        error: 'Vui lòng cung cấp mã học sinh và mật khẩu mới (tối thiểu 3 ký tự).',
       });
       return;
     }
 
     try {
       const supabase = getServerSupabase();
+      const escapedUser = username.replace(/[%_\\]/g, '\\$&');
       let query = supabase
         .from('students')
         .select('id, name, password, grade_id')
-        .eq('name', username);
+        .ilike('name', escapedUser);
 
       if (grade && !Number.isNaN(grade)) {
         query = query.eq('grade_id', grade);
