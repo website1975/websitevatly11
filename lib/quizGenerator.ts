@@ -23,6 +23,12 @@ const stripOptionPrefix = (text: string): string => {
   return text.replace(/^[A-Da-d][.)\]:]\s+/, '').trim();
 };
 
+const cleanLatexEscapes = (text: string): string => {
+  return text
+    .replace(/\\{2,}([a-zA-Z]{2,})/g, '\\$1')
+    .replace(/\\{2,}([{}%,;:!])/g, '\\$1');
+};
+
 const normalizeCorrectIndex = (item: RawQuizItem, options: string[]): number => {
   const rawIdx = item.correctIndex ?? item.correct_index;
   if (typeof rawIdx === 'number' && Number.isInteger(rawIdx)) {
@@ -69,22 +75,22 @@ export const normalizeQuizArray = (parsed: unknown): NormalizedQuizItem[] => {
 
   return list
     .map((item): NormalizedQuizItem | null => {
-      const question = String(item?.question || '').trim();
+      const question = cleanLatexEscapes(String(item?.question || '').trim());
       if (!question) return null;
 
       const rawOptions = Array.isArray(item?.options) ? item.options : [];
       const options = rawOptions
         .slice(0, 4)
-        .map(opt => stripOptionPrefix(String(opt ?? '').trim()));
+        .map(opt => cleanLatexEscapes(stripOptionPrefix(String(opt ?? '').trim())));
 
       while (options.length < 4) {
         options.push(`Phương án ${String.fromCharCode(65 + options.length)}`);
       }
 
       const correctIndex = normalizeCorrectIndex(item, options);
-      const rawExplanation = String(
-        item?.explanation ?? item?.solution ?? item?.giai_thich ?? ''
-      ).trim();
+      const rawExplanation = cleanLatexEscapes(
+        String(item?.explanation ?? item?.solution ?? item?.giai_thich ?? '').trim()
+      );
 
       const explanation =
         rawExplanation ||
@@ -185,7 +191,7 @@ export async function generatePhysicsQuiz(params: {
 
 Yêu cầu BẮT BUỘC cho cả 10 câu hỏi:
 1. Phân bổ mức độ: 4 câu Nhận biết (Biết), 3 câu Thông hiểu (Hiểu), 3 câu Vận dụng (bài tập tính toán ngắn gọn, số liệu đẹp).
-2. Dùng cặp dấu $...$ chuẩn LaTeX cho công thức và ký hiệu Vật lí (ví dụ: $F = m.a$, $m/s^2$).
+2. Dùng cặp dấu $...$ chuẩn LaTeX cho công thức và ký hiệu Vật lí (ví dụ: $F = m.a$, $m/s^2$, $\\frac{a}{b}$). Lưu ý trong chuỗi JSON chỉ escape đúng 1 lần để kết quả nhận được chỉ có 1 dấu \\ (ví dụ $\\frac{a}{b}$, KHÔNG lặp thành hai gạch chéo $\\\\frac{a}{b}$).
 3. Trường "options": mảng chứa ĐÚNG 4 phương án trả lời bằng tiếng Việt (KHÔNG ghi chữ cái "A.", "B.", "C.", "D." ở đầu mỗi phương án).
 4. Trường "correctIndex": SỐ NGUYÊN 0, 1, 2 hoặc 3 tương ứng vị trí đáp án đúng trong mảng "options" (0 = phương án thứ 1, 1 = thứ 2, 2 = thứ 3, 3 = thứ 4).
 5. Trường "explanation": BẮT BUỘC phải viết lời giải chi tiết bằng tiếng Việt cho MỌI câu hỏi (không được để trống), nêu rõ công thức/định luật áp dụng, cách suy luận hoặc thay số tính ra kết quả.`;
