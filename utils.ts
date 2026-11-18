@@ -1,6 +1,7 @@
 
 import katex from 'katex';
 import React from 'react';
+import { EcosystemApp, Student } from './types';
 
 export const getSafeEnv = (key: string): string | undefined => {
   try {
@@ -708,6 +709,94 @@ export const getStudentQuizPracticeStats = (
     byLesson,
   };
 };
+
+export const DEFAULT_ECOSYSTEM_APPS: EcosystemApp[] = [
+  {
+    id: 'eduquiz-vn',
+    name: 'EduQuiz VN',
+    url: 'https://eduquizvn.vercel.app/',
+    description: 'Ứng dụng luyện tập & kiểm tra liên kết chung tài khoản học sinh',
+    enabled: true,
+  },
+];
+
+export const getEffectiveEcosystemApps = (apps?: EcosystemApp[]): EcosystemApp[] => {
+  if (Array.isArray(apps) && apps.length > 0) {
+    return apps;
+  }
+  return DEFAULT_ECOSYSTEM_APPS;
+};
+
+export const isSafeHttpUrl = (rawUrl?: string | null): boolean => {
+  if (!rawUrl || typeof rawUrl !== 'string') return false;
+  try {
+    const parsed = new URL(rawUrl.trim());
+    return parsed.protocol === 'https:' || parsed.protocol === 'http:';
+  } catch {
+    return false;
+  }
+};
+
+export const isEcosystemAppUrl = (url?: string, apps?: EcosystemApp[]): boolean => {
+  if (!isSafeHttpUrl(url)) return false;
+  try {
+    const targetHost = new URL(url!.trim()).hostname.toLowerCase();
+    const list = getEffectiveEcosystemApps(apps).filter(app => app.enabled && isSafeHttpUrl(app.url));
+    return list.some(app => {
+      try {
+        const appHost = new URL(app.url.trim()).hostname.toLowerCase();
+        return targetHost === appHost || targetHost.endsWith(`.${appHost}`);
+      } catch {
+        return false;
+      }
+    });
+  } catch {
+    return false;
+  }
+};
+
+export const buildSsoTargetUrl = (targetUrl: string, token: string): string => {
+  if (!isSafeHttpUrl(targetUrl) || !token) return targetUrl;
+  try {
+    const parsed = new URL(targetUrl.trim());
+    parsed.searchParams.set('sso_token', token);
+    return parsed.toString();
+  } catch {
+    return targetUrl;
+  }
+};
+
+export const requestStudentSsoUrl = async (
+  targetUrl: string,
+  student: Student | null | undefined,
+  apps?: EcosystemApp[]
+): Promise<string> => {
+  if (!targetUrl || !student || student.is_guest || !student.id) {
+    return targetUrl;
+  }
+  if (!isEcosystemAppUrl(targetUrl, apps)) {
+    return targetUrl;
+  }
+  try {
+    const res = await fetch('/api/sso/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        studentId: student.id,
+        targetApp: targetUrl,
+      }),
+    });
+    if (!res.ok) return targetUrl;
+    const json = await res.json();
+    if (json?.token && typeof json.token === 'string') {
+      return buildSsoTargetUrl(targetUrl, json.token);
+    }
+    return targetUrl;
+  } catch {
+    return targetUrl;
+  }
+};
+
 
 
 

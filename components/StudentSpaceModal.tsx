@@ -27,7 +27,10 @@ import {
   ClipboardCheck,
   Filter,
   MessageSquare,
-  BrainCircuit
+  BrainCircuit,
+  Globe,
+  ExternalLink,
+  Zap
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -45,6 +48,8 @@ import {
   evaluateStudentHomeworkStatus,
   parseQuizPracticeRecords,
   getStudentQuizPracticeStats,
+  getEffectiveEcosystemApps,
+  requestStudentSsoUrl,
 } from '../utils';
 
 const customUrlTransform = (url: string) => {
@@ -180,6 +185,12 @@ export const StudentSpaceModal: React.FC<StudentSpaceModalProps> = ({
 
   // Expanded item view
   const [expandedItemId, setExpandedItemId] = useState<string | null>(null);
+  const [ssoLinksMap, setSsoLinksMap] = useState<Record<string, string>>({});
+
+  const ecosystemApps = useMemo(
+    () => getEffectiveEcosystemApps(data?.ecosystemApps).filter((app) => app.enabled && app.url),
+    [data?.ecosystemApps]
+  );
 
   // Fetch all homework comments, study logs and lesson tasks for this student
   const loadStudentData = async () => {
@@ -230,6 +241,30 @@ export const StudentSpaceModal: React.FC<StudentSpaceModalProps> = ({
       setConfirmPassword('');
     }
   }, [isOpen, student?.id, selectedGrade]);
+
+  useEffect(() => {
+    if (!isOpen || !student || student.is_guest || ecosystemApps.length === 0) {
+      setSsoLinksMap({});
+      return;
+    }
+    let active = true;
+    Promise.all(
+      ecosystemApps.map(async (app) => {
+        const ssoUrl = await requestStudentSsoUrl(app.url, student, ecosystemApps);
+        return [app.id, ssoUrl] as const;
+      })
+    ).then((entries) => {
+      if (!active) return;
+      const nextMap: Record<string, string> = {};
+      entries.forEach(([id, url]) => {
+        nextMap[id] = url;
+      });
+      setSsoLinksMap(nextMap);
+    });
+    return () => {
+      active = false;
+    };
+  }, [isOpen, student?.id, student?.is_guest, ecosystemApps]);
 
   // Map nodes to dictionary for fast lookup
   const nodeMap = useMemo(() => {
@@ -825,6 +860,63 @@ export const StudentSpaceModal: React.FC<StudentSpaceModalProps> = ({
                   </div>
                 </div>
               </div>
+
+              {/* HỆ SINH THÁI ỨNG DỤNG LIÊN KẾT (SSO 1 CHẠM) */}
+              {ecosystemApps.length > 0 && (
+                <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm space-y-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-slate-100">
+                    <div className="flex items-center gap-2.5">
+                      <div className="p-2.5 bg-sky-50 text-sky-600 rounded-xl">
+                        <Globe size={18} />
+                      </div>
+                      <div>
+                        <h4 className="text-sm font-black text-slate-800 uppercase tracking-tight">
+                          Hệ sinh thái ứng dụng liên kết
+                        </h4>
+                        <p className="text-[11px] text-slate-400 font-medium">
+                          {student.is_guest
+                            ? 'Đăng nhập bằng Mã HS để sử dụng đăng nhập tự động (SSO) sang các ứng dụng.'
+                            : `Đăng nhập tự động 1 chạm bằng tài khoản ${student.name} không cần nhập lại mật khẩu.`}
+                        </p>
+                      </div>
+                    </div>
+                    {!student.is_guest && (
+                      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-black uppercase tracking-wider self-start sm:self-center">
+                        <Zap size={12} className="fill-emerald-500 text-emerald-600" /> SSO Sẵn sàng
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {ecosystemApps.map((app) => {
+                      const targetHref = (!student.is_guest && ssoLinksMap[app.id]) || app.url;
+                      return (
+                        <a
+                          key={app.id}
+                          href={targetHref}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="group p-4 rounded-2xl border border-slate-200 bg-slate-50/70 hover:bg-sky-50/70 hover:border-sky-300 transition-all flex items-center justify-between gap-3"
+                        >
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs font-black text-slate-800 group-hover:text-sky-700 uppercase tracking-tight truncate">
+                                {app.name}
+                              </span>
+                            </div>
+                            <p className="text-[11px] text-slate-500 mt-0.5 line-clamp-1">
+                              {app.description || app.url}
+                            </p>
+                          </div>
+                          <span className="px-3 py-1.5 rounded-xl bg-sky-600 group-hover:bg-sky-700 text-white text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5 shrink-0 shadow-sm">
+                            Mở app <ExternalLink size={12} />
+                          </span>
+                        </a>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
 
               {/* BẢNG LIỆT KÊ DANH SÁCH TẤT CẢ BÀI HỌC VÀ TRẠNG THÁI HOÀN THÀNH */}
               <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm space-y-4">

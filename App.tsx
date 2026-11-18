@@ -1,10 +1,10 @@
 
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Routes, Route, useNavigate, Navigate } from 'react-router-dom';
-import { Book, Plus, Maximize2, Loader2, BrainCircuit, GraduationCap, ShieldCheck, Search, LogOut, Folder, Globe, Zap, Image as ImageIcon, Settings, ArrowLeft, ArrowRight, Upload, AlertCircle, Users, Cloud, ExternalLink, BookOpen, Sparkles, ChevronRight, Key, ListOrdered, ArrowUpDown, Menu, Paperclip, X, ClipboardCheck, BarChart3 } from 'lucide-react';
+import { Book, Plus, Maximize2, Loader2, BrainCircuit, GraduationCap, ShieldCheck, Search, LogOut, Folder, Globe, Zap, Image as ImageIcon, Settings, ArrowLeft, ArrowRight, Upload, AlertCircle, Users, Cloud, ExternalLink, BookOpen, Sparkles, ChevronRight, Key, ListOrdered, ArrowUpDown, Menu, Paperclip, X, ClipboardCheck, BarChart3, Copy, Check, Trash2, Code2 } from 'lucide-react';
 import { uploadFileToGoogleDrive, signInWithGoogleForDrive, getDriveAccessToken, isGoogleDriveUrl, extractDriveFileId } from './googleDrive';
 import { supabase } from './supabaseClient';
-import { AppData, ResourceLink, BookNode, NodeType, Student } from './types';
+import { AppData, ResourceLink, BookNode, NodeType, Student, EcosystemApp } from './types';
 import { INITIAL_DATA } from './constants';
 import TreeItem from './components/TreeItem';
 import QuizModal from './components/QuizModal';
@@ -22,7 +22,16 @@ import ChapterReorderModal from './components/ChapterReorderModal';
 import { MediaViewer, MediaViewerModal } from './components/MediaViewer';
 import { uploadToImgBB } from './imgbb';
 import { ConfirmModal, ToastNotification, ConfirmState, ToastState } from './components/CustomDialog';
-import { getSafeEnv, SLOGANS } from './utils';
+import {
+  getSafeEnv,
+  SLOGANS,
+  getEffectiveEcosystemApps,
+  requestStudentSsoUrl,
+  isEcosystemAppUrl,
+  isSafeHttpUrl,
+  buildSsoTargetUrl,
+  buildQuizPracticeCommentContent,
+} from './utils';
 
 class ErrorBoundary extends React.Component<any, any> {
   constructor(props: any) {
@@ -74,7 +83,8 @@ const normalizeAppData = (raw: any): AppData => {
   return {
     nodes: Array.isArray(raw.nodes) ? raw.nodes : INITIAL_DATA.nodes,
     globalResources: Array.isArray(raw.globalResources) ? raw.globalResources : INITIAL_DATA.globalResources,
-    homeUrl: typeof raw.homeUrl === 'string' ? raw.homeUrl : INITIAL_DATA.homeUrl
+    homeUrl: typeof raw.homeUrl === 'string' ? raw.homeUrl : INITIAL_DATA.homeUrl,
+    ecosystemApps: Array.isArray(raw.ecosystemApps) ? raw.ecosystemApps : undefined,
   };
 };
 
@@ -248,9 +258,208 @@ const App: React.FC = () => {
         <Route path="/" element={<LandingPage visitorCount={visitorCount} onSelectGrade={handleSelectGrade} selectedGrade={selectedGrade} />} />
         <Route path="/teacher" element={<ProtectedRoute><MainView isAdmin={true} data={data} updateData={updateData} isSyncing={isSyncing} visitorCount={visitorCount} selectedGrade={selectedGrade} syncError={syncError} fetchCloudData={fetchCloudData} student={null} /></ProtectedRoute>} />
         <Route path="/student" element={student ? <MainView isAdmin={false} data={data} updateData={updateData} isSyncing={isSyncing} visitorCount={visitorCount} selectedGrade={selectedGrade} syncError={syncError} fetchCloudData={fetchCloudData} student={student} onLogout={() => { setStudent(null); localStorage.removeItem('student_auth_id'); }} /> : <StudentLogin onLogin={setStudent} gradeId={selectedGrade || 11} themeColor={selectedGrade === 10 ? 'emerald' : selectedGrade === 12 ? 'rose' : 'indigo'} />} />
+        <Route path="/sso-login" element={<SsoGatewayPage onAuthenticated={(s) => { setStudent(s); handleSelectGrade(s.grade_id || 11); }} />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </ErrorBoundary>
+  );
+};
+
+const SsoGatewayPage: React.FC<{ onAuthenticated: (s: Student) => void }> = ({ onAuthenticated }) => {
+  const navigate = useNavigate();
+  const params = new URLSearchParams(window.location.search);
+  const rawRedirect = params.get('redirect') || '';
+  const redirectUrl = isSafeHttpUrl(rawRedirect) ? rawRedirect : '';
+
+  const [gradeId, setGradeId] = useState<number>(() => {
+    const gParam = Number(params.get('grade'));
+    if ([10, 11, 12].includes(gParam)) return gParam;
+    const saved = Number(localStorage.getItem('selected_grade'));
+    return [10, 11, 12].includes(saved) ? saved : 11;
+  });
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [checkingExisting, setCheckingExisting] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const savedId = localStorage.getItem('student_auth_id');
+    if (!savedId || !redirectUrl) {
+      setCheckingExisting(false);
+      return;
+    }
+    let active = true;
+    fetch('/api/sso/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ studentId: savedId, targetApp: redirectUrl }),
+    })
+      .then(async (res) => {
+        if (!res.ok) throw new Error('session expired');
+        return res.json();
+      })
+      .then((json) => {
+        if (!active) return;
+        if (json?.token) {
+          window.location.href = buildSsoTargetUrl(redirectUrl, json.token);
+        } else {
+          setCheckingExisting(false);
+        }
+      })
+      .catch(() => {
+        if (active) setCheckingExisting(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [redirectUrl]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!username.trim() || !password.trim()) return;
+    setSubmitting(true);
+    setError(null);
+    try {
+      const res = await fetch('/api/sso/authenticate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          username: username.trim(),
+          password: password.trim(),
+          grade: gradeId,
+        }),
+      });
+      const json = await res.json();
+      if (!res.ok || !json?.valid || !json?.token || !json?.user) {
+        setError(json?.error || 'Mã học sinh hoặc mật khẩu không chính xác.');
+        setSubmitting(false);
+        return;
+      }
+
+      const loggedStudent: Student = {
+        id: json.user.studentId,
+        name: json.user.username,
+        full_name: json.user.fullName,
+        grade_id: json.user.grade || gradeId,
+      };
+      localStorage.setItem('student_auth_id', loggedStudent.id);
+      localStorage.setItem('selected_grade', String(loggedStudent.grade_id));
+      localStorage.setItem('forum_name', loggedStudent.full_name || loggedStudent.name);
+      onAuthenticated(loggedStudent);
+
+      if (redirectUrl) {
+        window.location.href = buildSsoTargetUrl(redirectUrl, json.token);
+      } else {
+        navigate('/student');
+      }
+    } catch {
+      setError('Không thể kết nối máy chủ xác thực.');
+      setSubmitting(false);
+    }
+  };
+
+  if (checkingExisting) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 p-6 text-center space-y-4">
+        <Loader2 size={36} className="animate-spin text-indigo-600" />
+        <p className="text-xs font-black uppercase tracking-widest text-slate-600">
+          Đang kiểm tra phiên đăng nhập hệ sinh thái...
+        </p>
+      </div>
+    );
+  }
+
+  let targetHost = '';
+  try {
+    if (redirectUrl) targetHost = new URL(redirectUrl).hostname;
+  } catch {}
+
+  return (
+    <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 p-4">
+      <div className="w-full max-w-md bg-white rounded-3xl shadow-xl border border-slate-100 overflow-hidden">
+        <div className="h-2 w-full bg-indigo-600" />
+        <div className="p-6 sm:p-7 space-y-5">
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center shrink-0">
+              <ShieldCheck size={28} />
+            </div>
+            <div className="min-w-0">
+              <h2 className="text-base font-black text-slate-900 uppercase tracking-tight">Đăng nhập Hệ Sinh Thái SSO</h2>
+              <p className="text-[11px] font-semibold text-slate-500 truncate">
+                {targetHost ? `Liên kết tới: ${targetHost}` : 'Tài khoản chung Học tập & EduQuiz VN'}
+              </p>
+            </div>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-3.5">
+            <div>
+              <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1 block mb-1">Khối lớp</label>
+              <div className="grid grid-cols-3 gap-2">
+                {[10, 11, 12].map((g) => (
+                  <button
+                    key={g}
+                    type="button"
+                    onClick={() => setGradeId(g)}
+                    className={`py-2 rounded-xl text-xs font-black transition-all border ${
+                      gradeId === g
+                        ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
+                        : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
+                    }`}
+                  >
+                    Khối {g}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1 block mb-1">Mã học sinh (Username)</label>
+              <input
+                type="text"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                placeholder="Vd: HS08C07"
+                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 focus:border-indigo-500 rounded-xl outline-none font-medium text-xs"
+              />
+            </div>
+
+            <div>
+              <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1 block mb-1">Mật khẩu</label>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••"
+                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 focus:border-indigo-500 rounded-xl outline-none font-medium text-xs"
+              />
+            </div>
+
+            {error && (
+              <p className="text-[11px] font-bold text-red-600 bg-red-50 p-2.5 rounded-xl border border-red-100 text-center">
+                {error}
+              </p>
+            )}
+
+            <button
+              type="submit"
+              disabled={submitting || !username.trim() || !password.trim()}
+              className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-200 disabled:text-slate-400 text-white rounded-xl font-black uppercase tracking-wider text-xs transition-all flex items-center justify-center gap-2 shadow-md shadow-indigo-100"
+            >
+              {submitting ? <Loader2 size={16} className="animate-spin" /> : <>Đăng nhập & Chuyển tiếp <ArrowRight size={15} /></>}
+            </button>
+          </form>
+
+          <button
+            type="button"
+            onClick={() => navigate('/')}
+            className="w-full py-2 text-[10px] font-bold uppercase tracking-widest text-slate-400 hover:text-slate-700 transition-colors"
+          >
+            Quay lại Website Học Tập
+          </button>
+        </div>
+      </div>
+    </div>
   );
 };
 
@@ -392,6 +601,9 @@ const MainView: React.FC<{
   const [searchTerm, setSearchTerm] = useState('');
   const [isQuizOpen, setIsQuizOpen] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [resolvedHomeUrl, setResolvedHomeUrl] = useState(data.homeUrl || '');
+  const [resolvedNodeUrl, setResolvedNodeUrl] = useState('');
+  const lastSyncRef = useRef<number>(0);
   const navigate = useNavigate();
 
   const selectedNode = useMemo(() => data?.nodes?.find(n => n.id === selectedId), [data?.nodes, selectedId]);
@@ -400,6 +612,35 @@ const MainView: React.FC<{
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
+
+  // Tự động gắn SSO token nếu homeUrl hoặc selectedNode.url thuộc hệ sinh thái
+  useEffect(() => {
+    let active = true;
+    const rawHome = data.homeUrl || '';
+    setResolvedHomeUrl(rawHome);
+    if (rawHome && currentStudent && !currentStudent.is_guest && isEcosystemAppUrl(rawHome, data.ecosystemApps)) {
+      requestStudentSsoUrl(rawHome, currentStudent, data.ecosystemApps).then((url) => {
+        if (active && url) setResolvedHomeUrl(url);
+      });
+    }
+    return () => {
+      active = false;
+    };
+  }, [data.homeUrl, data.ecosystemApps, currentStudent?.id, currentStudent?.is_guest]);
+
+  useEffect(() => {
+    let active = true;
+    const rawNodeUrl = selectedNode?.url || '';
+    setResolvedNodeUrl(rawNodeUrl);
+    if (rawNodeUrl && currentStudent && !currentStudent.is_guest && isEcosystemAppUrl(rawNodeUrl, data.ecosystemApps)) {
+      requestStudentSsoUrl(rawNodeUrl, currentStudent, data.ecosystemApps).then((url) => {
+        if (active && url) setResolvedNodeUrl(url);
+      });
+    }
+    return () => {
+      active = false;
+    };
+  }, [selectedNode?.url, data.ecosystemApps, currentStudent?.id, currentStudent?.is_guest]);
 
   // Study Tracking Logic
   useEffect(() => {
@@ -811,12 +1052,79 @@ const MainView: React.FC<{
   
   const [showHomeConfig, setShowHomeConfig] = useState(false);
   const [tempHomeUrl, setTempHomeUrl] = useState(data.homeUrl || '');
+  const [tempEcosystemApps, setTempEcosystemApps] = useState<EcosystemApp[]>(() => getEffectiveEcosystemApps(data.ecosystemApps));
+  const [newAppName, setNewAppName] = useState('');
+  const [newAppUrl, setNewAppUrl] = useState('');
+  const [newAppDesc, setNewAppDesc] = useState('');
+  const [showSsoGuide, setShowSsoGuide] = useState(false);
+  const [copiedSsoSnippet, setCopiedSsoSnippet] = useState(false);
 
   useEffect(() => {
     if (showHomeConfig) {
       setTempHomeUrl(data.homeUrl || '');
+      setTempEcosystemApps(getEffectiveEcosystemApps(data.ecosystemApps));
+      setNewAppName('');
+      setNewAppUrl('');
+      setNewAppDesc('');
     }
-  }, [showHomeConfig, data.homeUrl]);
+  }, [showHomeConfig, data.homeUrl, data.ecosystemApps]);
+
+  // Lắng nghe kết quả từ app vệ tinh (vd: EduQuiz VN) gửi qua postMessage khi nhúng iframe
+  useEffect(() => {
+    const handleEcosystemMessage = async (event: MessageEvent) => {
+      const payload = event?.data;
+      if (!payload || payload.type !== 'EDUQUIZ_RESULT') return;
+      if (!currentStudent || currentStudent.is_guest || !currentStudent.id) return;
+      if (!isSafeHttpUrl(event.origin)) return;
+
+      const now = Date.now();
+      if (now - lastSyncRef.current < 2500) return;
+
+      const total = Number(payload.total || 0);
+      const correct = Number(payload.correct ?? payload.score ?? 0);
+      if (total <= 0 || correct < 0 || correct > total) return;
+
+      lastSyncRef.current = now;
+      const targetLessonId = String(payload.lessonId || selectedId || 'eduquiz_vn');
+      const targetTitle = String(payload.lessonTitle || selectedNode?.title || 'EduQuiz VN');
+      const batchLabel = String(payload.batchLabel || payload.title || 'EduQuiz VN');
+      const createdAt = new Date().toISOString();
+
+      try {
+        const content = buildQuizPracticeCommentContent({
+          studentId: currentStudent.id,
+          studentCode: currentStudent.name,
+          lessonId: targetLessonId,
+          lessonTitle: targetTitle,
+          gradeId: selectedGrade,
+          correct,
+          total,
+          batchLabel,
+          createdAt,
+        });
+        await supabase.from('forum_comments').insert([
+          {
+            nodeId: `quiz_practice_${targetLessonId}`,
+            node_id: `quiz_practice_${targetLessonId}`,
+            author: currentStudent.full_name || currentStudent.name,
+            content,
+            isAdmin: false,
+            is_admin: false,
+            gradeId: selectedGrade,
+            grade_id: selectedGrade,
+            createdAt,
+            created_at: createdAt,
+          },
+        ]);
+        showToast(`Đã đồng bộ kết quả ${correct}/${total} câu từ ${batchLabel}!`, 'success', 'Đồng bộ hệ sinh thái');
+      } catch (err) {
+        console.warn('Sync EDUQUIZ_RESULT failed:', err);
+      }
+    };
+
+    window.addEventListener('message', handleEcosystemMessage);
+    return () => window.removeEventListener('message', handleEcosystemMessage);
+  }, [currentStudent, selectedId, selectedNode?.title, selectedGrade]);
 
   const handleDeleteNode = (id: string) => {
     showConfirm(
@@ -949,9 +1257,9 @@ const MainView: React.FC<{
   };
 
   const handleSaveHomeConfig = () => {
-    updateData({...data, homeUrl: tempHomeUrl});
+    updateData({ ...data, homeUrl: tempHomeUrl, ecosystemApps: tempEcosystemApps });
     setShowHomeConfig(false);
-    showToast("Đã lưu cấu hình cài đặt thành công!", "success");
+    showToast("Đã lưu cấu hình cài đặt & hệ sinh thái thành công!", "success");
   };
 
   const handleSelectNode = (id: string | null, tab: 'content' | 'flashcards' | 'tasks' | 'homework' = 'content') => {
@@ -1243,7 +1551,17 @@ const MainView: React.FC<{
                           </>
                         )}
                       </div>
-                      {selectedNode?.url && <button onClick={()=>window.open(selectedNode.url, '_blank')} className={`p-2 bg-slate-50 text-slate-400 hover:text-${themeColor}-600 rounded-full hover:bg-${themeColor}-50 transition-colors`}><Maximize2 size={16}/></button>}
+                      {selectedNode?.url && (
+                        <a
+                          href={resolvedNodeUrl || selectedNode.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className={`p-2 bg-slate-50 text-slate-400 hover:text-${themeColor}-600 rounded-full hover:bg-${themeColor}-50 transition-colors inline-flex items-center justify-center`}
+                          title="Mở trong tab mới"
+                        >
+                          <Maximize2 size={16}/>
+                        </a>
+                      )}
                     </div>
                   </div>
                   
@@ -1288,6 +1606,8 @@ const MainView: React.FC<{
                           url={selectedNode.url}
                           title={selectedNode.title}
                           themeColor={themeColor}
+                          student={currentStudent}
+                          ecosystemApps={data.ecosystemApps}
                           className="w-full h-full"
                         />
                       ) : (
@@ -1321,7 +1641,7 @@ const MainView: React.FC<{
         ) : (
           <div className="flex-1 flex flex-col overflow-hidden bg-white">
              {data.homeUrl ? (
-               <iframe src={data.homeUrl} className="w-full h-full border-none" title="Trang chủ" />
+               <iframe src={resolvedHomeUrl || data.homeUrl} className="w-full h-full border-none" title="Trang chủ" />
              ) : (
                <div className="flex-1 flex flex-col items-center justify-center text-center p-12">
                  <div className="w-24 h-24 bg-slate-50 rounded-[40px] flex items-center justify-center mb-6 border border-slate-100">
@@ -1382,16 +1702,79 @@ const MainView: React.FC<{
           url={resourceModal.url}
           title={resourceModal.title}
           themeColor={themeColor}
+          student={currentStudent}
+          ecosystemApps={data.ecosystemApps}
           onClose={() => setResourceModal(null)}
         />
       )}
 
 
       {/* MODAL SETTINGS & DATA */}
-      {showHomeConfig && (
+      {showHomeConfig && (() => {
+        const portalOrigin = typeof window !== 'undefined' ? window.location.origin : '';
+        const eduQuizSnippet = `// Code gắn vào EduQuiz VN (bảng users: username + data JSON)
+const PORTAL_API = "${portalOrigin}";
+
+// 1. Vào từ Website Học Vật Lý (?sso_token=...) -> tự động đăng nhập thẳng EduQuiz VN
+export async function loginViaEcosystemSSO(supabaseEduQuiz) {
+  const params = new URLSearchParams(window.location.search);
+  const ssoToken = params.get("sso_token");
+  if (!ssoToken) return null;
+
+  const res = await fetch(\`\${PORTAL_API}/api/sso/verify?token=\${encodeURIComponent(ssoToken)}\`);
+  const { valid, user, syncProof } = await res.json();
+  if (!valid || !user?.username) return null;
+
+  const { data: existing } = await supabaseEduQuiz
+    .from("users")
+    .select("*")
+    .eq("username", user.username)
+    .maybeSingle();
+
+  const mergedData = {
+    ...(existing?.data || {}),
+    fullName: user.fullName || user.username,
+    grade: user.grade,
+    ssoLinked: true,
+    portalStudentId: user.studentId,
+    portalSyncProof: syncProof || existing?.data?.portalSyncProof || "",
+  };
+
+  if (existing) {
+    await supabaseEduQuiz.from("users").update({ data: mergedData }).eq("username", user.username);
+  } else {
+    await supabaseEduQuiz.from("users").insert([{ username: user.username, data: mergedData }]);
+  }
+
+  params.delete("sso_token");
+  window.history.replaceState({}, "", window.location.pathname + (params.toString() ? "?" + params.toString() : ""));
+  return { username: user.username, data: mergedData };
+}
+
+// 2. HS đổi mật khẩu bên EduQuiz VN -> ping đồng bộ đổi luôn bên Web Học Vật Lý
+export async function syncPasswordToPortal({ username, newPassword, oldPassword, syncProof }) {
+  const res = await fetch(\`\${PORTAL_API}/api/sso/change-password\`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ username, newPassword, oldPassword, syncProof }),
+  });
+  return res.json(); // { ok: true }
+}
+
+// 3. Đăng nhập trực tiếp trên EduQuiz bằng MSHS + Mật khẩu Web Học Vật Lý
+export async function loginWithPortalCredentials(username, password) {
+  const res = await fetch(\`\${PORTAL_API}/api/sso/authenticate\`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ username, password }),
+  });
+  return res.json(); // { valid, token, syncProof, user }
+}`;
+
+        return (
         <div className="fixed inset-0 z-[300] bg-slate-900/40 flex items-center justify-center p-4 backdrop-blur-md animate-in fade-in duration-300">
-          <div className="bg-white p-8 rounded-[32px] shadow-2xl w-full max-w-lg space-y-6 border border-slate-100 animate-in zoom-in-95">
-            <h3 className="font-black text-center text-amber-600 uppercase text-[11px] tracking-widest border-b pb-4">Cài đặt Admin & Dữ liệu</h3>
+          <div className="bg-white p-6 sm:p-8 rounded-[32px] shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto custom-scrollbar space-y-6 border border-slate-100 animate-in zoom-in-95">
+            <h3 className="font-black text-center text-amber-600 uppercase text-[11px] tracking-widest border-b pb-4">Cài đặt Admin, Dữ liệu & Hệ sinh thái SSO</h3>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-4">
@@ -1438,13 +1821,142 @@ const MainView: React.FC<{
               </div>
             </div>
 
+            {/* QUẢN LÝ HỆ SINH THÁI SSO */}
+            <div className="pt-4 border-t border-slate-100 space-y-3">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div>
+                  <h4 className="text-[10px] font-black text-sky-700 uppercase tracking-widest flex items-center gap-1.5">
+                    <ShieldCheck size={14} /> Hệ sinh thái App liên kết (SSO)
+                  </h4>
+                  <p className="text-[10px] text-slate-400 mt-0.5">
+                    Khi học sinh mở link thuộc các tên miền dưới đây (ở Trang chủ, Học liệu hoặc Góc học tập), hệ thống tự động gắn mã đăng nhập 1 chạm (?sso_token=...).
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowSsoGuide((v) => !v)}
+                  className="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5 shrink-0"
+                >
+                  <Code2 size={13} /> {showSsoGuide ? 'Ẩn mã kết nối EduQuiz' : 'Mã kết nối EduQuiz VN'}
+                </button>
+              </div>
+
+              <div className="space-y-2">
+                {tempEcosystemApps.map((app) => (
+                  <div key={app.id} className="flex items-center justify-between gap-3 p-3 bg-slate-50 border border-slate-200 rounded-2xl">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-black text-slate-800 truncate">{app.name}</span>
+                        <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase ${app.enabled ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-200 text-slate-500'}`}>
+                          {app.enabled ? 'Đang bật SSO' : 'Đã tắt'}
+                        </span>
+                      </div>
+                      <p className="text-[10px] text-sky-600 font-mono truncate">{app.url}</p>
+                    </div>
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setTempEcosystemApps((prev) =>
+                            prev.map((item) => (item.id === app.id ? { ...item, enabled: !item.enabled } : item))
+                          )
+                        }
+                        className="px-2.5 py-1.5 rounded-xl bg-white border border-slate-200 hover:bg-slate-100 text-[10px] font-bold text-slate-700"
+                      >
+                        {app.enabled ? 'Tắt' : 'Bật'}
+                      </button>
+                      {app.id !== 'eduquiz-vn' && (
+                        <button
+                          type="button"
+                          onClick={() => setTempEcosystemApps((prev) => prev.filter((item) => item.id !== app.id))}
+                          className="p-1.5 rounded-xl text-rose-500 hover:bg-rose-50"
+                          title="Xóa ứng dụng"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* THÊM APP VỆ TINH MỚI */}
+              <div className="grid grid-cols-1 sm:grid-cols-12 gap-2 pt-1">
+                <input
+                  value={newAppName}
+                  onChange={(e) => setNewAppName(e.target.value)}
+                  placeholder="Tên App (vd: Lab Thí Nghiệm)"
+                  className="sm:col-span-4 px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-sky-400"
+                />
+                <input
+                  value={newAppUrl}
+                  onChange={(e) => setNewAppUrl(e.target.value)}
+                  placeholder="https://ten-app.vercel.app/"
+                  className="sm:col-span-5 px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-sky-400"
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!newAppName.trim() || !isSafeHttpUrl(newAppUrl)) {
+                      showToast('Vui lòng nhập Tên App và URL https:// hợp lệ.', 'error');
+                      return;
+                    }
+                    setTempEcosystemApps((prev) => [
+                      ...prev,
+                      {
+                        id: `app-${Date.now()}`,
+                        name: newAppName.trim(),
+                        url: newAppUrl.trim(),
+                        description: newAppDesc.trim() || undefined,
+                        enabled: true,
+                      },
+                    ]);
+                    setNewAppName('');
+                    setNewAppUrl('');
+                    setNewAppDesc('');
+                  }}
+                  className="sm:col-span-3 px-3 py-2 bg-sky-600 hover:bg-sky-700 text-white rounded-xl text-[10px] font-black uppercase tracking-wider flex items-center justify-center gap-1"
+                >
+                  <Plus size={13} /> Thêm App
+                </button>
+              </div>
+
+              {showSsoGuide && (
+                <div className="p-4 bg-slate-900 text-slate-100 rounded-2xl space-y-2.5 border border-slate-800">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-[10px] font-black uppercase tracking-wider text-sky-300">
+                      Đoạn mã dán vào EduQuiz VN (bảng users: username + data JSON)
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        navigator.clipboard?.writeText(eduQuizSnippet);
+                        setCopiedSsoSnippet(true);
+                        setTimeout(() => setCopiedSsoSnippet(false), 2500);
+                      }}
+                      className="px-2.5 py-1 bg-sky-600 hover:bg-sky-500 text-white rounded-lg text-[10px] font-bold flex items-center gap-1"
+                    >
+                      {copiedSsoSnippet ? <><Check size={12} /> Đã sao chép</> : <><Copy size={12} /> Sao chép mã</>}
+                    </button>
+                  </div>
+                  <pre className="text-[10px] leading-relaxed font-mono text-slate-300 overflow-x-auto max-h-56 p-3 bg-slate-950 rounded-xl border border-slate-800">
+                    {eduQuizSnippet}
+                  </pre>
+                  <p className="text-[10px] text-slate-400">
+                    Trang đăng nhập SSO từ EduQuiz quay về Website: <code className="text-amber-300">{portalOrigin}/sso-login?redirect=https://eduquizvn.vercel.app/</code>
+                  </p>
+                </div>
+              )}
+            </div>
+
             <div className="flex gap-4 pt-2 border-t pt-4">
                 <button type="button" onClick={()=>setShowHomeConfig(false)} className="flex-1 py-3 text-[10px] font-bold uppercase text-slate-300 tracking-widest">Đóng</button>
-                <button onClick={handleSaveHomeConfig} className="flex-1 py-3 bg-amber-500 text-white rounded-xl font-bold uppercase text-[10px] shadow-lg shadow-amber-200 tracking-widest">Lưu trang chủ</button>
+                <button onClick={handleSaveHomeConfig} className="flex-1 py-3 bg-amber-500 text-white rounded-xl font-bold uppercase text-[10px] shadow-lg shadow-amber-200 tracking-widest">Lưu cài đặt</button>
             </div>
           </div>
         </div>
-      )}
+        );
+      })()}
 
       {/* MODALS CẤU TRÚC BÀI HỌC */}
       {showStudentManager && (

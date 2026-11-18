@@ -4,7 +4,7 @@ import { ClipboardCheck, Clock, CheckCircle2, AlertCircle, Loader2, Search, X, U
 import { supabase } from '../supabaseClient';
 import { LessonTask, StudyLog, Student } from '../types';
 import { ConfirmModal, ToastNotification, ConfirmState, ToastState } from './CustomDialog';
-import { extractClassCode, isTaskAssignedToStudent } from '../utils';
+import { extractClassCode, isTaskAssignedToStudent, evaluateStudentHomeworkStatus } from '../utils';
 
 interface TaskPanelProps {
   nodeId: string;
@@ -148,35 +148,9 @@ const TaskPanel: React.FC<TaskPanelProps> = ({ nodeId, student, isAdmin, themeCo
         const matCompleted = (matSec / 60) >= minMat;
         const flashCompleted = (flashSec / 60) >= minFlash;
 
-        const sName = (s.name || '').toLowerCase();
-        const sFullName = (s.full_name || s.name || '').toLowerCase();
-        
-        const sHwList = relevantHw.filter((c: any) => {
-          const auth = (c.author || '').toLowerCase();
-          return (sName && auth.includes(sName)) || (sFullName && auth.includes(sFullName));
-        });
-
-        const hwSubmitted = sHwList.length > 0;
-        const hwApproved = sHwList.some((c: any) => {
-          const raw = c.content || '';
-          return (
-            c.isApproved === true || 
-            c.isApproved === 'true' || 
-            c.is_approved === true || 
-            c.is_approved === 'true' || 
-            raw.includes('<!--status:approved-->')
-          );
-        });
-
-        const hwCompleted = !requireHw || hwApproved;
+        const hwEval = evaluateStudentHomeworkStatus(nodeId, s, relevantHw, requireHw);
+        const hwCompleted = hwEval.hwCompleted;
         const fullyCompleted = matCompleted && flashCompleted && hwCompleted;
-
-        let hwStatusStr = 'Không yêu cầu';
-        if (requireHw) {
-          if (hwApproved) hwStatusStr = 'Đã duyệt';
-          else if (hwSubmitted) hwStatusStr = 'Chờ duyệt';
-          else hwStatusStr = 'Chưa nộp';
-        }
 
         return {
           id: s.id,
@@ -186,10 +160,10 @@ const TaskPanel: React.FC<TaskPanelProps> = ({ nodeId, student, isAdmin, themeCo
           flashTime: flashSec,
           matCompleted,
           flashCompleted,
-          hwSubmitted,
-          hwApproved,
+          hwSubmitted: hwEval.hwSubmitted,
+          hwApproved: hwEval.hwApproved,
           hwCompleted,
-          hwStatusStr,
+          hwStatusStr: hwEval.statusLabel,
           fullyCompleted,
           isExpiredAndIncomplete: isTaskExpired && !fullyCompleted
         };
@@ -415,8 +389,11 @@ const TaskPanel: React.FC<TaskPanelProps> = ({ nodeId, student, isAdmin, themeCo
 
       let activeTask: LessonTask | null = null;
       if (student) {
-        // Find task assigned to this student (excluding drafts)
-        activeTask = parsedTasks.find(t => !t.isDraft && isTaskAssignedToStudent(t, student)) || null;
+        // Find tasks assigned to this student (excluding drafts), preferring specific target ('students' > 'class' > 'all')
+        const matchingTasks = parsedTasks.filter(t => !t.isDraft && isTaskAssignedToStudent(t, student));
+        const priority = (t: LessonTask) => (t.targetType === 'students' ? 0 : t.targetType === 'class' ? 1 : 2);
+        matchingTasks.sort((a, b) => priority(a) - priority(b));
+        activeTask = matchingTasks[0] || null;
       } else {
         // Teacher mode: select task by selected index
         activeTask = parsedTasks[selectedTaskIndex] || parsedTasks[0] || null;
@@ -700,27 +677,11 @@ const TaskPanel: React.FC<TaskPanelProps> = ({ nodeId, student, isAdmin, themeCo
   const matCompleted = matTime >= matMinSec;
   const flashCompleted = flashTime >= flashMinSec;
 
-  // BTVN Check for current student
-  const studentNameCode = (student?.name || '').toLowerCase();
-  const studentFullName = (student?.full_name || student?.name || '').toLowerCase();
-  const studentHwList = hwComments.filter((c: any) => {
-    const auth = (c.author || '').toLowerCase();
-    return (studentNameCode && auth.includes(studentNameCode)) || (studentFullName && auth.includes(studentFullName));
-  });
-
-  const hwSubmitted = studentHwList.length > 0;
-  const hwApproved = studentHwList.some((c: any) => {
-    const raw = c.content || '';
-    return (
-      c.isApproved === true || 
-      c.isApproved === 'true' || 
-      c.is_approved === true || 
-      c.is_approved === 'true' || 
-      raw.includes('<!--status:approved-->')
-    );
-  });
-
-  const hwCompleted = !task?.requireHomework || hwApproved;
+  // BTVN Check for current student (strictly evaluating only homework tasks assigned to this student)
+  const hwEval = evaluateStudentHomeworkStatus(nodeId, student, hwComments, Boolean(task?.requireHomework));
+  const hwSubmitted = hwEval.hwSubmitted;
+  const hwApproved = hwEval.hwApproved;
+  const hwCompleted = hwEval.hwCompleted;
   const isFullyCompleted = matCompleted && flashCompleted && hwCompleted;
   const isExpired = checkIsExpired(task?.endDate);
   const isLocked = isExpired && !isFullyCompleted;
@@ -1353,28 +1314,41 @@ const TaskPanel: React.FC<TaskPanelProps> = ({ nodeId, student, isAdmin, themeCo
                   </div>
 
                   {/* Task 3: BTVN */}
-                  {task.requireHomework && (
+                  {(task.requireHomework || hwEval.hwRequired) && (
                     <div className="space-y-2 p-4 bg-indigo-50/40 rounded-2xl border border-indigo-100">
-                      <div className="flex justify-between items-center">
+                      <div className="flex justify-between items-center gap-2 flex-wrap">
                         <span className="text-xs font-bold text-indigo-900 uppercase tracking-wide flex items-center gap-1.5">
                           <FileText size={14} className="text-indigo-600" /> 3. Bài tập về nhà (BTVN)
+                          {hwEval.totalAssignedHw > 0 && (
+                            <span className="text-[10px] font-bold text-indigo-600 bg-indigo-100/70 px-2 py-0.5 rounded-full">
+                              {hwEval.totalAssignedHw} nhiệm vụ giao cho em
+                            </span>
+                          )}
                         </span>
                         <span className={`text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase ${
-                          hwApproved ? 'bg-emerald-100 text-emerald-800' : hwSubmitted ? 'bg-amber-100 text-amber-800' : 'bg-red-100 text-red-700'
+                          !hwEval.hwRequired
+                            ? 'bg-slate-100 text-slate-600'
+                            : hwApproved
+                              ? 'bg-emerald-100 text-emerald-800'
+                              : hwSubmitted
+                                ? 'bg-amber-100 text-amber-800'
+                                : 'bg-red-100 text-red-700'
                         }`}>
-                          {hwApproved ? 'GV đã duyệt' : hwSubmitted ? 'Chờ GV duyệt' : 'Chưa nộp'}
+                          {hwEval.statusLabel}
                         </span>
                       </div>
                       
                       <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-indigo-100/60">
                         <p className="text-[11px] font-medium text-slate-600">
-                          {hwApproved 
-                            ? '✅ Bài tập về nhà của em đã được Giáo viên chấm đạt!' 
-                            : hwSubmitted 
-                              ? '⏳ Bài nộp của em đang chờ Giáo viên kiểm tra và phê duyệt.' 
-                              : '⚠️ Em cần nộp bài tập về nhà và được Giáo viên duyệt bài.'}
+                          {!hwEval.hwRequired
+                            ? 'ℹ️ Các nhiệm vụ BTVN trong bài này được giao cho nhóm/lớp khác.'
+                            : hwApproved 
+                              ? '✅ Bài tập về nhà của em đã được Giáo viên chấm đạt!' 
+                              : hwSubmitted 
+                                ? `⏳ Bài nộp của em (${hwEval.submittedHwCount}/${Math.max(1, hwEval.totalAssignedHw)}) đang chờ Giáo viên kiểm tra và phê duyệt.` 
+                                : `⚠️ Em cần hoàn thành ${hwEval.totalAssignedHw > 1 ? `${hwEval.totalAssignedHw} nhiệm vụ` : ''} bài tập về nhà được giao và chờ Giáo viên duyệt.`}
                         </p>
-                        {onSwitchTab && !hwApproved && (
+                        {onSwitchTab && hwEval.hwRequired && !hwApproved && (
                           <button
                             type="button"
                             onClick={() => onSwitchTab('homework')}
@@ -1436,6 +1410,44 @@ const TaskPanel: React.FC<TaskPanelProps> = ({ nodeId, student, isAdmin, themeCo
                    </div>
                 </div>
              </div>
+          </div>
+        </div>
+      ) : !isAdmin && hwEval.totalAssignedHw > 0 ? (
+        <div className="bg-white p-6 sm:p-8 rounded-[32px] border border-indigo-100 shadow-sm space-y-4">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <h4 className="text-sm font-black text-indigo-950 uppercase tracking-wide flex items-center gap-2">
+                <FileText size={16} className="text-indigo-600" />
+                Nhiệm vụ Bài tập về nhà được giao cho em ({hwEval.totalAssignedHw} nhiệm vụ)
+              </h4>
+              <p className="text-xs text-slate-500 mt-1">
+                Giáo viên đã giao riêng cho em {hwEval.totalAssignedHw} nhiệm vụ trong mục Bài tập về nhà của bài học này.
+              </p>
+            </div>
+            <span className={`text-[10px] font-black px-3 py-1 rounded-full uppercase ${
+              hwApproved ? 'bg-emerald-100 text-emerald-800' : hwSubmitted ? 'bg-amber-100 text-amber-800' : 'bg-red-100 text-red-700'
+            }`}>
+              {hwEval.statusLabel}
+            </span>
+          </div>
+
+          <div className="flex flex-wrap items-center justify-between gap-3 p-4 bg-indigo-50/40 rounded-2xl border border-indigo-100">
+            <p className="text-xs font-medium text-slate-600">
+              {hwApproved
+                ? '✅ Em đã hoàn thành và được Giáo viên duyệt toàn bộ nhiệm vụ BTVN được giao!'
+                : hwSubmitted
+                  ? `⏳ Đã nộp ${hwEval.submittedHwCount}/${hwEval.totalAssignedHw} nhiệm vụ, đang chờ Giáo viên chấm duyệt.`
+                  : `⚠️ Em còn ${hwEval.totalAssignedHw - hwEval.submittedHwCount} nhiệm vụ BTVN chưa nộp.`}
+            </p>
+            {onSwitchTab && (
+              <button
+                type="button"
+                onClick={() => onSwitchTab('homework')}
+                className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-black uppercase tracking-wider shadow-sm transition-all flex items-center gap-1.5"
+              >
+                <span>Mở mục Bài tập về nhà</span> <ArrowRight size={14} />
+              </button>
+            )}
           </div>
         </div>
       ) : (
@@ -1610,11 +1622,11 @@ const TaskPanel: React.FC<TaskPanelProps> = ({ nodeId, student, isAdmin, themeCo
                                    {s.flashCompleted ? 'Đã luyện Flashcard' : 'Flashcard chưa đạt'}
                                 </p>
                              </div>
-                             {task?.requireHomework && (
+                             {(task?.requireHomework || s.hwStatusStr !== 'Không yêu cầu') && (
                                <div className="flex items-center gap-2">
                                   {s.hwApproved ? <CheckCircle2 size={12} className="text-emerald-500"/> : <AlertCircle size={12} className="text-indigo-500"/>}
                                   <p className="text-[9px] font-bold text-slate-500 uppercase tracking-tight">
-                                     BTVN: <span className={s.hwApproved ? 'text-emerald-600 font-black' : s.hwSubmitted ? 'text-amber-600 font-black' : 'text-red-500'}>{s.hwStatusStr}</span>
+                                     BTVN: <span className={s.hwApproved ? 'text-emerald-600 font-black' : s.hwSubmitted ? 'text-amber-600 font-black' : s.hwStatusStr === 'Không giao cho HS này' ? 'text-slate-400' : 'text-red-500'}>{s.hwStatusStr}</span>
                                   </p>
                                </div>
                              )}

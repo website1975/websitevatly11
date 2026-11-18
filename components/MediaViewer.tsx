@@ -1,5 +1,7 @@
-import React, { useState } from 'react';
-import { Music, FileText, Cloud, Globe, ExternalLink, BookOpen, AlertCircle, RefreshCw, Monitor, X } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Music, FileText, Cloud, Globe, ExternalLink, BookOpen, AlertCircle, RefreshCw, Monitor, X, ShieldCheck } from 'lucide-react';
+import { EcosystemApp, Student } from '../types';
+import { isEcosystemAppUrl, requestStudentSsoUrl } from '../utils';
 
 const YoutubeIcon = ({ size = 18, className = "" }: { size?: number; className?: string }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" className={className}>
@@ -100,6 +102,8 @@ interface MediaViewerProps {
   title?: string;
   themeColor?: string;
   className?: string;
+  student?: Student | null;
+  ecosystemApps?: EcosystemApp[];
   onClose?: () => void;
 }
 
@@ -108,12 +112,36 @@ export const MediaViewer: React.FC<MediaViewerProps> = ({
   title = 'Nội dung học liệu',
   themeColor = 'indigo',
   className = 'w-full h-full',
+  student,
+  ecosystemApps,
   onClose
 }) => {
   const [iframeLoading, setIframeLoading] = useState(true);
   const [viewMode, setViewMode] = useState<'embed' | 'card'>('embed');
-  const mediaType = detectMediaType(url);
-  const formattedUrl = formatIframeUrl(url);
+  const [resolvedUrl, setResolvedUrl] = useState(url);
+
+  const isEcosystemLink = isEcosystemAppUrl(url, ecosystemApps);
+  const hasSsoSession = isEcosystemLink && Boolean(student && !student.is_guest && student.id);
+
+  useEffect(() => {
+    let active = true;
+    setResolvedUrl(url);
+    if (!url || !student || student.is_guest || !isEcosystemAppUrl(url, ecosystemApps)) {
+      return;
+    }
+    requestStudentSsoUrl(url, student, ecosystemApps).then((ssoUrl) => {
+      if (active && ssoUrl) {
+        setResolvedUrl(ssoUrl);
+      }
+    });
+    return () => {
+      active = false;
+    };
+  }, [url, student?.id, student?.is_guest, ecosystemApps]);
+
+  const effectiveUrl = resolvedUrl || url;
+  const mediaType = detectMediaType(effectiveUrl);
+  const formattedUrl = formatIframeUrl(effectiveUrl);
 
   // Extract domain for display
   let domain = '';
@@ -338,7 +366,14 @@ export const MediaViewer: React.FC<MediaViewerProps> = ({
         <div className="flex items-center gap-2 min-w-0">
           <Globe size={15} className="text-sky-400 shrink-0" />
           <div className="min-w-0">
-            <span className="font-bold text-white truncate block text-[11px]">{title}</span>
+            <div className="flex items-center gap-1.5">
+              <span className="font-bold text-white truncate block text-[11px]">{title}</span>
+              {hasSsoSession && (
+                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 text-[9px] font-bold shrink-0">
+                  <ShieldCheck size={10} /> SSO Tự động
+                </span>
+              )}
+            </div>
             <span className="text-[9px] text-slate-400 truncate block">Nguồn: {domain}</span>
           </div>
         </div>
@@ -351,7 +386,7 @@ export const MediaViewer: React.FC<MediaViewerProps> = ({
             <Monitor size={12} /> {viewMode === 'embed' ? 'Thẻ chuyển hướng' : 'Xem dạng nhúng'}
           </button>
           <a
-            href={url}
+            href={effectiveUrl}
             target="_blank"
             rel="noopener noreferrer"
             className="px-3 py-1 bg-sky-500 hover:bg-sky-600 text-white font-black text-[10px] uppercase rounded-lg flex items-center gap-1.5 shadow-sm transition-all"
@@ -393,7 +428,7 @@ export const MediaViewer: React.FC<MediaViewerProps> = ({
                 Thử xem nhúng
               </button>
               <a
-                href={url}
+                href={effectiveUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex-1 py-3 bg-sky-600 hover:bg-sky-700 text-white rounded-2xl font-bold text-xs shadow-lg shadow-sky-200 transition-all flex items-center justify-center gap-2"
@@ -412,7 +447,7 @@ export const MediaViewer: React.FC<MediaViewerProps> = ({
               <span>Nếu trang bị trắng hoặc lỗi kết nối: hãy bấm nút <b>"Mở tab mới"</b> ở góc phải.</span>
             </span>
             <a
-              href={url}
+              href={effectiveUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="px-2 py-0.5 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded text-[9px] shrink-0 ml-2"
@@ -437,6 +472,8 @@ interface MediaViewerModalProps {
   url: string;
   title: string;
   themeColor?: string;
+  student?: Student | null;
+  ecosystemApps?: EcosystemApp[];
   onClose: () => void;
 }
 
@@ -444,6 +481,8 @@ export const MediaViewerModal: React.FC<MediaViewerModalProps> = ({
   url,
   title,
   themeColor = 'indigo',
+  student,
+  ecosystemApps,
   onClose
 }) => {
   return (
@@ -453,6 +492,8 @@ export const MediaViewerModal: React.FC<MediaViewerModalProps> = ({
           url={url}
           title={title}
           themeColor={themeColor}
+          student={student}
+          ecosystemApps={ecosystemApps}
           onClose={onClose}
           className="w-full h-full"
         />

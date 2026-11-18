@@ -17,6 +17,9 @@ export interface ForumComment {
   isAdmin: boolean;
   isApproved?: boolean;
   isPublic?: boolean;
+  targetType?: 'all' | 'class' | 'students';
+  targetClasses?: string[];
+  targetStudentIds?: string[];
 }
 
 export interface BookNode {
@@ -30,10 +33,19 @@ export interface BookNode {
   order: number;
 }
 
+export interface EcosystemApp {
+  id: string;
+  name: string;
+  url: string;
+  description?: string;
+  enabled: boolean;
+}
+
 export interface AppData {
   nodes: BookNode[];
   globalResources: ResourceLink[];
   homeUrl?: string; // Link trang chào mừng/trang chủ
+  ecosystemApps?: EcosystemApp[]; // Danh sách các Web App liên kết SSO (vd: EduQuiz VN)
 }
 
 export interface Flashcard {
