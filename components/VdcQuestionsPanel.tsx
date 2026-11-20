@@ -159,7 +159,9 @@ export const VdcQuestionsPanel: React.FC<VdcQuestionsPanelProps> = ({
 }) => {
   const [questions, setQuestions] = useState<VdcQuestion[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingPageDetails, setLoadingPageDetails] = useState(false);
   const [dbStatus, setDbStatus] = useState<'checking' | 'connected' | 'fallback'>('checking');
+  const loadedDetailIdsRef = useRef<Set<string>>(new Set());
   const [selectedChapter, setSelectedChapter] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [filterLevel, setFilterLevel] = useState<string>('all');
@@ -356,11 +358,10 @@ export const VdcQuestionsPanel: React.FC<VdcQuestionsPanelProps> = ({
   // State mở menu các chương trên thiết bị di động (iPhone / Tablet)
   const [isMobileChapterMenuOpen, setIsMobileChapterMenuOpen] = useState(false);
 
-  // ĐỒNG BỘ ĐÁM MÂY SUPABASE: Tải cấu hình chương và thiết lập Realtime giữa các trình duyệt/thiết bị
+  // ĐỒNG BỘ ĐÁM MÂY SUPABASE: Thiết lập Realtime giữa các trình duyệt/thiết bị (tải lần đầu do loadQuestions đảm nhận)
   useEffect(() => {
     let isMounted = true;
 
-    // 1. Tải từ localStorage trước để hiển thị tức thì
     try {
       const savedOrder = localStorage.getItem(`vdc_chapter_order_g${gradeId}`);
       if (savedOrder) setChapterOrder(JSON.parse(savedOrder));
@@ -368,38 +369,6 @@ export const VdcQuestionsPanel: React.FC<VdcQuestionsPanelProps> = ({
       if (savedDeleted) setDeletedChapters(JSON.parse(savedDeleted));
     } catch {}
 
-    // 2. Luôn nạp dữ liệu chính xác nhất từ Supabase app_settings (ID: 8000 + gradeId)
-    const fetchCloudSettings = async () => {
-      try {
-        const { data: vdcSettings, error: sErr } = await supabase
-          .from('app_settings')
-          .select('data')
-          .eq('id', 8000 + gradeId)
-          .maybeSingle();
-
-        if (!sErr && vdcSettings?.data && isMounted) {
-          const sData = vdcSettings.data as any;
-          if (Array.isArray(sData.deleted_chapters)) {
-            setDeletedChapters(sData.deleted_chapters);
-            try {
-              localStorage.setItem(`vdc_deleted_chapters_g${gradeId}`, JSON.stringify(sData.deleted_chapters));
-            } catch {}
-          }
-          if (Array.isArray(sData.chapter_order)) {
-            setChapterOrder(sData.chapter_order);
-            try {
-              localStorage.setItem(`vdc_chapter_order_g${gradeId}`, JSON.stringify(sData.chapter_order));
-            } catch {}
-          }
-        }
-      } catch (err) {
-        console.warn("Lỗi khi tải cấu hình VDC từ đám mây Supabase:", err);
-      }
-    };
-
-    fetchCloudSettings();
-
-    // 3. Đăng ký Supabase Realtime: Khi một trình duyệt xóa/sắp xếp chương, các trình duyệt khác tự cập nhật ngay
     const channel = supabase
       .channel(`vdc_sync_realtime_g${gradeId}`)
       .on('postgres_changes', {
@@ -422,7 +391,7 @@ export const VdcQuestionsPanel: React.FC<VdcQuestionsPanelProps> = ({
               localStorage.setItem(`vdc_chapter_order_g${gradeId}`, JSON.stringify(sData.chapter_order));
             } catch {}
           }
-          if (Array.isArray(sData.questions) && sData.questions.length > 0) {
+          if (dbStatus === 'fallback' && Array.isArray(sData.questions) && sData.questions.length > 0) {
             setQuestions(sData.questions);
           }
         }
@@ -433,22 +402,33 @@ export const VdcQuestionsPanel: React.FC<VdcQuestionsPanelProps> = ({
       isMounted = false;
       supabase.removeChannel(channel);
     };
-  }, [gradeId]);
+  }, [gradeId, dbStatus]);
+
+  const syncVdcAppSettings = useCallback(async (
+    nextChapterOrder: string[],
+    nextDeletedChapters: string[],
+    fallbackQuestions?: VdcQuestion[]
+  ) => {
+    const payload: Record<string, any> = {
+      chapter_order: nextChapterOrder,
+      deleted_chapters: nextDeletedChapters,
+      updated_at: new Date().toISOString()
+    };
+    if (dbStatus !== 'connected' && fallbackQuestions) {
+      payload.questions = fallbackQuestions;
+    }
+    await supabase.from('app_settings').upsert({
+      id: 8000 + gradeId,
+      data: payload
+    });
+  }, [dbStatus, gradeId]);
 
   // Khôi phục các chương đã ẩn khỏi VDC (lấy lại từ cấu trúc sách)
   const handleRestoreDeletedChapters = async () => {
     setDeletedChapters([]);
     try {
       localStorage.removeItem(`vdc_deleted_chapters_g${gradeId}`);
-      await supabase.from('app_settings').upsert({
-        id: 8000 + gradeId,
-        data: {
-          questions,
-          chapter_order: chapterOrder,
-          deleted_chapters: [],
-          updated_at: new Date().toISOString()
-        }
-      });
+      await syncVdcAppSettings(chapterOrder, [], questions);
       showToast('Đã khôi phục các chương từ sách vào menu VDC thành công!', 'success');
     } catch (e) {
       console.warn("Lỗi khi khôi phục chương:", e);
@@ -557,16 +537,7 @@ export const VdcQuestionsPanel: React.FC<VdcQuestionsPanelProps> = ({
     setChapterOrder(newOrderedTitles);
     try {
       localStorage.setItem(`vdc_chapter_order_g${gradeId}`, JSON.stringify(newOrderedTitles));
-      // Lưu vào Supabase fallback app_settings
-      await supabase.from('app_settings').upsert({
-        id: 8000 + gradeId,
-        data: {
-          questions,
-          chapter_order: newOrderedTitles,
-          deleted_chapters: deletedChapters,
-          updated_at: new Date().toISOString()
-        }
-      });
+      await syncVdcAppSettings(newOrderedTitles, deletedChapters, questions);
       showToast(`Đã chuyển chương "${chapterTitle}" ${direction === 'up' ? 'lên' : 'xuống'} thành công!`, 'success');
     } catch (e) {
       console.warn("Lỗi khi lưu thứ tự chương:", e);
@@ -605,16 +576,8 @@ export const VdcQuestionsPanel: React.FC<VdcQuestionsPanelProps> = ({
           setChapterOrder(updatedOrder);
           localStorage.setItem(`vdc_chapter_order_g${gradeId}`, JSON.stringify(updatedOrder));
 
-          // 5. Cập nhật backup vào app_settings VDC (ID 8000 + gradeId)
-          await supabase.from('app_settings').upsert({
-            id: 8000 + gradeId,
-            data: {
-              questions: remainingQuestions,
-              chapter_order: updatedOrder,
-              deleted_chapters: updatedDeleted,
-              updated_at: new Date().toISOString()
-            }
-          });
+          // 5. Cập nhật cấu hình chương vào app_settings VDC (chỉ lưu backup questions khi ở chế độ fallback)
+          await syncVdcAppSettings(updatedOrder, updatedDeleted, remainingQuestions);
 
           // 6. Nếu đang chọn chương này thì chuyển về 'all'
           if (selectedChapter === ch.title || selectedChapter === ch.id) {
@@ -671,16 +634,8 @@ export const VdcQuestionsPanel: React.FC<VdcQuestionsPanelProps> = ({
       setChapterOrder(updatedOrder);
       localStorage.setItem(`vdc_chapter_order_g${gradeId}`, JSON.stringify(updatedOrder));
 
-      // 4. Cập nhật app_settings fallback cho VDC
-      await supabase.from('app_settings').upsert({
-        id: 8000 + gradeId,
-        data: {
-          questions: updatedQuestions,
-          chapter_order: updatedOrder,
-          deleted_chapters: deletedChapters,
-          updated_at: new Date().toISOString()
-        }
-      });
+      // 4. Cập nhật cấu hình chương vào app_settings
+      await syncVdcAppSettings(updatedOrder, deletedChapters, updatedQuestions);
 
       // 5. Cập nhật selectedChapter nếu đang chọn chương này
       if (selectedChapter === oldTitle || selectedChapter === editingChapter.id) {
@@ -714,15 +669,7 @@ export const VdcQuestionsPanel: React.FC<VdcQuestionsPanelProps> = ({
       localStorage.setItem(`vdc_chapter_order_g${gradeId}`, JSON.stringify(updatedOrder));
 
       // 3. Đồng bộ lên Supabase app_settings (ID: 8000 + gradeId) để các thiết bị / trình duyệt khác thấy ngay
-      await supabase.from('app_settings').upsert({
-        id: 8000 + gradeId,
-        data: {
-          questions,
-          chapter_order: updatedOrder,
-          deleted_chapters: updatedDeleted,
-          updated_at: new Date().toISOString()
-        }
-      });
+      await syncVdcAppSettings(updatedOrder, updatedDeleted, questions);
 
       // 4. Chọn ngay chương vừa thêm
       setSelectedChapter(titleToAdd);
@@ -736,13 +683,13 @@ export const VdcQuestionsPanel: React.FC<VdcQuestionsPanelProps> = ({
     }
   };
 
-  // Tải danh sách câu hỏi & cấu hình Menu chương từ Supabase
+  // Tải danh sách mục lục nhẹ & cấu hình Menu chương từ Supabase (chỉ tải chi tiết 5 câu theo trang đang xem)
   const loadQuestions = useCallback(async () => {
     setLoading(true);
     try {
       let loadedQuestions: VdcQuestion[] = [];
 
-      // 1. Luôn tải cấu hình VDC (danh sách chương đã xóa/ẩn, thứ tự chương) từ Supabase app_settings (8000 + gradeId)
+      // 1. Tải cấu hình VDC (thứ tự chương, chương ẩn) từ app_settings (8000 + gradeId)
       try {
         const { data: vdcSettings, error: sErr } = await supabase
           .from('app_settings')
@@ -772,31 +719,44 @@ export const VdcQuestionsPanel: React.FC<VdcQuestionsPanelProps> = ({
         console.warn("Lỗi khi tải app_settings VDC:", settingsErr);
       }
 
-      // 2. Thử truy vấn bảng vdc_questions
+      // 2. Truy vấn bảng vdc_questions CHỈ lấy các cột mục lục nhẹ (không tải trước content/solution/options nặng)
       const { data: dbData, error } = await supabase
         .from('vdc_questions')
-        .select('*')
+        .select('id, grade_id, chapter_id, chapter_title, title, question_type, level, source, order_num, created_at, updated_at')
         .eq('grade_id', gradeId)
         .order('order_num', { ascending: true })
         .order('created_at', { ascending: false });
 
       if (!error && dbData && dbData.length > 0) {
+        loadedDetailIdsRef.current.clear();
         setDbStatus('connected');
-        setQuestions(dbData as VdcQuestion[]);
+        const stubs: VdcQuestion[] = (dbData as any[]).map(item => ({
+          ...item,
+          content: '',
+          options: [],
+          solution: '',
+        }));
+        setQuestions(stubs);
       } else if (!error && dbData) {
+        loadedDetailIdsRef.current.clear();
         setDbStatus('connected');
         if (loadedQuestions.length > 0) {
+          loadedQuestions.forEach(q => loadedDetailIdsRef.current.add(q.id));
           setQuestions(loadedQuestions);
         } else {
-          setQuestions(SAMPLE_VDC_QUESTIONS.filter(q => q.grade_id === gradeId));
+          const samples = SAMPLE_VDC_QUESTIONS.filter(q => q.grade_id === gradeId);
+          samples.forEach(q => loadedDetailIdsRef.current.add(q.id));
+          setQuestions(samples);
         }
       } else {
-        // Lỗi (chưa tạo bảng vdc_questions trên Supabase) -> Dùng Fallback
         setDbStatus('fallback');
         if (loadedQuestions.length > 0) {
+          loadedQuestions.forEach(q => loadedDetailIdsRef.current.add(q.id));
           setQuestions(loadedQuestions);
         } else {
-          setQuestions(SAMPLE_VDC_QUESTIONS.filter(q => q.grade_id === gradeId));
+          const samples = SAMPLE_VDC_QUESTIONS.filter(q => q.grade_id === gradeId);
+          samples.forEach(q => loadedDetailIdsRef.current.add(q.id));
+          setQuestions(samples);
         }
       }
     } catch (err) {
@@ -859,6 +819,98 @@ export const VdcQuestionsPanel: React.FC<VdcQuestionsPanelProps> = ({
     }
   }, [totalPages, currentPage]);
 
+  // Chỉ tải nội dung chi tiết (content, options, solution, images) cho đúng các câu đang hiển thị ở trang hiện tại
+  useEffect(() => {
+    if (dbStatus !== 'connected' || loading || paginatedQuestions.length === 0) return;
+
+    const missingIds = paginatedQuestions
+      .map(q => q.id)
+      .filter(id => id && !loadedDetailIdsRef.current.has(id));
+
+    if (missingIds.length === 0) return;
+
+    let cancelled = false;
+    setLoadingPageDetails(true);
+    Promise.resolve(
+      supabase
+        .from('vdc_questions')
+        .select('*')
+        .in('id', missingIds)
+    )
+      .then(({ data: detailRows, error }) => {
+        if (cancelled) return;
+        if (!error && Array.isArray(detailRows) && detailRows.length > 0) {
+          const detailMap = new Map<string, VdcQuestion>();
+          detailRows.forEach((row: any) => {
+            if (row?.id) {
+              loadedDetailIdsRef.current.add(row.id);
+              detailMap.set(row.id, row as VdcQuestion);
+            }
+          });
+          setQuestions(prev =>
+            prev.map(q => (detailMap.has(q.id) ? detailMap.get(q.id)! : q))
+          );
+        } else {
+          missingIds.forEach(id => loadedDetailIdsRef.current.add(id));
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingPageDetails(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [dbStatus, loading, paginatedQuestions]);
+
+  // Nếu người dùng tìm kiếm theo nội dung bên trong đề/lời giải chưa tải, tìm bổ sung trên server (giới hạn 25 câu)
+  useEffect(() => {
+    const rawTerm = searchTerm.trim();
+    if (dbStatus !== 'connected' || rawTerm.length < 2) return;
+
+    let cancelled = false;
+    const timer = setTimeout(async () => {
+      try {
+        const cleanTerm = rawTerm.replace(/[,%()]/g, ' ').trim();
+        if (!cleanTerm) return;
+        const escapedSearch = cleanTerm.replace(/[%_\\"]/g, '\\$&');
+        let q = supabase
+          .from('vdc_questions')
+          .select('*')
+          .eq('grade_id', gradeId)
+          .or(`title.ilike."%${escapedSearch}%",content.ilike."%${escapedSearch}%",solution.ilike."%${escapedSearch}%",source.ilike."%${escapedSearch}%"`)
+          .limit(25);
+        if (selectedChapter !== 'all') {
+          q = q.ilike('chapter_title', selectedChapter.trim());
+        }
+        const { data: hits, error } = await q;
+        if (cancelled || error || !Array.isArray(hits) || hits.length === 0) return;
+
+        const hitMap = new Map<string, VdcQuestion>();
+        hits.forEach((row: any) => {
+          if (row?.id) {
+            loadedDetailIdsRef.current.add(row.id);
+            hitMap.set(row.id, row as VdcQuestion);
+          }
+        });
+        setQuestions(prev => {
+          const merged = prev.map(item => (hitMap.has(item.id) ? hitMap.get(item.id)! : item));
+          hitMap.forEach((val, key) => {
+            if (!merged.some(item => item.id === key)) {
+              merged.push(val);
+            }
+          });
+          return merged;
+        });
+      } catch {}
+    }, 350);
+
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [searchTerm, dbStatus, gradeId, selectedChapter]);
+
   // Đếm số câu theo từng chương
   const countByChapter = useMemo(() => {
     const counts: Record<string, number> = {};
@@ -880,8 +932,8 @@ export const VdcQuestionsPanel: React.FC<VdcQuestionsPanelProps> = ({
   };
 
   const expandAllSolutions = () => {
-    const next: Record<string, boolean> = {};
-    filteredQuestions.forEach(q => { next[q.id] = true; });
+    const next: Record<string, boolean> = { ...expandedSolutions };
+    paginatedQuestions.forEach(q => { next[q.id] = true; });
     setExpandedSolutions(next);
   };
 
@@ -950,19 +1002,11 @@ export const VdcQuestionsPanel: React.FC<VdcQuestionsPanelProps> = ({
             const { error } = await supabase.from('vdc_questions').delete().eq('id', id);
             if (error) throw error;
           }
+          loadedDetailIdsRef.current.delete(id);
           const nextList = questions.filter(q => q.id !== id);
           setQuestions(nextList);
 
-          // Cập nhật bản sao lưu fallback (bảo toàn thứ tự và các chương tùy chỉnh)
-          await supabase.from('app_settings').upsert({
-            id: 8000 + gradeId,
-            data: { 
-              questions: nextList, 
-              chapter_order: chapterOrder,
-              deleted_chapters: deletedChapters,
-              updated_at: new Date().toISOString() 
-            }
-          });
+          await syncVdcAppSettings(chapterOrder, deletedChapters, nextList);
 
           showToast('Đã xóa câu hỏi thành công!', 'success');
         } catch (err: any) {
@@ -1028,7 +1072,8 @@ export const VdcQuestionsPanel: React.FC<VdcQuestionsPanelProps> = ({
         }
       }
 
-      // 2. Cập nhật state nội bộ
+      // 2. Cập nhật state nội bộ & cache chi tiết
+      loadedDetailIdsRef.current.add(newOrUpdated.id);
       let nextQuestions: VdcQuestion[];
       if (editingQuestion) {
         nextQuestions = questions.map(q => q.id === newOrUpdated.id ? newOrUpdated : q);
@@ -1037,16 +1082,8 @@ export const VdcQuestionsPanel: React.FC<VdcQuestionsPanelProps> = ({
       }
       setQuestions(nextQuestions);
 
-      // 3. Luôn lưu một bản vào fallback app_settings để đảm bảo an toàn 100% (bảo toàn thứ tự chương và chương tùy chỉnh)
-      await supabase.from('app_settings').upsert({
-        id: 8000 + gradeId,
-        data: { 
-          questions: nextQuestions, 
-          chapter_order: chapterOrder,
-          deleted_chapters: deletedChapters,
-          updated_at: new Date().toISOString() 
-        }
-      });
+      // 3. Đồng bộ metadata chương lên app_settings (chỉ đính kèm questions khi đang ở chế độ fallback)
+      await syncVdcAppSettings(chapterOrder, deletedChapters, nextQuestions);
 
       setShowQuestionModal(false);
       showToast(editingQuestion ? 'Đã cập nhật câu hỏi thành công!' : 'Đã thêm câu hỏi VDC mới thành công!', 'success');
@@ -1737,10 +1774,10 @@ ON public.vdc_questions FOR DELETE USING (true);
             </div>
 
             {/* Trạng thái Loading hoặc Rỗng */}
-            {loading ? (
+            {loading || loadingPageDetails ? (
               <div className="py-20 flex flex-col items-center justify-center text-slate-400 space-y-3">
                 <RefreshCw size={32} className="animate-spin text-indigo-500" />
-                <p className="text-xs font-bold uppercase tracking-wider">Đang tải kho câu hỏi VDC...</p>
+                <p className="text-xs font-bold uppercase tracking-wider">Đang tải câu hỏi VDC...</p>
               </div>
             ) : filteredQuestions.length === 0 ? (
               <div className="py-16 bg-white rounded-3xl border border-dashed border-slate-300 p-8 text-center max-w-md mx-auto">
