@@ -718,6 +718,13 @@ export const DEFAULT_ECOSYSTEM_APPS: EcosystemApp[] = [
     description: 'Ứng dụng luyện tập & kiểm tra liên kết chung tài khoản học sinh',
     enabled: true,
   },
+  {
+    id: 'giao-an-so',
+    name: 'Giáo Án Số',
+    url: 'https://giaoanso.vercel.app/',
+    description: 'Ứng dụng bài giảng & giáo án số liên kết chung tài khoản học sinh',
+    enabled: true,
+  },
 ];
 
 export const getEffectiveEcosystemApps = (apps?: EcosystemApp[]): EcosystemApp[] => {
@@ -797,6 +804,178 @@ export const requestStudentSsoUrl = async (
   }
 };
 
+let cachedForumNodeCol: 'nodeId' | 'node_id' | null = null;
 
+const escapeLikePattern = (val: string): string => val.replace(/[%_\\]/g, '\\$&');
 
+export const fetchForumCommentsByNode = async (
+  supabaseClient: any,
+  nodeId: string
+): Promise<{ data: any[] | null; error: any }> => {
+  const firstCol: 'nodeId' | 'node_id' = cachedForumNodeCol || 'nodeId';
+  const secondCol: 'nodeId' | 'node_id' = firstCol === 'nodeId' ? 'node_id' : 'nodeId';
 
+  const res1 = await supabaseClient.from('forum_comments').select('*').eq(firstCol, nodeId);
+  if (!res1.error) {
+    cachedForumNodeCol = firstCol;
+    return res1;
+  }
+
+  const res2 = await supabaseClient.from('forum_comments').select('*').eq(secondCol, nodeId);
+  if (!res2.error) {
+    cachedForumNodeCol = secondCol;
+    return res2;
+  }
+
+  return res1;
+};
+
+export const fetchForumCommentsByPrefix = async (
+  supabaseClient: any,
+  prefix: string,
+  extraOrGradeFilter?: { gradeId?: number | null }
+): Promise<{ data: any[] | null; error: any }> => {
+  const escaped = escapeLikePattern(prefix);
+  const pattern = `${escaped}%`;
+  const firstCol: 'nodeId' | 'node_id' = cachedForumNodeCol || 'nodeId';
+  const secondCol: 'nodeId' | 'node_id' = firstCol === 'nodeId' ? 'node_id' : 'nodeId';
+
+  const runQuery = async (col: 'nodeId' | 'node_id') => {
+    let q = supabaseClient.from('forum_comments').select('*').like(col, pattern);
+    if (extraOrGradeFilter?.gradeId) {
+      q = q.or(`grade_id.eq.${extraOrGradeFilter.gradeId},grade_id.is.null`);
+    }
+    return await q;
+  };
+
+  let res = await runQuery(firstCol);
+  if (!res.error) {
+    cachedForumNodeCol = firstCol;
+    return res;
+  }
+
+  res = await runQuery(secondCol);
+  if (!res.error) {
+    cachedForumNodeCol = secondCol;
+    return res;
+  }
+
+  // Fallback without grade_id filter in case schema lacks grade_id
+  if (extraOrGradeFilter?.gradeId) {
+    const noGrade1 = await supabaseClient.from('forum_comments').select('*').like(firstCol, pattern);
+    if (!noGrade1.error) {
+      cachedForumNodeCol = firstCol;
+      return noGrade1;
+    }
+    const noGrade2 = await supabaseClient.from('forum_comments').select('*').like(secondCol, pattern);
+    if (!noGrade2.error) {
+      cachedForumNodeCol = secondCol;
+      return noGrade2;
+    }
+  }
+
+  return res;
+};
+
+export const fetchForumCommentsByPrefixes = async (
+  supabaseClient: any,
+  prefixes: string[],
+  selectedGrade?: number | null
+): Promise<{ data: any[] | null; error: any }> => {
+  const firstCol: 'nodeId' | 'node_id' = cachedForumNodeCol || 'nodeId';
+  const secondCol: 'nodeId' | 'node_id' = firstCol === 'nodeId' ? 'node_id' : 'nodeId';
+
+  const buildOr = (col: 'nodeId' | 'node_id') =>
+    prefixes.map((p) => `${col}.like.${escapeLikePattern(p)}%`).join(',');
+
+  const runQuery = async (col: 'nodeId' | 'node_id', withGrade: boolean) => {
+    let q = supabaseClient.from('forum_comments').select('*').or(buildOr(col));
+    if (withGrade && selectedGrade) {
+      q = q.or(`grade_id.eq.${selectedGrade},grade_id.is.null`);
+    }
+    return await q;
+  };
+
+  let res = await runQuery(firstCol, true);
+  if (!res.error) {
+    cachedForumNodeCol = firstCol;
+    return res;
+  }
+
+  res = await runQuery(secondCol, true);
+  if (!res.error) {
+    cachedForumNodeCol = secondCol;
+    return res;
+  }
+
+  if (selectedGrade) {
+    const resNoGrade1 = await runQuery(firstCol, false);
+    if (!resNoGrade1.error) {
+      cachedForumNodeCol = firstCol;
+      return resNoGrade1;
+    }
+    const resNoGrade2 = await runQuery(secondCol, false);
+    if (!resNoGrade2.error) {
+      cachedForumNodeCol = secondCol;
+      return resNoGrade2;
+    }
+  }
+
+  return res;
+};
+
+export const fetchQuizPracticeCommentsForStudent = async (
+  supabaseClient: any,
+  student: { id?: string | number; name?: string } | null | undefined,
+  gradeId?: number | null
+): Promise<{ data: any[] | null; error: any }> => {
+  const sId = student?.id ? String(student.id).trim() : '';
+  const sCode = (student?.name || '').trim();
+  const pattern = `${escapeLikePattern('quiz_practice_')}%`;
+  const firstCol: 'nodeId' | 'node_id' = cachedForumNodeCol || 'nodeId';
+  const secondCol: 'nodeId' | 'node_id' = firstCol === 'nodeId' ? 'node_id' : 'nodeId';
+
+  const contentClauses: string[] = [];
+  if (sId) contentClauses.push(`content.ilike."%${escapeLikePattern(sId)}%"`);
+  if (sCode) contentClauses.push(`content.ilike."%${escapeLikePattern(sCode)}%"`);
+
+  if (contentClauses.length > 0) {
+    const contentOr = contentClauses.join(',');
+    const runFiltered = async (col: 'nodeId' | 'node_id', withGrade: boolean) => {
+      let q = supabaseClient
+        .from('forum_comments')
+        .select('*')
+        .like(col, pattern)
+        .or(contentOr);
+      if (withGrade && gradeId) {
+        q = q.or(`grade_id.eq.${gradeId},grade_id.is.null`);
+      }
+      return await q;
+    };
+
+    const r1 = await runFiltered(firstCol, Boolean(gradeId));
+    if (!r1.error) {
+      cachedForumNodeCol = firstCol;
+      return r1;
+    }
+    const r2 = await runFiltered(secondCol, Boolean(gradeId));
+    if (!r2.error) {
+      cachedForumNodeCol = secondCol;
+      return r2;
+    }
+    if (gradeId) {
+      const r1NoGrade = await runFiltered(firstCol, false);
+      if (!r1NoGrade.error) {
+        cachedForumNodeCol = firstCol;
+        return r1NoGrade;
+      }
+      const r2NoGrade = await runFiltered(secondCol, false);
+      if (!r2NoGrade.error) {
+        cachedForumNodeCol = secondCol;
+        return r2NoGrade;
+      }
+    }
+  }
+
+  return await fetchForumCommentsByPrefix(supabaseClient, 'quiz_practice_', { gradeId });
+};
