@@ -149,15 +149,43 @@ const StudentManager: React.FC<StudentManagerProps> = ({
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [studentsRes, tasksRes, logsRes, commentsRes] = await Promise.all([
-        supabase.from('students').select('*').eq('grade_id', gradeId).order('name'),
-        supabase.from('lesson_tasks').select('*'),
-        supabase.from('study_logs').select('*'),
+      const studentsRes = await supabase
+        .from('students')
+        .select('*')
+        .eq('grade_id', gradeId)
+        .order('name');
+
+      if (studentsRes.error) throw studentsRes.error;
+      const gradeStudentsList = studentsRes.data || [];
+      setStudents(gradeStudentsList);
+
+      const studentIds = gradeStudentsList.map((s: any) => s.id).filter(Boolean);
+
+      const fetchTasksByGrade = async () => {
+        const res = await supabase
+          .from('lesson_tasks')
+          .select('*')
+          .or(`grade_id.eq.${gradeId},grade_id.is.null`);
+        if (res.error) {
+          return await supabase.from('lesson_tasks').select('*');
+        }
+        return res;
+      };
+
+      const fetchLogsByStudents = async () => {
+        if (studentIds.length === 0) return { data: [], error: null };
+        if (studentIds.length <= 500) {
+          return await supabase.from('study_logs').select('*').in('student_id', studentIds);
+        }
+        return await supabase.from('study_logs').select('*');
+      };
+
+      const [tasksRes, logsRes, commentsRes] = await Promise.all([
+        fetchTasksByGrade(),
+        fetchLogsByStudents(),
         fetchForumCommentsByPrefixes(supabase, ['homework_', 'quiz_practice_'], gradeId)
       ]);
 
-      if (studentsRes.error) throw studentsRes.error;
-      setStudents(studentsRes.data || []);
       setLessonTasks(tasksRes.data || []);
       setStudyLogs(logsRes.data || []);
       setRawComments(commentsRes.data || []);
