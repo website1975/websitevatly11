@@ -4,7 +4,7 @@ import { ClipboardCheck, Clock, CheckCircle2, AlertCircle, Loader2, Search, X, U
 import { supabase } from '../supabaseClient';
 import { LessonTask, StudyLog, Student } from '../types';
 import { ConfirmModal, ToastNotification, ConfirmState, ToastState } from './CustomDialog';
-import { extractClassCode, isTaskAssignedToStudent, evaluateStudentHomeworkStatus } from '../utils';
+import { extractClassCode, isTaskAssignedToStudent, evaluateStudentHomeworkStatus, fetchForumCommentsByPrefix } from '../utils';
 
 interface TaskPanelProps {
   nodeId: string;
@@ -132,7 +132,7 @@ const TaskPanel: React.FC<TaskPanelProps> = ({ nodeId, student, isAdmin, themeCo
       const assignedStudents = students.filter(s => isTaskAssignedToStudent(task, s));
 
       const { data: allLogs } = await supabase.from('study_logs').select('*').eq('node_id', nodeId);
-      const { data: allHw } = await supabase.from('forum_comments').select('*');
+      const { data: allHw } = await fetchForumCommentsByPrefix(supabase, `homework_${nodeId}`);
 
       const homeworkNodeId = `homework_${nodeId}`;
       const relevantHw = (allHw || []).filter((c: any) => {
@@ -316,9 +316,9 @@ const TaskPanel: React.FC<TaskPanelProps> = ({ nodeId, student, isAdmin, themeCo
   const fetchTaskData = useCallback(async () => {
     setLoading(true);
     try {
-      if (gradeId) {
-        const { data: stData } = await supabase.from('students').select('*').eq('grade_id', gradeId).order('name');
-        if (stData) setGradeStudents(stData);
+      if (isAdmin && gradeId) {
+        const { data: stData } = await supabase.from('students').select('id, name, full_name, grade_id').eq('grade_id', gradeId).order('name');
+        if (stData) setGradeStudents(stData as Student[]);
       }
 
       // Fetch task for this node
@@ -429,9 +429,7 @@ const TaskPanel: React.FC<TaskPanelProps> = ({ nodeId, student, isAdmin, themeCo
 
       // Fetch homework comments to verify BTVN submission & teacher approval
       const homeworkNodeId = `homework_${nodeId}`;
-      const { data: hwData } = await supabase
-        .from('forum_comments')
-        .select('*');
+      const { data: hwData } = await fetchForumCommentsByPrefix(supabase, homeworkNodeId);
 
       if (hwData) {
         const filtered = hwData.filter((c: any) => {
@@ -548,10 +546,7 @@ const TaskPanel: React.FC<TaskPanelProps> = ({ nodeId, student, isAdmin, themeCo
         .eq('node_id', nodeId);
 
       const homeworkNodeId = `homework_${nodeId}`;
-      const { data: hwData } = await supabase
-        .from('forum_comments')
-        .select('id')
-        .like('node_id', `${homeworkNodeId}_ans_%`);
+      const { data: hwData } = await fetchForumCommentsByPrefix(supabase, `${homeworkNodeId}_ans_`);
 
       const logsCount = logsData?.length || 0;
       const hwCount = hwData?.length || 0;

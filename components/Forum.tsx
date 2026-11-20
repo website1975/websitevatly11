@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Send, Trash2, Image as ImageIcon, Wifi, WifiOff, RefreshCw, ChevronDown, Eye, AlertCircle } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 import { ForumComment } from '../types';
-import { renderLatex } from '../utils';
+import { renderLatex, fetchForumCommentsByNode } from '../utils';
 import { ConfirmModal, ToastNotification, ConfirmState, ToastState } from './CustomDialog';
 
 import { uploadImageFlexible, getImageServerMode } from '../imgbb';
@@ -89,7 +89,7 @@ const Forum: React.FC<ForumProps> = ({ nodeId, isAdmin, themeColor }) => {
 
   const fetchComments = async (silent = false) => {
     if (!silent) setIsRefreshing(true);
-    const { data, error } = await supabase.from('forum_comments').select('*');
+    const { data, error } = await fetchForumCommentsByNode(supabase, nodeId);
     if (data) {
       const filtered = data.filter((item: any) => (item.nodeId || item.node_id) === nodeId);
       const mappedData = filtered.map((item: any) => ({
@@ -107,8 +107,6 @@ const Forum: React.FC<ForumProps> = ({ nodeId, isAdmin, themeColor }) => {
     }
     if (error) {
       console.error("Fetch error:", error);
-      const { data: retryData } = await supabase.from('forum_comments').select('*').eq('nodeId', nodeId);
-      if (retryData) setComments(retryData);
     }
     setIsRefreshing(false);
   };

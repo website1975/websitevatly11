@@ -50,6 +50,7 @@ import {
   getStudentQuizPracticeStats,
   getEffectiveEcosystemApps,
   requestStudentSsoUrl,
+  fetchForumCommentsByPrefixes,
 } from '../utils';
 
 const customUrlTransform = (url: string) => {
@@ -197,12 +198,12 @@ export const StudentSpaceModal: React.FC<StudentSpaceModalProps> = ({
     if (!student || student.is_guest) return;
     setLoading(true);
     try {
-      // 1. Fetch comments with grade_id or unassigned (null)
-      let query = supabase.from('forum_comments').select('*');
-      if (selectedGrade) {
-        query = query.or(`grade_id.eq.${selectedGrade},grade_id.is.null`);
-      }
-      const { data: commentsData, error: commentsError } = await query;
+      // 1. Only fetch homework & quiz practice records (skip general forum discussions)
+      const { data: commentsData, error: commentsError } = await fetchForumCommentsByPrefixes(
+        supabase,
+        ['homework_', 'quiz_practice_'],
+        selectedGrade
+      );
       if (commentsError) throw commentsError;
       setRawComments(commentsData || []);
 

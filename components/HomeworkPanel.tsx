@@ -13,7 +13,7 @@ import { uploadToImgBB, uploadImageFlexible, getImageServerMode } from '../imgbb
 import { ImageUploadModal } from './ImageUploadModal';
 import { ForumComment, Student } from '../types';
 import { ConfirmModal, ToastNotification, ConfirmState, ToastState } from './CustomDialog';
-import { extractClassCode, parseHomeworkMeta, buildHomeworkMetaSnippet, isHomeworkQuestionAssignedToStudent } from '../utils';
+import { extractClassCode, parseHomeworkMeta, buildHomeworkMetaSnippet, isHomeworkQuestionAssignedToStudent, fetchForumCommentsByPrefix } from '../utils';
 
 // Import Katex CSS
 const KATEX_CSS = "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css";
@@ -130,19 +130,20 @@ const HomeworkPanel: React.FC<HomeworkPanelProps> = ({ nodeId, student, isAdmin,
   const [hwTargetSearch, setHwTargetSearch] = useState<string>('');
 
   const fetchClassStudents = useCallback(async () => {
+    if (!isAdmin) return;
     try {
-      let query = supabase.from('students').select('*');
+      let query = supabase.from('students').select('id, name, full_name, grade_id');
       if (gradeId) {
         query = query.eq('grade_id', gradeId);
       }
       const { data, error } = await query.order('name');
       if (!error && data) {
-        setClassStudents(data);
+        setClassStudents(data as Student[]);
       }
     } catch (err) {
       console.error("Error fetching class students:", err);
     }
-  }, [gradeId]);
+  }, [gradeId, isAdmin]);
 
   useEffect(() => {
     fetchClassStudents();
@@ -689,10 +690,8 @@ const HomeworkPanel: React.FC<HomeworkPanelProps> = ({ nodeId, student, isAdmin,
     if (!silent) setIsRefreshing(true);
     
     try {
-      // Lấy tất cả dữ liệu có node_id tương ứng
-      const { data, error } = await supabase
-        .from('forum_comments')
-        .select('*');
+      // Chỉ lấy các dòng thuộc BTVN của bài học hiện tại thay vì tải toàn bảng forum_comments
+      const { data, error } = await fetchForumCommentsByPrefix(supabase, homeworkNodeId, { gradeId });
       
       if (error) {
         console.error("Supabase Select Error:", error);
@@ -786,8 +785,23 @@ const HomeworkPanel: React.FC<HomeworkPanelProps> = ({ nodeId, student, isAdmin,
         event: '*', 
         schema: 'public', 
         table: 'forum_comments' 
-      }, () => {
-        fetchComments(true);
+      }, (payload) => {
+        if (payload.eventType === 'DELETE') {
+          const oldId = (payload.old as any)?.id;
+          if (oldId) {
+            setComments(prev => prev.filter(c => c.id !== oldId));
+          }
+          return;
+        }
+        const row = (payload.new || {}) as any;
+        const rowNodeId = row.nodeId || row.node_id || '';
+        if (
+          rowNodeId === homeworkNodeId ||
+          rowNodeId.startsWith(`${homeworkNodeId}_ans_`) ||
+          rowNodeId.startsWith(`${homeworkNodeId}_feedback_`)
+        ) {
+          fetchComments(true);
+        }
       })
       .subscribe();
 

@@ -36,6 +36,7 @@ import {
   evaluateStudentHomeworkStatus,
   parseQuizPracticeRecords,
   getStudentQuizPracticeStats,
+  fetchForumCommentsByPrefixes,
 } from '../utils';
 
 interface StudentManagerProps {
@@ -152,7 +153,7 @@ const StudentManager: React.FC<StudentManagerProps> = ({
         supabase.from('students').select('*').eq('grade_id', gradeId).order('name'),
         supabase.from('lesson_tasks').select('*'),
         supabase.from('study_logs').select('*'),
-        supabase.from('forum_comments').select('*')
+        fetchForumCommentsByPrefixes(supabase, ['homework_', 'quiz_practice_'], gradeId)
       ]);
 
       if (studentsRes.error) throw studentsRes.error;

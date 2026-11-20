@@ -152,16 +152,7 @@ const QuizModal: React.FC<QuizModalProps> = ({ nodeId, lessonTitle, lessonUrl, i
     try {
       const { data } = await supabase.from('quiz_data').select('data').eq('id', getDbId()).single();
       if (data?.data && Array.isArray(data.data)) {
-        const cleanEsc = (s: unknown) =>
-          String(s ?? '')
-            .replace(/\\{2,}([a-zA-Z]{2,})/g, '\\$1')
-            .replace(/\\{2,}([{}%,;:!])/g, '\\$1');
-        const bank: QuizQuestion[] = data.data.map((q: any) => ({
-          question: cleanEsc(q?.question),
-          options: Array.isArray(q?.options) ? q.options.map((o: any) => cleanEsc(o)) : ['', '', '', ''],
-          correctIndex: typeof q?.correctIndex === 'number' ? q.correctIndex : Number(q?.correctIndex || 0),
-          explanation: cleanEsc(q?.explanation),
-        }));
+        const bank = data.data;
         setFullBank(bank);
         setIsAiMode(false);
         if (isAdmin) {
@@ -212,18 +203,9 @@ const QuizModal: React.FC<QuizModalProps> = ({ nodeId, lessonTitle, lessonUrl, i
         }),
       });
 
-      const rawText = await resp.text();
-      let payload: any = {};
-      try {
-        payload = rawText ? JSON.parse(rawText) : {};
-      } catch {
-        payload = {};
-      }
-
+      const payload = await resp.json().catch(() => ({}));
       if (!resp.ok) {
-        throw new Error(
-          payload?.error || `Không thể kết nối máy chủ AI (Mã ${resp.status}). Vui lòng thử lại.`
-        );
+        throw new Error(payload?.error || 'Không thể kết nối máy chủ AI để soạn câu hỏi.');
       }
 
       const rawList = Array.isArray(payload?.questions) ? payload.questions : [];
