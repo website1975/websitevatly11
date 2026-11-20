@@ -979,3 +979,285 @@ export const fetchQuizPracticeCommentsForStudent = async (
 
   return await fetchForumCommentsByPrefix(supabaseClient, 'quiz_practice_', { gradeId });
 };
+
+const dedupeRowsById = (rows: any[]): any[] => {
+  const map = new Map<string, any>();
+  rows.forEach((r) => {
+    if (r && r.id !== undefined && r.id !== null) {
+      map.set(String(r.id), r);
+    }
+  });
+  return Array.from(map.values());
+};
+
+const escapeQuotedLike = (val: string): string =>
+  escapeLikePattern(val).replace(/"/g, '\\"');
+
+/**
+ * Dành cho chế độ Học sinh / Khách khi mở BTVN của 1 bài học cụ thể:
+ * Chỉ tải câu hỏi của giáo viên, bài làm của chính học sinh đó, bài công khai mẫu, và phản hồi thuộc các bài đó.
+ */
+export const fetchHomeworkForLessonStudent = async (
+  supabaseClient: any,
+  homeworkNodeId: string,
+  student: { id?: string | number; name?: string; is_guest?: boolean } | null | undefined,
+  gradeId?: number | null
+): Promise<{ data: any[] | null; error: any }> => {
+  const firstCol: 'nodeId' | 'node_id' = cachedForumNodeCol || 'nodeId';
+  const secondCol: 'nodeId' | 'node_id' = firstCol === 'nodeId' ? 'node_id' : 'nodeId';
+  const studentTag = !student?.is_guest && student?.name ? `[${student.name.trim()}]` : '';
+  const ansPattern = `${escapeLikePattern(homeworkNodeId)}\\_ans\\_%`;
+
+  const runForCol = async (col: 'nodeId' | 'node_id', withGrade: boolean) => {
+    const applyGrade = (q: any) =>
+      withGrade && gradeId ? q.or(`grade_id.eq.${gradeId},grade_id.is.null`) : q;
+
+    // 1. Câu hỏi gốc của giáo viên (và bài nộp cũ cùng nodeId nếu thuộc về student hoặc public)
+    const rootOrParts = ['author.is.null', 'author.not.like."%[%"', 'content.ilike."%<!--public:true-->%"'];
+    if (studentTag) {
+      rootOrParts.push(`author.ilike."%${escapeQuotedLike(studentTag)}%"`);
+    }
+    const rootRes = await applyGrade(
+      supabaseClient
+        .from('forum_comments')
+        .select('*')
+        .eq(col, homeworkNodeId)
+        .or(rootOrParts.join(','))
+    );
+    if (rootRes.error) return { data: null, error: rootRes.error };
+
+    // 2. Các bài nộp (_ans_) chỉ của chính HS này hoặc được đặt công khai (<!--public:true-->)
+    const ansOrParts = ['content.ilike."%<!--public:true-->%"'];
+    if (studentTag) {
+      ansOrParts.push(`author.ilike."%${escapeQuotedLike(studentTag)}%"`);
+    }
+    const ansRes = await applyGrade(
+      supabaseClient
+        .from('forum_comments')
+        .select('*')
+        .like(col, ansPattern)
+        .or(ansOrParts.join(','))
+    );
+    if (ansRes.error) return { data: null, error: ansRes.error };
+
+    const combined = dedupeRowsById([...(rootRes.data || []), ...(ansRes.data || [])]);
+
+    // 3. Chỉ tải _feedback_ của những bài làm vừa lấy ở bước 1-2
+    const answerRows = combined.filter((item: any) => {
+      const nid = item.nodeId || item.node_id || '';
+      return nid.startsWith(`${homeworkNodeId}_ans_`) || (nid === homeworkNodeId && (item.author || '').includes('['));
+    });
+    const feedbackNodeIds = Array.from(
+      new Set(answerRows.map((a: any) => `${homeworkNodeId}_feedback_${a.id}`).filter(Boolean))
+    );
+
+    if (feedbackNodeIds.length > 0) {
+      const fbRes = await supabaseClient
+        .from('forum_comments')
+        .select('*')
+        .in(col, feedbackNodeIds);
+      if (!fbRes.error && fbRes.data) {
+        return { data: dedupeRowsById([...combined, ...fbRes.data]), error: null };
+      }
+    }
+
+    return { data: combined, error: null };
+  };
+
+  let res = await runForCol(firstCol, Boolean(gradeId));
+  if (!res.error) {
+    cachedForumNodeCol = firstCol;
+    return res;
+  }
+
+  res = await runForCol(secondCol, Boolean(gradeId));
+  if (!res.error) {
+    cachedForumNodeCol = secondCol;
+    return res;
+  }
+
+  if (gradeId) {
+    res = await runForCol(firstCol, false);
+    if (!res.error) {
+      cachedForumNodeCol = firstCol;
+      return res;
+    }
+    res = await runForCol(secondCol, false);
+    if (!res.error) {
+      cachedForumNodeCol = secondCol;
+      return res;
+    }
+  }
+
+  return await fetchForumCommentsByPrefix(supabaseClient, homeworkNodeId, { gradeId });
+};
+
+/**
+ * Dành cho chế độ Học sinh khi mở TaskPanel của 1 bài học cụ thể:
+ * Chỉ tải đề bài của giáo viên và bài nộp BTVN của chính học sinh đó (không tải bài của HS khác hay feedback).
+ */
+export const fetchTaskHomeworkForStudent = async (
+  supabaseClient: any,
+  homeworkNodeId: string,
+  student: { id?: string | number; name?: string; is_guest?: boolean } | null | undefined
+): Promise<{ data: any[] | null; error: any }> => {
+  const firstCol: 'nodeId' | 'node_id' = cachedForumNodeCol || 'nodeId';
+  const secondCol: 'nodeId' | 'node_id' = firstCol === 'nodeId' ? 'node_id' : 'nodeId';
+  const studentTag = !student?.is_guest && student?.name ? `[${student.name.trim()}]` : '';
+  const ansPattern = `${escapeLikePattern(homeworkNodeId)}\\_ans\\_%`;
+
+  const runForCol = async (col: 'nodeId' | 'node_id') => {
+    const rootOrParts = ['author.is.null', 'author.not.like."%[%"'];
+    if (studentTag) {
+      rootOrParts.push(`author.ilike."%${escapeQuotedLike(studentTag)}%"`);
+    }
+    const rootRes = await supabaseClient
+      .from('forum_comments')
+      .select('*')
+      .eq(col, homeworkNodeId)
+      .or(rootOrParts.join(','));
+    if (rootRes.error) return { data: null, error: rootRes.error };
+
+    if (!studentTag) {
+      return { data: rootRes.data || [], error: null };
+    }
+
+    const ansRes = await supabaseClient
+      .from('forum_comments')
+      .select('*')
+      .like(col, ansPattern)
+      .ilike('author', `%${escapeLikePattern(studentTag)}%`);
+    if (ansRes.error) return { data: null, error: ansRes.error };
+
+    return {
+      data: dedupeRowsById([...(rootRes.data || []), ...(ansRes.data || [])]),
+      error: null,
+    };
+  };
+
+  let res = await runForCol(firstCol);
+  if (!res.error) {
+    cachedForumNodeCol = firstCol;
+    return res;
+  }
+
+  res = await runForCol(secondCol);
+  if (!res.error) {
+    cachedForumNodeCol = secondCol;
+    return res;
+  }
+
+  return await fetchForumCommentsByPrefix(supabaseClient, homeworkNodeId);
+};
+
+/**
+ * Dành cho Không gian học tập cá nhân (StudentSpaceModal) của đối tượng học sinh X:
+ * Chỉ tải đề BTVN của giáo viên + bài nộp của chính X + nhận xét dành riêng cho bài của X + lịch sử luyện Quiz của chính X.
+ */
+export const fetchStudentSpaceComments = async (
+  supabaseClient: any,
+  student: { id?: string | number; name?: string; is_guest?: boolean } | null | undefined,
+  selectedGrade?: number | null
+): Promise<{ data: any[] | null; error: any }> => {
+  if (!student || student.is_guest) return { data: [], error: null };
+
+  const firstCol: 'nodeId' | 'node_id' = cachedForumNodeCol || 'nodeId';
+  const secondCol: 'nodeId' | 'node_id' = firstCol === 'nodeId' ? 'node_id' : 'nodeId';
+  const studentTag = student?.name ? `[${student.name.trim()}]` : '';
+
+  const runForCol = async (col: 'nodeId' | 'node_id', withGrade: boolean) => {
+    const applyGrade = (q: any) =>
+      withGrade && selectedGrade ? q.or(`grade_id.eq.${selectedGrade},grade_id.is.null`) : q;
+
+    // 1. Câu hỏi BTVN của giáo viên trong khối
+    const questionsPromise = applyGrade(
+      supabaseClient
+        .from('forum_comments')
+        .select('*')
+        .like(col, 'homework\\_%')
+        .not(col, 'like', '%\\_ans\\_%')
+        .not(col, 'like', '%\\_feedback\\_%')
+        .or('author.is.null,author.not.like."%[%"')
+    );
+
+    // 2. Bài nộp BTVN của chính học sinh này
+    const answersPromise = studentTag
+      ? applyGrade(
+          supabaseClient
+            .from('forum_comments')
+            .select('*')
+            .like(col, 'homework\\_%\\_ans\\_%')
+            .ilike('author', `%${escapeLikePattern(studentTag)}%`)
+        )
+      : Promise.resolve({ data: [], error: null });
+
+    // 3. Kết quả luyện Quiz của chính học sinh này
+    const quizPromise = fetchQuizPracticeCommentsForStudent(supabaseClient, student, selectedGrade);
+
+    const [qRes, aRes, quizRes] = await Promise.all([questionsPromise, answersPromise, quizPromise]);
+    if (qRes.error) return { data: null, error: qRes.error };
+    if (aRes.error) return { data: null, error: aRes.error };
+
+    const myAnswers = aRes.data || [];
+    const feedbackNodeIds = Array.from(
+      new Set(
+        myAnswers
+          .map((a: any) => {
+            const nid = a.nodeId || a.node_id || '';
+            const baseHw = nid.split('_ans_')[0];
+            return baseHw && a.id ? `${baseHw}_feedback_${a.id}` : '';
+          })
+          .filter(Boolean)
+      )
+    );
+
+    let feedbackRows: any[] = [];
+    if (feedbackNodeIds.length > 0) {
+      const fbRes = await supabaseClient
+        .from('forum_comments')
+        .select('*')
+        .in(col, feedbackNodeIds);
+      if (!fbRes.error && fbRes.data) {
+        feedbackRows = fbRes.data;
+      }
+    }
+
+    return {
+      data: dedupeRowsById([
+        ...(qRes.data || []),
+        ...myAnswers,
+        ...feedbackRows,
+        ...(quizRes.data || []),
+      ]),
+      error: null,
+    };
+  };
+
+  let res = await runForCol(firstCol, Boolean(selectedGrade));
+  if (!res.error) {
+    cachedForumNodeCol = firstCol;
+    return res;
+  }
+
+  res = await runForCol(secondCol, Boolean(selectedGrade));
+  if (!res.error) {
+    cachedForumNodeCol = secondCol;
+    return res;
+  }
+
+  if (selectedGrade) {
+    res = await runForCol(firstCol, false);
+    if (!res.error) {
+      cachedForumNodeCol = firstCol;
+      return res;
+    }
+    res = await runForCol(secondCol, false);
+    if (!res.error) {
+      cachedForumNodeCol = secondCol;
+      return res;
+    }
+  }
+
+  return await fetchForumCommentsByPrefixes(supabaseClient, ['homework_', 'quiz_practice_'], selectedGrade);
+};
+
