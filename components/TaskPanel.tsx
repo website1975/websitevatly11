@@ -4,7 +4,7 @@ import { ClipboardCheck, Clock, CheckCircle2, AlertCircle, Loader2, Search, X, U
 import { supabase } from '../supabaseClient';
 import { LessonTask, StudyLog, Student } from '../types';
 import { ConfirmModal, ToastNotification, ConfirmState, ToastState } from './CustomDialog';
-import { extractClassCode, isTaskAssignedToStudent, evaluateStudentHomeworkStatus, fetchForumCommentsByPrefix } from '../utils';
+import { extractClassCode, isTaskAssignedToStudent, evaluateStudentHomeworkStatus, fetchForumCommentsByPrefix, fetchTaskHomeworkForStudent } from '../utils';
 
 interface TaskPanelProps {
   nodeId: string;
@@ -429,7 +429,9 @@ const TaskPanel: React.FC<TaskPanelProps> = ({ nodeId, student, isAdmin, themeCo
 
       // Fetch homework comments to verify BTVN submission & teacher approval
       const homeworkNodeId = `homework_${nodeId}`;
-      const { data: hwData } = await fetchForumCommentsByPrefix(supabase, homeworkNodeId);
+      const { data: hwData } = !isAdmin && student
+        ? await fetchTaskHomeworkForStudent(supabase, homeworkNodeId, student)
+        : await fetchForumCommentsByPrefix(supabase, homeworkNodeId);
 
       if (hwData) {
         const filtered = hwData.filter((c: any) => {
