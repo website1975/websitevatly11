@@ -50,7 +50,7 @@ import {
   getStudentQuizPracticeStats,
   getEffectiveEcosystemApps,
   requestStudentSsoUrl,
-  fetchForumCommentsByPrefixes,
+  fetchStudentSpaceComments,
 } from '../utils';
 
 const customUrlTransform = (url: string) => {
@@ -198,16 +198,16 @@ export const StudentSpaceModal: React.FC<StudentSpaceModalProps> = ({
     if (!student || student.is_guest) return;
     setLoading(true);
     try {
-      // 1. Only fetch homework & quiz practice records (skip general forum discussions)
-      const { data: commentsData, error: commentsError } = await fetchForumCommentsByPrefixes(
+      // 1. Chỉ tải câu hỏi BTVN + bài làm của chính học sinh này + nhận xét riêng + kết quả quiz của chính học sinh này
+      const { data: commentsData, error: commentsError } = await fetchStudentSpaceComments(
         supabase,
-        ['homework_', 'quiz_practice_'],
+        student,
         selectedGrade
       );
       if (commentsError) throw commentsError;
       setRawComments(commentsData || []);
 
-      // 2. Fetch study logs
+      // 2. Fetch study logs của chính học sinh này
       const { data: logsData, error: logsError } = await supabase
         .from('study_logs')
         .select('*')
@@ -216,11 +216,16 @@ export const StudentSpaceModal: React.FC<StudentSpaceModalProps> = ({
         setStudyLogs(logsData || []);
       }
 
-      // 3. Fetch lesson_tasks
+      // 3. Fetch lesson_tasks theo khối lớp đang chọn (có fallback nếu bảng thiếu cột grade_id)
       try {
-        const { data: tasksData } = await supabase.from('lesson_tasks').select('*');
-        if (tasksData) {
-          setLessonTasks(tasksData);
+        let taskRes = selectedGrade
+          ? await supabase.from('lesson_tasks').select('*').or(`grade_id.eq.${selectedGrade},grade_id.is.null`)
+          : await supabase.from('lesson_tasks').select('*');
+        if (taskRes.error && selectedGrade) {
+          taskRes = await supabase.from('lesson_tasks').select('*');
+        }
+        if (taskRes.data) {
+          setLessonTasks(taskRes.data);
         }
       } catch (e) {
         console.log("Error or missing lesson_tasks table:", e);
