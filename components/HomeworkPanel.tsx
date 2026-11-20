@@ -13,7 +13,7 @@ import { uploadToImgBB, uploadImageFlexible, getImageServerMode } from '../imgbb
 import { ImageUploadModal } from './ImageUploadModal';
 import { ForumComment, Student } from '../types';
 import { ConfirmModal, ToastNotification, ConfirmState, ToastState } from './CustomDialog';
-import { extractClassCode, parseHomeworkMeta, buildHomeworkMetaSnippet, isHomeworkQuestionAssignedToStudent, fetchForumCommentsByPrefix } from '../utils';
+import { extractClassCode, parseHomeworkMeta, buildHomeworkMetaSnippet, isHomeworkQuestionAssignedToStudent, fetchForumCommentsByPrefix, fetchHomeworkForLessonStudent } from '../utils';
 
 // Import Katex CSS
 const KATEX_CSS = "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css";
@@ -690,8 +690,10 @@ const HomeworkPanel: React.FC<HomeworkPanelProps> = ({ nodeId, student, isAdmin,
     if (!silent) setIsRefreshing(true);
     
     try {
-      // Chỉ lấy các dòng thuộc BTVN của bài học hiện tại thay vì tải toàn bảng forum_comments
-      const { data, error } = await fetchForumCommentsByPrefix(supabase, homeworkNodeId, { gradeId });
+      // Nếu là học sinh / khách: chỉ tải đề của GV, bài làm của chính HS đó, bài mẫu công khai & feedback liên quan
+      const { data, error } = isAdmin
+        ? await fetchForumCommentsByPrefix(supabase, homeworkNodeId, { gradeId })
+        : await fetchHomeworkForLessonStudent(supabase, homeworkNodeId, student, gradeId);
       
       if (error) {
         console.error("Supabase Select Error:", error);
@@ -795,18 +797,30 @@ const HomeworkPanel: React.FC<HomeworkPanelProps> = ({ nodeId, student, isAdmin,
         }
         const row = (payload.new || {}) as any;
         const rowNodeId = row.nodeId || row.node_id || '';
-        if (
+        const isCurrentLesson =
           rowNodeId === homeworkNodeId ||
           rowNodeId.startsWith(`${homeworkNodeId}_ans_`) ||
-          rowNodeId.startsWith(`${homeworkNodeId}_feedback_`)
-        ) {
-          fetchComments(true);
+          rowNodeId.startsWith(`${homeworkNodeId}_feedback_`);
+        if (!isCurrentLesson) return;
+
+        if (!isAdmin) {
+          const author = String(row.author || '');
+          const contentStr = String(row.content || '');
+          const studentTag = !student?.is_guest && student?.name ? `[${student.name.trim()}]` : '';
+          const isTeacherRoot = rowNodeId === homeworkNodeId && !author.includes('[');
+          const isOwnRow = Boolean(studentTag && author.includes(studentTag));
+          const isPublicSample = contentStr.includes('<!--public:true-->');
+          const isFeedback = rowNodeId.startsWith(`${homeworkNodeId}_feedback_`);
+          if (!isTeacherRoot && !isOwnRow && !isPublicSample && !isFeedback) {
+            return;
+          }
         }
+        fetchComments(true);
       })
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
-  }, [nodeId, homeworkNodeId]);
+  }, [nodeId, homeworkNodeId, isAdmin, student?.name, student?.is_guest]);
 
   const handleRemoveAttachedImage = () => {
     setSelectedFile(null);
