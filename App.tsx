@@ -840,7 +840,7 @@ const MainView: React.FC<{
     setIsUploadingDrive(true);
     try {
       const result = await uploadFileToGoogleDrive(file);
-      const driveUrl = result.previewUrl; // https://drive.google.com/file/d/FILE_ID/preview
+      const driveUrl = target === 'node_image' ? result.directImageUrl : result.previewUrl;
 
       if (target === 'node') {
         setNodeModalData((prev: any) => ({ ...prev, url: driveUrl, title: prev.title || file.name.replace(/\.[^/.]+$/, '') }));
