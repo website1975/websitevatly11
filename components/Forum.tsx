@@ -56,12 +56,13 @@ const Forum: React.FC<ForumProps> = ({ nodeId, isAdmin, themeColor }) => {
         if (blob) {
           e.preventDefault();
           const mode = getImageServerMode();
-          showToast(`Đang tự động xử lý ảnh dán qua máy chủ [${mode}]...`, 'info', 'Đang xử lý ảnh');
+          const modeLabel = mode === 'GDRIVE' ? 'GOOGLE DRIVE' : mode;
+          showToast(`Đang tự động xử lý ảnh dán qua máy chủ [${modeLabel}]...`, 'info', 'Đang xử lý ảnh');
           try {
             const result = await uploadImageFlexible(blob, mode);
             const snippet = `\n\n![Ảnh thảo luận](${result.url})\n\n`;
             setContent(prev => prev + snippet);
-            showToast(`Đã tải ảnh dán qua [${result.modeUsed}] thành công!`, 'success');
+            showToast(`Đã tải ảnh dán qua [${result.modeUsed === 'GDRIVE' ? 'GOOGLE DRIVE' : result.modeUsed}] thành công!`, 'success');
           } catch (err: any) {
             showToast(err.message || 'Không thể xử lý ảnh dán.', 'error');
           }
