@@ -335,7 +335,7 @@ export const VdcQuestionsPanel: React.FC<VdcQuestionsPanelProps> = ({
 
   const gradeId = (selectedGrade === 1 ? 11 : selectedGrade) || 11;
 
-  // Thứ tự sắp xếp các chương do người dùng tùy chỉnh
+  // Thứ tự & danh sách các chương riêng của Kho VDC (hoàn toàn độc lập với menu bài học gốc bên trái)
   const [chapterOrder, setChapterOrder] = useState<string[]>(() => {
     try {
       const saved = localStorage.getItem(`vdc_chapter_order_g${gradeId}`);
@@ -345,29 +345,22 @@ export const VdcQuestionsPanel: React.FC<VdcQuestionsPanelProps> = ({
     }
   });
 
-  // Danh sách các chương đã bị xóa (để không bị nạp lại từ node hoặc câu hỏi cũ)
-  const [deletedChapters, setDeletedChapters] = useState<string[]>(() => {
-    try {
-      const saved = localStorage.getItem(`vdc_deleted_chapters_g${gradeId}`);
-      return saved ? JSON.parse(saved) : [];
-    } catch {
-      return [];
-    }
-  });
-
   // State mở menu các chương trên thiết bị di động (iPhone / Tablet)
   const [isMobileChapterMenuOpen, setIsMobileChapterMenuOpen] = useState(false);
 
-  // ĐỒNG BỘ ĐÁM MÂY SUPABASE: Thiết lập Realtime giữa các trình duyệt/thiết bị (tải lần đầu do loadQuestions đảm nhận)
+  // Nạp lại cache local khi chuyển Khối lớp
   useEffect(() => {
-    let isMounted = true;
-
     try {
       const savedOrder = localStorage.getItem(`vdc_chapter_order_g${gradeId}`);
-      if (savedOrder) setChapterOrder(JSON.parse(savedOrder));
-      const savedDeleted = localStorage.getItem(`vdc_deleted_chapters_g${gradeId}`);
-      if (savedDeleted) setDeletedChapters(JSON.parse(savedDeleted));
-    } catch {}
+      setChapterOrder(savedOrder ? JSON.parse(savedOrder) : []);
+    } catch {
+      setChapterOrder([]);
+    }
+  }, [gradeId]);
+
+  // ĐỒNG BỘ ĐÁM MÂY SUPABASE: Thiết lập Realtime giữa các trình duyệt/thiết bị
+  useEffect(() => {
+    let isMounted = true;
 
     const channel = supabase
       .channel(`vdc_sync_realtime_g${gradeId}`)
@@ -379,12 +372,6 @@ export const VdcQuestionsPanel: React.FC<VdcQuestionsPanelProps> = ({
       }, (payload: any) => {
         if (payload?.new?.data && isMounted) {
           const sData = payload.new.data as any;
-          if (Array.isArray(sData.deleted_chapters)) {
-            setDeletedChapters(sData.deleted_chapters);
-            try {
-              localStorage.setItem(`vdc_deleted_chapters_g${gradeId}`, JSON.stringify(sData.deleted_chapters));
-            } catch {}
-          }
           if (Array.isArray(sData.chapter_order)) {
             setChapterOrder(sData.chapter_order);
             try {
@@ -406,60 +393,46 @@ export const VdcQuestionsPanel: React.FC<VdcQuestionsPanelProps> = ({
 
   const syncVdcAppSettings = useCallback(async (
     nextChapterOrder: string[],
-    nextDeletedChapters: string[],
     fallbackQuestions?: VdcQuestion[]
-  ) => {
+  ): Promise<boolean> => {
     const payload: Record<string, any> = {
       chapter_order: nextChapterOrder,
-      deleted_chapters: nextDeletedChapters,
+      deleted_chapters: [],
+      independent_menu: true,
       updated_at: new Date().toISOString()
     };
     if (dbStatus !== 'connected' && fallbackQuestions) {
       payload.questions = fallbackQuestions;
     }
-    await supabase.from('app_settings').upsert({
+    const { error } = await supabase.from('app_settings').upsert({
       id: 8000 + gradeId,
       data: payload
     });
-  }, [dbStatus, gradeId]);
-
-  // Khôi phục các chương đã ẩn khỏi VDC (lấy lại từ cấu trúc sách)
-  const handleRestoreDeletedChapters = async () => {
-    setDeletedChapters([]);
-    try {
-      localStorage.removeItem(`vdc_deleted_chapters_g${gradeId}`);
-      await syncVdcAppSettings(chapterOrder, [], questions);
-      showToast('Đã khôi phục các chương từ sách vào menu VDC thành công!', 'success');
-    } catch (e) {
-      console.warn("Lỗi khi khôi phục chương:", e);
+    if (error) {
+      console.error("Lỗi đồng bộ cấu hình menu VDC:", error);
+      showToast(`Không thể lưu menu VDC lên máy chủ: ${error.message}`, 'error');
+      return false;
     }
-  };
+    return true;
+  }, [dbStatus, gradeId, showToast]);
 
-  // Lấy danh sách các chương từ cấu trúc sách hiện tại và các chương tùy chỉnh
-  const chaptersList = useMemo(() => {
-    const list: { id: string; title: string; fromNode?: boolean }[] = [];
-    const seen = new Set<string>();
-    const deletedSet = new Set(deletedChapters.map(t => t.trim().toLowerCase()));
-
-    // Hàm kiểm tra xem folder có phải là thư mục chứa sách (như Sách KNTT, Sách CTST) không
+  // Tùy chọn nhập thủ công các chương từ menu bài học gốc bên trái sang menu riêng của VDC
+  const handleImportChaptersFromBook = () => {
     const isBookContainer = (f: BookNode) => {
       if (f.parentId) return false;
       return (nodes || []).some(c => c.parentId === f.id && c.type === 'folder');
     };
 
-    // 1. Lấy tất cả các thư mục/chương từ cấu trúc sách (cả folder gốc và các folder chương con bên trong sách KNTT/CTST)
     const orderedFolderNodes: BookNode[] = [];
     const addFolderTree = (pid: string | null | undefined) => {
       const children = (nodes || [])
         .filter(n => (pid ? n.parentId === pid : (!n.parentId || n.parentId === null || n.parentId === undefined)))
         .sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
-      
+
       for (const c of children) {
-        // Bỏ qua folder cấp sách lớn nếu nó chứa các chương con
         if (c.type === 'folder' && !isBookContainer(c)) {
           orderedFolderNodes.push(c);
         } else if (c.type === 'lesson') {
-          // Nếu bài học có con hoặc tiêu đề bắt đầu bằng Chương/Chủ đề/Chuyên đề/Đề thi
           const hasChildren = (nodes || []).some(sub => sub.parentId === c.id);
           const tLower = c.title.trim().toLowerCase();
           if (hasChildren || tLower.startsWith('chương') || tLower.startsWith('chủ đề') || tLower.startsWith('chuyên đề') || tLower.startsWith('đề thi')) {
@@ -471,55 +444,71 @@ export const VdcQuestionsPanel: React.FC<VdcQuestionsPanelProps> = ({
     };
     addFolderTree(null);
 
-    // Bổ sung các folder nếu có parentId khác biệt
     (nodes || []).forEach(n => {
       if (n.type === 'folder' && !isBookContainer(n) && !orderedFolderNodes.some(o => o.id === n.id)) {
         orderedFolderNodes.push(n);
       }
     });
 
-    // Thêm các folder từ sách vào list
+    const existingLower = new Set(chaptersList.map(c => c.title.trim().toLowerCase()));
+    const newTitles: string[] = [];
     orderedFolderNodes.forEach(f => {
       const clean = f.title.trim();
-      if (clean && !seen.has(clean.toLowerCase()) && !deletedSet.has(clean.toLowerCase())) {
-        seen.add(clean.toLowerCase());
-        list.push({ id: f.id, title: clean, fromNode: true });
+      if (clean && !existingLower.has(clean.toLowerCase())) {
+        existingLower.add(clean.toLowerCase());
+        newTitles.push(clean);
       }
     });
 
-    // 2. Thêm các chương đã được tạo trực tiếp từ menu VDC (lưu trong chapterOrder)
+    if (newTitles.length === 0) {
+      showToast('Tất cả chương từ menu bài học bên trái đều đã có trong menu VDC.', 'info');
+      return;
+    }
+
+    showConfirm(
+      'Nhập chương từ menu bài học gốc',
+      `Tìm thấy ${newTitles.length} chương từ menu bài học bên trái chưa có trong Kho VDC:\n• ${newTitles.slice(0, 6).join('\n• ')}${newTitles.length > 6 ? `\n... và ${newTitles.length - 6} chương khác` : ''}\n\nThầy/cô có muốn sao chép vào menu riêng của VDC không? (Sau khi nhập có thể tự do sửa/xóa độc lập.)`,
+      async () => {
+        const mergedOrder = [...chaptersList.map(c => c.title.trim()), ...newTitles];
+        setChapterOrder(mergedOrder);
+        try {
+          localStorage.setItem(`vdc_chapter_order_g${gradeId}`, JSON.stringify(mergedOrder));
+        } catch {}
+        const ok = await syncVdcAppSettings(mergedOrder, questions);
+        if (ok) {
+          showToast(`Đã sao chép ${newTitles.length} chương vào menu riêng của VDC!`, 'success');
+        }
+      },
+      'info',
+      'Sao chép vào VDC'
+    );
+  };
+
+  // Danh sách chương ĐỘC LẬP của Kho VDC: chỉ lấy từ cấu trúc menu VDC đã lưu (chapterOrder) và các chương đang có câu hỏi VDC
+  const chaptersList = useMemo(() => {
+    const list: { id: string; title: string; fromNode?: boolean }[] = [];
+    const seen = new Set<string>();
+
+    // 1. Các chương đã được tạo/lưu trong menu riêng của VDC (lưu trên app_settings)
     (chapterOrder || []).forEach((ordTitle, idx) => {
       const clean = (ordTitle || '').trim();
-      if (clean && !seen.has(clean.toLowerCase()) && !deletedSet.has(clean.toLowerCase())) {
+      if (clean && !seen.has(clean.toLowerCase())) {
         seen.add(clean.toLowerCase());
         list.push({ id: `vdc-custom-ch-${idx}-${clean}`, title: clean, fromNode: false });
       }
     });
 
-    // 3. Thêm bất kỳ chương nào đã có trong danh sách câu hỏi
+    // 2. Bổ sung các chương đang có câu hỏi trong vdc_questions (nếu chưa nằm trong chapterOrder)
     questions.forEach(q => {
       const title = q.chapter_title?.trim();
-      if (title && !seen.has(title.toLowerCase()) && !deletedSet.has(title.toLowerCase())) {
+      if (title && !seen.has(title.toLowerCase())) {
         seen.add(title.toLowerCase());
         list.push({ id: q.chapter_id || `custom-${title}`, title, fromNode: false });
       }
     });
 
-    // 4. Sắp xếp danh sách chương theo chapterOrder nếu có (so sánh không phân biệt hoa thường)
-    if (chapterOrder.length > 0) {
-      const lowerOrder = chapterOrder.map(t => t.trim().toLowerCase());
-      list.sort((a, b) => {
-        const idxA = lowerOrder.indexOf(a.title.trim().toLowerCase());
-        const idxB = lowerOrder.indexOf(b.title.trim().toLowerCase());
-        if (idxA !== -1 && idxB !== -1) return idxA - idxB;
-        if (idxA !== -1) return -1;
-        if (idxB !== -1) return 1;
-        return 0;
-      });
-    }
-
     return list;
-  }, [nodes, questions, chapterOrder, deletedChapters]);
+  }, [questions, chapterOrder]);
 
   // Di chuyển thứ tự chương lên hoặc xuống
   const handleReorderChapter = async (chapterTitle: string, direction: 'up' | 'down') => {
@@ -537,55 +526,56 @@ export const VdcQuestionsPanel: React.FC<VdcQuestionsPanelProps> = ({
     setChapterOrder(newOrderedTitles);
     try {
       localStorage.setItem(`vdc_chapter_order_g${gradeId}`, JSON.stringify(newOrderedTitles));
-      await syncVdcAppSettings(newOrderedTitles, deletedChapters, questions);
-      showToast(`Đã chuyển chương "${chapterTitle}" ${direction === 'up' ? 'lên' : 'xuống'} thành công!`, 'success');
+      const ok = await syncVdcAppSettings(newOrderedTitles, questions);
+      if (ok) {
+        showToast(`Đã chuyển chương "${chapterTitle}" ${direction === 'up' ? 'lên' : 'xuống'} thành công!`, 'success');
+      }
     } catch (e) {
       console.warn("Lỗi khi lưu thứ tự chương:", e);
     }
   };
 
-  // Xóa chương khỏi menu VDC
+  // Xóa chương khỏi menu riêng của VDC
   const handleDeleteChapter = (ch: { id: string; title: string; fromNode?: boolean }, count: number) => {
     showConfirm(
-      "Xác nhận xóa chương khỏi kho VDC",
+      "Xác nhận xóa chương khỏi menu VDC",
       count > 0 
-        ? `Chương "${ch.title}" đang có ${count} câu hỏi VDC. Thầy/cô có chắc chắn muốn xóa chương này khỏi kho VDC và toàn bộ ${count} câu hỏi bên trong không?\n\n(LƯU Ý: Thao tác này chỉ xóa câu hỏi trong kho VDC, hoàn toàn KHÔNG làm mất chương hay bài học bên ngoài cấu trúc sách ở menu bên trái!)`
-        : `Thầy/cô có chắc chắn muốn xóa/ẩn chương "${ch.title}" khỏi menu kho VDC không?\n\n(LƯU Ý: Thao tác này hoàn toàn KHÔNG ảnh hưởng hay làm mất menu bài học bên ngoài màn hình chính!)`,
+        ? `Chương "${ch.title}" đang có ${count} câu hỏi VDC. Thầy/cô có chắc chắn muốn xóa chương này khỏi menu VDC và toàn bộ ${count} câu hỏi bên trong không?\n\n(Menu này hoàn toàn độc lập, KHÔNG ảnh hưởng tới menu bài học gốc bên trái màn hình.)`
+        : `Thầy/cô có chắc chắn muốn xóa chương "${ch.title}" khỏi menu riêng của Kho VDC không?\n\n(Menu này hoàn toàn độc lập, KHÔNG ảnh hưởng tới menu bài học gốc bên trái màn hình.)`,
       async () => {
         try {
           const lowerTitle = ch.title.trim().toLowerCase();
 
-          // 1. Xóa các câu hỏi VDC thuộc chương này
-          const remainingQuestions = questions.filter(
-            q => q.chapter_title?.trim().toLowerCase() !== lowerTitle && q.chapter_id !== ch.id
-          );
+          // 1. Tìm & xóa các câu hỏi VDC thuộc chương này
+          const matchingIds = questions
+            .filter(q => q.chapter_title?.trim().toLowerCase() === lowerTitle || q.chapter_id === ch.id)
+            .map(q => q.id);
+          const remainingQuestions = questions.filter(q => !matchingIds.includes(q.id));
           setQuestions(remainingQuestions);
 
           // 2. Xóa câu hỏi trên Supabase
-          if (dbStatus === 'connected') {
-            await supabase.from('vdc_questions').delete().eq('grade_id', gradeId).ilike('chapter_title', ch.title.trim());
+          if (dbStatus === 'connected' && matchingIds.length > 0) {
+            const { error: delQErr } = await supabase.from('vdc_questions').delete().in('id', matchingIds);
+            if (delQErr) throw delQErr;
           }
 
-          // 3. Cập nhật danh sách deletedChapters để loại bỏ khỏi menu VDC vĩnh viễn
-          const updatedDeleted = Array.from(new Set([...deletedChapters, ch.title.trim()]));
-          setDeletedChapters(updatedDeleted);
-          localStorage.setItem(`vdc_deleted_chapters_g${gradeId}`, JSON.stringify(updatedDeleted));
-
-          // 4. Cập nhật chapterOrder
-          const updatedOrder = chapterOrder.filter(t => t.trim().toLowerCase() !== lowerTitle);
+          // 3. Cập nhật danh sách chapterOrder (giữ các chương còn lại trong chaptersList trừ chương vừa xóa)
+          const updatedOrder = chaptersList
+            .map(c => c.title.trim())
+            .filter(t => t.toLowerCase() !== lowerTitle);
           setChapterOrder(updatedOrder);
           localStorage.setItem(`vdc_chapter_order_g${gradeId}`, JSON.stringify(updatedOrder));
 
-          // 5. Cập nhật cấu hình chương vào app_settings VDC (chỉ lưu backup questions khi ở chế độ fallback)
-          await syncVdcAppSettings(updatedOrder, updatedDeleted, remainingQuestions);
+          // 4. Lưu cấu hình menu VDC lên Supabase app_settings
+          await syncVdcAppSettings(updatedOrder, remainingQuestions);
 
-          // 6. Nếu đang chọn chương này thì chuyển về 'all'
-          if (selectedChapter === ch.title || selectedChapter === ch.id) {
+          // 5. Nếu đang chọn chương này thì chuyển về 'all'
+          if (selectedChapter.trim().toLowerCase() === lowerTitle || selectedChapter === ch.id) {
             setSelectedChapter('all');
             setCurrentPage(1);
           }
 
-          showToast(`Đã xóa chương "${ch.title}" khỏi kho VDC thành công!`, 'success');
+          showToast(`Đã xóa chương "${ch.title}" khỏi menu VDC thành công!`, 'success');
         } catch (err: any) {
           console.error("Lỗi khi xóa chương:", err);
           showToast(`Lỗi khi xóa chương: ${err.message || 'Không xác định'}`, 'error');
@@ -596,7 +586,7 @@ export const VdcQuestionsPanel: React.FC<VdcQuestionsPanelProps> = ({
     );
   };
 
-  // Lưu thay đổi tên chương trong kho VDC
+  // Lưu thay đổi tên chương trong menu VDC
   const handleSaveEditChapter = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingChapter || !editChapterTitle.trim()) return;
@@ -612,33 +602,45 @@ export const VdcQuestionsPanel: React.FC<VdcQuestionsPanelProps> = ({
       const oldLower = oldTitle.toLowerCase();
 
       // 1. Cập nhật tất cả câu hỏi VDC có chapter_title cũ
+      const matchingIds = questions
+        .filter(q => q.chapter_title?.trim().toLowerCase() === oldLower || q.chapter_id === editingChapter.id)
+        .map(q => q.id);
       const updatedQuestions = questions.map(q => 
-        q.chapter_title?.trim().toLowerCase() === oldLower || q.chapter_id === editingChapter.id
-          ? { ...q, chapter_title: newTitle }
-          : q
+        matchingIds.includes(q.id) ? { ...q, chapter_title: newTitle } : q
       );
       setQuestions(updatedQuestions);
 
       // 2. Cập nhật trong Supabase
-      if (dbStatus === 'connected') {
-        await supabase
+      if (dbStatus === 'connected' && matchingIds.length > 0) {
+        const { error: updErr } = await supabase
           .from('vdc_questions')
           .update({ chapter_title: newTitle })
-          .eq('grade_id', gradeId)
-          .ilike('chapter_title', oldTitle);
+          .in('id', matchingIds);
+        if (updErr) throw updErr;
       }
 
-      // 3. Cập nhật chapterOrder
-      const updatedOrder = chapterOrder.map(t => t.trim().toLowerCase() === oldLower ? newTitle : t);
-      if (!updatedOrder.includes(newTitle)) updatedOrder.push(newTitle);
+      // 3. Cập nhật chapterOrder giữ đúng vị trí
+      const updatedOrder: string[] = [];
+      const seenLower = new Set<string>();
+      chaptersList.forEach(c => {
+        const t = c.title.trim();
+        const finalT = t.toLowerCase() === oldLower ? newTitle : t;
+        if (finalT && !seenLower.has(finalT.toLowerCase())) {
+          seenLower.add(finalT.toLowerCase());
+          updatedOrder.push(finalT);
+        }
+      });
+      if (!seenLower.has(newTitle.toLowerCase())) {
+        updatedOrder.push(newTitle);
+      }
       setChapterOrder(updatedOrder);
       localStorage.setItem(`vdc_chapter_order_g${gradeId}`, JSON.stringify(updatedOrder));
 
       // 4. Cập nhật cấu hình chương vào app_settings
-      await syncVdcAppSettings(updatedOrder, deletedChapters, updatedQuestions);
+      await syncVdcAppSettings(updatedOrder, updatedQuestions);
 
       // 5. Cập nhật selectedChapter nếu đang chọn chương này
-      if (selectedChapter === oldTitle || selectedChapter === editingChapter.id) {
+      if (selectedChapter.trim().toLowerCase() === oldLower || selectedChapter === editingChapter.id) {
         setSelectedChapter(newTitle);
       }
 
@@ -650,7 +652,7 @@ export const VdcQuestionsPanel: React.FC<VdcQuestionsPanelProps> = ({
     }
   };
 
-  // Thêm chương mới vào kho VDC
+  // Thêm chương mới vào menu riêng của kho VDC
   const handleSaveAddChapter = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newChapterTitle.trim()) return;
@@ -658,25 +660,26 @@ export const VdcQuestionsPanel: React.FC<VdcQuestionsPanelProps> = ({
     const titleToAdd = newChapterTitle.trim();
 
     try {
-      // 1. Bỏ khỏi deletedChapters nếu trước đó từng bị xóa
-      const updatedDeleted = deletedChapters.filter(t => t.trim().toLowerCase() !== titleToAdd.toLowerCase());
-      setDeletedChapters(updatedDeleted);
-      localStorage.setItem(`vdc_deleted_chapters_g${gradeId}`, JSON.stringify(updatedDeleted));
+      const currentTitles = chaptersList.map(c => c.title.trim());
+      const alreadyExists = currentTitles.some(t => t.toLowerCase() === titleToAdd.toLowerCase());
+      const updatedOrder = alreadyExists
+        ? currentTitles
+        : [...currentTitles, titleToAdd];
 
-      // 2. Thêm vào chapterOrder
-      const updatedOrder = [...chapterOrder.filter(t => t.trim().toLowerCase() !== titleToAdd.toLowerCase()), titleToAdd];
       setChapterOrder(updatedOrder);
       localStorage.setItem(`vdc_chapter_order_g${gradeId}`, JSON.stringify(updatedOrder));
 
-      // 3. Đồng bộ lên Supabase app_settings (ID: 8000 + gradeId) để các thiết bị / trình duyệt khác thấy ngay
-      await syncVdcAppSettings(updatedOrder, updatedDeleted, questions);
+      // Đồng bộ lên Supabase app_settings (ID: 8000 + gradeId) để các thiết bị / trình duyệt khác thấy ngay
+      const ok = await syncVdcAppSettings(updatedOrder, questions);
 
-      // 4. Chọn ngay chương vừa thêm
+      // Chọn ngay chương vừa thêm
       setSelectedChapter(titleToAdd);
       setShowAddChapterModal(false);
       setNewChapterTitle('');
 
-      showToast(`Đã thêm chương "${titleToAdd}" vào kho VDC thành công!`, 'success');
+      if (ok) {
+        showToast(`Đã thêm chương "${titleToAdd}" vào menu VDC thành công!`, 'success');
+      }
     } catch (err: any) {
       console.error("Lỗi khi thêm chương:", err);
       showToast(`Lỗi khi thêm chương: ${err.message || 'Không xác định'}`, 'error');
@@ -688,8 +691,9 @@ export const VdcQuestionsPanel: React.FC<VdcQuestionsPanelProps> = ({
     setLoading(true);
     try {
       let loadedQuestions: VdcQuestion[] = [];
+      let hasIndependentSettings = false;
 
-      // 1. Tải cấu hình VDC (thứ tự chương, chương ẩn) từ app_settings (8000 + gradeId)
+      // 1. Tải cấu hình VDC (thứ tự chương độc lập) từ app_settings (8000 + gradeId)
       try {
         const { data: vdcSettings, error: sErr } = await supabase
           .from('app_settings')
@@ -699,11 +703,8 @@ export const VdcQuestionsPanel: React.FC<VdcQuestionsPanelProps> = ({
 
         if (!sErr && vdcSettings?.data) {
           const sData = vdcSettings.data as any;
-          if (Array.isArray(sData.deleted_chapters)) {
-            setDeletedChapters(sData.deleted_chapters);
-            try {
-              localStorage.setItem(`vdc_deleted_chapters_g${gradeId}`, JSON.stringify(sData.deleted_chapters));
-            } catch {}
+          if (sData.independent_menu) {
+            hasIndependentSettings = true;
           }
           if (Array.isArray(sData.chapter_order)) {
             setChapterOrder(sData.chapter_order);
@@ -743,6 +744,8 @@ export const VdcQuestionsPanel: React.FC<VdcQuestionsPanelProps> = ({
         if (loadedQuestions.length > 0) {
           loadedQuestions.forEach(q => loadedDetailIdsRef.current.add(q.id));
           setQuestions(loadedQuestions);
+        } else if (hasIndependentSettings) {
+          setQuestions([]);
         } else {
           const samples = SAMPLE_VDC_QUESTIONS.filter(q => q.grade_id === gradeId);
           samples.forEach(q => loadedDetailIdsRef.current.add(q.id));
@@ -1006,7 +1009,7 @@ export const VdcQuestionsPanel: React.FC<VdcQuestionsPanelProps> = ({
           const nextList = questions.filter(q => q.id !== id);
           setQuestions(nextList);
 
-          await syncVdcAppSettings(chapterOrder, deletedChapters, nextList);
+          await syncVdcAppSettings(chapterOrder, nextList);
 
           showToast('Đã xóa câu hỏi thành công!', 'success');
         } catch (err: any) {
@@ -1082,8 +1085,17 @@ export const VdcQuestionsPanel: React.FC<VdcQuestionsPanelProps> = ({
       }
       setQuestions(nextQuestions);
 
-      // 3. Đồng bộ metadata chương lên app_settings (chỉ đính kèm questions khi đang ở chế độ fallback)
-      await syncVdcAppSettings(chapterOrder, deletedChapters, nextQuestions);
+      // 3. Bảo đảm tên chương của câu hỏi mới được lưu vào danh sách menu VDC và đồng bộ lên app_settings
+      const chTitleClean = newOrUpdated.chapter_title.trim();
+      const baseTitles = chaptersList.map(c => c.title.trim());
+      const nextChapterOrder = baseTitles.some(t => t.toLowerCase() === chTitleClean.toLowerCase())
+        ? baseTitles
+        : [...baseTitles, chTitleClean];
+      setChapterOrder(nextChapterOrder);
+      try {
+        localStorage.setItem(`vdc_chapter_order_g${gradeId}`, JSON.stringify(nextChapterOrder));
+      } catch {}
+      await syncVdcAppSettings(nextChapterOrder, nextQuestions);
 
       setShowQuestionModal(false);
       showToast(editingQuestion ? 'Đã cập nhật câu hỏi thành công!' : 'Đã thêm câu hỏi VDC mới thành công!', 'success');
@@ -1327,20 +1339,20 @@ ON public.vdc_questions FOR DELETE USING (true);
           <div className="p-4 border-b border-slate-100 bg-slate-50/50">
             <div className="flex items-center justify-between mb-1">
               <h2 className="text-[10px] font-black uppercase tracking-widest text-slate-500 flex items-center gap-1.5">
-                <Folder size={13} className="text-amber-500" /> Menu các chương
+                <Folder size={13} className="text-amber-500" /> Menu riêng VDC
               </h2>
               {isAdmin && (
                 <button
                   type="button"
                   onClick={() => { setNewChapterTitle(''); setShowAddChapterModal(true); }}
                   className="flex items-center gap-1 px-2 py-1 bg-amber-500 hover:bg-amber-600 text-white rounded-lg text-[10px] font-black transition-all shadow-xs active:scale-95"
-                  title="Thêm chương mới"
+                  title="Thêm chương mới vào menu riêng VDC"
                 >
                   <Plus size={11} strokeWidth={3} /> Thêm
                 </button>
               )}
             </div>
-            <p className="text-[11px] text-slate-400">Chọn chương để xem hoặc bấm ▲/▼, Sửa, Xóa</p>
+            <p className="text-[11px] text-slate-400">Độc lập với menu bài học gốc bên trái</p>
           </div>
 
           <div className="flex-1 overflow-y-auto p-3 space-y-1.5 custom-scrollbar">
@@ -1495,14 +1507,14 @@ ON public.vdc_questions FOR DELETE USING (true);
                 <RefreshCw size={13} className={loading ? 'animate-spin' : ''} />
               </button>
             </div>
-            {deletedChapters.length > 0 && (
+            {isAdmin && (
               <button
                 type="button"
-                onClick={handleRestoreDeletedChapters}
+                onClick={handleImportChaptersFromBook}
                 className="w-full text-center text-[10px] text-indigo-600 hover:text-indigo-800 font-bold p-1.5 bg-indigo-50 hover:bg-indigo-100 rounded-xl border border-indigo-100 transition-all flex items-center justify-center gap-1.5"
-                title="Bấm để hiển thị lại các chương từ sách đã từng bị ẩn khỏi VDC"
+                title="Sao chép thêm tên các chương từ menu bài học bên trái sang menu riêng của VDC"
               >
-                <RotateCcw size={11} /> Khôi phục {deletedChapters.length} chương đã ẩn
+                <RotateCcw size={11} /> Lấy chương từ menu gốc
               </button>
             )}
           </div>
@@ -1522,7 +1534,7 @@ ON public.vdc_questions FOR DELETE USING (true);
                 <div className="flex items-center gap-2">
                   <Folder size={16} className="text-amber-500 fill-amber-500" />
                   <h2 className="text-xs font-black uppercase tracking-wider text-slate-800">
-                    Menu các chương
+                    Menu riêng VDC
                   </h2>
                 </div>
                 <div className="flex items-center gap-1">
@@ -1652,13 +1664,13 @@ ON public.vdc_questions FOR DELETE USING (true);
                     <RefreshCw size={13} className={loading ? 'animate-spin' : ''} />
                   </button>
                 </div>
-                {deletedChapters.length > 0 && (
+                {isAdmin && (
                   <button
                     type="button"
-                    onClick={handleRestoreDeletedChapters}
+                    onClick={handleImportChaptersFromBook}
                     className="w-full text-center text-[10px] text-indigo-600 font-bold p-2 bg-indigo-50 hover:bg-indigo-100 rounded-xl border border-indigo-100 transition-all flex items-center justify-center gap-1.5"
                   >
-                    <RotateCcw size={11} /> Khôi phục {deletedChapters.length} chương đã ẩn
+                    <RotateCcw size={11} /> Lấy chương từ menu gốc
                   </button>
                 )}
               </div>
