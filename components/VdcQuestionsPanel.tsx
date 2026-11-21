@@ -1136,7 +1136,7 @@ export const VdcQuestionsPanel: React.FC<VdcQuestionsPanelProps> = ({
           await signInWithGoogleForDrive();
         }
         const res = await uploadFileToGoogleDrive(file);
-        setModalForm(prev => ({ ...prev, [target]: res.previewUrl }));
+        setModalForm(prev => ({ ...prev, [target]: res.directImageUrl }));
         showToast('Đã tải ảnh lên Google Drive thành công!', 'success');
       } catch (driveErr: any) {
         showToast('Không thể tải ảnh: ' + (imgbbErr.message || 'Kiểm tra đường truyền'), 'error');
