@@ -1,6 +1,7 @@
 import { supabase } from './supabaseClient';
+import { uploadFileToGoogleDrive, getDriveAccessToken, signInWithGoogleForDrive } from './googleDrive';
 
-export type ImageServerMode = 'STORE' | 'SBASE64' | 'IMGBB';
+export type ImageServerMode = 'STORE' | 'SBASE64' | 'IMGBB' | 'GDRIVE';
 
 // Default keys for ImgBB with fallback capability
 const DEFAULT_IMGBB_KEYS = [
@@ -16,6 +17,9 @@ export interface ImgBBUploadResult {
   deleteUrl?: string;
   title?: string;
   modeUsed?: ImageServerMode;
+  isDocument?: boolean;
+  previewUrl?: string;
+  viewUrl?: string;
 }
 
 /**
@@ -24,7 +28,7 @@ export interface ImgBBUploadResult {
  */
 export function getImageServerMode(): ImageServerMode {
   const savedMode = localStorage.getItem('image_server_mode') as ImageServerMode;
-  if (savedMode && ['STORE', 'SBASE64', 'IMGBB'].includes(savedMode)) {
+  if (savedMode && ['STORE', 'SBASE64', 'IMGBB', 'GDRIVE'].includes(savedMode)) {
     return savedMode;
   }
   return 'STORE';
@@ -187,7 +191,40 @@ export async function uploadToImgBBDirect(
 }
 
 /**
- * Flexible image uploader supporting STORE (Supabase Storage), SBASE64 (Base64 data URL), and IMGBB (ImgBB API).
+ * Upload image or document file directly to user's Google Drive using existing Firebase/Google Drive auth.
+ */
+export async function uploadToGoogleDriveFlexible(file: File | Blob): Promise<ImgBBUploadResult & { modeUsed: ImageServerMode }> {
+  let fileObj: File;
+  if (file instanceof File) {
+    fileObj = file;
+  } else {
+    const ext = file.type && file.type.includes('/') ? file.type.split('/')[1].replace(/[^a-z0-9]/gi, '') : 'png';
+    fileObj = new File([file], `upload_${Date.now()}.${ext || 'png'}`, { type: file.type || 'image/png' });
+  }
+
+  if (!getDriveAccessToken()) {
+    await signInWithGoogleForDrive();
+  }
+
+  const driveRes = await uploadFileToGoogleDrive(fileObj);
+  const isImageFile =
+    (fileObj.type && fileObj.type.startsWith('image/')) ||
+    /\.(png|jpe?g|gif|webp|svg|bmp)$/i.test(fileObj.name);
+
+  const primaryUrl = isImageFile ? driveRes.directImageUrl : driveRes.previewUrl;
+  return {
+    url: primaryUrl,
+    displayUrl: primaryUrl,
+    previewUrl: driveRes.previewUrl,
+    viewUrl: driveRes.viewUrl,
+    title: driveRes.name || fileObj.name,
+    isDocument: !isImageFile,
+    modeUsed: 'GDRIVE',
+  };
+}
+
+/**
+ * Flexible uploader supporting STORE (Supabase Storage), SBASE64 (Base64 data URL), IMGBB (ImgBB API), and GDRIVE (Google Drive).
  */
 export async function uploadImageFlexible(
   file: File | Blob,
@@ -195,6 +232,15 @@ export async function uploadImageFlexible(
   customApiKey?: string
 ): Promise<ImgBBUploadResult & { modeUsed: ImageServerMode }> {
   const selectedMode = mode || getImageServerMode();
+
+  if (selectedMode === 'GDRIVE') {
+    try {
+      return await uploadToGoogleDriveFlexible(file);
+    } catch (err: any) {
+      console.error("GDRIVE upload failed:", err);
+      throw new Error(err?.message || 'Không thể tải tệp lên Google Drive. Vui lòng thử đăng nhập lại Google hoặc chọn phương thức khác.');
+    }
+  }
 
   if (selectedMode === 'SBASE64') {
     const base64Url = await fileToBase64Compressed(file);
@@ -209,10 +255,13 @@ export async function uploadImageFlexible(
   if (selectedMode === 'STORE') {
     try {
       const res = await uploadToSupabaseStore(file);
-      return { ...res, modeUsed: 'STORE' };
+      const isImageFile =
+        (file.type && file.type.startsWith('image/')) ||
+        (file instanceof File && /\.(png|jpe?g|gif|webp|svg|bmp)$/i.test(file.name));
+      return { ...res, isDocument: !isImageFile, modeUsed: 'STORE' };
     } catch (err: any) {
       console.error("STORE upload failed:", err);
-      throw new Error(`Không thể tải ảnh lên Supabase Storage (STORE): ${err.message || 'Lỗi lưu trữ'}. Bạn có thể thử lại hoặc chọn phương thức SBASE64 / IMGBB.`);
+      throw new Error(`Không thể tải ảnh lên Supabase Storage (STORE): ${err.message || 'Lỗi lưu trữ'}. Bạn có thể thử lại hoặc chọn phương thức SBASE64 / IMGBB / GOOGLE.`);
     }
   }
 
